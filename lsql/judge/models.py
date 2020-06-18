@@ -44,6 +44,12 @@ class Collection(models.Model):
     def __str__(self):
         return html.fromstring(self.description_html).text_content()
 
+    def problems(self):
+        return Problem.objects.filter(collection=self)
+
+    def num_problems(self):
+        return self.problems().count()
+
 
 class Problem(models.Model):
     title_md = models.CharField(max_length=100)

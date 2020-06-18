@@ -1,0 +1,24 @@
+tr.marked_row {
+    background-color: yellow;
+    border-style: solid;
+    border-width: 5px;
+    border-color: red;
+}
+
+#results_box {
+    background-color: #F6CECE;
+    padding: 10px 10px 10px 10px;
+}
+
+textarea.code_box {
+    font-family: monospace;
+}
+
+div#codigo {
+    border-style: solid;
+    position: relative;
+    width: 100%;
+    margin: auto;
+    //height: 80px;
+    //text-align: center;
+}
