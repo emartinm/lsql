@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.validators import MinLengthValidator
 from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.translation import gettext_lazy as _
 
 import markdown
 from lxml import html
@@ -49,6 +50,10 @@ class Collection(models.Model):
 
     def num_problems(self):
         return self.problems().count()
+
+    def num_solved_by_user(self, user):
+        # FIXME
+        return 2
 
 
 class Problem(models.Model):
@@ -122,9 +127,27 @@ class TriggerProblem(Problem):
 
 
 class Submission(models.Model):
+    class VeredictCode(models.TextChoices):
+        AC = 'AC', _('Aceptado')
+        TLE = 'TLE', _('Tiempo limite excedido')
+        RE = 'RE', _('Error en ejecución')
+        WA = 'WA', _('Resultados incorrectos')
+        IE = 'IE', _('Error interno')
+        VE = 'VE', _('Error de validación')
+
+        def html_short_name(self):
+            if self.value == self.AC:
+                return f'<span class="text-success">{self.label}</span>'
+            else:
+                return f'<span class ="text-danger">{self.label}</span>'
+
     creation_date = models.DateTimeField(auto_now_add=True)
     code = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
-    veredict_code = models.PositiveSmallIntegerField()
+    veredict_code = models.CharField(
+        max_length=3,
+        choices=VeredictCode.choices,
+        default=VeredictCode.AC
+    )
     veredict_message = models.CharField(max_length=5000, null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)

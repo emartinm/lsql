@@ -17,12 +17,12 @@
       </li>
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          tunombre
+          {{ request.user.email }}
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="/sql/user/pirate">Ver perfil</a>
+          <a class="dropdown-item" href="{% url 'judge:user' request.user.pk %}">Ver perfil</a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="/sql/logout">Cerrar sesión</a>
+          <a class="dropdown-item" href="{% url 'judge:logout' %}">Cerrar sesión</a>
         </div>
       </li>
     </ul>

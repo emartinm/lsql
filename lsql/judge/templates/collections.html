@@ -12,14 +12,17 @@
       </tr>
     </thead>
     <tbody>
-    {% for c in object_list %}
+    {% for c in collections %}
     <tr>
       <td>
+        {% if c.num_problems == c.num_solved %}
         <img src="{% static "judge/img/tick.svg" %}" alt="Coleccion terminada" height="20">
+        {% else %}
         <img src="{% static "judge/img/tick.svg" %}" alt="Colección no terminada" style="visibility: hidden" height="20">
+        {% endif %}
         <a href="{% url 'judge:collection' c.id %}">{{ c.name_html|safe }}</a>
       </td>
-      <td>{{ c.problems }}</td>
+      <td>{{ c.num_solved }}</td>
       <td>{{ c.num_problems }}</td>
     </tr>
     {% endfor %}

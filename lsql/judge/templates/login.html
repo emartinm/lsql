@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block menu %}
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li>
+        <a class="nav-link" href="#">Ayuda</a>
+      </li>
+    </ul>
+  </div>
+{% endblock %}
+{% block contenido %}
+  <h2>Inicio de sesión</h2>
+<form action="{% url 'judge:login' %}" method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="username">Dirección de correo electrónico</label>
+    <input type="text" name="username" class="form-control" id="username" aria-describedby="emailHelp"
+           placeholder="Introduce tu e-mail" required>
+    <small id="emailHelp" class="form-text text-muted">Es la parte de tu e-mail que precede a <code>@ucm.es</code>.</small>
+    </div>
+    <div class="form-group">
+    <label for="password">Contraseña</label>
+    <input type="password" name="password" class="form-control" id="password" placeholder="Contraseña" required>
+      <small id="passwordHelp" class="form-text text-muted">Ponte en contacto con tu profesor si has olvidado tu contraseña.</small>
+    </div>
+  <button type="submit" class="btn btn-primary">Entrar</button>
+</form>
+{% endblock %}
