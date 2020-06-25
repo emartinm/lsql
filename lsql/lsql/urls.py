@@ -17,8 +17,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    # path('sql/accounts/', include('django.contrib.auth.urls')),  # FIXME arreglar
     path('sql/', include('judge.urls')),
-    path('polls/', include('polls.urls')),
+    # path('polls/', include('polls.urls')),
     path('sql/admin/', admin.site.urls),
 ]

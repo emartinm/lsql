@@ -84,6 +84,9 @@ class Problem(models.Model):
     def __str__(self):
         return html.fromstring(self.title_html).text_content()
 
+    def template(self):
+        raise NotImplementedError
+
 
 class SelectProblem(Problem):
     check_order = models.BooleanField(default=False)
@@ -99,17 +102,26 @@ class SelectProblem(Problem):
         self.initial_db = res['db']
         logger.error(f'***** {res}')
 
+    def template(self):
+        return 'problem_select.html'
+
 
 class DMLProblem(Problem):
     check_order = models.BooleanField(default=False)
     solution = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
     expected_result = JSONField(encoder=DjangoJSONEncoder)
 
+    def template(self):
+        return 'problem.html'
+
 
 class FunctionProblem(Problem):
     check_order = models.BooleanField(default=False)
     solution = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
     expected_result = JSONField(encoder=DjangoJSONEncoder)
+
+    def template(self):
+        return 'problem.html'
 
 
 class ProcProblem(Problem):
@@ -118,12 +130,18 @@ class ProcProblem(Problem):
     proc_call = models.CharField(max_length=1000, validators=[MinLengthValidator(1)])
     expected_result = JSONField(encoder=DjangoJSONEncoder)
 
+    def template(self):
+        return 'problem.html'
+
 
 class TriggerProblem(Problem):
     check_order = models.BooleanField(default=False)
     solution = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
     tests = models.CharField(max_length=1000, validators=[MinLengthValidator(1)])
     expected_result = JSONField(encoder=DjangoJSONEncoder)
+
+    def template(self):
+        return 'problem.html'
 
 
 class Submission(models.Model):

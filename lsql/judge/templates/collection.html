@@ -1,10 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>hola!</title>
-</head>
-<body>
-{{ collection }}
-</body>
-</html>
+{% extends "base_menu.html" %}
+{% load static %}
+{% block contenido %}
+<h2>{{collection.name_html|safe}}</h2>
+{{collection.description_html|safe}}
+
+
+  <h4>Listado de problemas</h4>
+  <table class="table">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">Nombre</th>
+        <th scope="col">Número de envíos</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for p in collection.problems %}
+    <tr>
+      <td>
+        {% if p.solved %}
+        <img src="{% static 'judge/img/tick.svg' %}" alt="Problema resuelto" height="20">
+        {% else %}
+        <img src="{% static 'judge/img/tick.svg' %}" alt="Problema resuelto" style="visibility: hidden" height="20">
+        {% endif %}
+        <a href="{% url 'judge:problem' p.pk %}">{{ p.title_html|safe }}</a>
+      </td>
+      <td>{{p.num_submissions}}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

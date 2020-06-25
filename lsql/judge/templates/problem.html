@@ -1,0 +1,101 @@
+{% extends "base_menu.html" %}
+{% comment %}
+General template for a problem. Provides the following blocks:
+   * name_text: Name and text of the problem, considering HTML as safe
+   * initial_db: Contents of the initial DB (if any)
+   * expected_result: Contents of the expected results (default -> one table)
+   * solution: form and the hidden div for showin errors
+{% endcomment %}
+{% load static %}
+{% block contenido %}
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+{% block name_text %}
+<h2>{{ problem.title_html|safe}}
+{% if problem.solved %}
+  <img id="markSolved" src="{% static "judge/img/tick.svg" %}" alt="Ejercicio superado" height="30">
+{% else %}
+  <img id="markSolved" src="{% static "judge/img/tick.svg" %}" style="visibility: hidden" alt="Ejercicio superado" height="30">
+{% endif %}
+</h2>
+<p>
+  <!--
+  <a href="/sql/collection/{{problem.collection}}"><button type="button" class="btn btn-primary">Volver a la colección</button></a>
+  <a href="/sql/submission/?problem={{problem.prob_id}}"><button type="button" class="btn btn-primary">Ver histórico de envíos</button></a>
+  -->
+</p>
+<div>
+  {{ problem.text_html|safe }}
+</div>
+{% endblock %}
+
+{% block initial_db %}
+{% if problem.initial_db %}
+<h2>
+  Base de datos
+  <!-- <a href="/sql/problem/{{problem.prob_id}}/db_sql/"><button type="button" class="btn btn-primary">Descargar</button></a>
+  -->
+</h2>
+{% for name, table in problem.initial_db.items %}
+  {% include 'show_table.html' with table=table name=name mark_rows=None %}
+{% endfor %}
+{% endif %}
+{% endblock %}
+
+{% block expected_result %}
+<h2>Resultado esperado</h2>
+{% include 'show_table.html' with table=problem.expected_result name=None %}
+{% endblock %}
+
+{% block solution %}
+<h2>Solución</h2>
+  <script src="{% static 'judge/js/submit.js' %}"></script>
+  <form action="javascript:send_solution({{problem.pk}});">
+    {{ form.csrf_token }} {# Includes a hidden input with the CSRF token #}
+    <div id="codigo"></div>
+    <button id="botonEnviar" type="submit" class="btn btn-primary">
+      <span id="spinnerEnviar" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" hidden></span>
+      <span id="textoBotonEnviar">Enviar solución</span>
+    </button>
+  </form>
+
+<div id="ventanaResultado" class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h5 id="tituloCorreccion" class="modal-title">Titulo</h5>
+      </div>
+      <div id="mensajeCorreccion" class="modal-body">
+        Modal body text goes here.
+      </div>
+      <div class="modal-footer">
+        <button id="botonCerrarModal" type="button" class="btn btn-info" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.11/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+  var el = document.getElementById('mensajeCorreccion');
+  var style = window.getComputedStyle(el, null).getPropertyValue('font-size');
+  var size = parseInt(style);
+
+  ace.edit("codigo", {
+        theme: "ace/theme/eclipse",
+        mode: "ace/mode/sql",
+        autoScrollEditorIntoView: true,
+        maxLines: 30,
+        minLines: 10,
+        fontSize: size
+    });
+</script>
+
+<br/>
+<div id="results_box" hidden>
+<div id="feedback_content"></div>
+</div>
+{% endblock %}
+{% endblock %}
