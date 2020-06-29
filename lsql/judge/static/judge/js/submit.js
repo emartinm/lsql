@@ -18,7 +18,8 @@ function show_modal(titulo, contenido, botonVerde) {
     }
     // Reloads highlight.js to format new code in feedback
     hljs.initHighlighting.called = false;
-    hljs.initHighlighting();
+    hljs.initHighlighting();top
+
 }
 
 function mark_solved() {
@@ -51,25 +52,25 @@ function hide_feedback() {
     $('#results_box').attr('hidden', true);
 }
 
-function send_solution(prob_id) {
+function send_solution() {
+    let endpoint = $('#endpoint').val();
     var formData = new FormData();
     update_page_submission_in_progress();
     // Extracts code from ACE editor
     let code = ace.edit("codigo").getValue();
     formData.append('codigo', code);
-    formData.append('prob_id', prob_id);
 
     const config = {
         method: 'POST',
         mode: 'same-origin', // no-cors, *cors, same-origin
         cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
         credentials: 'same-origin', // include, *same-origin, omit
-        headers: { 'X-CSRFToken': $('#csrf_token').val() },
+        headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() },
         redirect: 'follow', // manual, *follow, error
         referrerPolicy: 'same-origin', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
         body: formData // body data type must match "Content-Type" header
     };
-    fetch('/sql/submit/', config)
+    fetch(endpoint, config)
       .then(function(response) {
           if (response.ok) {
               return response.json();

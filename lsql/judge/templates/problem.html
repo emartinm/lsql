@@ -52,8 +52,9 @@ General template for a problem. Provides the following blocks:
 {% block solution %}
 <h2>Solución</h2>
   <script src="{% static 'judge/js/submit.js' %}"></script>
-  <form action="javascript:send_solution({{problem.pk}});">
-    {{ form.csrf_token }} {# Includes a hidden input with the CSRF token #}
+  <form action="javascript:send_solution();">
+    {% csrf_token %} {# Includes a hidden input with the CSRF token #}
+    <input type="hidden" id="endpoint" name="endpoint" value="{% url 'judge:submit' problem.pk %}">
     <div id="codigo"></div>
     <button id="botonEnviar" type="submit" class="btn btn-primary">
       <span id="spinnerEnviar" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" hidden></span>

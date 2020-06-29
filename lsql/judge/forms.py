@@ -11,3 +11,7 @@ class SelectProblemAdminForm(forms.ModelForm):
 class LoginForm(forms.Form):
     username = forms.CharField(label='Nombre de usuario', max_length=100)
     password = forms.CharField(label='Contraseña', max_length=100, widget=forms.PasswordInput)
+
+
+class SubmitForm(forms.Form):
+    code = forms.CharField(label='Codigo', min_length=10)

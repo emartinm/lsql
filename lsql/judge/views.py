@@ -1,13 +1,28 @@
 import logging
 
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
+
+
+from .forms import SubmitForm
 from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem
 
 logger = logging.getLogger(__name__)
+
+
+def get_child_problem(pk):
+    """Look for problem 'pk' in the different child classes of Problem"""
+    classes = [SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem]
+    i = 0
+    p = None
+    while i < len(classes) and p is None:
+        q = classes[i].objects.filter(pk=pk)
+        if q:
+            p = q[0]
+    return p
 
 
 def index(_):
@@ -33,14 +48,19 @@ def problem(request, pk):
     # Error 404 if there is no a Problem pk
     get_object_or_404(Problem, pk=pk)
     # Look for problem pk in all the Problem classes
-    classes = [SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem]
-    i = 0
-    p = None
-    while i < len(classes) and p is None:
-        q = classes[i].objects.filter(pk=pk)
-        if q:
-            p = q[0]
+    p = get_child_problem(pk)
     return render(request, p.template(), {'problem': p})
+
+
+@login_required
+def submit(request, pk):
+    p = get_child_problem(pk)
+    data = {
+        'mensaje': 'foo',
+        'estado': 1,
+    }
+    return JsonResponse(data)
+    # return render(request, p.template(), {'problem': p})
 
 
 @login_required
