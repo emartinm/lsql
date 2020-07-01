@@ -1,89 +1,88 @@
-const auth_msg = 'Ha habido un error de autenticación al conectar con el corrector de ejercicios. ' +
-                 'Por favor, vuelve a cargar la página del problema e intenta ' +
-                 'enviarlo de nuevo dentro de unos instantes.';
-const correction_error = 'Ha sido imposible conectar con el corrector de ejercicios. ' +
-                         'Este problema puede ser debido a una saturación del servidor. ' +
-                         'Por favor, vuelve a cargar la página del problema e intenta ' +
-                         'enviarlo de nuevo dentro de unos instantes. Ponte en contacto con tu ' +
-                         'profesor si el problema persiste.';
+/*****************************************************
+ * Copyright Enrique Martín Martín <emartinm@ucm.es> *
+ *****************************************************/
 
-function show_modal(titulo, contenido, botonVerde) {
-    $('#tituloCorreccion').text(titulo);
-    $('#mensajeCorreccion').text(contenido);
-    $('#ventanaResultado').modal();
-    if (botonVerde) {
-        $('#botonCerrarModal').attr('class', 'btn btn-success');
-    } else {
-        $('#botonCerrarModal').attr('class', 'btn btn-danger');
-    }
+
+// Shows a modal window with a title and message
+function show_modal(title, message) {
+    $('#modal_title').text(title);
+    $('#modal_message').text(message);
+    $('#result_window').modal();
     // Reloads highlight.js to format new code in feedback
     hljs.initHighlighting.called = false;
-    hljs.initHighlighting();top
-
+    hljs.initHighlighting();
 }
 
+// Shows s modal windows with a connection error message
+function show_error_modal() {
+     $('#error_window').modal();
+}
+
+// Shows the 'solved' mark next to the problem title
 function mark_solved() {
-    $('#markSolved').css("visibility", "visible");
+    $('#markSolved').css('visibility', 'visible');
 }
 
+// Disables the form and shows the spinner
 function update_page_submission_in_progress() {
-    $('#botonEnviar').attr('disabled', true);
-    //$('#codigo').attr('disabled', true);
-    ace.edit("codigo").setReadOnly(true);
-    $('#spinnerEnviar').removeAttr("hidden");
-    $('#textoBotonEnviar').text("Enviando...");
+    $('#submit_button').attr('disabled', true);
+    ace.edit('user_code').setReadOnly(true);
+    $('#spinner_submit').removeAttr('hidden');
 }
 
+// Enables the form and hides the spinner
 function update_page_submission_received() {
-    $('#botonEnviar').removeAttr("disabled");
-    //$('#codigo').removeAttr("disabled");
-    ace.edit("codigo").setReadOnly(false);
-    $('#spinnerEnviar').attr('hidden', true);
-    $('#textoBotonEnviar').text("Enviar solución");
+    $('#submit_button').removeAttr('disabled');
+    ace.edit('user_code').setReadOnly(false);
+    $('#spinner_submit').attr('hidden', true);
 }
 
+// Shows the feedback in page. If feedback is empty, hides the feedback area
 function show_feedback(html) {
-    $('#results_box').removeAttr("hidden");
-    $('#feedback_content').empty();
-    $('#feedback_content')[0].insertAdjacentHTML('beforeend', html);
+    if (html.length > 0) {
+        $('#results_box').removeAttr('hidden');
+        $('#feedback_content').empty();
+        $('#feedback_content')[0].insertAdjacentHTML('beforeend', html);
+    } else {
+        $('#results_box').attr('hidden', true);
+    }
 }
 
-function hide_feedback() {
-    $('#results_box').attr('hidden', true);
-}
-
+// Submits the solution and receives and shows the veredict
 function send_solution() {
+    // Get endpoint from the form
     let endpoint = $('#endpoint').val();
-    var formData = new FormData();
     update_page_submission_in_progress();
+
+    var formData = new FormData();
     // Extracts code from ACE editor
-    let code = ace.edit("codigo").getValue();
-    formData.append('codigo', code);
+    let code = ace.edit('user_code').getValue();
+    formData.append('code', code);
 
     const config = {
         method: 'POST',
         mode: 'same-origin', // no-cors, *cors, same-origin
         cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
         credentials: 'same-origin', // include, *same-origin, omit
-        headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() },
+        headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() }, // CSRF token from form
         redirect: 'follow', // manual, *follow, error
         referrerPolicy: 'same-origin', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-        body: formData // body data type must match "Content-Type" header
+        body: formData // body data type must match 'Content-Type' header
     };
     fetch(endpoint, config)
       .then(function(response) {
           if (response.ok) {
-              return response.json();
-              // Returns a new Promise, that can be chained
-          } else if (response.status == 400 ) {
-              throw auth_msg;
+              return response.json(); // Returns a new Promise, that can be chained
           } else {
-              throw correction_error;
+              throw response;
           }
       })
       .then(function(myJson) {
-          // AC = 1, TLE = 2, RE = 3, WA = 4, INTERNAL_ERROR = 5, VALIDATION_ERROR = 6
           console.log(myJson);
+          show_feedback(myJson.feedback);
+          show_modal(myJson.title, myJson.message);
+          update_page_submission_received();
+          /*
           if (myJson.estado == 1) {
               // AC
               const msg = '¡Enhorabuena! Tu código SQL ha generado los resultados esperados.';
@@ -117,10 +116,10 @@ function send_solution() {
               hide_feedback();
               const msg = 'Error inesperado al ejecutar tu código. Por favor, inténtalo de nuevo.';
               show_modal('Error inesperado', msg, false);
-          }
-          update_page_submission_received();
+          }*/
       }).catch(function(e) {
-          show_modal('Error de conexión', e, false);
+          console.log(e);
+          show_error_modal();
           update_page_submission_received();
       });
 }

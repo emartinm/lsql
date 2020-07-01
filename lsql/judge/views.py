@@ -1,14 +1,15 @@
 import logging
 
-from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
-
-
+from .exceptions import ExecutorException
 from .forms import SubmitForm
-from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem
+from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
+    Submission
+from .oracleDriver import OracleExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +55,24 @@ def problem(request, pk):
 
 @login_required
 def submit(request, pk):
+    # Error 404 if there is no Problem 'pk'
+    get_object_or_404(Problem, pk=pk)
     p = get_child_problem(pk)
-    data = {
-        'mensaje': 'foo',
-        'estado': 1,
-    }
+    submit_form = SubmitForm(request.POST)
+    data = {'veredict': None, 'title': '', 'message': '', 'feedback': ''}
+    if submit_form.is_valid():
+        executor = OracleExecutor.get()
+        try:
+            data['veredict'], data['feedback'] = p.judge(submit_form.code, executor)  # FIXME
+            data['title'] = titles_from_veredict[data['veredict']]  # FIXME: crear mapas
+            data['message'] = messages_from_veredict[data['veredict']]
+        except ExecutorException as e:
+            pass  # TODO
+    else:
+        data['veredict'] = Submission.VeredictCode.VE
+        data['title'] = 'Error de validación'
+        data['message'] = 'Los datos enviados no son correctos.'
     return JsonResponse(data)
-    # return render(request, p.template(), {'problem': p})
 
 
 @login_required

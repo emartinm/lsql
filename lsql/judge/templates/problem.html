@@ -55,24 +55,45 @@ General template for a problem. Provides the following blocks:
   <form action="javascript:send_solution();">
     {% csrf_token %} {# Includes a hidden input with the CSRF token #}
     <input type="hidden" id="endpoint" name="endpoint" value="{% url 'judge:submit' problem.pk %}">
-    <div id="codigo"></div>
-    <button id="botonEnviar" type="submit" class="btn btn-primary">
-      <span id="spinnerEnviar" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" hidden></span>
-      <span id="textoBotonEnviar">Enviar solución</span>
+    <div id="user_code"></div>
+    <button id="submit_button" type="submit" class="btn btn-primary">
+      <span id="spinner_submit" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" hidden></span>
+      <span id="submit_button_text">Enviar solución</span>
     </button>
   </form>
 
-<div id="ventanaResultado" class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+<div id="result_window" class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
         <div class="modal-header">
-        <h5 id="tituloCorreccion" class="modal-title">Titulo</h5>
+        <h5 id="modal_title" class="modal-title">Titulo</h5>
       </div>
-      <div id="mensajeCorreccion" class="modal-body">
+      <div id="modal_message" class="modal-body">
         Modal body text goes here.
       </div>
       <div class="modal-footer">
-        <button id="botonCerrarModal" type="button" class="btn btn-info" data-dismiss="modal">Cerrar</button>
+        <button id="close_result_window_button" type="button" class="btn btn-info" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="error_window" class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h5 id="error_title" class="modal-title">
+          Error de conexión
+        </h5>
+      </div>
+      <div id="error_message" class="modal-body">
+        Ha sido imposible conectar con el corrector de ejercicios.
+        Este problema puede ser debido a una saturación del servidor.
+        Por favor, vuelve a cargar la página del problema e intenta enviarlo de nuevo dentro de unos instantes.
+        Ponte en contacto con tu profesor si el problema persiste.
+      </div>
+      <div class="modal-footer">
+        <button id="close_error_window_button" type="button" class="btn btn-info" data-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
@@ -80,11 +101,12 @@ General template for a problem. Provides the following blocks:
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.11/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
-  var el = document.getElementById('mensajeCorreccion');
+  // Same font size in the editor as the modal window
+  var el = document.getElementById('modal_message');
   var style = window.getComputedStyle(el, null).getPropertyValue('font-size');
   var size = parseInt(style);
 
-  ace.edit("codigo", {
+  ace.edit("user_code", {
         theme: "ace/theme/eclipse",
         mode: "ace/mode/sql",
         autoScrollEditorIntoView: true,
