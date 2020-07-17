@@ -1,0 +1,11 @@
+<p>
+Las filas que aparecen son correctas, pero el orden en el que aparecen no es el esperado.
+</p>
+<p>
+    <strong>Resultado esperado:</strong>
+    {% include 'show_table.html' with table=expected name=None mark_rows=None %}
+</p>
+<p>
+    <strong>Resultado generado por tu código:</strong>
+    {% include 'show_table.html' with table=obtained name=None mark_rows=mark_rows %}
+</p>

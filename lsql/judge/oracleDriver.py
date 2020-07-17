@@ -17,6 +17,7 @@ from .types import OracleStatusCode
 
 
 logger = logging.getLogger(__name__)
+logging.getLogger().setLevel(logging.INFO)
 
 
 def clean_sql(code, min_stmt=None, max_stmt=None):
@@ -27,6 +28,8 @@ def clean_sql(code, min_stmt=None, max_stmt=None):
     :param max_stmt: maximum number of statements
     :return: [str] if code is a sequence between min_stmt and max_stmt correct SQL statements.
     """
+    if code is None:
+        code = ""
     statements = [sqlparse.format(s, strip_comments=True).rstrip('\n\t ;') for s in sqlparse.split(code)]
     statements = [s for s in statements if len(s) > 0]
     num_sql = len(statements)
@@ -475,12 +478,13 @@ class OracleExecutor:
         """
         Using a new fresh user, creates a set of tables ('creation) and inserts some data.
         Then, executes some DML statements
-        :param tests:
+        :param tests: (str) function calls separated by new lines
         :param func_creation:
         :param creation: (str) Statements to create the tables and other structures
         :param insertion: (str) Statements to insert data into tables
 
-        :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before and after executing dml
+        :return: {'pre': DB, 'results': dict} dictionary containing the initial state of the DB and a dictionary
+                 {call: result} with the different calls and its expected result
         """
         conn, gestor, result, user, post, stmt = None, None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
@@ -527,6 +531,7 @@ class OracleExecutor:
                     raise ExecutorException(OracleStatusCode.COMPILATION_ERROR, message=errors, statement=stmt)
 
                 results = dict()
+                tests = [s.strip() for s in tests.split('\n') if len(s.strip()) > 0]
                 for stmt in tests:
                     func_call = f'SELECT {stmt} FROM DUAL'
                     cursor.execute(func_call)

@@ -1,0 +1,5 @@
+{% extends "problem.html" %}
+{% block expected_result %}
+<h2>Resultado esperado</h2>
+{% include 'show_table.html' with table=problem.expected_result_as_table name=None %}
+{% endblock %}

@@ -1,15 +1,15 @@
 import logging
 
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
 from .exceptions import ExecutorException
 from .forms import SubmitForm
-from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
-    Submission
+from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem
 from .oracleDriver import OracleExecutor
+from .types import VeredictCode, OracleStatusCode
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ def get_child_problem(pk):
     p = None
     while i < len(classes) and p is None:
         q = classes[i].objects.filter(pk=pk)
+        i += 1
         if q:
             p = q[0]
     return p
@@ -61,17 +62,28 @@ def submit(request, pk):
     submit_form = SubmitForm(request.POST)
     data = {'veredict': None, 'title': '', 'message': '', 'feedback': ''}
     if submit_form.is_valid():
-        executor = OracleExecutor.get()
         try:
-            data['veredict'], data['feedback'] = p.judge(submit_form.code, executor)  # FIXME
-            data['title'] = titles_from_veredict[data['veredict']]  # FIXME: crear mapas
-            data['message'] = messages_from_veredict[data['veredict']]
+            # AC or WA
+            data['veredict'], data['feedback'] = p.judge(submit_form.cleaned_data['code'], OracleExecutor.get())
+            data['title'] = data['veredict'].label
+            data['message'] = data['veredict'].message()
         except ExecutorException as e:
-            pass  # TODO
+            # Exceptions when judging: RE, TLE, VE or IE
+            if e.error_code == OracleStatusCode.EXECUTE_USER_CODE:
+                data = {'veredict': VeredictCode.RE, 'title': VeredictCode.RE.label,
+                        'message': VeredictCode.RE.message(), 'feedback': e.message}
+            elif e.error_code == OracleStatusCode.TLE_USER_CODE:
+                data = {'veredict': VeredictCode.TLE, 'title': VeredictCode.TLE.label,
+                        'message': VeredictCode.TLE.message(), 'feedback': ''}
+            elif e.error_code == OracleStatusCode.NUMBER_STATEMENTS:
+                data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
+                        'message': VeredictCode.VE.message(), 'feedback': e.message}
+            else:
+                data = {'veredict': VeredictCode.IE, 'title': VeredictCode.IE.label,
+                        'message': VeredictCode.IE.message(), 'feedback': ''}
     else:
-        data['veredict'] = Submission.VeredictCode.VE
-        data['title'] = 'Error de validación'
-        data['message'] = 'Los datos enviados no son correctos.'
+        data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
+                'message': VeredictCode.VE.message(), 'feedback': ''}
     return JsonResponse(data)
 
 

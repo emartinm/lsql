@@ -4,7 +4,7 @@
 $ python manage.py makemigrations
 
 # Aplicar migracions pendientes
-$ python manage.py makemigrations
+$ python manage.py migrate
 
 # Copia los ficheros estáticos de todas las aplicacionies
 # al directorio especificado en STATIC_ROOT

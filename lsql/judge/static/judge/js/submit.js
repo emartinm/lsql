@@ -1,6 +1,6 @@
-/*****************************************************
- * Copyright Enrique Martín Martín <emartinm@ucm.es> *
- *****************************************************/
+/**********************************************************
+ * Copyright Enrique Martín Martín <emartinm@ucm.es> 2020 *
+ **********************************************************/
 
 
 // Shows a modal window with a title and message
@@ -82,41 +82,6 @@ function send_solution() {
           show_feedback(myJson.feedback);
           show_modal(myJson.title, myJson.message);
           update_page_submission_received();
-          /*
-          if (myJson.estado == 1) {
-              // AC
-              const msg = '¡Enhorabuena! Tu código SQL ha generado los resultados esperados.';
-              mark_solved();
-              hide_feedback();
-              show_modal('Aceptado', msg, true);
-          } else if (myJson.estado == 2) {
-              // TLE
-              const msg = 'Puede deberse a una sobrecarga puntual del servidor, pero seguramente sea debido a que tu ' +
-                          'código SQL no es suficientemente eficiente. Vuelve a enviarlo en unos minutos y si sigues ' +
-                          'obteniendo el mismo veredicto trata de reescribir tu código lo para ser más eficiente.'
-              show_feedback(myJson.mensaje);
-              show_modal('Tu código ha tardado demasiado en ejecutarse', msg, false);
-              hide_feedback();
-          } else if (myJson.estado == 3) {
-              // RE
-              const msg = 'Tu código SQL ha producido un error durante la ejecución. Consulta el cuadro rojo en ' +
-                          'la parte inferior de la página para ver los detalles.';
-              show_feedback(myJson.mensaje);
-              show_modal('Error de ejecución', msg, false);
-          } else if (myJson.estado == 4) {
-              // WA
-              const msg = 'Tu código SQL ha generado resultados erróneos. Consulta el cuadro rojo en ' +
-                          'la parte inferior de la página para ver los detalles.';
-              show_feedback(myJson.mensaje);
-              show_modal('Respuesta incorrecta', msg, false);
-          } else if (myJson.estado == 6) {
-              hide_feedback();
-              show_modal('Error de validación de tu código SQL', myJson.mensaje, false);
-          } else { // INTERNAL_ERROR or incorrect code
-              hide_feedback();
-              const msg = 'Error inesperado al ejecutar tu código. Por favor, inténtalo de nuevo.';
-              show_modal('Error inesperado', msg, false);
-          }*/
       }).catch(function(e) {
           console.log(e);
           show_error_modal();

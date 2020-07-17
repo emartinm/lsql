@@ -1,8 +1,16 @@
-import json
+# -*- coding: utf-8 -*-
+"""
+Copyright Enrique Martín <emartinm@ucm.es> 2020
 
-from logzero import logger
+Generation of feedback messages
+"""
+from django.core.serializers.json import DjangoJSONEncoder
+from django.template.loader import render_to_string
 import re
 from multiset import Multiset
+import json
+
+from .types import VeredictCode
 
 __ORACLE_TYPE_PATTERN = r"<class 'cx_Oracle\.(.*)'>"
 
@@ -32,20 +40,20 @@ def feedback_headers(expected, obtained):
     """
     :param expected: expected result ({'header': list, 'rows': list})
     :param obtained: obtained result ({'header': list, 'rows': list})
-    :return: (str) HTML code with the feedback, or '' if the header are equal
+    :return: (str) HTML code with the feedback, or '' if the headers are equal
     """
     if expected['header'] == obtained['header']:
         return ''
     else:
-        return render_template('feedback_wa_headers.html',
-                               expected=header_to_str(expected['header']),
-                               obtained=header_to_str(obtained['header']))
+        return render_to_string('feedback_wa_headers.html',
+                                {'expected': header_to_str(expected['header']),
+                                 'obtained': header_to_str(obtained['header'])}
+                                )
 
 
 def table_to_html(table, row_remark=None):
     if not row_remark:
         row_remark = set()
-
     return "{}, {}".format(table, row_remark)
 
 
@@ -71,23 +79,24 @@ def feedback_rows(expected, obtained, order):
                 incorrect_row_numbers.add(pos)
                 obtained_not_expected.remove(tupled_obtained[pos], 1)  # Removes one appearance of that row
             pos = pos + 1
-        feedback = render_template('feedback_wa_wrong_rows.html',
-                                   table={'header': expected['header'], 'rows': tupled_obtained},
-                                   name=None,
-                                   mark_rows=incorrect_row_numbers)
+        feedback = render_to_string('feedback_wa_wrong_rows.html',
+                                    {'table': {'header': expected['header'], 'rows': tupled_obtained},
+                                     'name': None,
+                                     'mark_rows': incorrect_row_numbers}
+                                    )
         return feedback
 
     expected_not_obtained = mset_expected - mset_obtained
     if expected_not_obtained:
-        feedback = render_template('feedback_wa_missing_rows.html',
-                                   obtained=obtained,
-                                   missing={'header': expected['header'], 'rows': expected_not_obtained},
-                                   mark_missing=set(list(range(len(expected_not_obtained))))
-                                   )
+        feedback = render_to_string('feedback_wa_missing_rows.html',
+                                    {'obtained': obtained,
+                                     'missing': {'header': expected['header'], 'rows': expected_not_obtained},
+                                     'mark_missing': set(list(range(len(expected_not_obtained))))}
+                                    )
         return feedback
 
     if order and expected != obtained:
-        return render_template('feedback_wa_order.html', expected=expected, obtained=obtained)
+        return render_to_string('feedback_wa_order.html', {'expected': expected, 'obtained': obtained})
 
     return ''  # Everything OK => Accepted
 
@@ -100,10 +109,10 @@ def compare_select_results(expected, obtained, order):
     :return: (veredict, feedback), where veredict is VeredictCode.AC or VeredictCode.WA and
              error is a str with feedback to the student
     """
-    # Encodes and decodes the obtained results so that they are comparable to the ones stored in the DB
-    # (dates are represented differently)
-    encoded = json.dumps(obtained, default=json_util.default)
-    obtained = json.loads(encoded, object_hook=json_util.object_hook)
+    # Encodes and decodes the obtained results using the same JSONEncoder used to store the data in the DB
+    # (otherwise dates are represented differently in the results from the DB and the results from Oracle)
+    encoded = json.dumps(obtained, cls=DjangoJSONEncoder)
+    obtained = json.loads(encoded)
     feedback = feedback_headers(expected, obtained)
     if not feedback:
         feedback = feedback_rows(expected, obtained, order)
@@ -125,7 +134,8 @@ def compare_db_results(expected_db, obtained_db):
     if expected_tables != obtained_tables:
         obtained = sorted(list(obtained_db.keys()))
         expected = sorted(list(expected_db.keys()))
-        return VeredictCode.WA, render_template('feedback_wa_tables.html', obtained=obtained, expected=expected)
+        return VeredictCode.WA, render_to_string('feedback_wa_tables.html',
+                                                 {'obtained': obtained, 'expected': expected})
 
     veredict = VeredictCode.AC
     for table in expected_db:
@@ -148,7 +158,7 @@ def compare_function_results(expected, obtained):
     for call in expected:
         if expected[call] != obtained[call]:
             veredict = VeredictCode.WA
-            feedback = render_template('feedback_wa_function.html', call=call, expected=expected[call],
-                                       obtained=obtained[call])
+            feedback = render_to_string('feedback_wa_function.html',
+                                        {'call': call, 'expected': expected[call], 'obtained': obtained[call]})
             break
     return veredict, feedback

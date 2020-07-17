@@ -4,18 +4,18 @@ from django.conf import settings
 from django.core.validators import MinLengthValidator
 from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
-from django.utils.translation import gettext_lazy as _
+
 
 import markdown
 from lxml import html
 import logging
 
+from .feedback import compare_select_results, compare_db_results, compare_function_results
 from .oracleDriver import OracleExecutor
-
+from .types import VeredictCode, ProblemType
+from .parse import load_select_problem, load_dml_problem, load_function_problem, load_proc_problem, load_trigger_problem
 
 logger = logging.getLogger(__name__)
-
-# Create your models here.
 
 
 def markdown_to_html(md, remove_initial_p=False):
@@ -35,6 +35,7 @@ class Collection(models.Model):
     description_html = models.CharField(max_length=10000, default='', blank=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     creation_date = models.DateTimeField(auto_now_add=True)
+    # zipfile = models.FileField(upload_to='collection_zips/', default=None, blank=True, null=True)
 
     def clean(self):
         """Creates HTML versions from MarkDown"""
@@ -57,12 +58,12 @@ class Collection(models.Model):
 
 
 class Problem(models.Model):
-    title_md = models.CharField(max_length=100)
-    title_html = models.CharField(max_length=200, default='', blank=True)
-    text_md = models.CharField(max_length=5000)
-    text_html = models.CharField(max_length=10000, default='', blank=True)
-    create_sql = models.CharField(max_length=20000)
-    insert_sql = models.CharField(max_length=20000)
+    title_md = models.CharField(max_length=100, blank=True)
+    title_html = models.CharField(max_length=200, default='')
+    text_md = models.CharField(max_length=5000, blank=True)
+    text_html = models.CharField(max_length=10000, default='')
+    create_sql = models.CharField(max_length=20000, null=True, blank=True)
+    insert_sql = models.CharField(max_length=20000, null=True, blank=True)
     initial_db = JSONField(encoder=DjangoJSONEncoder, default=None, blank=True, null=True)
     min_stmt = models.PositiveIntegerField(default=1)
     max_stmt = models.PositiveIntegerField(default=1)
@@ -70,6 +71,8 @@ class Problem(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     creation_date = models.DateTimeField(auto_now_add=True)
     position = models.PositiveIntegerField(default=1, null=False)
+    # (Dirty) trick to upload ZIP files using the standard admin interface of Django
+    zipfile = models.FileField(upload_to='problem_zips/', default=None, blank=True, null=True)
 
     def clean(self):
         """Check the number of statements and creates HTML versions from MarkDown"""
@@ -87,23 +90,44 @@ class Problem(models.Model):
     def template(self):
         raise NotImplementedError
 
+    def judge(self, code, executor):
+        raise NotImplementedError
+
+    def problem_type(self):
+        raise NotImplementedError
+
 
 class SelectProblem(Problem):
     check_order = models.BooleanField(default=False)
-    solution = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
+    solution = models.CharField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, default=None, blank=True, null=True)
 
     def clean(self):
         """Executes the problem and stores the expected result"""
-        super().clean()
-        executor = OracleExecutor.get()
-        res = executor.execute_select_test(self.create_sql, self.insert_sql, self.solution, output_db=True)
-        self.expected_result = res['result']
-        self.initial_db = res['db']
-        logger.error(f'***** {res}')
+        try:
+            if self.zipfile:
+                # Replaces the fields with the information from the file
+                load_select_problem(self, self.zipfile)
+
+            super().clean()
+            executor = OracleExecutor.get()
+            res = executor.execute_select_test(self.create_sql, self.insert_sql, self.solution, output_db=True)
+            self.expected_result = res['result']
+            self.initial_db = res['db']
+        except ValidationError:
+            raise
+        except Exception as e:
+            raise ValidationError(e)
 
     def template(self):
         return 'problem_select.html'
+
+    def judge(self, code, executor):
+        oracle_result = executor.execute_select_test(self.create_sql, self.insert_sql, code, output_db=False)
+        return compare_select_results(self.expected_result, oracle_result['result'], self.check_order)
+
+    def problem_type(self):
+        return ProblemType.SELECT
 
 
 class DMLProblem(Problem):
@@ -111,17 +135,70 @@ class DMLProblem(Problem):
     solution = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
     expected_result = JSONField(encoder=DjangoJSONEncoder)
 
+    def clean(self):
+        """Executes the problem and stores the expected result"""
+        try:
+            if self.zipfile:
+                # Replaces the fields with the information from the file
+                load_dml_problem(self, self.zipfile)
+
+            super().clean()
+            executor = OracleExecutor.get()
+            res = executor.execute_dml_test(self.create_sql, self.insert_sql, self.solution, pre_db=True)
+            self.expected_result = res['post']
+            self.initial_db = res['pre']
+        except ValidationError:
+            raise
+        except Exception as e:
+            raise ValidationError(e)
+
     def template(self):
-        return 'problem.html'
+        return 'problem_dml.html'
+
+    def judge(self, code, executor):
+        oracle_result = executor.execute_dml_test(self.create_sql, self.insert_sql, code, pre_db=False)
+        return compare_db_results(self.expected_result, oracle_result['post'])
+
+    def problem_type(self):
+        return ProblemType.DML
 
 
 class FunctionProblem(Problem):
     check_order = models.BooleanField(default=False)
     solution = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
+    calls = models.CharField(max_length=5000, validators=[MinLengthValidator(1)], default='')
     expected_result = JSONField(encoder=DjangoJSONEncoder)
 
+    def clean(self):
+        """Executes the problem and stores the expected result"""
+        try:
+            if self.zipfile:
+                # Replaces the fields with the information from the file
+                load_function_problem(self, self.zipfile)
+
+            super().clean()
+            executor = OracleExecutor.get()
+            res = executor.execute_function_test(self.create_sql, self.insert_sql, self.solution, self.calls)
+            self.expected_result = res['results']
+            self.initial_db = res['db']
+        except ValidationError:
+            raise
+        except Exception as e:
+            raise ValidationError(e)
+
     def template(self):
-        return 'problem.html'
+        return 'problem_function.html'
+
+    def expected_result_as_table(self):
+        rows = [[call, result] for call, result in self.expected_result.items()]
+        return {'rows': rows, 'header': [('Llamada', None), ('Resultado', None)]}
+
+    def judge(self, code, executor):
+        oracle_result = executor.execute_function_test(self.create_sql, self.insert_sql, code, self.calls)
+        return compare_function_results(self.expected_result, oracle_result['results'])
+
+    def problem_type(self):
+        return ProblemType.FUNCTION
 
 
 class ProcProblem(Problem):
@@ -131,7 +208,32 @@ class ProcProblem(Problem):
     expected_result = JSONField(encoder=DjangoJSONEncoder)
 
     def template(self):
-        return 'problem.html'
+        return 'problem_dml.html'  # The same template works
+
+    def clean(self):
+        """Executes the problem and stores the expected result"""
+        try:
+            if self.zipfile:
+                # Replaces the fields with the information from the file
+                load_proc_problem(self, self.zipfile)
+
+            super().clean()
+            executor = OracleExecutor.get()
+            res = executor.execute_proc_test(self.create_sql, self.insert_sql, self.solution, self.proc_call,
+                                             pre_db=True)
+            self.expected_result = res['post']
+            self.initial_db = res['pre']
+        except ValidationError:
+            raise
+        except Exception as e:
+            raise ValidationError(e)
+
+    def judge(self, code, executor):
+        oracle_result = executor.execute_proc_test(self.create_sql, self.insert_sql, code, self.proc_call, pre_db=False)
+        return compare_db_results(self.expected_result, oracle_result['post'])
+
+    def problem_type(self):
+        return ProblemType.PROC
 
 
 class TriggerProblem(Problem):
@@ -141,24 +243,34 @@ class TriggerProblem(Problem):
     expected_result = JSONField(encoder=DjangoJSONEncoder)
 
     def template(self):
-        return 'problem.html'
+        return 'problem_dml.html'  # The same template works
+
+    def clean(self):
+        """Executes the problem and stores the expected result"""
+        try:
+            if self.zipfile:
+                # Replaces the fields with the information from the file
+                load_trigger_problem(self, self.zipfile)
+
+            super().clean()
+            executor = OracleExecutor.get()
+            res = executor.execute_trigger_test(self.create_sql, self.insert_sql, self.solution, self.tests, pre_db=True)
+            self.expected_result = res['post']
+            self.initial_db = res['pre']
+        except ValidationError:
+            raise
+        except Exception as e:
+            raise ValidationError(e)
+
+    def judge(self, code, executor):
+        oracle_result = executor.execute_trigger_test(self.create_sql, self.insert_sql, code, self.tests, pre_db=False)
+        return compare_db_results(self.expected_result, oracle_result['post'])
+
+    def problem_type(self):
+        return ProblemType.TRIGGER
 
 
 class Submission(models.Model):
-    class VeredictCode(models.TextChoices):
-        AC = 'AC', _('Aceptado')
-        TLE = 'TLE', _('Tiempo limite excedido')
-        RE = 'RE', _('Error en ejecución')
-        WA = 'WA', _('Resultados incorrectos')
-        IE = 'IE', _('Error interno')
-        VE = 'VE', _('Error de validación')
-
-        def html_short_name(self):
-            if self.value == self.AC:
-                return f'<span class="text-success">{self.label}</span>'
-            else:
-                return f'<span class ="text-danger">{self.label}</span>'
-
     creation_date = models.DateTimeField(auto_now_add=True)
     code = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
     veredict_code = models.CharField(
