@@ -1,5 +1,8 @@
 # Comandos importantes
 ```
+# Acceder al shell de la BD para consultar tablas a mano
+$ python manage.py dbshell
+
 # Calcular migraciones pendientes
 $ python manage.py makemigrations
 

@@ -1,13 +1,4 @@
-# Funcionalidad por portar
- * Mostrar estadísticas de problemas (solucionados, envios)
- * Mostrar el icono de superacion en listado y en enunciado
- * Mostrar listado de envios
- * Añadir varios problemas de golpe a una coleccion (con un zip, siendo el autor el mismo que el de la colección).
- * Recuperar el log (ahora mismo no muestra nada)
-
 # TODO:
- * Establecer el fichero ZIP a None una vez que se han extraido los datos en Problem y Collection
- * Mostrar el widget de añadir ZIP en Collection únicamente cuando ya existe y tiene col_id.
  * Añadir pruebas automáticas
  * En el repositorio GitHub, añadir comprobaciones (pylint, mypy, cobertura de tests...) => TravisCI?
  * Hacer un robots.txt para evitar que indexen imágenes ni nada

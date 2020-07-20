@@ -4,18 +4,11 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Parse problem and set of collections from a ZIP file
 """
-import os
-
 from zipfile import ZipFile
 import json
-import tempfile
-import logging
-
-import logging
 
 from .exceptions import ZipFileParsingException
-
-logger = logging.getLogger(__name__)
+import judge.models
 
 __MAX_INT = 2 ** 31
 __MIN_INT = -(2 ** 31)
@@ -27,33 +20,41 @@ __PROC_PROBLEM_FILES = {'create.sql', 'insert.sql', 'problem.json', 'solution.sq
 __TRIGGER_PROBLEM_FILES = {'create.sql', 'insert.sql', 'problem.json', 'solution.sql', 'text.md', 'tests.sql'}
 
 
-"""
-# IDEA:
-# For every inner ZIP file, create an empty Problem of each type and try to load from the ZIP. Stop tying as soon
-# as one empty Problem is successfuly loaded.
-def parse_many_problems(file, oracle, col_id, author):
+def parse_many_problems(file, collection):
     problems = list()
-    tmp_file = tempfile.mkstemp(suffix='.zip', prefix='lsql_')[1]
     try:
         with ZipFile(file) as zf:
             for filename in zf.infolist():
-                # Workaround to avoid unexpected BadZipFile exceptions when opening ZIP files inside 'file'
-                # Now I first save the ZIP file to a temp file and use that path to parse each problem
-                curr_file = FileStorage(zf.open(filename), content_type='application/zip')
-                curr_file.save(tmp_file)
-                problem = parse_problem(tmp_file, oracle)
-                problem.collection = col_id
-                problem.author = author
+                curr_file = zf.open(filename)
+                problem = load_problem_from_file(curr_file)
+                problem.collection = collection
+                problem.author = collection.author
                 problems.append(problem)
     except ZipFileParsingException as e:
         raise ZipFileParsingException('{}: {}'.format(filename.filename, e))
     except Exception as e:
         raise ZipFileParsingException("{}: {}".format(type(e), e))
-    finally:
-        # It will always exist, as it is created with mkstemp
-        os.remove(tmp_file)
     return problems
-"""
+
+
+def load_problem_from_file(file):
+    """Tries to load all the types of problem from file, in order"""
+    problem_types = [(judge.models.SelectProblem, load_select_problem),
+                     (judge.models.DMLProblem, load_dml_problem),
+                     (judge.models.FunctionProblem, load_function_problem),
+                     (judge.models.ProcProblem, load_proc_problem),
+                     (judge.models.TriggerProblem, load_trigger_problem)
+                     ]
+
+    for pclass, load_fun in problem_types:
+        problem = pclass()
+        try:
+            load_fun(problem, file)
+            return problem
+        except ZipFileParsingException:
+            # It is not the type, try next one
+            pass
+    return None
 
 
 def extract_json(file, problem_type):

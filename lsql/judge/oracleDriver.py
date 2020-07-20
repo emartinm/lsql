@@ -5,19 +5,14 @@
 
 import cx_Oracle
 import time
-import logging
 import string
 import random
 import os
-
+from logzero import logger
 import sqlparse
 
 from .exceptions import ExecutorException
 from .types import OracleStatusCode
-
-
-logger = logging.getLogger(__name__)
-logging.getLogger().setLevel(logging.INFO)
 
 
 def clean_sql(code, min_stmt=None, max_stmt=None):

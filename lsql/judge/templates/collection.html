@@ -14,7 +14,7 @@
       </tr>
     </thead>
     <tbody>
-    {% for p in collection.problems %}
+    {% for p in collection.problem_list %}
     <tr>
       <td>
         {% if p.solved %}
@@ -24,7 +24,7 @@
         {% endif %}
         <a href="{% url 'judge:problem' p.pk %}">{{ p.title_html|safe }}</a>
       </td>
-      <td>{{p.num_submissions}}</td>
+      <td>{{ p.num_submissions }}</td>
     </tr>
     {% endfor %}
     </tbody>

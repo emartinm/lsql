@@ -13,14 +13,15 @@ function show_modal(title, message) {
     hljs.initHighlighting();
 }
 
-// Shows s modal windows with a connection error message
+// Shows a modal windows with a connection error message
 function show_error_modal() {
      $('#error_window').modal();
 }
 
 // Shows the 'solved' mark next to the problem title
-function mark_solved() {
-    $('#markSolved').css('visibility', 'visible');
+function mark_solved(myJson) {
+    if (myJson.veredict == "AC")
+        $('#markSolved').css('visibility', 'visible');
 }
 
 // Disables the form and shows the spinner
@@ -79,6 +80,7 @@ function send_solution() {
       })
       .then(function(myJson) {
           console.log(myJson);
+          mark_solved(myJson);
           show_feedback(myJson.feedback);
           show_modal(myJson.title, myJson.message);
           update_page_submission_received();
