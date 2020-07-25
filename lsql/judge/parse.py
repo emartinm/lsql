@@ -8,7 +8,7 @@ from zipfile import ZipFile
 import json
 
 from .exceptions import ZipFileParsingException
-import judge.models
+
 
 __MAX_INT = 2 ** 31
 __MIN_INT = -(2 ** 31)
@@ -18,43 +18,6 @@ __DML_PROBLEM_FILES = {'create.sql', 'insert.sql', 'problem.json', 'solution.sql
 __FUNCTION_PROBLEM_FILES = {'create.sql', 'insert.sql', 'problem.json', 'solution.sql', 'text.md', 'tests.sql'}
 __PROC_PROBLEM_FILES = {'create.sql', 'insert.sql', 'problem.json', 'solution.sql', 'text.md', 'tests.sql'}
 __TRIGGER_PROBLEM_FILES = {'create.sql', 'insert.sql', 'problem.json', 'solution.sql', 'text.md', 'tests.sql'}
-
-
-def parse_many_problems(file, collection):
-    problems = list()
-    try:
-        with ZipFile(file) as zf:
-            for filename in zf.infolist():
-                curr_file = zf.open(filename)
-                problem = load_problem_from_file(curr_file)
-                problem.collection = collection
-                problem.author = collection.author
-                problems.append(problem)
-    except ZipFileParsingException as e:
-        raise ZipFileParsingException('{}: {}'.format(filename.filename, e))
-    except Exception as e:
-        raise ZipFileParsingException("{}: {}".format(type(e), e))
-    return problems
-
-
-def load_problem_from_file(file):
-    """Tries to load all the types of problem from file, in order"""
-    problem_types = [(judge.models.SelectProblem, load_select_problem),
-                     (judge.models.DMLProblem, load_dml_problem),
-                     (judge.models.FunctionProblem, load_function_problem),
-                     (judge.models.ProcProblem, load_proc_problem),
-                     (judge.models.TriggerProblem, load_trigger_problem)
-                     ]
-
-    for pclass, load_fun in problem_types:
-        problem = pclass()
-        try:
-            load_fun(problem, file)
-            return problem
-        except ZipFileParsingException:
-            # It is not the type, try next one
-            pass
-    return None
 
 
 def extract_json(file, problem_type):
@@ -79,8 +42,8 @@ def extract_json(file, problem_type):
                                                   f'esperaba {problem_type} y se ha leído {json_problem_type}')
     except ZipFileParsingException:
         raise
-    except Exception as e:
-        raise ZipFileParsingException("{}: {}".format(type(e), e))
+    except Exception as excp:
+        raise ZipFileParsingException("{}: {}".format(type(excp), excp))
     return problem_json
 
 
@@ -129,8 +92,8 @@ def load_select_problem(problem, file):
                 problem.solution = solution_file.read().decode()
     except ZipFileParsingException:
         raise
-    except Exception as e:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(e), e))
+    except Exception as excp:
+        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp))
 
 
 def load_dml_problem(problem, file):
@@ -177,8 +140,8 @@ def load_dml_problem(problem, file):
                 problem.solution = solution_file.read().decode()
     except ZipFileParsingException:
         raise
-    except Exception as e:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(e), e))
+    except Exception as excp:
+        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp))
 
 
 def load_function_problem(problem, file):
@@ -225,8 +188,8 @@ def load_function_problem(problem, file):
                 problem.calls = tests_file.read().decode()
     except ZipFileParsingException:
         raise
-    except Exception as e:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(e), e))
+    except Exception as excp:
+        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp))
 
 
 def load_proc_problem(problem, file):
@@ -273,8 +236,8 @@ def load_proc_problem(problem, file):
                 problem.proc_call = tests_file.read().decode().strip()
     except ZipFileParsingException:
         raise
-    except Exception as e:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(e), e))
+    except Exception as excp:
+        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp))
 
 
 def load_trigger_problem(problem, file):
@@ -321,7 +284,5 @@ def load_trigger_problem(problem, file):
                 problem.tests = tests_file.read().decode().strip()
     except ZipFileParsingException:
         raise
-    except Exception as e:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(e), e))
-
-
+    except Exception as excp:
+        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp))

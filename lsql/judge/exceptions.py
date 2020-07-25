@@ -21,7 +21,7 @@ class ProblemInsertException(Exception):
 class DAOException(Exception):
     def __init__(self, error_code, message):
         super().__init__(message)
-        self.message=message
+        self.message = message
         # value from types.DAOStatusCode
         self.error_code = error_code
 
@@ -32,7 +32,7 @@ class DAOException(Exception):
 class ExecutorException(Exception):
     def __init__(self, error_code, message='', statement=''):
         super().__init__(message)
-        self.message=message
+        self.message = message
         # value from types.SelectStatusCode
         self.error_code = error_code
         self.statement = statement

@@ -8,7 +8,7 @@ from .exceptions import ExecutorException
 from .forms import SubmitForm
 from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
     Submission
-from .oracleDriver import OracleExecutor
+from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode
 
 

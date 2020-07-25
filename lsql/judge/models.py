@@ -12,16 +12,17 @@ from django.core.validators import MinLengthValidator
 from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 
-
 import markdown
 from lxml import html
 from logzero import logger
+from zipfile import ZipFile
 
 from .feedback import compare_select_results, compare_db_results, compare_function_results
-from .oracleDriver import OracleExecutor
+from .oracle_driver import OracleExecutor
 from .types import VeredictCode, ProblemType
 from .parse import load_select_problem, load_dml_problem, load_function_problem, load_proc_problem, \
-    load_trigger_problem, parse_many_problems
+    load_trigger_problem
+from .exceptions import ZipFileParsingException
 
 
 def markdown_to_html(md, remove_initial_p=False):
@@ -32,6 +33,45 @@ def markdown_to_html(md, remove_initial_p=False):
         # Removes the surrounding <p></p> in one paragraph html
         html_code = html_code[3:-4]
     return html_code
+
+
+def load_many_problems(file, collection):
+    """Given a ZIP file containing several ZIP files (each one a problem),
+       insert the problems into collection"""
+    problems = list()
+    try:
+        with ZipFile(file) as zfile:
+            for filename in zfile.infolist():
+                curr_file = zfile.open(filename)
+                problem = load_problem_from_file(curr_file)
+                problem.collection = collection
+                problem.author = collection.author
+                problems.append(problem)
+    except ZipFileParsingException as excp:
+        raise ZipFileParsingException('{}: {}'.format(filename.filename, excp))
+    except Exception as excp:
+        raise ZipFileParsingException("{}: {}".format(type(excp), excp))
+    return problems
+
+
+def load_problem_from_file(file):
+    """Try to load all the types of problem from file, in order"""
+    problem_types = [(SelectProblem, load_select_problem),
+                     (DMLProblem, load_dml_problem),
+                     (FunctionProblem, load_function_problem),
+                     (ProcProblem, load_proc_problem),
+                     (TriggerProblem, load_trigger_problem)
+                     ]
+
+    for pclass, load_fun in problem_types:
+        problem = pclass()
+        try:
+            load_fun(problem, file)
+            return problem
+        except ZipFileParsingException:
+            # It is not the type, try next one
+            pass
+    return None
 
 
 class Collection(models.Model):
@@ -48,7 +88,7 @@ class Collection(models.Model):
     def clean(self):
         # Loads data from file and generates HTML from Markdown
         if self.zipfile:
-            problems = parse_many_problems(self.zipfile, self)
+            problems = load_many_problems(self.zipfile, self)
             for p in problems:
                 p.clean()
                 p.save()

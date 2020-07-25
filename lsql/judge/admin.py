@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright Enrique Martín <emartinm@ucm.es> 2020
+
+Customize how to show add/edit forms for problems in the Admin
+"""
+
 from django.contrib import admin
 
 from . import forms
@@ -5,11 +12,8 @@ from .models import Collection, SelectProblem, DMLProblem, FunctionProblem, Proc
     Submission
 
 
-# Register your models here.
-
-
-# Customize how to show add/edit forms for problems
 class SelectProblemAdmin(admin.ModelAdmin):
+    """Model for SelectProblem"""
     fieldsets = [
         ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
         ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
@@ -21,6 +25,7 @@ class SelectProblemAdmin(admin.ModelAdmin):
 
 
 class DMLProblemAdmin(admin.ModelAdmin):
+    """Model for DMLProblem"""
     fieldsets = [
         ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
         ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
@@ -32,6 +37,7 @@ class DMLProblemAdmin(admin.ModelAdmin):
 
 
 class FunctionProblemAdmin(admin.ModelAdmin):
+    """Model for FunctionProblem"""
     fieldsets = [
         ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
         ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
@@ -44,6 +50,7 @@ class FunctionProblemAdmin(admin.ModelAdmin):
 
 
 class ProcProblemAdmin(admin.ModelAdmin):
+    """Model for ProcProblem"""
     fieldsets = [
         ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
         ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
@@ -56,6 +63,7 @@ class ProcProblemAdmin(admin.ModelAdmin):
 
 
 class TriggerProblemAdmin(admin.ModelAdmin):
+    """Model for TriggerProblem"""
     fieldsets = [
         ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
         ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
@@ -68,27 +76,34 @@ class TriggerProblemAdmin(admin.ModelAdmin):
 
 
 class CollectionAdmin(admin.ModelAdmin):
+    """Model for Collection"""
     def get_fieldsets(self, request, obj=None):
         # Only shows the ZIP file when the collection exists
         if obj is None:
             return [(None, {'fields': ('name_md', 'position', 'description_md', 'author')})]
-        else:
-            return [
-                ('Load problems from ZIP (the new problems will be added)', {'fields': ('zipfile', )}),
-                ('Collection data', {'fields': ('name_md', 'position', 'description_md', 'author')})
-            ]
+        return [
+            ('Load problems from ZIP (the new problems will be added)', {'fields': ('zipfile', )}),
+            ('Collection data', {'fields': ('name_md', 'position', 'description_md', 'author')})
+        ]
 
     list_display = ('name_md', 'author', 'creation_date')
     list_filter = ['creation_date']
 
 
 class SubmissionAdmin(admin.ModelAdmin):
+    """Model for Submission"""
     list_display = ('pk', 'user', 'problem', 'veredict_code', 'creation_date')
     list_filter = ['creation_date']
 
 
+class ProblemAdmin(admin.ModelAdmin):
+    """Model for Problem"""
+    list_display = ('title_md', 'creation_date', 'collection')
+    list_filter = ['creation_date']
+
+
 admin.site.register(Collection, CollectionAdmin)
-admin.site.register(Problem)
+admin.site.register(Problem, ProblemAdmin)
 admin.site.register(SelectProblem, SelectProblemAdmin)
 admin.site.register(DMLProblem, DMLProblemAdmin)
 admin.site.register(FunctionProblem, FunctionProblemAdmin)

@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright Enrique Martín <emartinm@ucm.es> 2020
+
+Mapping from URL to views
+"""
+
 from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
 

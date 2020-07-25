@@ -1,0 +1,14 @@
+[MASTER]
+extension-pkg-whitelist=cx_Oracle
+
+[FORMAT]
+max-line-length=120
+
+[DESIGN]
+max-branches=15
+max-statements=70
+max-locals=20
+max-args=10
+
+[BASIC]
+good-names=db	

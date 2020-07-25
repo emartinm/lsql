@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
+"""
+Copyright Enrique Martín <emartinm@ucm.es> 2020
+
+Class to connect to Oracle and execute the different types of problems
+"""
 
 # Needed to use cx_Oracle
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/kike/xDownload/instantclient_19_6
 
-import cx_Oracle
 import time
 import string
 import random
 import os
+import cx_Oracle
 from logzero import logger
 import sqlparse
 
@@ -33,15 +38,15 @@ def clean_sql(code, min_stmt=None, max_stmt=None):
     return statements
 
 
-def random_str(alphabet, n=8):
+def random_str(alphabet, size=8):
     """
     Creates a random string of 'n' letters from 'alphabet'
     :param alphabet: Candidate letters
-    :param n: Lenght of the generated random string
+    :param size: Lenght of the generated random string
     :return: Random string of 'n' letters from 'alphabet'
     """
     ret = ''
-    for _ in range(n):
+    for _ in range(size):
         ret += random.choice(alphabet)
     return ret
 
@@ -70,21 +75,20 @@ def get_all_tables(conn):
         cursor.execute("SELECT table_name FROM USER_TABLES")
         tb_names = [e[0] for e in cursor]
         db_dict = dict()
-        for tb in tb_names:
+        for table_name in tb_names:
             table = {'header': [], 'rows': []}
-            # TODO: use some kind of escaping for table names?
             # https://docs.oracle.com/database/121/SQLRF/sql_elements008.htm#SQLRF51129
             # Quoted names should be embedded with "..." in order to work. I tried
             # both versions for table names, ignoring possible exceptions.
             try:
-                cursor.execute("SELECT * FROM {}".format(tb))  # Direct name
+                cursor.execute("SELECT * FROM {}".format(table_name))  # Direct name
                 table = table_from_cursor(cursor)
                 if not table['header']:
-                    cursor.execute('SELECT * FROM "{}"'.format(tb))  # Quoted name
+                    cursor.execute('SELECT * FROM "{}"'.format(table_name))  # Quoted name
                     table = table_from_cursor(cursor)
             except cx_Oracle.DatabaseError:
-                logger.error('Unable to get contend from table <<{}>>'.format(tb))
-            db_dict[tb] = table
+                logger.error('Unable to get contend from table <<%s>>', table_name)
+            db_dict[table_name] = table
 
         return db_dict
 
@@ -101,15 +105,15 @@ def execute_select_statement(conn, statement):
     init = time.time()
     statements = clean_sql(statement)
     if len(statements) != 1:
-        logger.debug('User {} - <<{}>> contains more than one SQL statement'.format(
-            conn.username, statement))
+        logger.debug('User %s - <<%s>> contains more than one SQL statement',
+                     conn.username, statement)
         raise ExecutorException(OracleStatusCode.NUMBER_STATEMENTS)
 
     with conn.cursor() as cursor:
         cursor.execute(statements[0])
         # conn.commit()
-        logger.debug('User {} - SQL select statement <<{}>> executed in {} seconds'.format(
-            conn.username, statements[0], time.time() - init))
+        logger.debug('User %s - SQL select statement <<%s>> executed in %s seconds',
+                     conn.username, statements[0], time.time() - init)
         table = table_from_cursor(cursor)
     return table
 
@@ -126,8 +130,8 @@ def execute_dml_statements(conn, dml):
     with conn.cursor() as cursor:
         for stmt in statements:
             cursor.execute(stmt)
-            logger.debug('User {} - SQL DML statement <<{}>> executed in {} seconds'.format(
-                conn.username, stmt, time.time() - init))
+            logger.debug('User %s - SQL DML statement <<%s>> executed in %s seconds',
+                         conn.username, stmt, time.time() - init)
         conn.commit()
 
 
@@ -142,11 +146,11 @@ def execute_sql_script(conn, script):
     init = time.time()
     statements = clean_sql(script)
     with conn.cursor() as cursor:
-        for s in statements:
-            cursor.execute(s)
+        for statement in statements:
+            cursor.execute(statement)
         conn.commit()
-        logger.debug('User {} - SQL script <<{}>> executed in {} seconds'.format(
-            conn.username, statements, time.time() - init))
+        logger.debug('User %s - SQL script <<%s>> executed in %s seconds',
+                     conn.username, statements, time.time() - init)
 
 
 def empty_schema(conn):
@@ -157,28 +161,29 @@ def empty_schema(conn):
     :return: bool
     """
     init = time.time()
-    ok = True
+    correct = True
     try:
         sql = """
             select 'DROP '||object_type||' '|| object_name|| DECODE(OBJECT_TYPE,'TABLE',' CASCADE CONSTRAINTS','')
             from user_objects"""
-        with conn.cursor() as c:
-            c.execute(sql)
-            drop_statements = [p[0] for p in c]
+        with conn.cursor() as cursor:
+            cursor.execute(sql)
+            drop_statements = [p[0] for p in cursor]
             for drop in drop_statements:
-                c.execute(drop)
+                cursor.execute(drop)
     except cx_Oracle.DatabaseError:
-        ok = False
+        correct = False
 
-    if ok:
-        logger.debug('User {} - Schema deleted in {} seconds'.format(
-            conn.username, time.time() - init))
+    if correct:
+        logger.debug('User %s - Schema deleted in %s seconds',
+                     conn.username, time.time() - init)
     else:
-        logger.error('User {} - Unable to delete schema '.format(conn.username))
-    return ok
+        logger.error('User %s - Unable to delete schema', conn.username)
+    return correct
 
 
 def build_dsn_tns():
+    """Build a Data Source Name from values in the environment"""
     dsn_tns = cx_Oracle.makedsn(
         os.environ['ORACLE_SERVER'],
         int(os.environ['ORACLE_PORT']),
@@ -187,6 +192,8 @@ def build_dsn_tns():
 
 
 class OracleExecutor:
+    """Class to connecto to Oracle DB and execute problems"""
+
     __USER_PREFIX = 'lsql_'
     __ALPHABET = string.ascii_lowercase + string.digits
     __CREATE_USER_SCRIPT = ('CREATE USER {} '
@@ -234,14 +241,14 @@ class OracleExecutor:
             waitTimeout=int(os.environ['ORACLE_GESTOR_POOL_TIMEOUT_MS'])
         )
         self.version = None
-        logger.debug('Created an OracleExecutor to {} with a pool of {} connections with a timeout of {} ms'.format(
-            self.dsn_tns,
-            int(os.environ['ORACLE_MAX_GESTOR_CONNECTIONS']),
-            int(os.environ['ORACLE_GESTOR_POOL_TIMEOUT_MS'])
-            )
-        )
+        logger.debug('Created an OracleExecutor to %s with a pool of %s connections with a timeout of %s ms',
+                     self.dsn_tns,
+                     int(os.environ['ORACLE_MAX_GESTOR_CONNECTIONS']),
+                     int(os.environ['ORACLE_GESTOR_POOL_TIMEOUT_MS'])
+                     )
 
     def get_version(self):
+        """Returns the version of the Oracle server"""
         if not self.version:
             gestor = self.connection_pool.acquire()
             self.version = f'Oracle {gestor.version}'
@@ -268,10 +275,9 @@ class OracleExecutor:
 
         with connection.cursor() as cursor:
             cursor.execute(create_script)
-            logger.debug('User {} - Created user {}'.format(connection.username, user_name))
+            logger.debug('User %s - Created user %s', connection.username, user_name)
             cursor.execute(grant_script)
-        logger.debug('User {} - Granted privileges to user {}'.format(
-            connection.username, user_name))
+        logger.debug('User %s - Granted privileges to user %s', connection.username, user_name)
         return user_name, user_passwd
 
     def drop_user(self, user_name, connection):
@@ -286,11 +292,11 @@ class OracleExecutor:
             cursor.execute(user_connections_script)
             active_connections = cursor.fetchall()
             if len(active_connections) > 0:
-                logger.error('User {} has {} active connections'.format(user_name, len(active_connections)))
+                logger.error('User %s has %s active connections', user_name, len(active_connections))
 
             drop_script = self.__DROP_USER_SCRIPT.format(user_name)
             cursor.execute(drop_script)
-        logger.debug('User {} - Dropped user {}'.format(connection.username, user_name))
+        logger.debug('User %s - Dropped user %s', connection.username, user_name)
 
     def create_connection(self, user, passwd):
         """
@@ -324,7 +330,6 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.stmtcachesize = 0  # FIXME: remember reason
             conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
@@ -356,20 +361,19 @@ class OracleExecutor:
         except ExecutorException:
             # This is previously checked in the server, but I keep this code for extra safety
             raise
-        except cx_Oracle.DatabaseError as e:
+        except cx_Oracle.DatabaseError as excp:
             # Workaround to fix some odd problem when failing to get connections from the pool
             # But now it is not happening and I do not know how to re-produce it.
             # if 'timeout' in str(e):
             #     sleep(self.__SLEEP_AFTER_TIMEOUT / 1000)
-            error_msg = str(e)
-            logger.info('Error when testing DML statements: {} - {} - {}'.format(state, e, select))
+            error_msg = str(excp)
+            logger.info('Error when testing DML statements: %s - %s - %s', state, excp, select)
             if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, select)
-            else:
-                raise ExecutorException(state, error_msg, select)
-        except Exception as e:
-            logger.error('Internal error while testing a SELECT statement: {} - {}'.format(state, e))
-            raise ExecutorException(OracleStatusCode.OTHER, str(e))
+            raise ExecutorException(state, error_msg, select)
+        except Exception as excp:
+            logger.error('Internal error while testing a SELECT statement: %s - %s', state, excp)
+            raise ExecutorException(OracleStatusCode.OTHER, str(excp))
         finally:
             try:
                 if conn:
@@ -379,7 +383,7 @@ class OracleExecutor:
                 if gestor:
                     self.connection_pool.release(gestor)
             except cx_Oracle.DatabaseError as inner:
-                logger.error(f'Exception when cleaning a failing SELECT execution: {inner}')
+                logger.error('Exception when cleaning a failing SELECT execution: %s', inner)
 
     def execute_dml_test(self, creation, insertion, dml, pre_db=True):
         """
@@ -391,7 +395,7 @@ class OracleExecutor:
         :param dml: (str) DML statements to execute (insert, delete, update)
         :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before and after executing dml
         """
-        conn, gestor, result, user, post, stmt = None, None, None, None, None, None
+        conn, gestor, user, post, stmt = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
             gestor = self.connection_pool.acquire()
@@ -402,7 +406,6 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.stmtcachesize = 0  # FIXME: remember reason
             conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
@@ -423,8 +426,8 @@ class OracleExecutor:
                     cursor.execute(stmt)
                 conn.commit()
 
-            logger.debug('User {} - SQL DML statements <<{}>> executed in {} seconds'.format(
-                    conn.username, statements, time.time() - init))
+            logger.debug('User %s - SQL DML statements <<%s>> executed in %s seconds',
+                         conn.username, statements, time.time() - init)
 
             state = OracleStatusCode.GET_ALL_TABLES
             post = get_all_tables(conn)
@@ -444,20 +447,19 @@ class OracleExecutor:
             return {'pre': pre, 'post': post}
         except ExecutorException:
             raise
-        except cx_Oracle.DatabaseError as e:
+        except cx_Oracle.DatabaseError as excp:
             # Workaround to fix some odd problem when failing to get connections from the pool
             # But now it is not happening and I do not know how to re-produce it.
             # if 'timeout' in str(e):
             #     sleep(self.__SLEEP_AFTER_TIMEOUT / 1000)
-            error_msg = str(e)
-            logger.info('Error when testing DML statements: {} - {} - {}'.format(state, e, stmt))
+            error_msg = str(excp)
+            logger.info('Error when testing DML statements: %s - %s - %s', state, excp, stmt)
             if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt)
-            else:
-                raise ExecutorException(state, error_msg, stmt)
-        except Exception as e:
-            logger.error('Internal error while testing DML statements: {} - {}'.format(state, e))
-            raise ExecutorException(OracleStatusCode.OTHER, str(e))
+            raise ExecutorException(state, error_msg, stmt)
+        except Exception as excp:
+            logger.error('Internal error while testing DML statements: %s - %s', state, excp)
+            raise ExecutorException(OracleStatusCode.OTHER, str(excp))
         finally:
             try:
                 if conn:
@@ -467,7 +469,7 @@ class OracleExecutor:
                 if gestor:
                     self.connection_pool.release(gestor)
             except cx_Oracle.DatabaseError as inner:
-                logger.error(f'Exception when cleaning a failing DML execution: {inner}')
+                logger.error('Exception when cleaning a failing DML execution: %s', inner)
 
     def execute_function_test(self, creation, insertion, func_creation, tests):
         """
@@ -481,7 +483,7 @@ class OracleExecutor:
         :return: {'pre': DB, 'results': dict} dictionary containing the initial state of the DB and a dictionary
                  {call: result} with the different calls and its expected result
         """
-        conn, gestor, result, user, post, stmt = None, None, None, None, None, None
+        conn, gestor, user, stmt = None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
             gestor = self.connection_pool.acquire()
@@ -492,7 +494,6 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.stmtcachesize = 0  # FIXME: remember reason
             conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
@@ -506,7 +507,6 @@ class OracleExecutor:
             state = OracleStatusCode.EXECUTE_USER_CODE
             init = time.time()
 
-            # TODO
             # sqlparse does not consider the whole CREATE FUNCTION as a single statement, so we cannot check
             # the minimum and maximum number of statements in this kind of problems
 
@@ -517,7 +517,7 @@ class OracleExecutor:
                 # Stops if there is some compilation error with the function
                 # We must handle it manually because executing a FUNCTION creation with failures does not throw
                 # any Oracle exception
-                cursor.execute('''SELECT NAME "Nombre de función", LINE "Línea", POSITION "Posición", 
+                cursor.execute('''SELECT NAME "Nombre de función", LINE "Línea", POSITION "Posición",
                                          TEXT "Error detectado", ATTRIBUTE "Criticidad" 
                                   FROM SYS.USER_ERRORS 
                                   WHERE TYPE = \'FUNCTION\'''')
@@ -533,8 +533,8 @@ class OracleExecutor:
                     row = cursor.fetchone()
                     results[stmt] = row[0]
 
-            logger.debug('User {} - Function creation and testing executed in {} seconds'.format(
-                    conn.username, time.time() - init))
+            logger.debug('User %s - Function creation and testing executed in %s seconds',
+                         conn.username, time.time() - init)
 
             state = OracleStatusCode.CLOSE_USER_CONNECTION
             conn.close()
@@ -551,20 +551,20 @@ class OracleExecutor:
             return {'db': db, 'results': results}
         except ExecutorException:
             raise
-        except cx_Oracle.DatabaseError as e:
+        except cx_Oracle.DatabaseError as excp:
             # Workaround to fix some odd problem when failing to get connections from the pool
             # But now it is not happening and I do not know how to re-produce it.
             # if 'timeout' in str(e):
             #     sleep(self.__SLEEP_AFTER_TIMEOUT / 1000)
-            error_msg = str(e)
-            logger.info('Error when testing function statements: {} - {} - {}'.format(state, e, stmt))
-            if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
-                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt)
-            else:
-                raise ExecutorException(state, error_msg, stmt)
-        except Exception as e:
-            logger.error('Internal error when testing function creation and calls: {} - {} - {}'.format(state, e, stmt))
-            raise ExecutorException(OracleStatusCode.OTHER, str(e), stmt)
+            logger.info('Error when testing function statements: %s - %s - %s',
+                        state, excp, stmt)
+            if 'ORA-3156' in str(excp) and state == OracleStatusCode.EXECUTE_USER_CODE:
+                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, excp, stmt)
+            raise ExecutorException(state, excp, stmt)
+        except Exception as excp:
+            logger.error('Internal error when testing function creation and calls: %s - %s - %s',
+                         state, excp, stmt)
+            raise ExecutorException(OracleStatusCode.OTHER, str(excp), stmt)
         finally:
             try:
                 if conn:
@@ -574,7 +574,7 @@ class OracleExecutor:
                 if gestor:
                     self.connection_pool.release(gestor)
             except cx_Oracle.DatabaseError as inner:
-                logger.error(f'Exception when cleaning a failing DML execution: {inner}')
+                logger.error('Exception when cleaning a failing DML execution: %s', inner)
 
     def execute_proc_test(self, creation, insertion, proc_creation, proc_call, pre_db=True):
         """
@@ -589,7 +589,7 @@ class OracleExecutor:
         :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before defining the procedure and
                    and after invoking the procedure
         """
-        conn, gestor, result, user, post, stmt = None, None, None, None, None, None
+        conn, gestor, user, post, stmt = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
             gestor = self.connection_pool.acquire()
@@ -600,7 +600,6 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.stmtcachesize = 0  # FIXME: remember reason
             conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
@@ -620,7 +619,7 @@ class OracleExecutor:
                 stmt = proc_creation
                 cursor.execute(stmt)
 
-                cursor.execute('''SELECT NAME "Nombre de procedimiento", LINE "Línea", POSITION "Posición", 
+                cursor.execute('''SELECT NAME "Nombre de procedimiento", LINE "Línea", POSITION "Posición",
                                          TEXT "Error detectado", ATTRIBUTE "Criticidad" 
                                   FROM SYS.USER_ERRORS 
                                   WHERE TYPE = \'PROCEDURE\'''')
@@ -634,8 +633,8 @@ class OracleExecutor:
             state = OracleStatusCode.GET_ALL_TABLES
             post = get_all_tables(conn)
 
-            logger.debug('User {} - Procedure creation and testing executed in {} seconds'.format(
-                    conn.username, time.time() - init))
+            logger.debug('User %s - Procedure creation and testing executed in %s seconds',
+                         conn.username, time.time() - init)
 
             state = OracleStatusCode.CLOSE_USER_CONNECTION
             conn.close()
@@ -652,20 +651,21 @@ class OracleExecutor:
             return {'pre': db, 'post': post}
         except ExecutorException:
             raise
-        except cx_Oracle.DatabaseError as e:
+        except cx_Oracle.DatabaseError as excp:
             # Workaround to fix some odd problem when failing to get connections from the pool
             # But now it is not happening and I do not know how to re-produce it.
             # if 'timeout' in str(e):
             #     sleep(self.__SLEEP_AFTER_TIMEOUT / 1000)
-            error_msg = str(e)
-            logger.info('Error when testing procedure creation and call: {} - {} - {}'.format(state, e, stmt))
+            error_msg = str(excp)
+            logger.info('Error when testing procedure creation and call: %s - %s - %s',
+                        state, excp, stmt)
             if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt)
-            else:
-                raise ExecutorException(state, error_msg, stmt)
-        except Exception as e:
-            logger.error('Internal error when testing procedure creation and call: {} - {} - {}'.format(state, e, stmt))
-            raise ExecutorException(OracleStatusCode.OTHER, str(e), stmt)
+            raise ExecutorException(state, error_msg, stmt)
+        except Exception as excp:
+            logger.error('Internal error when testing procedure creation and call: %s - %s - %s',
+                         state, excp, stmt)
+            raise ExecutorException(OracleStatusCode.OTHER, str(excp), stmt)
         finally:
             try:
                 if conn:
@@ -675,7 +675,7 @@ class OracleExecutor:
                 if gestor:
                     self.connection_pool.release(gestor)
             except cx_Oracle.DatabaseError as inner:
-                logger.error(f'Exception when cleaning a failing PROC execution: {inner}')
+                logger.error('Exception when cleaning a failing PROC execution: %s', inner)
 
     def execute_trigger_test(self, creation, insertion, trigger_definition, tests, pre_db=True):
         """
@@ -690,7 +690,7 @@ class OracleExecutor:
         :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before defining the trigger and
                    and after executing the tests
         """
-        conn, gestor, result, user, post, stmt = None, None, None, None, None, None
+        conn, gestor, user, post, stmt = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
             gestor = self.connection_pool.acquire()
@@ -701,7 +701,6 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.stmtcachesize = 0  # FIXME: remember reason
             conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
@@ -721,7 +720,7 @@ class OracleExecutor:
                 stmt = trigger_definition
                 cursor.execute(stmt)
 
-                cursor.execute('''SELECT NAME "Nombre de procedimiento", LINE "Línea", POSITION "Posición", 
+                cursor.execute('''SELECT NAME "Nombre de procedimiento", LINE "Línea", POSITION "Posición",
                                          TEXT "Error detectado", ATTRIBUTE "Criticidad" 
                                   FROM SYS.USER_ERRORS 
                                   WHERE TYPE = \'PROCEDURE\'''')
@@ -734,8 +733,8 @@ class OracleExecutor:
             state = OracleStatusCode.GET_ALL_TABLES
             post = get_all_tables(conn)
 
-            logger.debug('User {} - Procedure creation and testing executed in {} seconds'.format(
-                    conn.username, time.time() - init))
+            logger.debug('User %s - Procedure creation and testing executed in %s seconds',
+                         conn.username, time.time() - init)
 
             state = OracleStatusCode.CLOSE_USER_CONNECTION
             conn.close()
@@ -752,20 +751,21 @@ class OracleExecutor:
             return {'pre': db, 'post': post}
         except ExecutorException:
             raise
-        except cx_Oracle.DatabaseError as e:
+        except cx_Oracle.DatabaseError as excp:
             # Workaround to fix some odd problem when failing to get connections from the pool
             # But now it is not happening and I do not know how to re-produce it.
             # if 'timeout' in str(e):
             #     sleep(self.__SLEEP_AFTER_TIMEOUT / 1000)
-            error_msg = str(e)
-            logger.info('Error when testing procedure creation and call: {} - {} - {}'.format(state, e, stmt))
+            error_msg = str(excp)
+            logger.info('Error when testing procedure creation and call: %s - %s - %s',
+                        state, excp, stmt)
             if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt)
-            else:
-                raise ExecutorException(state, error_msg, stmt)
-        except Exception as e:
-            logger.error('Internal error when testing procedure creation and call: {} - {} - {}'.format(state, e, stmt))
-            raise ExecutorException(OracleStatusCode.OTHER, str(e), stmt)
+            raise ExecutorException(state, error_msg, stmt)
+        except Exception as excp:
+            logger.error('Internal error when testing procedure creation and call: %s - %s - %s',
+                         state, excp, stmt)
+            raise ExecutorException(OracleStatusCode.OTHER, str(excp), stmt)
         finally:
             try:
                 if conn:
@@ -775,4 +775,4 @@ class OracleExecutor:
                 if gestor:
                     self.connection_pool.release(gestor)
             except cx_Oracle.DatabaseError as inner:
-                logger.error(f'Exception when cleaning a failing PROC execution: {inner}')
+                logger.error('Exception when cleaning a failing trigger execution: %s', inner)
