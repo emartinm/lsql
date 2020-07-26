@@ -5,17 +5,17 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 Models to store objects in the DB
 """
 
+from zipfile import ZipFile
+import markdown
+from lxml import html
+from logzero import logger
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinLengthValidator
 from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
-
-import markdown
-from lxml import html
-from logzero import logger
-from zipfile import ZipFile
 
 from .feedback import compare_select_results, compare_db_results, compare_function_results
 from .oracle_driver import OracleExecutor
@@ -25,9 +25,9 @@ from .parse import load_select_problem, load_dml_problem, load_function_problem,
 from .exceptions import ZipFileParsingException
 
 
-def markdown_to_html(md, remove_initial_p=False):
+def markdown_to_html(markdown_text, remove_initial_p=False):
     """Converts a markdown string into HTML (posibbly removing initial paragraph <p>....</p>"""
-    html_code = markdown.markdown(md, output_format='html5').strip()
+    html_code = markdown.markdown(markdown_text, output_format='html5').strip()
     tree = html.fromstring(html_code)
     if remove_initial_p and tree.tag == 'p':
         # Removes the surrounding <p></p> in one paragraph html
@@ -75,6 +75,7 @@ def load_problem_from_file(file):
 
 
 class Collection(models.Model):
+    """Collection of problems"""
     name_md = models.CharField(max_length=100, validators=[MinLengthValidator(1)])
     name_html = models.CharField(max_length=200, default='', blank=True)
     position = models.PositiveIntegerField(default=1, null=False)
@@ -86,13 +87,13 @@ class Collection(models.Model):
     zipfile = models.FileField(upload_to='problem_zips/', default=None, blank=True, null=True)
 
     def clean(self):
-        # Loads data from file and generates HTML from Markdown
+        """Loads and overwrite data from the ZIP file (if it is set) and creates HTML from markdown"""
         if self.zipfile:
             problems = load_many_problems(self.zipfile, self)
-            for p in problems:
-                p.clean()
-                p.save()
-                logger.debug(f'Added problem {type(p)} "{p}" from ZIP (batch)')
+            for problem in problems:
+                problem.clean()
+                problem.save()
+                logger.debug('Added problem %s "%s" from ZIP (batch)', type(problem), problem)
             self.zipfile = None  # Avoids storing the file in the filysystem
 
         super().clean()
@@ -100,23 +101,25 @@ class Collection(models.Model):
         self.description_html = markdown_to_html(self.description_md, remove_initial_p=False)
 
     def __str__(self):
-        # String to show in the Admin
+        """String to show in the Admin"""
         return html.fromstring(self.name_html).text_content()
 
     def problems(self):
-        # Returns a list of Problem objects in the collection using the inverse FK from Problem to Collection
+        """Returns a list of Problem objects in the collection using the inverse FK from Problem to Collection"""
         return self.problem_set.filter()
 
     def num_problems(self):
-        # Number of problems in the collection
+        """Number of problems in the collection"""
         return self.problems().count()
 
     def num_solved_by_user(self, user):
+        """Number of problems solved by user in this collection"""
         return Submission.objects.filter(veredict_code='AC', problem__collection=self, user=user)\
             .distinct('problem').count()
 
 
 class Problem(models.Model):
+    """Base class for problems, with common attributes and methods"""
     title_md = models.CharField(max_length=100, blank=True)
     title_html = models.CharField(max_length=200)
     text_md = models.TextField(max_length=5000, blank=True)
@@ -144,25 +147,32 @@ class Problem(models.Model):
         self.text_html = markdown_to_html(self.text_md, remove_initial_p=False)
 
     def __str__(self):
+        """String to show in the Admin interface"""
         return html.fromstring(self.title_html).text_content()
 
     def template(self):
+        """Name of the HTML template used to show the problem"""
         raise NotImplementedError
 
     def judge(self, code, executor):
+        """Assess the code with the user solution using a DB executor"""
         raise NotImplementedError
 
     def problem_type(self):
+        """Return an enumeration ProblemType with the problem type"""
         raise NotImplementedError
 
-    def solved_by_user(self, user):
+    def solved_by_user(self, user) -> bool:
+        """Whether user has solved the problem or not"""
         return Submission.objects.filter(user=user, problem=self, veredict_code=VeredictCode.AC).count() > 0
 
     def num_submissions_by_user(self, user):
+        """Number of user submissions to the problem"""
         return Submission.objects.filter(problem=self, user=user).count()
 
 
 class SelectProblem(Problem):
+    """Problem that requires a SELECT statement as solution"""
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, default=None, blank=True, null=True)
@@ -181,8 +191,8 @@ class SelectProblem(Problem):
             self.initial_db = res['db']
         except ValidationError:
             raise
-        except Exception as e:
-            raise ValidationError(e)
+        except Exception as excp:
+            raise ValidationError(excp)
 
     def template(self):
         return 'problem_select.html'
@@ -196,6 +206,7 @@ class SelectProblem(Problem):
 
 
 class DMLProblem(Problem):
+    """Problem that requires one or more DML statements (INSERT, UPDATE, CREATE...) as solution"""
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, blank=True)
@@ -214,8 +225,8 @@ class DMLProblem(Problem):
             self.initial_db = res['pre']
         except ValidationError:
             raise
-        except Exception as e:
-            raise ValidationError(e)
+        except Exception as excp:
+            raise ValidationError(excp)
 
     def template(self):
         return 'problem_dml.html'
@@ -229,6 +240,7 @@ class DMLProblem(Problem):
 
 
 class FunctionProblem(Problem):
+    """Problem that requires a function definition as solution"""
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     calls = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], default='', blank=True)
@@ -248,13 +260,15 @@ class FunctionProblem(Problem):
             self.initial_db = res['db']
         except ValidationError:
             raise
-        except Exception as e:
-            raise ValidationError(e)
+        except Exception as excp:
+            raise ValidationError(excp)
 
     def template(self):
         return 'problem_function.html'
 
     def expected_result_as_table(self):
+        """Transforms the dict with the expected result in a dict representing a table that can be shown
+        in the templaes (adding a header)"""
         rows = [[call, result] for call, result in self.expected_result.items()]
         return {'rows': rows, 'header': [('Llamada', None), ('Resultado', None)]}
 
@@ -267,6 +281,7 @@ class FunctionProblem(Problem):
 
 
 class ProcProblem(Problem):
+    """Problem that requires a procedure definition as solution"""
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     proc_call = models.TextField(max_length=1000, validators=[MinLengthValidator(1)], blank=True)
@@ -291,8 +306,8 @@ class ProcProblem(Problem):
             self.initial_db = res['pre']
         except ValidationError:
             raise
-        except Exception as e:
-            raise ValidationError(e)
+        except Exception as excp:
+            raise ValidationError(excp)
 
     def judge(self, code, executor):
         oracle_result = executor.execute_proc_test(self.create_sql, self.insert_sql, code, self.proc_call, pre_db=False)
@@ -303,6 +318,7 @@ class ProcProblem(Problem):
 
 
 class TriggerProblem(Problem):
+    """Problem that requires a trigger definition as solution"""
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     tests = models.TextField(max_length=1000, validators=[MinLengthValidator(1)], blank=True)
@@ -320,13 +336,14 @@ class TriggerProblem(Problem):
 
             super().clean()
             executor = OracleExecutor.get()
-            res = executor.execute_trigger_test(self.create_sql, self.insert_sql, self.solution, self.tests, pre_db=True)
+            res = executor.execute_trigger_test(self.create_sql, self.insert_sql,
+                                                self.solution, self.tests, pre_db=True)
             self.expected_result = res['post']
             self.initial_db = res['pre']
         except ValidationError:
             raise
-        except Exception as e:
-            raise ValidationError(e)
+        except Exception as excp:
+            raise ValidationError(excp)
 
     def judge(self, code, executor):
         oracle_result = executor.execute_trigger_test(self.create_sql, self.insert_sql, code, self.tests, pre_db=False)
@@ -337,6 +354,7 @@ class TriggerProblem(Problem):
 
 
 class Submission(models.Model):
+    """A user submssion"""
     creation_date = models.DateTimeField(auto_now_add=True)
     code = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
     veredict_code = models.CharField(

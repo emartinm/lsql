@@ -1,5 +1,6 @@
 [MASTER]
-extension-pkg-whitelist=cx_Oracle
+extension-pkg-whitelist=cx_Oracle  # Avoid missing methods
+load-plugins=pylint_django         # Avoid missing attributes in models
 
 [FORMAT]
 max-line-length=120
@@ -11,4 +12,4 @@ max-locals=20
 max-args=10
 
 [BASIC]
-good-names=db	
+good-names=db,i,j,k

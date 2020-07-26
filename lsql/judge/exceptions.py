@@ -7,29 +7,15 @@ Custom exceptions when accesing the PostgreSQL database in LSQL
 
 
 class IncorrectNumberOfSentencesException(Exception):
-    pass
+    """Problem solution with an incorrect number of sentences"""
 
 
 class ZipFileParsingException(Exception):
-    pass
-
-
-class ProblemInsertException(Exception):
-    pass
-
-
-class DAOException(Exception):
-    def __init__(self, error_code, message):
-        super().__init__(message)
-        self.message = message
-        # value from types.DAOStatusCode
-        self.error_code = error_code
-
-    def __repr__(self):
-        return f'DAOException({self.error_code}, {self.message})'
+    """Error while parsing a ZIP file containing a problem (or a set of problems)"""
 
 
 class ExecutorException(Exception):
+    """Exception when calling the DB executor"""
     def __init__(self, error_code, message='', statement=''):
         super().__init__(message)
         self.message = message
