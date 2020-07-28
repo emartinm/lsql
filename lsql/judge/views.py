@@ -1,4 +1,11 @@
-from django.http import HttpResponseRedirect, JsonResponse
+# -*- coding: utf-8 -*-
+"""
+Copyright Enrique Martín <emartinm@ucm.es> 2020
+
+Functions that process HTTP connections
+"""
+
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -12,74 +19,87 @@ from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode
 
 
-def get_child_problem(pk):
+def get_child_problem(problem_id):
     """Look for problem 'pk' in the different child classes of Problem"""
     classes = [SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem]
     i = 0
-    p = None
-    while i < len(classes) and p is None:
-        q = classes[i].objects.filter(pk=pk)
+    problem = None
+    while i < len(classes) and problem is None:
+        problems = classes[i].objects.filter(pk=problem_id)
         i += 1
-        if q:
-            p = q[0]
-    return p
+        if problems:
+            problem = problems[0]
+    return problem
 
 
 def index(_):
+    """Redirect root access to collections"""
     return HttpResponseRedirect(reverse('judge:collections'))
 
 
 @login_required
-def collections(request):
+def show_collections(request):
+    """Show all the collections"""
     cols = Collection.objects.all().order_by('-creation_date')
-    for e in cols:
+    for collection in cols:
         # Templates can only invoke nullary functions or access object attribute, so we store
         # the number of problems solved by the user in an attribute
-        e.num_solved = e.num_solved_by_user(request.user)
+        collection.num_solved = collection.num_solved_by_user(request.user)
     return render(request, 'collections.html', {'collections': cols})
 
 
 @login_required
-def collection(request, pk):
-    c = get_object_or_404(Collection, pk=pk)
+def show_collection(request, collection_id):
+    """Shows a collection"""
+    collection = get_object_or_404(Collection, pk=collection_id)
     # New attribute to store the list of problems and include the number of submission in each problem
-    c.problem_list = c.problems()
-    for p in c.problem_list:
-        p.num_submissions = p.num_submissions_by_user(request.user)
-        p.solved = p.solved_by_user(request.user)
-    return render(request, 'collection.html', {'collection': c})
+    collection.problem_list = collection.problems()
+    for problem in collection.problem_list:
+        problem.num_submissions = problem.num_submissions_by_user(request.user)
+        problem.solved = problem.solved_by_user(request.user)
+    return render(request, 'collection.html', {'collection': collection})
 
 
 @login_required
-def problem(request, pk):
+def show_problem(request, problem_id):
+    """Shows a concrete problem"""
     # Error 404 if there is no a Problem pk
-    get_object_or_404(Problem, pk=pk)
+    get_object_or_404(Problem, pk=problem_id)
     # Look for problem pk in all the Problem classes
-    p = get_child_problem(pk)
-    p.solved = p.solved_by_user(request.user)  # Stores the flag in an attribute so that the template can use it
-    return render(request, p.template(), {'problem': p})
+    problem = get_child_problem(problem_id)
+    # Stores the flag in an attribute so that the template can use it
+    problem.solved = problem.solved_by_user(request.user)
+    return render(request, problem.template(), {'problem': problem})
 
 
 @login_required
-def submissions(request):
+def show_submissions(request):
+    """Shows all the submissions of the current user"""
     subs = Submission.objects.filter(user=request.user)
-    for s in subs:
-        s.veredict_pretty = VeredictCode(s.veredict_code).html_short_name()
+    for submission in subs:
+        submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
     return render(request, 'submissions.html', {'submissions': subs})
 
 
 @login_required
-def submission(request, pk):
-    s = get_object_or_404(Submission, pk=pk)
-    s.veredict_pretty = VeredictCode(s.veredict_code).html_short_name()
-    return render(request, 'submission.html', {'submission': s})
+def show_submission(request, submission_id):
+    """Shows a submission of the current user"""
+    submission = get_object_or_404(Submission, pk=submission_id)
+    if submission.user != request.user:
+        return HttpResponseForbidden("Forbidden")
+    submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
+    return render(request, 'submission.html', {'submission': submission})
 
 
 @login_required
-def submit(request, pk):
+# pylint does not understand the dynamic attributes in VeredictCode (TextChoices), so we need to disable
+# no-member warning in this specific function
+# pylint: disable=no-member
+def submit(request, problem_id):
+    """Process a user submission"""
     # Error 404 if there is no Problem 'pk'
-    general_problem = get_object_or_404(Problem, pk=pk)
-    p = get_child_problem(pk)
+    general_problem = get_object_or_404(Problem, pk=problem_id)
+    problem = get_child_problem(problem_id)
     submit_form = SubmitForm(request.POST)
     data = {'veredict': None, 'title': '', 'message': '', 'feedback': ''}
     code = ''
@@ -87,20 +107,20 @@ def submit(request, pk):
         try:
             # AC or WA
             code = submit_form.cleaned_data['code']
-            data['veredict'], data['feedback'] = p.judge(code, OracleExecutor.get())
+            data['veredict'], data['feedback'] = problem.judge(code, OracleExecutor.get())
             data['title'] = data['veredict'].label
             data['message'] = data['veredict'].message()
-        except ExecutorException as e:
+        except ExecutorException as excp:
             # Exceptions when judging: RE, TLE, VE or IE
-            if e.error_code == OracleStatusCode.EXECUTE_USER_CODE:
+            if excp.error_code == OracleStatusCode.EXECUTE_USER_CODE:
                 data = {'veredict': VeredictCode.RE, 'title': VeredictCode.RE.label,
-                        'message': VeredictCode.RE.message(), 'feedback': e.message}
-            elif e.error_code == OracleStatusCode.TLE_USER_CODE:
+                        'message': VeredictCode.RE.message(), 'feedback': excp.message}
+            elif excp.error_code == OracleStatusCode.TLE_USER_CODE:
                 data = {'veredict': VeredictCode.TLE, 'title': VeredictCode.TLE.label,
                         'message': VeredictCode.TLE.message(), 'feedback': ''}
-            elif e.error_code == OracleStatusCode.NUMBER_STATEMENTS:
+            elif excp.error_code == OracleStatusCode.NUMBER_STATEMENTS:
                 data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
-                        'message': VeredictCode.VE.message(), 'feedback': e.message}
+                        'message': VeredictCode.VE.message(), 'feedback': excp.message}
             else:
                 data = {'veredict': VeredictCode.IE, 'title': VeredictCode.IE.label,
                         'message': VeredictCode.IE.message(), 'feedback': ''}
@@ -108,13 +128,14 @@ def submit(request, pk):
         data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
                 'message': VeredictCode.VE.message(), 'feedback': ''}
 
-    s = Submission(code=code, veredict_code=data['veredict'], veredict_message=data['message'],
-                   user=request.user, problem=general_problem)
-    s.save()
-    logger.debug(f'Stored submission {s}')
+    submission = Submission(code=code, veredict_code=data['veredict'], veredict_message=data['message'],
+                            user=request.user, problem=general_problem)
+    submission.save()
+    logger.debug('Stored submission %s', submission)
     return JsonResponse(data)
 
 
 @login_required
 def password_change_done(request):
+    """Password change confirmation"""
     return render(request, 'password_change_done.html')

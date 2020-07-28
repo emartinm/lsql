@@ -47,7 +47,7 @@ def extract_json(file, problem_type):
     return problem_json
 
 
-def load_select_problem(problem, file):
+def load_select_problem(problem, file) -> None:
     """
     Load the problem information form a ZIP file and updates the attributes of 'problem'
     :param problem: SelectProblem to update

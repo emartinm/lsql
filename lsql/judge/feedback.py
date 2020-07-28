@@ -4,11 +4,12 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Generation of feedback messages
 """
+import re
+import json
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.template.loader import render_to_string
-import re
 from multiset import Multiset
-import json
 
 from .types import VeredictCode
 
@@ -16,11 +17,11 @@ __ORACLE_TYPE_PATTERN = r"<class 'cx_Oracle\.(.*)'>"
 
 
 def pretty_type(type_str):
+    """Given a string representing a type of cx_Oracle, extracts the important fragment"""
     match = re.match(__ORACLE_TYPE_PATTERN, type_str)
     if match:
         return match.group(1)
-    else:
-        return type_str
+    return type_str
 
 
 def header_to_str(header):
@@ -44,17 +45,10 @@ def feedback_headers(expected, obtained):
     """
     if expected['header'] == obtained['header']:
         return ''
-    else:
-        return render_to_string('feedback_wa_headers.html',
-                                {'expected': header_to_str(expected['header']),
-                                 'obtained': header_to_str(obtained['header'])}
-                                )
-
-
-def table_to_html(table, row_remark=None):
-    if not row_remark:
-        row_remark = set()
-    return "{}, {}".format(table, row_remark)
+    return render_to_string('feedback_wa_headers.html',
+                            {'expected': header_to_str(expected['header']),
+                             'obtained': header_to_str(obtained['header'])}
+                            )
 
 
 def feedback_rows(expected, obtained, order):

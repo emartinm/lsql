@@ -13,14 +13,14 @@ from . import views
 app_name = 'judge'
 urlpatterns = [
     path('', views.index, name='index'),
-    path('collection/', views.collections, name='collections'),
-    path('collection/<int:pk>', views.collection, name='collection'),
-    path('problem/<int:pk>', views.problem, name='problem'),
+    path('collection/', views.show_collections, name='collections'),
+    path('collection/<int:collection_id>', views.show_collection, name='collection'),
+    path('problem/<int:problem_id>', views.show_problem, name='problem'),
 
-    path('submit/<int:pk>', views.submit, name='submit'),
+    path('submit/<int:problem_id>', views.submit, name='submit'),
 
-    path('submission/', views.submissions, name='submissions'),
-    path('submission/<int:pk>', views.submission, name='submission'),
+    path('submission/', views.show_submissions, name='submissions'),
+    path('submission/<int:submission_id>', views.show_submission, name='submission'),
 
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(template_name='logout.html'), name='logout'),
@@ -33,7 +33,4 @@ urlpatterns = [
          name='password_change'
          ),
     path('password_change_done/', views.password_change_done, name='password_change_done')
-    # path('<int:pk>/', views.DetailView.as_view(), name='detail'),
-    # path('<int:pk>/results/', views.ResultsView.as_view(), name='results'),
-    # path('<int:question_id>/vote/', views.vote, name='vote'),
 ]
