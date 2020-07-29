@@ -232,7 +232,8 @@ class DMLProblem(Problem):
         return 'problem_dml.html'
 
     def judge(self, code, executor):
-        oracle_result = executor.execute_dml_test(self.create_sql, self.insert_sql, code, pre_db=False)
+        oracle_result = executor.execute_dml_test(self.create_sql, self.insert_sql, code, pre_db=False,
+                                                  min_stmt=self.min_stmt, max_stmt=self.max_stmt)
         return compare_db_results(self.expected_result, oracle_result['post'])
 
     def problem_type(self):

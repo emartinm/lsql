@@ -1,0 +1,428 @@
+# -*- coding: utf-8 -*-
+"""
+Copyright Enrique Martín <emartinm@ucm.es> 2020
+
+Unit tests for the conection and execution of statements using the Oracle DB
+"""
+
+from django.test import TestCase
+
+from judge.oracle_driver import OracleExecutor, clean_sql
+from judge.models import SelectProblem, Collection, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem
+from judge.types import VeredictCode, OracleStatusCode
+from judge.exceptions import ExecutorException
+
+
+def assert_executor_exception(function, status_code):
+    """Checks if executing the nullary function raises an ExecutorException with the statuus_code"""
+    try:
+        function()
+    except ExecutorException as excp:
+        assert excp.error_code == status_code
+
+
+class OracleTest(TestCase):
+    """"Tests for oracle_driver"""
+
+    @staticmethod
+    def test_version():
+        """Test for get_version()"""
+        oracle = OracleExecutor.get()
+        parts = oracle.get_version().split()
+        assert parts[0] == 'Oracle'
+        assert int(parts[1].split('.')[0]) >= 11
+
+    @staticmethod
+    def test_empty_clean_code():
+        """Test for cleaning a null SQL code"""
+        assert clean_sql(None) == []
+
+    @staticmethod
+    def test_select():
+        """Tests for SelectProblem.judge()"""
+        collection = Collection()
+        collection.save()
+        create = '''CREATE TABLE "Nombre Club" (
+                        CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
+                        Nombre VARCHAR2(40) NOT NULL UNIQUE,
+                        Sede VARCHAR2(30) NOT NULL,
+                        Num_Socios NUMBER(10,0) NOT NULL,
+                        CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
+                    );'''
+        insert = '''INSERT INTO "Nombre Club" VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
+                    INSERT INTO "Nombre Club" VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
+                    INSERT INTO "Nombre Club" VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);'''
+        solution = 'SELECT * FROM "Nombre Club";'
+        oracle = OracleExecutor.get()
+        problem = SelectProblem(title_md='Test Select', text_md='bla bla bla',
+                                create_sql=create, insert_sql=insert, collection=collection,
+                                author=None, check_order=False, solution=solution)
+        problem.clean()  # Needed to compute extra HTML fields and solutions
+        problem.save()
+
+        # Validation error (only one statement supported)
+        assert_executor_exception(lambda: problem.judge('', oracle), OracleStatusCode.NUMBER_STATEMENTS)
+        assert_executor_exception(lambda: problem.judge('SELECT * FROM "Nombre Club"; SELECT * FROM "Nombre Club"',
+                                                        oracle),
+                                  OracleStatusCode.NUMBER_STATEMENTS)
+
+        # Runtime error
+        assert_executor_exception(lambda: problem.judge('SELECT * from "Nombre ClubE"', oracle),
+                                  OracleStatusCode.EXECUTE_USER_CODE)
+        assert_executor_exception(lambda: problem.judge('SELECT * from Club', oracle),
+                                  OracleStatusCode.EXECUTE_USER_CODE)
+        assert_executor_exception(lambda: problem.judge('SELECT * FROM', oracle), OracleStatusCode.EXECUTE_USER_CODE)
+
+        # Correct solution
+        assert problem.judge(solution, oracle)[0] == VeredictCode.AC
+        assert problem.judge('SELECT CIF, NOmbre, Sede, Num_Socios FROM "Nombre Club"', oracle)[0] == VeredictCode.AC
+        assert problem.judge('SELECT * FROM "Nombre Club" ORDER BY Num_Socios ASC', oracle)[0] == VeredictCode.AC
+
+        # Incorrect solution
+        assert problem.judge('SELECT CIF FROM "Nombre Club"', oracle)[0] == VeredictCode.WA
+        assert problem.judge('SELECT * FROM "Nombre Club" WHERE Num_Socios < 50000', oracle)[0] == VeredictCode.WA
+
+    @staticmethod
+    def test_dml():
+        """Tests for DMLProblem.judge()"""
+        collection = Collection()
+        collection.save()
+        create = '''CREATE TABLE Club(
+                        CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
+                        Nombre VARCHAR2(40) NOT NULL UNIQUE,
+                        Sede VARCHAR2(30) NOT NULL,
+                        Num_Socios NUMBER(10,0) NOT NULL,
+                        CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
+                    );'''
+        insert = '''INSERT INTO Club VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
+                    INSERT INTO Club VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
+                    INSERT INTO Club VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);'''
+        solution = """INSERT INTO Club VALUES ('11111114X', 'Real Betis Balompié', 'Av. de Heliópolis, s/n', 45000);
+                      INSERT INTO Club VALUES ('11111115X', 'Un otro equipo', 'Calle falsa, 123', 25478);"""
+        incorrect1 = """INSERT INTO Club VALUES ('11111114X', 'Real Betis Balompié', 'Av. de Heliópolis, s/n', 45001);
+                        INSERT INTO Club VALUES ('11111115X', 'Un otro equipo', 'Calle falsa, 123', 25478);"""
+        incorrect2 = """INSERT INTO Club VALUES ('11111114X', 'Real Betis Balompié', 'Av. de Heliópolis, s/n', 45000);
+                        INSERT INTO Club VALUES ('11111115Z', 'Un otro equipo', 'Calle falsa, 123', 25478);"""
+        solution_order = """
+          INSERT INTO Club VALUES ('11111115X', 'Un otro equipo', 'Calle falsa, 123', 25478);
+          INSERT INTO Club VALUES ('11111114X', 'Real Betis Balompié', 'Av. de Heliópolis, s/n', 45000);
+        """
+        oracle = OracleExecutor.get()
+        problem = DMLProblem(title_md='Test DML', text_md='bla bla bla',
+                             create_sql=create, insert_sql=insert, collection=collection,
+                             min_stmt=2, max_stmt=2,
+                             author=None, check_order=False, solution=solution)
+        problem.clean()  # Needed to compute extra fields and solutions
+        problem.save()
+
+        # Validation error (there should be exactly 2 statements)
+        assert_executor_exception(
+            lambda: problem.judge("INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000)", oracle),
+            OracleStatusCode.NUMBER_STATEMENTS)
+        assert_executor_exception(
+            lambda: problem.judge("""INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
+                                     INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
+                                     INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000)""", oracle),
+            OracleStatusCode.NUMBER_STATEMENTS)
+
+        # Runtime error
+        assert_executor_exception(
+            lambda: problem.judge("""INSERT Club VALUES ('11111114X', 'R', 'A', 45000);
+                                     INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);""", oracle),
+            OracleStatusCode.EXECUTE_USER_CODE)
+        assert_executor_exception(
+            lambda: problem.judge("""INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
+                                     INSERT Club VALUES ('11111114X', 'R', 'A', 45000);""", oracle),
+            OracleStatusCode.EXECUTE_USER_CODE)
+
+        # Correct solution
+        assert problem.judge(solution, oracle)[0] == VeredictCode.AC
+        assert problem.judge(solution_order, oracle)[0] == VeredictCode.AC
+
+        # Incorrect solution
+        assert problem.judge(incorrect1, oracle)[0] == VeredictCode.WA
+        assert problem.judge(incorrect2, oracle)[0] == VeredictCode.WA
+
+    @staticmethod
+    def test_function():
+        """Tests for FunctionProblem.judge()"""
+        collection = Collection()
+        collection.save()
+        create = ''
+        insert = ''
+        solution = """
+            CREATE OR REPLACE FUNCTION golesLocal(resultado VARCHAR2) RETURN NUMBER IS
+                posGuion NUMBER;
+                golesStr VARCHAR2(3);
+            BEGIN
+                posGuion := INSTR(resultado, '-');
+                golesStr := SUBSTR(resultado, 0, posGuion - 1);
+                RETURN TO_NUMBER(golesStr); 
+            END;"""
+        calls = """
+                golesLocal('2-1')
+                golesLocal('0-1')
+                golesLocal('12-13')
+                golesLocal('117-99')
+                """
+
+        # Funcion definition is syntactically incorrect
+        compile_error = """
+            CREATE OR REPLACE FUNCTION golesLocal(resultado VARCHAR2) RETURN NUMBER IS
+                posGuion NUMBER;
+                golesStr VARCHAR2(3);
+            BEGIN
+                posGuion := INSTR(resultado, '-');
+                golesStr := SUBSTR(resultado, 0, posGuion - 1; -- missing bracket
+                RETURN TO_NUMBER(golesStr); 
+            END;"""
+        # The execution produces a division by zero
+        runtime_error1 = """
+            CREATE OR REPLACE FUNCTION golesLocal(resultado VARCHAR2) RETURN NUMBER IS
+                posGuion NUMBER;
+                golesStr VARCHAR2(3);
+            BEGIN
+                RETURN 1 / 0; 
+            END;"""
+        # The function parameter (NUMBER) does not match the actual value (VARCHAR)
+        runtime_error2 = """
+            CREATE OR REPLACE FUNCTION golesLocal(resultado NUMBER) RETURN NUMBER IS
+            BEGIN
+                RETURN resultado; 
+            END;"""
+        # Retuns 2x the expected value
+        wrong_answer = """
+            CREATE OR REPLACE FUNCTION golesLocal(resultado VARCHAR2) RETURN NUMBER IS
+                posGuion NUMBER;
+                golesStr VARCHAR2(3);
+            BEGIN
+                posGuion := INSTR(resultado, '-');
+                golesStr := SUBSTR(resultado, 0, posGuion - 1);
+                RETURN TO_NUMBER(golesStr) * 2; -- Doubled 
+            END;"""
+        # Waits for 11 seconds
+        tle = """
+                CREATE OR REPLACE FUNCTION golesLocal(resultado VARCHAR2) RETURN NUMBER IS
+                    IN_TIME INT := 11; --num seconds
+                    v_now DATE;
+                BEGIN
+                    SELECT SYSDATE INTO v_now FROM DUAL;
+                    LOOP
+                        EXIT WHEN v_now + (IN_TIME * (1/86400)) <= SYSDATE;
+                    END LOOP;  
+                    RETURN 54;
+                END;"""
+        oracle = OracleExecutor.get()
+        problem = FunctionProblem(title_md='Test Function', text_md='bla bla bla',
+                                  create_sql=create, insert_sql=insert, collection=collection,
+                                  author=None, solution=solution, calls=calls)
+        problem.clean()  # Needed to compute extra HTML fields and solutions
+        problem.save()
+
+        # Time-limit
+        assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+
+        # Error when compiling user function
+        assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.COMPILATION_ERROR)
+
+        # Error when invoking user function
+        assert_executor_exception(lambda: problem.judge(runtime_error1, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+        assert_executor_exception(lambda: problem.judge(runtime_error2, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+
+        # Correct solution
+        assert problem.judge(solution, oracle)[0] == VeredictCode.AC
+
+        # Incorrect solution
+        assert problem.judge(wrong_answer, oracle)[0] == VeredictCode.WA
+
+    @staticmethod
+    def test_proc():
+        """Tests for ProcProblem.judge()"""
+        collection = Collection()
+        collection.save()
+        create = '''CREATE TABLE Club(
+                        CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
+                        Nombre VARCHAR2(40) NOT NULL UNIQUE,
+                        Sede VARCHAR2(30) NOT NULL,
+                        Num_Socios NUMBER(10,0) NOT NULL,
+                        CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
+                    );'''
+        insert = """INSERT INTO Club VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
+                    INSERT INTO Club VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
+                    INSERT INTO Club VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);"""
+        solution = """
+            CREATE OR REPLACE PROCEDURE inserta(x NUMBER) IS
+                num_equipos NUMBER;
+            BEGIN
+                SELECT COUNT(*) INTO num_equipos FROM Club;
+                INSERT INTO CLUB VALUES ('22222222X', 'A', 'B', num_equipos + x);
+            END;"""
+        call = "inserta(4)"
+
+        # Time-limit
+        tle = """
+                CREATE OR REPLACE PROCEDURE inserta(x NUMBER) IS
+                    num_equipos NUMBER;
+                    IN_TIME INT := 11; --num seconds
+                    v_now DATE;
+                BEGIN
+                    SELECT SYSDATE INTO v_now FROM DUAL;
+                    SELECT COUNT(*) INTO num_equipos FROM Club;
+                    LOOP
+                        EXIT WHEN v_now + (IN_TIME * (1/86400)) <= SYSDATE;
+                    END LOOP;  
+                    INSERT INTO CLUB VALUES ('22222222X', 'A', 'B', num_equipos + x);
+                END;"""
+        # Error in the procedure code
+        compile_error = """
+                CREATE OR REPLACE PROCEDURE inserta(x NUMBER) IS
+                    num_equipos NUMBER;
+                BEGIN
+                    SELECT SYSDATE INTO v_now DUAL; -- Falta FROM
+                    INSERT INTO CLUB VALUES ('22222222X', 'A', 'B', num_equipos + x);
+                END;"""
+        # Division by zero
+        runtime_error1 = """
+                CREATE OR REPLACE PROCEDURE inserta(x NUMBER) IS
+                    num_equipos NUMBER;
+                BEGIN
+                    SELECT COUNT(*) INTO num_equipos FROM Club;
+                    INSERT INTO CLUB VALUES ('22222222X', 'A', 'B', num_equipos / 0); -- Division by zero
+                END;"""
+        # Incompatible type in parameter
+        runtime_error2 = """
+                CREATE OR REPLACE PROCEDURE inserta(x DATE) IS -- Incorrect parameter when invoked
+                    num_equipos NUMBER;
+                BEGIN
+                    SELECT COUNT(*) INTO num_equipos FROM Club;
+                    INSERT INTO CLUB VALUES ('22222222X', 'A', 'B', num_equipos);
+                END;"""
+        wrong_answer = """
+            CREATE OR REPLACE PROCEDURE inserta(x NUMBER) IS
+                num_equipos NUMBER;
+            BEGIN
+                SELECT COUNT(*) INTO num_equipos FROM Club;
+                INSERT INTO CLUB VALUES ('22222222X', 'A', 'B', num_equipos + x + 2);
+            END;"""
+
+        oracle = OracleExecutor.get()
+        problem = ProcProblem(title_md='Test Function', text_md='bla bla bla',
+                              create_sql=create, insert_sql=insert, collection=collection,
+                              author=None, solution=solution, proc_call=call)
+        problem.clean()  # Needed to compute extra HTML fields and solutions
+        problem.save()
+
+        # Time-limit
+        assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+
+        # Error when compiling user function
+        assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.COMPILATION_ERROR)
+
+        # Error when invoking user function
+        assert_executor_exception(lambda: problem.judge(runtime_error1, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+        assert_executor_exception(lambda: problem.judge(runtime_error2, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+
+        # Correct solution
+        assert problem.judge(solution, oracle)[0] == VeredictCode.AC
+
+        # Incorrect solution
+        assert problem.judge(wrong_answer, oracle)[0] == VeredictCode.WA
+
+    @staticmethod
+    def test_trigger():
+        """Tests for TriggerProblem.judge()"""
+        collection = Collection()
+        collection.save()
+        create = '''CREATE TABLE Club(
+                        CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
+                        Nombre VARCHAR2(40) NOT NULL UNIQUE,
+                        Sede VARCHAR2(30) NOT NULL,
+                        Num_Socios NUMBER(10,0) NOT NULL,
+                        CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
+                    );'''
+        insert = """INSERT INTO Club VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
+                    INSERT INTO Club VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
+                    INSERT INTO Club VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);"""
+        solution = """
+            CREATE OR REPLACE TRIGGER IncrementaNumSocios
+            BEFORE INSERT OR UPDATE
+            ON Club FOR EACH ROW
+            DECLARE
+                numClubes NUMBER;
+            BEGIN
+                SELECT 4000 INTO numClubes FROM DUAL;
+                :NEW.Num_Socios := :NEW.Num_Socios + numClubes * 100;
+            END;"""
+        tests = """
+            INSERT INTO Club VALUES ('22222222X', 'FALSO', 'Calle', 30000);
+            UPDATE Club SET Num_Socios = 70000 WHERE CIF = '11111113X';"""
+
+        # Time-limit
+        tle = """
+            CREATE OR REPLACE TRIGGER IncrementaNumSocios
+            BEFORE INSERT OR UPDATE
+            ON Club FOR EACH ROW
+            DECLARE
+                numClubes NUMBER;
+                IN_TIME INT := 11; --num seconds
+                v_now DATE;
+            BEGIN
+                LOOP
+                    EXIT WHEN v_now + (IN_TIME * (1/86400)) <= SYSDATE;
+                END LOOP;  
+                SELECT 4000 INTO numClubes FROM DUAL;
+                :NEW.Num_Socios := :NEW.Num_Socios + numClubes * 100;
+            END;"""
+        # Error in the trigger code
+        compile_error = """
+            CREATE OR REPLACE TRIGGER IncrementaNumSocios
+            BEFORE INSERT OR UPDATE
+            ON Club FOR EACH ROW
+            DECLARE
+                numClubes NUMBER;
+                SELECT 4000 INTO numClubes FROM DUAL;
+                :NEW.Num_Socios := :NEW.Num_Socios + numClubes * 100; -- Missing operator
+            END;"""
+        # Division by zero
+        runtime_error = """
+            CREATE OR REPLACE TRIGGER IncrementaNumSocios
+            BEFORE INSERT OR UPDATE
+            ON Club FOR EACH ROW
+            DECLARE
+                numClubes NUMBER;
+            BEGIN
+                SELECT 4000 INTO numClubes FROM DUAL;
+                :NEW.Num_Socios := :NEW.Num_Socios + numClubes / 0;
+            END;"""
+        wrong_answer = """
+            CREATE OR REPLACE TRIGGER IncrementaNumSocios
+            BEFORE INSERT OR UPDATE
+            ON Club FOR EACH ROW
+            DECLARE
+                numClubes NUMBER;
+            BEGIN
+                SELECT 4000 INTO numClubes FROM DUAL;
+                :NEW.Num_Socios := :NEW.Num_Socios + numClubes * 10000;
+            END;"""
+
+        oracle = OracleExecutor.get()
+        problem = TriggerProblem(title_md='Test Function', text_md='bla bla bla',
+                                 create_sql=create, insert_sql=insert, collection=collection,
+                                 author=None, solution=solution, tests=tests)
+        problem.clean()  # Needed to compute extra HTML fields and solutions
+        problem.save()
+
+        # Time-limit
+        assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+
+        # Error when compiling user function (for triggers this happens during execution)
+        assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+
+        # Error when invoking user function
+        assert_executor_exception(lambda: problem.judge(runtime_error, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+
+        # Correct solution
+        assert problem.judge(solution, oracle)[0] == VeredictCode.AC
+
+        # Incorrect solution
+        assert problem.judge(wrong_answer, oracle)[0] == VeredictCode.WA

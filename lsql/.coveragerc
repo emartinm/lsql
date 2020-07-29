@@ -1,4 +1,3 @@
 [run] 
-include = 
-    judge/parse.py
-    judge/feedback.py
+include = judge/*.py
+omit = judge/__init__.py, judge/tests/*.py, judge/migrations/*.py

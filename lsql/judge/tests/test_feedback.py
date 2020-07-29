@@ -2,13 +2,14 @@
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
-Unit tests for the LSQL
+Unit tests for the feedback module
 """
 
 from django.test import TestCase
 
-from .feedback import pretty_type, header_to_str, compare_select_results, compare_db_results, compare_function_results
-from .types import VeredictCode
+from judge.feedback import pretty_type, header_to_str, compare_select_results, compare_db_results, \
+    compare_function_results
+from judge.types import VeredictCode
 
 
 class FeedbackTest(TestCase):

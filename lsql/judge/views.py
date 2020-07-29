@@ -16,7 +16,7 @@ from .forms import SubmitForm
 from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
     Submission
 from .oracle_driver import OracleExecutor
-from .types import VeredictCode, OracleStatusCode
+from .types import VeredictCode, OracleStatusCode, ProblemType
 
 
 def get_child_problem(problem_id):
@@ -113,8 +113,11 @@ def submit(request, problem_id):
         except ExecutorException as excp:
             # Exceptions when judging: RE, TLE, VE or IE
             if excp.error_code == OracleStatusCode.EXECUTE_USER_CODE:
-                data = {'veredict': VeredictCode.RE, 'title': VeredictCode.RE.label,
-                        'message': VeredictCode.RE.message(), 'feedback': excp.message}
+                data = {
+                    'veredict': VeredictCode.RE, 'title': VeredictCode.RE.label,
+                    'message': VeredictCode.RE.message(),
+                    'feedback': f'{excp.statement} --> {excp.message}' if problem.problem_type() == ProblemType.FUNCTION
+                                else excp.message}
             elif excp.error_code == OracleStatusCode.TLE_USER_CODE:
                 data = {'veredict': VeredictCode.TLE, 'title': VeredictCode.TLE.label,
                         'message': VeredictCode.TLE.message(), 'feedback': ''}
