@@ -60,6 +60,19 @@ class OracleTest(TestCase):
         problem.clean()  # Needed to compute extra HTML fields and solutions
         problem.save()
 
+        # Time-limit
+        tle = '''
+        SELECT a, AVG(b), MAX(b), AVG(c), AVG(d)
+        FROM (select 8 AS a, sqrt(8) as b from dual connect by level <= 5000)
+             CROSS JOIN
+             (select 8 as c, sqrt(8) as d from dual connect by level <= 5000)
+        GROUP BY a;'''
+        too_many_rows = 'select * from dual connect by level <= 1001;'
+        too_many_cols = 'select 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 from dual;'
+        assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+        assert_executor_exception(lambda: problem.judge(too_many_rows, oracle), OracleStatusCode.TLE_USER_CODE)
+        assert_executor_exception(lambda: problem.judge(too_many_cols, oracle), OracleStatusCode.TLE_USER_CODE)
+
         # Validation error (only one statement supported)
         assert_executor_exception(lambda: problem.judge('', oracle), OracleStatusCode.NUMBER_STATEMENTS)
         assert_executor_exception(lambda: problem.judge('SELECT * FROM "Nombre Club"; SELECT * FROM "Nombre Club"',
@@ -107,12 +120,78 @@ class OracleTest(TestCase):
           INSERT INTO Club VALUES ('11111115X', 'Un otro equipo', 'Calle falsa, 123', 25478);
           INSERT INTO Club VALUES ('11111114X', 'Real Betis Balompié', 'Av. de Heliópolis, s/n', 45000);
         """
+        # Time-limit
+        tle = '''
+            INSERT INTO Club
+                SELECT CIF, MIN(Nombre) AS nombre, MAX(Sede) as sede, AVG(Num_socios) as Num_socios
+                FROM (select '00000000X' AS CIF, 'a' as Nombre from dual connect by level <= 5000)
+                     CROSS JOIN
+                     (select 'b' as Sede, 56789 AS Num_Socios from dual connect by level <= 5000)
+                GROUP BY CIF;'''
+        too_many_rows = """
+            INSERT INTO Club
+            SELECT level || '3333X', level || 'a', 'b', 45 from dual connect by level <= 1001;
+            """
+        too_many_cols = """
+            CREATE TABLE Test (
+                a1 NUMBER,
+                a2 NUMBER,
+                a3 NUMBER,
+                a4 NUMBER,
+                a5 NUMBER,
+                a6 NUMBER,
+                a7 NUMBER,
+                a8 NUMBER,
+                a9 NUMBER,
+                a10 NUMBER,
+                a11 NUMBER,
+                a12 NUMBER,
+                a13 NUMBER,
+                a14 NUMBER,
+                a15 NUMBER,
+                a16 NUMBER,
+                a17 NUMBER,
+                a18 NUMBER,
+                a19 NUMBER,
+                a20 NUMBER,
+                a21 NUMBER);
+            """
+        too_many_tables = """
+            CREATE TABLE t01(n NUMBER);
+            CREATE TABLE t02(n NUMBER);
+            CREATE TABLE t03(n NUMBER);
+            CREATE TABLE t04(n NUMBER);
+            CREATE TABLE t05(n NUMBER);
+            CREATE TABLE t06(n NUMBER);
+            CREATE TABLE t07(n NUMBER);
+            CREATE TABLE t08(n NUMBER);
+            CREATE TABLE t09(n NUMBER);
+            CREATE TABLE t10(n NUMBER);
+            CREATE TABLE t11(n NUMBER);
+            CREATE TABLE t12(n NUMBER);
+            CREATE TABLE t13(n NUMBER);
+            CREATE TABLE t14(n NUMBER);
+            CREATE TABLE t15(n NUMBER);
+            CREATE TABLE t16(n NUMBER);
+            CREATE TABLE t17(n NUMBER);
+            CREATE TABLE t18(n NUMBER);
+            CREATE TABLE t19(n NUMBER);
+            CREATE TABLE t20(n NUMBER);
+            CREATE TABLE t21(n NUMBER);           
+        """
+
         oracle = OracleExecutor.get()
         problem = DMLProblem(title_md='Test DML', text_md='bla bla bla',
                              create_sql=create, insert_sql=insert, collection=collection,
                              min_stmt=2, max_stmt=2,
                              author=None, check_order=False, solution=solution)
+        problem2 = DMLProblem(title_md='DML problem', text_md='bla bla bla',
+                              create_sql=create, insert_sql=insert, collection=collection,
+                              min_stmt=0, max_stmt=100,
+                              author=None, check_order=False, solution=solution)
         problem.clean()  # Needed to compute extra fields and solutions
+        problem.save()
+        problem2.clean()
         problem.save()
 
         # Validation error (there should be exactly 2 statements)
@@ -142,6 +221,14 @@ class OracleTest(TestCase):
         # Incorrect solution
         assert problem.judge(incorrect1, oracle)[0] == VeredictCode.WA
         assert problem.judge(incorrect2, oracle)[0] == VeredictCode.WA
+
+        # Time-limit
+        assert_executor_exception(lambda: problem2.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+        assert_executor_exception(lambda: problem2.judge(too_many_rows, oracle), OracleStatusCode.TLE_USER_CODE)
+        assert_executor_exception(lambda: problem2.judge(too_many_cols, oracle), OracleStatusCode.TLE_USER_CODE)
+
+        # Too many tables
+        assert_executor_exception(lambda: problem2.judge(too_many_tables, oracle), OracleStatusCode.TLE_USER_CODE)
 
     @staticmethod
     def test_function():

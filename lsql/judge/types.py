@@ -32,7 +32,7 @@ class VeredictCode(models.TextChoices):
         if self == self.TLE:
             return _('Puede deberse a una sobrecarga puntual del servidor, pero seguramente sea debido a que tu '
                      'código SQL no es suficientemente eficiente. Vuelve a enviarlo en unos minutos y si sigues '
-                     'obteniendo el mismo veredicto trata de reescribir tu código lo para ser más eficiente.')
+                     'obteniendo el mismo veredicto trata de reescribir tu código para ser más eficiente.')
         if self == self.RE:
             return _('Tu código SQL ha producido un error durante la ejecución. Consulta el cuadro rojo en '
                      'la parte inferior de la página para ver los detalles.')
