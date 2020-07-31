@@ -5,9 +5,7 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 Generation of feedback messages
 """
 import re
-import json
 
-from django.core.serializers.json import DjangoJSONEncoder
 from django.template.loader import render_to_string
 from multiset import Multiset
 
@@ -103,10 +101,6 @@ def compare_select_results(expected, obtained, order):
     :return: (veredict, feedback), where veredict is VeredictCode.AC or VeredictCode.WA and
              error is a str with feedback to the student
     """
-    # Encodes and decodes the obtained results using the same JSONEncoder used to store the data in the DB
-    # (otherwise dates are represented differently in the results from the DB and the results from Oracle)
-    encoded = json.dumps(obtained, cls=DjangoJSONEncoder)
-    obtained = json.loads(encoded)
     feedback = feedback_headers(expected, obtained)
     if not feedback:
         feedback = feedback_rows(expected, obtained, order)

@@ -48,9 +48,9 @@ def load_many_problems(file, collection):
                 problem.author = collection.author
                 problems.append(problem)
     except ZipFileParsingException as excp:
-        raise ZipFileParsingException('{}: {}'.format(filename.filename, excp))
+        raise ZipFileParsingException('{}: {}'.format(filename.filename, excp)) from excp
     except Exception as excp:
-        raise ZipFileParsingException("{}: {}".format(type(excp), excp))
+        raise ZipFileParsingException("{}: {}".format(type(excp), excp)) from excp
     return problems
 
 
@@ -71,7 +71,7 @@ def load_problem_from_file(file):
         except ZipFileParsingException:
             # It is not the type, try next one
             pass
-    return None
+    raise ZipFileParsingException(f'Unable to load {file}')
 
 
 class Collection(models.Model):
@@ -88,17 +88,20 @@ class Collection(models.Model):
 
     def clean(self):
         """Loads and overwrite data from the ZIP file (if it is set) and creates HTML from markdown"""
-        if self.zipfile:
-            problems = load_many_problems(self.zipfile, self)
-            for problem in problems:
-                problem.clean()
-                problem.save()
-                logger.debug('Added problem %s "%s" from ZIP (batch)', type(problem), problem)
-            self.zipfile = None  # Avoids storing the file in the filysystem
+        try:
+            if self.zipfile:
+                problems = load_many_problems(self.zipfile, self)
+                for problem in problems:
+                    problem.clean()
+                    problem.save()
+                    logger.debug('Added problem %s "%s" from ZIP (batch)', type(problem), problem)
+                self.zipfile = None  # Avoids storing the file in the filysystem
 
-        super().clean()
-        self.name_html = markdown_to_html(self.name_md, remove_initial_p=True)
-        self.description_html = markdown_to_html(self.description_md, remove_initial_p=False)
+            super().clean()
+            self.name_html = markdown_to_html(self.name_md, remove_initial_p=True)
+            self.description_html = markdown_to_html(self.description_md, remove_initial_p=False)
+        except Exception as excp:
+            raise ValidationError(excp) from excp
 
     def __str__(self):
         """String to show in the Admin"""
@@ -189,10 +192,8 @@ class SelectProblem(Problem):
             res = executor.execute_select_test(self.create_sql, self.insert_sql, self.solution, output_db=True)
             self.expected_result = res['result']
             self.initial_db = res['db']
-        except ValidationError:
-            raise
         except Exception as excp:
-            raise ValidationError(excp)
+            raise ValidationError(excp) from excp
 
     def template(self):
         return 'problem_select.html'
@@ -223,10 +224,8 @@ class DMLProblem(Problem):
             res = executor.execute_dml_test(self.create_sql, self.insert_sql, self.solution, pre_db=True)
             self.expected_result = res['post']
             self.initial_db = res['pre']
-        except ValidationError:
-            raise
         except Exception as excp:
-            raise ValidationError(excp)
+            raise ValidationError(excp) from excp
 
     def template(self):
         return 'problem_dml.html'
@@ -259,17 +258,15 @@ class FunctionProblem(Problem):
             res = executor.execute_function_test(self.create_sql, self.insert_sql, self.solution, self.calls)
             self.expected_result = res['results']
             self.initial_db = res['db']
-        except ValidationError:
-            raise
         except Exception as excp:
-            raise ValidationError(excp)
+            raise ValidationError(excp) from excp
 
     def template(self):
         return 'problem_function.html'
 
     def expected_result_as_table(self):
         """Transforms the dict with the expected result in a dict representing a table that can be shown
-        in the templaes (adding a header)"""
+        in the templates (after adding a header)"""
         rows = [[call, result] for call, result in self.expected_result.items()]
         return {'rows': rows, 'header': [('Llamada', None), ('Resultado', None)]}
 
@@ -305,10 +302,8 @@ class ProcProblem(Problem):
                                              pre_db=True)
             self.expected_result = res['post']
             self.initial_db = res['pre']
-        except ValidationError:
-            raise
         except Exception as excp:
-            raise ValidationError(excp)
+            raise ValidationError(excp) from excp
 
     def judge(self, code, executor):
         oracle_result = executor.execute_proc_test(self.create_sql, self.insert_sql, code, self.proc_call, pre_db=False)
@@ -341,10 +336,8 @@ class TriggerProblem(Problem):
                                                 self.solution, self.tests, pre_db=True)
             self.expected_result = res['post']
             self.initial_db = res['pre']
-        except ValidationError:
-            raise
         except Exception as excp:
-            raise ValidationError(excp)
+            raise ValidationError(excp) from excp
 
     def judge(self, code, executor):
         oracle_result = executor.execute_trigger_test(self.create_sql, self.insert_sql, code, self.tests, pre_db=False)

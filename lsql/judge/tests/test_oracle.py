@@ -13,32 +13,28 @@ from judge.types import VeredictCode, OracleStatusCode
 from judge.exceptions import ExecutorException
 
 
-def assert_executor_exception(function, status_code):
-    """Checks if executing the nullary function raises an ExecutorException with the statuus_code"""
-    try:
-        function()
-    except ExecutorException as excp:
-        assert excp.error_code == status_code
-
-
 class OracleTest(TestCase):
     """"Tests for oracle_driver"""
 
-    @staticmethod
-    def test_version():
+    def assert_executor_exception(self, function, status_code):
+        """Checks if executing the nullary function raises an ExecutorException with the statuus_code"""
+        try:
+            function()
+        except ExecutorException as excp:
+            self.assertEqual(excp.error_code, status_code)
+
+    def test_version(self):
         """Test for get_version()"""
         oracle = OracleExecutor.get()
         parts = oracle.get_version().split()
-        assert parts[0] == 'Oracle'
-        assert int(parts[1].split('.')[0]) >= 11
+        self.assertEqual(parts[0], 'Oracle')
+        self.assertTrue(int(parts[1].split('.')[0]) >= 11)
 
-    @staticmethod
-    def test_empty_clean_code():
+    def test_empty_clean_code(self):
         """Test for cleaning a null SQL code"""
-        assert clean_sql(None) == []
+        self.assertEqual(clean_sql(None), [])
 
-    @staticmethod
-    def test_select():
+    def test_select(self):
         """Tests for SelectProblem.judge()"""
         collection = Collection()
         collection.save()
@@ -69,34 +65,36 @@ class OracleTest(TestCase):
         GROUP BY a;'''
         too_many_rows = 'select * from dual connect by level <= 1001;'
         too_many_cols = 'select 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 from dual;'
-        assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
-        assert_executor_exception(lambda: problem.judge(too_many_rows, oracle), OracleStatusCode.TLE_USER_CODE)
-        assert_executor_exception(lambda: problem.judge(too_many_cols, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(too_many_rows, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(too_many_cols, oracle), OracleStatusCode.TLE_USER_CODE)
 
         # Validation error (only one statement supported)
-        assert_executor_exception(lambda: problem.judge('', oracle), OracleStatusCode.NUMBER_STATEMENTS)
-        assert_executor_exception(lambda: problem.judge('SELECT * FROM "Nombre Club"; SELECT * FROM "Nombre Club"',
-                                                        oracle),
-                                  OracleStatusCode.NUMBER_STATEMENTS)
+        self.assert_executor_exception(lambda: problem.judge('', oracle), OracleStatusCode.NUMBER_STATEMENTS)
+        self.assert_executor_exception(lambda: problem.judge('SELECT * FROM "Nombre Club"; SELECT * FROM "Nombre Club"',
+                                                             oracle), OracleStatusCode.NUMBER_STATEMENTS)
 
         # Runtime error
-        assert_executor_exception(lambda: problem.judge('SELECT * from "Nombre ClubE"', oracle),
-                                  OracleStatusCode.EXECUTE_USER_CODE)
-        assert_executor_exception(lambda: problem.judge('SELECT * from Club', oracle),
-                                  OracleStatusCode.EXECUTE_USER_CODE)
-        assert_executor_exception(lambda: problem.judge('SELECT * FROM', oracle), OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge('SELECT * from "Nombre ClubE"', oracle),
+                                       OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge('SELECT * from Club', oracle),
+                                       OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge('SELECT * FROM', oracle),
+                                       OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        assert problem.judge(solution, oracle)[0] == VeredictCode.AC
-        assert problem.judge('SELECT CIF, NOmbre, Sede, Num_Socios FROM "Nombre Club"', oracle)[0] == VeredictCode.AC
-        assert problem.judge('SELECT * FROM "Nombre Club" ORDER BY Num_Socios ASC', oracle)[0] == VeredictCode.AC
+        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
+        self.assertEqual(problem.judge('SELECT CIF, NOmbre, Sede, Num_Socios FROM "Nombre Club"', oracle)[0],
+                         VeredictCode.AC)
+        self.assertEqual(problem.judge('SELECT * FROM "Nombre Club" ORDER BY Num_Socios ASC', oracle)[0],
+                         VeredictCode.AC)
 
         # Incorrect solution
-        assert problem.judge('SELECT CIF FROM "Nombre Club"', oracle)[0] == VeredictCode.WA
-        assert problem.judge('SELECT * FROM "Nombre Club" WHERE Num_Socios < 50000', oracle)[0] == VeredictCode.WA
+        self.assertEqual(problem.judge('SELECT CIF FROM "Nombre Club"', oracle)[0], VeredictCode.WA)
+        self.assertEqual(problem.judge('SELECT * FROM "Nombre Club" WHERE Num_Socios < 50000', oracle)[0],
+                         VeredictCode.WA)
 
-    @staticmethod
-    def test_dml():
+    def test_dml(self):
         """Tests for DMLProblem.judge()"""
         collection = Collection()
         collection.save()
@@ -195,43 +193,42 @@ class OracleTest(TestCase):
         problem.save()
 
         # Validation error (there should be exactly 2 statements)
-        assert_executor_exception(
+        self.assert_executor_exception(
             lambda: problem.judge("INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000)", oracle),
             OracleStatusCode.NUMBER_STATEMENTS)
-        assert_executor_exception(
+        self.assert_executor_exception(
             lambda: problem.judge("""INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
                                      INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
                                      INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000)""", oracle),
             OracleStatusCode.NUMBER_STATEMENTS)
 
         # Runtime error
-        assert_executor_exception(
+        self.assert_executor_exception(
             lambda: problem.judge("""INSERT Club VALUES ('11111114X', 'R', 'A', 45000);
                                      INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);""", oracle),
             OracleStatusCode.EXECUTE_USER_CODE)
-        assert_executor_exception(
+        self.assert_executor_exception(
             lambda: problem.judge("""INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
                                      INSERT Club VALUES ('11111114X', 'R', 'A', 45000);""", oracle),
             OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        assert problem.judge(solution, oracle)[0] == VeredictCode.AC
-        assert problem.judge(solution_order, oracle)[0] == VeredictCode.AC
+        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
+        self.assertEqual(problem.judge(solution_order, oracle)[0], VeredictCode.AC)
 
         # Incorrect solution
-        assert problem.judge(incorrect1, oracle)[0] == VeredictCode.WA
-        assert problem.judge(incorrect2, oracle)[0] == VeredictCode.WA
+        self.assertEqual(problem.judge(incorrect1, oracle)[0], VeredictCode.WA)
+        self.assertEqual(problem.judge(incorrect2, oracle)[0], VeredictCode.WA)
 
         # Time-limit
-        assert_executor_exception(lambda: problem2.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
-        assert_executor_exception(lambda: problem2.judge(too_many_rows, oracle), OracleStatusCode.TLE_USER_CODE)
-        assert_executor_exception(lambda: problem2.judge(too_many_cols, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem2.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem2.judge(too_many_rows, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem2.judge(too_many_cols, oracle), OracleStatusCode.TLE_USER_CODE)
 
         # Too many tables
-        assert_executor_exception(lambda: problem2.judge(too_many_tables, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem2.judge(too_many_tables, oracle), OracleStatusCode.TLE_USER_CODE)
 
-    @staticmethod
-    def test_function():
+    def test_function(self):
         """Tests for FunctionProblem.judge()"""
         collection = Collection()
         collection.save()
@@ -307,23 +304,24 @@ class OracleTest(TestCase):
         problem.save()
 
         # Time-limit
-        assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
 
         # Error when compiling user function
-        assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.COMPILATION_ERROR)
+        self.assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.COMPILATION_ERROR)
 
         # Error when invoking user function
-        assert_executor_exception(lambda: problem.judge(runtime_error1, oracle), OracleStatusCode.EXECUTE_USER_CODE)
-        assert_executor_exception(lambda: problem.judge(runtime_error2, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(runtime_error1, oracle),
+                                       OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(runtime_error2, oracle),
+                                       OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        assert problem.judge(solution, oracle)[0] == VeredictCode.AC
+        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
 
         # Incorrect solution
-        assert problem.judge(wrong_answer, oracle)[0] == VeredictCode.WA
+        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VeredictCode.WA)
 
-    @staticmethod
-    def test_proc():
+    def test_proc(self):
         """Tests for ProcProblem.judge()"""
         collection = Collection()
         collection.save()
@@ -400,23 +398,24 @@ class OracleTest(TestCase):
         problem.save()
 
         # Time-limit
-        assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
 
         # Error when compiling user function
-        assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.COMPILATION_ERROR)
+        self.assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.COMPILATION_ERROR)
 
         # Error when invoking user function
-        assert_executor_exception(lambda: problem.judge(runtime_error1, oracle), OracleStatusCode.EXECUTE_USER_CODE)
-        assert_executor_exception(lambda: problem.judge(runtime_error2, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(runtime_error1, oracle),
+                                       OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(runtime_error2, oracle),
+                                       OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        assert problem.judge(solution, oracle)[0] == VeredictCode.AC
+        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
 
         # Incorrect solution
-        assert problem.judge(wrong_answer, oracle)[0] == VeredictCode.WA
+        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VeredictCode.WA)
 
-    @staticmethod
-    def test_trigger():
+    def test_trigger(self):
         """Tests for TriggerProblem.judge()"""
         collection = Collection()
         collection.save()
@@ -500,16 +499,35 @@ class OracleTest(TestCase):
         problem.save()
 
         # Time-limit
-        assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
 
         # Error when compiling user function (for triggers this happens during execution)
-        assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.EXECUTE_USER_CODE)
 
         # Error when invoking user function
-        assert_executor_exception(lambda: problem.judge(runtime_error, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(runtime_error, oracle), OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        assert problem.judge(solution, oracle)[0] == VeredictCode.AC
+        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
 
         # Incorrect solution
-        assert problem.judge(wrong_answer, oracle)[0] == VeredictCode.WA
+        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VeredictCode.WA)
+
+    def test_table_with_date(self):
+        """Check that DATEs are correctly stored and retrived from the DB, and comparing them to a new obtained
+        value works as expected"""
+        collection = Collection()
+        collection.save()
+        create = 'CREATE TABLE test (day DATE);'
+        insert = "INSERT INTO test VALUES (TO_DATE('2003/07/09', 'yyyy/mm/dd'))"
+        solution = 'SELECT * FROM test'
+        problem = SelectProblem(title_md='Dates', text_md='Example with dates',
+                                create_sql=create, insert_sql=insert, collection=collection,
+                                solution=solution)
+        problem.clean()
+        problem.save()
+        oracle = OracleExecutor.get()
+        veredict, _ = problem.judge(solution, oracle)
+        self.assertEqual(veredict, VeredictCode.AC)
+        veredict, _ = problem.judge("SELECT TO_DATE('2003/07/09', 'yyyy/mm/dd') AS day FROM dual", oracle)
+        self.assertEqual(veredict, VeredictCode.AC)

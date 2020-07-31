@@ -382,8 +382,8 @@ class OracleExecutor:
             error_msg = str(excp)
             logger.info('Error when testing SELECT statements: %s - %s - %s', state, excp, select)
             if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
-                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, select)
-            raise ExecutorException(state, error_msg, select)
+                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, select) from excp
+            raise ExecutorException(state, error_msg, select) from excp
         finally:
             if conn:
                 conn.close()
@@ -466,8 +466,8 @@ class OracleExecutor:
             error_msg = str(excp)
             logger.info('Error when testing DML statements: %s - %s - %s', state, excp, stmt)
             if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
-                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt)
-            raise ExecutorException(state, error_msg, stmt)
+                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
+            raise ExecutorException(state, error_msg, stmt) from excp
         finally:
             if conn:
                 conn.close()
@@ -562,8 +562,8 @@ class OracleExecutor:
             logger.info('Error when testing function statements: %s - %s - %s',
                         state, excp, stmt)
             if 'ORA-3156' in str(excp) and state == OracleStatusCode.EXECUTE_USER_CODE:
-                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, excp, stmt)
-            raise ExecutorException(state, excp, stmt)
+                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, excp, stmt) from excp
+            raise ExecutorException(state, excp, stmt) from excp
         finally:
             if conn:
                 conn.close()
@@ -657,8 +657,8 @@ class OracleExecutor:
             logger.info('Error when testing procedure creation and call: %s - %s - %s',
                         state, excp, stmt)
             if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
-                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt)
-            raise ExecutorException(state, error_msg, stmt)
+                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
+            raise ExecutorException(state, error_msg, stmt) from excp
         finally:
             if conn:
                 conn.close()
@@ -745,8 +745,8 @@ class OracleExecutor:
             logger.info('Error when testing procedure creation and call: %s - %s - %s',
                         state, excp, stmt)
             if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
-                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt)
-            raise ExecutorException(state, error_msg, stmt)
+                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
+            raise ExecutorException(state, error_msg, stmt) from excp
         finally:
             if conn:
                 conn.close()

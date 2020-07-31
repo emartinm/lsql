@@ -22,6 +22,3 @@ class ExecutorException(Exception):
         # value from types.SelectStatusCode
         self.error_code = error_code
         self.statement = statement
-
-    def __repr__(self):
-        return f'ExecutorException({self.error_code}, {self.message}, {self.statement})'
