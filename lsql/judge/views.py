@@ -69,6 +69,8 @@ def show_problem(request, problem_id):
     problem = get_child_problem(problem_id)
     # Stores the flag in an attribute so that the template can use it
     problem.solved = problem.solved_by_user(request.user)
+    if problem.problem_type() == ProblemType.FUNCTION:
+        problem.expected_result_as_table = problem.result_as_table()  # To be used when rendering template
     return render(request, problem.template(), {'problem': problem})
 
 
@@ -101,7 +103,8 @@ def submit(request, problem_id):
     general_problem = get_object_or_404(Problem, pk=problem_id)
     problem = get_child_problem(problem_id)
     submit_form = SubmitForm(request.POST)
-    data = {'veredict': None, 'title': '', 'message': '', 'feedback': ''}
+    data = {'veredict': VeredictCode.IE, 'title': VeredictCode.IE.label,
+            'message': VeredictCode.IE.message(), 'feedback': ''}
     code = ''
     if submit_form.is_valid():
         try:
@@ -124,9 +127,6 @@ def submit(request, problem_id):
             elif excp.error_code == OracleStatusCode.NUMBER_STATEMENTS:
                 data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
                         'message': VeredictCode.VE.message(), 'feedback': excp.message}
-            else:
-                data = {'veredict': VeredictCode.IE, 'title': VeredictCode.IE.label,
-                        'message': VeredictCode.IE.message(), 'feedback': ''}
     else:
         data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
                 'message': VeredictCode.VE.message(), 'feedback': ''}

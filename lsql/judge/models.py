@@ -105,7 +105,7 @@ class Collection(models.Model):
 
     def __str__(self):
         """String to show in the Admin"""
-        return html.fromstring(self.name_html).text_content()
+        return html.fromstring(self.name_html).text_content() if self.name_html else self.name_md
 
     def problems(self):
         """Returns a list of Problem objects in the collection using the inverse FK from Problem to Collection"""
@@ -264,7 +264,7 @@ class FunctionProblem(Problem):
     def template(self):
         return 'problem_function.html'
 
-    def expected_result_as_table(self):
+    def result_as_table(self):
         """Transforms the dict with the expected result in a dict representing a table that can be shown
         in the templates (after adding a header)"""
         rows = [[call, result] for call, result in self.expected_result.items()]

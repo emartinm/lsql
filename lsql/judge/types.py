@@ -27,21 +27,22 @@ class VeredictCode(models.TextChoices):
 
     def message(self):
         """Message to show in the modal window in the webpage"""
+        msg = _('Error inesperado al ejecutar tu código. Por favor, inténtalo de nuevo.')
         if self == self.AC:
-            return _('¡Enhorabuena! Tu código SQL ha generado los resultados esperados.')
-        if self == self.TLE:
-            return _('Puede deberse a una sobrecarga puntual del servidor, pero seguramente sea debido a que tu '
-                     'código SQL no es suficientemente eficiente. Vuelve a enviarlo en unos minutos y si sigues '
-                     'obteniendo el mismo veredicto trata de reescribir tu código para ser más eficiente.')
-        if self == self.RE:
-            return _('Tu código SQL ha producido un error durante la ejecución. Consulta el cuadro rojo en '
-                     'la parte inferior de la página para ver los detalles.')
-        if self == self.WA:
-            return _('Tu código SQL ha generado resultados erróneos. Consulta el cuadro rojo en la parte inferior '
-                     'de la página para ver los detalles.')
-        if self == self.IE:
-            return _('Error inesperado al ejecutar tu código. Por favor, inténtalo de nuevo.')
-        return _('Error de validación de tu código.')  # self == self.VE:
+            msg = _('¡Enhorabuena! Tu código SQL ha generado los resultados esperados.')
+        elif self == self.TLE:
+            msg = _('Puede deberse a una sobrecarga puntual del servidor, pero seguramente sea debido a que tu '
+                    'código SQL no es suficientemente eficiente. Vuelve a enviarlo en unos minutos y si sigues '
+                    'obteniendo el mismo veredicto trata de reescribir tu código para ser más eficiente.')
+        elif self == self.RE:
+            msg = _('Tu código SQL ha producido un error durante la ejecución. Consulta el cuadro rojo en '
+                    'la parte inferior de la página para ver los detalles.')
+        elif self == self.WA:
+            msg = _('Tu código SQL ha generado resultados erróneos. Consulta el cuadro rojo en la parte inferior '
+                    'de la página para ver los detalles.')
+        elif self == self.VE:
+            msg = _('Error de validación de tu código.')  # self == self.VE:
+        return msg
 
 
 @unique

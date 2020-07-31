@@ -12,6 +12,13 @@ from judge.models import SelectProblem, Collection, DMLProblem, FunctionProblem,
 from judge.types import VeredictCode, OracleStatusCode
 from judge.exceptions import ExecutorException
 
+SELECT_TLE = '''
+        SELECT a, AVG(b), MAX(b), AVG(c), AVG(d)
+        FROM (select 8 AS a, sqrt(8) as b from dual connect by level <= 5000)
+             CROSS JOIN
+             (select 8 as c, sqrt(8) as d from dual connect by level <= 5000)
+        GROUP BY a;'''
+
 
 class OracleTest(TestCase):
     """"Tests for oracle_driver"""
@@ -57,12 +64,7 @@ class OracleTest(TestCase):
         problem.save()
 
         # Time-limit
-        tle = '''
-        SELECT a, AVG(b), MAX(b), AVG(c), AVG(d)
-        FROM (select 8 AS a, sqrt(8) as b from dual connect by level <= 5000)
-             CROSS JOIN
-             (select 8 as c, sqrt(8) as d from dual connect by level <= 5000)
-        GROUP BY a;'''
+        tle = SELECT_TLE
         too_many_rows = 'select * from dual connect by level <= 1001;'
         too_many_cols = 'select 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 from dual;'
         self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)

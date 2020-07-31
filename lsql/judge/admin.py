@@ -77,15 +77,12 @@ class TriggerProblemAdmin(admin.ModelAdmin):
 
 class CollectionAdmin(admin.ModelAdmin):
     """Model for Collection"""
-    def get_fieldsets(self, request, obj=None):
-        # Only shows the ZIP file when the collection exists
-        if obj is None:
-            return [(None, {'fields': ('name_md', 'position', 'description_md', 'author')})]
-        return [
-            ('Load problems from ZIP (the new problems will be added)', {'fields': ('zipfile', )}),
-            ('Collection data', {'fields': ('name_md', 'position', 'description_md', 'author')})
-        ]
-
+    # define get_fieldsets(self, request, obj=None) to have a dynamic behavior
+    fieldsets = [
+        ('Load problems from ZIP (only if the collecton exists).  The new problems will be added)',
+         {'fields': ('zipfile', )}),
+        ('Collection data', {'fields': ('name_md', 'position', 'description_md', 'author')})
+    ]
     list_display = ('name_md', 'author', 'creation_date')
     list_filter = ['creation_date']
 
