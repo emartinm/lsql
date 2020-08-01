@@ -34,7 +34,6 @@ class ParseTest(TestCase):
     SELECT_MISSING_FILES = 'select_missing_files.zip'
     SELECT_EMPTY_TITLE = 'select_empty_title.zip'
     SELEC_TEXT_DECODE = 'select_text_decode.zip'
-    SELEC_TEXT_DECODE = 'select_text_decode.zip'
 
     DML_MISSING_FILES = 'dml_missing_files.zip'
     DML_BAD_NUM_STMT = 'dml_bad_num_stmt.zip'

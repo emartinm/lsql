@@ -69,8 +69,6 @@ def show_problem(request, problem_id):
     problem = get_child_problem(problem_id)
     # Stores the flag in an attribute so that the template can use it
     problem.solved = problem.solved_by_user(request.user)
-    if problem.problem_type() == ProblemType.FUNCTION:
-        problem.expected_result_as_table = problem.result_as_table()  # To be used when rendering template
     return render(request, problem.template(), {'problem': problem})
 
 
