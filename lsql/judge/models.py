@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinLengthValidator
-from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 
 from .feedback import compare_select_results, compare_db_results, compare_function_results

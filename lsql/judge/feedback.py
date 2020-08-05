@@ -11,12 +11,19 @@ from multiset import Multiset
 
 from .types import VeredictCode
 
-__ORACLE_TYPE_PATTERN = r"<class 'cx_Oracle\.(.*)'>"
+__ORACLE_TYPE_PATTERN_v7 = r"<class 'cx_Oracle\.(.*)'>"
+__ORACLE_TYPE_PATTERN_v8 = r"<cx_Oracle\.DbType (.*)>"
 
 
 def pretty_type(type_str):
-    """Given a string representing a type of cx_Oracle, extracts the important fragment"""
-    match = re.match(__ORACLE_TYPE_PATTERN, type_str)
+    """Given a string representing a type of cx_Oracle (https://cx-oracle.readthedocs.io/en/latest/api_manual/
+    module.html?highlight=cx_Oracle.DbType%20DB_TYPE_CHAR#database-types), extracts the important fragment
+    Adapted to support cx_Oracle v8 types as '<cx_Oracle.DbType DB_TYPE_CHAR>' as well as deprecated cx_Oracle v7 types
+    """
+    match = re.match(__ORACLE_TYPE_PATTERN_v8, type_str)
+    if match:
+        return match.group(1)
+    match = re.match(__ORACLE_TYPE_PATTERN_v7, type_str)
     if match:
         return match.group(1)
     return type_str
