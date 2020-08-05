@@ -163,12 +163,13 @@ def execute_sql_script(conn, script):
     """
     init = time.time()
     statements = clean_sql(script)
-    with conn.cursor() as cursor:
-        for statement in statements:
-            cursor.execute(statement)
-        conn.commit()
-        logger.debug('User %s - SQL script <<%s>> executed in %s seconds',
-                     conn.username, statements, time.time() - init)
+    if len(statements) > 0:
+        with conn.cursor() as cursor:
+            for statement in statements:
+                cursor.execute(statement)
+            conn.commit()
+            logger.debug('User %s - SQL script <<%s>> executed in %s seconds',
+                         conn.username, statements, time.time() - init)
 
 
 # Dropping users will automatically remove all their objects

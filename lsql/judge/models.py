@@ -109,7 +109,7 @@ class Collection(models.Model):
 
     def problems(self):
         """Returns a list of Problem objects in the collection using the inverse FK from Problem to Collection"""
-        return self.problem_set.filter()
+        return self.problem_set.all().order_by('position', '-creation_date')
 
     def num_problems(self):
         """Number of problems in the collection"""
