@@ -80,13 +80,13 @@ DATABASES = {
     #     'ENGINE': 'django.db.backends.sqlite3',
     #     'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     # }
-    'default': {
+    'default': {  # Takes default values if there are no envirnoment variables
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ['PG_DB'],
-        'USER': os.environ['PG_USER'],
-        'PASSWORD': os.environ['PG_PASS'],
-        'HOST': os.environ['PG_SERVER'],
-        'PORT': os.environ['PG_PORT'],
+        'NAME': os.environ.get('PG_DB', 'postgres'),
+        'USER': os.environ.get('PG_USER', 'postgres'),
+        'PASSWORD': os.environ.get('PG_PASS', ''),
+        'HOST': os.environ.get('PG_SERVER', 'localhost'),
+        'PORT': os.environ('PG_PORT', 5432),
     }
 }
 
