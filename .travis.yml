@@ -6,11 +6,11 @@ python:
   - "3.7"
   - "3.8"
 ## Configure Oracle 11g R2 XE from https://github.com/Vincit/travis-oracledb-xe
-## And you will be able to connect the database in localhost:1521 with user/pass: travis/travis
+## You will be able to connect the Oracle database in localhost:1521 with user/pass: travis/travis
 ## and with SYSDBA role user/pass: sys/travis.
 sudo: required
 env:
-  - ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe ORACLE_SID=XE ORACLE_MAX_GESTOR_CONNECTIONS=20 ORACLE_GESTOR_POOL_TIMEOUT_MS=20000 ORACLE_STMT_TIMEOUT_MS=1500 ORACLE_SERVER=localhost ORACLE_PORT=1521 ORACLE_TABLESPACE=USERS ORACLE_USER=sys ORACLE_PASS=travis ORACLE_MAX_COLS=20 ORACLE_MAX_ROWS=1000 ORACLE_MAX_TABLES=20 PG_USER=postgres PG_PASS=travis PG_SERVER=localhost PG_PORT=5432 PG_DB=postgres
+  - ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe ORACLE_SID=XE ORACLE_MAX_GESTOR_CONNECTIONS=20 ORACLE_GESTOR_POOL_TIMEOUT_MS=20000 ORACLE_STMT_TIMEOUT_MS=1500 ORACLE_SERVER=localhost ORACLE_PORT=1521 ORACLE_TABLESPACE=USERS ORACLE_USER=SYSDBA ORACLE_PASS=travis ORACLE_MAX_COLS=20 ORACLE_MAX_ROWS=1000 ORACLE_MAX_TABLES=20 PG_USER=postgres PG_PASS=travis PG_SERVER=localhost PG_PORT=5432 PG_DB=postgres
 before_install:
   - sudo apt-get update
   - sudo apt install libaio1
