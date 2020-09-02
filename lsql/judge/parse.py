@@ -134,7 +134,7 @@ def load_dml_problem(problem, file):
     except ZipFileParsingException:
         raise
     except Exception as excp:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp))
+        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp)) from excp
 
 
 def load_function_problem(problem, file):
