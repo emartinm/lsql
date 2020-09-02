@@ -5,11 +5,33 @@ services:
 python:
   - "3.7"
   - "3.8"
+## Configure Oracle 11g R2 XE from https://github.com/Vincit/travis-oracledb-xe
+## And you will be able to connect the database in localhost:1521 with user/pass: travis/travis
+## and with SYSDBA role user/pass: sys/travis.
+sudo: required
+env:
+  - ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
+  - ORACLE_SID=XE  # xe?
+  - ORACLE_MAX_GESTOR_CONNECTIONS=20
+  - ORACLE_GESTOR_POOL_TIMEOUT_MS=20000
+  - ORACLE_STMT_TIMEOUT_MS=1500
+  - ORACLE_SERVER=localhost
+  - ORACLE_PORT=1521
+  - ORACLE_TABLESPACE=USERS
+  - ORACLE_USER=sys
+  - ORACLE_PASS=travis
+  - ORACLE_MAX_COLS=20
+  - ORACLE_MAX_ROWS=1000
+  - ORACLE_MAX_TABLES=20
+before_install:
+  - wget https://raw.githubusercontent.com/Vincit/travis-oracledb-xe/master/accept_the_license_agreement_for_oracledb_xe_11g_and_install.sh
+  - bash ./accept_the_license_agreement_for_oracledb_xe_11g_and_install.sh
+##
 # command to install dependencies
 install:
   - pip install -r requirements.txt
 # command to run tests
 script:
 #  - ./pylint.sh
-  - ./tests.sh
+  - ./tests_travis.sh
 
