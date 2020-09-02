@@ -15,7 +15,6 @@ from judge.models import Collection, Problem, SelectProblem, DMLProblem, Functio
     ProcProblem, TriggerProblem
 
 
-
 class ParseTest(TestCase):
     """Tests for module parse"""
     ZIP_FOLDER = 'zip_files'
@@ -50,6 +49,10 @@ class ParseTest(TestCase):
     TRIGGER_MISSING_FILES = 'trigger_missing_files.zip'
     TRIGGER_EMPTY_TITLE = 'trigger_empty_title.zip'
     TRIGGER_TEXT_DECODE = 'trigger_text_decode.zip'
+
+    def test_must_fail(self):
+        """Example of a failing test"""
+        self.assertTrue(False)
 
     def test_no_json(self):
         """Loading problem details form a ZIP without JSON file"""
