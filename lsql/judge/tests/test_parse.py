@@ -50,10 +50,6 @@ class ParseTest(TestCase):
     TRIGGER_EMPTY_TITLE = 'trigger_empty_title.zip'
     TRIGGER_TEXT_DECODE = 'trigger_text_decode.zip'
 
-    def test_must_fail(self):
-        """Example of a failing test"""
-        self.assertTrue(False)
-
     def test_no_json(self):
         """Loading problem details form a ZIP without JSON file"""
         curr_path = os.path.dirname(__file__)
