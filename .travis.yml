@@ -1,5 +1,7 @@
 dist: focal
 language: python
+services:
+  - postgresql
 python:
   - "3.7"
   - "3.8"
@@ -8,5 +10,6 @@ install:
   - pip install -r requirements.txt
 # command to run tests
 script:
-  - ./pylint.sh
+#  - ./pylint.sh
+  - ./tests.sh
 
