@@ -1,21 +1,29 @@
 # TODO:
- * Añadir pruebas automáticas
- * En el repositorio GitHub, añadir comprobaciones (pylint, mypy, cobertura de tests...) => TravisCI?
  * Hacer un robots.txt para evitar que indexen imágenes ni nada
- * Aislar cada parte en su docker:
-   * Incluir el frontend dentro de un docker ubuntu:latest personalizado
-     que lanza gunicorn. Redirigir puerto al lanzar
-   * Usar imagen docker de postgresql 12
-   * Usar imagen docker de oracle 11g XE
  * Indicar ilustraciones obtenidas de:
    * https://freesvg.org/red-cross-not-ok-vector-icon (dominio público)
    * https://icons.getbootstrap.com/ (MIT)
  
 # Mejoras propuestas:
- * (Jesús Correas) Que se pueda poner en inglés
- * (Jesús Correas) Que en todos los ejercicios haya un botón para descargarse el script de creación de las tablas y carga de datos.
- * (Jesús Correas) Triggers: mejorar la comparación de resultados y diseño de casos de prueba.
- * (Jesús Correas) Incluir almacenar datos de puntuación para calificar automáticamente, gestión de grupos de clase, etc.
- * (Jesús Correas) Hacer una representación gráfica del diseño de BD de cada pregunta (al estilo del modelo relacional o tipo uml, representando claves externas y primarias, etc.)
-
+ * (JC) Soporte multi-idioma para mostrar el sistema en inglés (https://docs.djangoproject.com/en/3.1/topics/i18n/)
+ * (JC) Botón para descargarse el *script* de creación de las tablas y carga de datos en cada problema.
+ * (JC) Triggers: mejorar la comparación de resultados y diseño de casos de prueba.
+ * (JC) Almacenar puntuación para calificar automáticamente algunos ejercicios (exportar o comunicar con Moodle), 
+ gestión de grupos de clase, etc.
+ * (JC) Representación gráfica del diseño de BD de cada pregunta (al estilo del modelo relacional o tipo UML, 
+ representando claves externas y primarias, etc.)
+ * (JC) Modo competición: ver los resultados de los demás estudiantes y sus puntos, primer estudiante en resolver cada 
+ problema. ¿Agrupar por clases/ver todos?
+*  (JC) Modo examen: horario reducido, sin retroalimentación de solución o sin mostrar el resultado esperado. ¿Crear 
+una agrupación concreta para cada examen con usuarios nuevos o reutilizar los existentes?
+* (JC) Mejorar retroalimentación: pistas más inteligentes, p.ej. ```Te falta usar la tabla X en FROM```
+* (EM) Soporte de otros SGBD: PostgreSQL, MySQL, MariaDB, SQLite, etc.
+* (JC) Comprobar también la salida estándar en PL/SQL (PUT_LINE)
+* (JC) Gestión de excepciones en PL/SQL: ver que se lanzan las que deberían
+* (JC) Permitir varios casos de prueba en PL/SQL con distintos valores para los parámetros (actualmente suportado 
+en funciones pero no en procedimientos).
+* (EM) Permitir varias BD uniciales como casos de prueba en los ejercicios (actualmente solo se considera una 
+BD inicial).
+* (DI) Subir solución como fichero SQL arrastrando o con botón.
+* (JC) Diseñar los conjuntos de datos necesarios para probar una consulta que puede ser errónea.
 
