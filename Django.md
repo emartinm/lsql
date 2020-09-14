@@ -3,7 +3,7 @@
 # Acceder al shell de la BD para consultar tablas a mano
 $ python manage.py dbshell
 
-# Calcular migraciones pendientes
+# Generar migraciones pendientes
 $ python manage.py makemigrations
 
 # Aplicar migracions pendientes
@@ -26,4 +26,8 @@ $ python manage.py shell
 >>> p.id = None
 >>> p.pk = None
 >>> p.save()
+
+# Comprobar que la configuración es segura para desplegar el sistema 
+# (DEBUG desactivado, el SECRET_KEY es suficientemente larga, etc.) 
+>>> python manage.py check --deploy¶
 ```
