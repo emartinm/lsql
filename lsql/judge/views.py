@@ -75,7 +75,7 @@ def show_problem(request, problem_id):
 @login_required
 def show_submissions(request):
     """Shows all the submissions of the current user"""
-    subs = Submission.objects.filter(user=request.user)
+    subs = Submission.objects.filter(user=request.user).order_by('-pk')
     for submission in subs:
         submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
     return render(request, 'submissions.html', {'submissions': subs})
