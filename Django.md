@@ -29,5 +29,5 @@ $ python manage.py shell
 
 # Comprobar que la configuración es segura para desplegar el sistema 
 # (DEBUG desactivado, el SECRET_KEY es suficientemente larga, etc.) 
->>> python manage.py check --deploy¶
+>>> python manage.py check --deploy
 ```
