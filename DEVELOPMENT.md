@@ -5,8 +5,8 @@
 * Se recomienda usar del editor de Python **PyCharm** (https://www.jetbrains.com/pycharm/) 
 en su versión *Community* (gratuita).
 * Es necesario disponer de un servidor de PostgreSQL 12 y otro de Oracle 11g XE, no importa si es en local o en remoto.
-* Las versiones de Python consideradas para el sistema son la 3.7 y la 3.8.
-* Para conectar con Oracle, además del paquete Python cx_Oracle, es necesario instalar Oracle Instant Client
+* Las versiones de Python consideradas para el sistema son la 3.7 y la 3.8, pero **mejor 3.8**.
+* Para conectar con Oracle, además del paquete Python `cx_Oracle`, es necesario instalar Oracle Instant Client
   tal y como se explica en https://cx-oracle.readthedocs.io/en/latest/user_guide/installation.html#quick-start-cx-oracle-installation.
 * Crear en la carpeta **venv** un *virtual environment* e instalar todas las dependencias:
     ````
@@ -51,14 +51,40 @@ Lanzar el servidor en local:
 $ python manage.py runserver
 ````
 
-# Pruebas a pasar
-Antes de integrar cambios en la rama principal y de hacer ningún *pull request* es necesario que:
-1. El código obtengan un 10.0 en pylint:
+# Incorporar cambios al proyecto
+* **[LEER PRIMERO]** Hay un tutorial bastante fácil de seguir sobre como realizar *pull requests*
+en proyectos GitHub en https://www.freecodecamp.org/news/how-to-make-your-first-pull-request-on-github-3/
+
+Antes de integrar cualquier cambio en la rama principal o de hacer ningún *pull request* es necesario que:
+ 1. El código obtengan un 10.0 en pylint:
 ````
 $ ./pylint.sh
+------------------------------------
+
+Your code has been rated at 10.00/10
 ````
-1. Los tests tengan una alta cobertura de código, idealmente el 100%:
+ 2. Los tests tengan una cobertura de código del 100%:
 ````
 $ ./tests.sh
+----------------------------------------------------------------------
+(...)
+Ran 26 tests in 139.763s
+
+OK
+Destroying test database for alias 'default'...
+Name                     Stmts   Miss  Cover   Missing
+------------------------------------------------------
+judge/admin.py              45      0   100%
+judge/apps.py                3      0   100%
+judge/exceptions.py          9      0   100%
+judge/feedback.py           78      0   100%
+judge/forms.py              13      0   100%
+judge/models.py            237      0   100%
+judge/oracle_driver.py     385      0   100%
+judge/parse.py             188      0   100%
+judge/types.py              52      0   100%
+judge/urls.py                6      0   100%
+judge/views.py              84      0   100%
+------------------------------------------------------
+TOTAL                     1100      0   100%
 ````
- 
