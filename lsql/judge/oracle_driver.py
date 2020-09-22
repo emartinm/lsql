@@ -12,9 +12,12 @@ import time
 import string
 import random
 import os
+import json
 import cx_Oracle
 from logzero import logger
 import sqlparse
+
+from django.core.serializers.json import DjangoJSONEncoder
 
 from .exceptions import ExecutorException
 from .types import OracleStatusCode
@@ -51,6 +54,16 @@ def random_str(alphabet, size=8):
     return ret
 
 
+def uniform_dict(dictionary):
+    """
+    Uses DjangoJSONEncoder to represent as strings those values that are not directly serialized (like datetime)
+    :param dictionary: Python dictionary
+    :return: Python dictionary with all the fields uniformly represented
+    """
+    string_rep = json.dumps(dictionary, cls=DjangoJSONEncoder)
+    return json.loads(string_rep)
+
+
 def table_from_cursor(cursor):
     """
     Takes a cursor that has executed a SELECT statement and returns all the results
@@ -74,7 +87,7 @@ def table_from_cursor(cursor):
         raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
     table['rows'] = [list(e) for e in batch]
 
-    return table
+    return uniform_dict(table) # Represents datetime as uniform strings
 
 
 def get_all_tables(conn):
@@ -95,7 +108,6 @@ def get_all_tables(conn):
         tb_names = [e[0] for e in tables]
         db_dict = dict()
         for table_name in tb_names:
-            table = None
             # https://docs.oracle.com/database/121/SQLRF/sql_elements008.htm#SQLRF51129
             # Quoted names should be embedded with "..." in order to work. We try
             # both versions for table names, ignoring possible exceptions.
@@ -166,6 +178,7 @@ def execute_sql_script(conn, script):
     if len(statements) > 0:
         with conn.cursor() as cursor:
             for statement in statements:
+                logger.debug('Executing SQL statement <<%s>>', statement)
                 cursor.execute(statement)
             conn.commit()
             logger.debug('User %s - SQL script <<%s>> executed in %s seconds',
