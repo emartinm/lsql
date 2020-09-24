@@ -26,4 +26,11 @@ en funciones pero no en procedimientos).
 BD inicial).
 * (DI) Subir solución como fichero SQL arrastrando o con botón.
 * (JC) Diseñar los conjuntos de datos necesarios para probar una consulta que puede ser errónea.
+* (DI) Traducción a otros idiomas de España como el valenciano.
+* (DI) Sistema de logros para aumentar la competitividad, p-ej. ```Realiza 3 ejercicios de inserción```
+* (DI) Corrección diciendo si está algo 'medio bien', como refuerzo a las pistas.
+* (DI) Añadir tanto primer alumno en resolver ejercicio, como el segundo y tercero, como si fuera un podio.
+* (DI) Sistema de comunicación con el profesor para resolver dudas de ejercicios específicos.
+* (DI) Función para que el alumno pueda agregar algún caso de prueba específico.
+
 
