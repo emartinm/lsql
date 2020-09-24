@@ -5,7 +5,8 @@
    * https://icons.getbootstrap.com/ (MIT)
  
 # Mejoras propuestas:
- * (JC) Soporte multi-idioma para mostrar el sistema en inglés (https://docs.djangoproject.com/en/3.1/topics/i18n/)
+ * (JC) Soporte multi-idioma para mostrar el sistema en inglés y (DI) otros idiomas
+ incluidos los demás de España como el valenciano. (https://docs.djangoproject.com/en/3.1/topics/i18n/)
  * (JC) Botón para descargarse el *script* de creación de las tablas y carga de datos en cada problema.
  * (JC) Triggers: mejorar la comparación de resultados y diseño de casos de prueba.
  * (JC) Almacenar puntuación para calificar automáticamente algunos ejercicios (exportar o comunicar con Moodle), 
@@ -26,7 +27,6 @@ en funciones pero no en procedimientos).
 BD inicial).
 * (DI) Subir solución como fichero SQL arrastrando o con botón.
 * (JC) Diseñar los conjuntos de datos necesarios para probar una consulta que puede ser errónea.
-* (DI) Traducción a otros idiomas de España como el valenciano.
 * (DI) Sistema de logros para aumentar la competitividad, p-ej. ```Realiza 3 ejercicios de inserción```
 * (DI) Corrección diciendo si está algo 'medio bien', como refuerzo a las pistas.
 * (DI) Añadir tanto primer alumno en resolver ejercicio, como el segundo y tercero, como si fuera un podio.
