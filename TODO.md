@@ -32,5 +32,7 @@ BD inicial).
 * (DI) Añadir tanto primer alumno en resolver ejercicio, como el segundo y tercero, como si fuera un podio.
 * (DI) Sistema de comunicación con el profesor para resolver dudas de ejercicios específicos.
 * (DI) Función para que el alumno pueda agregar algún caso de prueba específico.
-
+* (TH) En el apartado "Mis envíos" añadir un botón para descargar el código enviado de un ejercicio.
+* (TH) Opción de pista en cada ejercicio para los alumnos que no sepan empezar un ejercicio. En el caso de tener
+un sistema de puntos se les restaría un porcentaje por cada ejercicio en el que han necesitado ayuda.
 
