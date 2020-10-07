@@ -87,7 +87,7 @@ def table_from_cursor(cursor):
         raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
     table['rows'] = [list(e) for e in batch]
 
-    return uniform_dict(table) # Represents datetime as uniform strings
+    return uniform_dict(table)  # Represents datetime as uniform strings
 
 
 def get_all_tables(conn):
