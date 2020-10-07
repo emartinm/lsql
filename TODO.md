@@ -35,4 +35,6 @@ BD inicial).
 * (TH) En el apartado "Mis envíos" añadir un botón para descargar el código enviado de un ejercicio.
 * (TH) Opción de pista en cada ejercicio para los alumnos que no sepan empezar un ejercicio. En el caso de tener
 un sistema de puntos se les restaría un porcentaje por cada ejercicio en el que han necesitado ayuda.
+* (IB) Tener un contador de monedas, que cuando resuelva un ejercicio o serie de ejercicios de "monedas" y para las pistas haya un boton donde gaste esas "monedas" y le de una 
+  pista genérica al respecto del problema , con un máximo de 3 pistas y cada pista que cueste algo más.
 
