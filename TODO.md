@@ -70,4 +70,15 @@ Enrique: ojo a posibles problemas de injección si se hace disponible para todos
 En el apartado "Mis envíos" añadir un botón para descargar el código enviado de un ejercicio.
 
 * (Tamara) [**Dificultad media**] 
-Opción de pista en cada ejercicio para los alumnos que no sepan empezar un ejercicio. En el caso de tener un sistema de puntos se les restaría un porcentaje por cada ejercicio en el que han necesitado ayuda.
+Opción de pista en cada ejercicio para los alumnos que no sepan
+empezar un ejercicio. En el caso de tener un sistema de puntos se les
+restaría un porcentaje por cada ejercicio en el que han necesitado
+ayuda.
+
+* (Jesús) [**Dificultad media**]
+Añadir una opción que permita introducir en formato "libre" (como
+SQLDeveloper, o https://livesql.oracle.com/) instrucciones a ejecutar
+en un esquema limpio de BD. Los esquemas generados de esta forma deben
+permitir un nivel de persistencia asociado al usuario, por ejemplo
+hasta las 00:00 del día siguiente. O mejor aún, que se pueda
+configurar para cada usuario.
