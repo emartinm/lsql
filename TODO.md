@@ -71,3 +71,6 @@ En el apartado "Mis envíos" añadir un botón para descargar el código enviado
 
 * (Tamara) [**Dificultad media**] 
 Opción de pista en cada ejercicio para los alumnos que no sepan empezar un ejercicio. En el caso de tener un sistema de puntos se les restaría un porcentaje por cada ejercicio en el que han necesitado ayuda.
+
+* (Iker) [**Dificultad a determinar**] 
+Cada alumno tiene una serie de "saldo" el cual recibe tras un aceptado, logros (subir tres seguidos bien, alguno por dificultad tener más premio), que los comentarios de ayuda aparezca un botoncito con un máximo de 3 ayudas y cada vez más caros (3 , 5 , 10 por ejemplo) y sean ayudas genéricas para cada ejercicio.
