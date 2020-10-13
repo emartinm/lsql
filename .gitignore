@@ -4,3 +4,6 @@ venv
 *.pyc
 config.sh
 postgres/
+lsql/problem_zips
+lsql/.coverage
+lsql/allstaticfiles/
