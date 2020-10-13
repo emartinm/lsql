@@ -15,7 +15,8 @@
  Triggers: mejorar la comparación de resultados y diseño de casos de prueba.
 
  * (Jesús y Enrique) 
-     * [**Dificultad media**] [**IMPRESCINDIBLE**] Agrupar usuarios en clases 
+     * [**Dificultad media**] [**IMPRESCINDIBLE**] Agrupar usuarios en clases. Se podría utilizar los grupos de Django, 
+     lo que facilita bastante la cosa. 
      * [**Dificultad baja**] [**INTERESANTE**] Almacenar puntuación para calificar automáticamente algunos ejercicios, mostrar el ranking (modo competición: ver los resultados de los demás estudiantes y sus puntos, primer estudiante en resolver cada problema) y generar un reporte (idealmente Moodle)
      * [**Dificultad alta**] [**INTERESANTE**] Modo examen: horario reducido, sin retroalimentación de solución o sin mostrar el resultado esperado. ¿Crear una agrupación concreta para cada examen con usuarios nuevos o reutilizar los existentes?
 
