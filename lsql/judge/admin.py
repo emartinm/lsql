@@ -11,7 +11,7 @@ from . import forms
 from .models import Collection, SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Problem, \
     Submission
 
-
+"Esto es una prueba"
 class SelectProblemAdmin(admin.ModelAdmin):
     """Model for SelectProblem"""
     fieldsets = [
