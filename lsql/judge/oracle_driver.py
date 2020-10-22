@@ -404,8 +404,8 @@ class OracleExecutor:
                     # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
-                except cx_Oracle.DatabaseError as e:  # pragma: no cover
-                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, e)
+                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -491,8 +491,8 @@ class OracleExecutor:
                     # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
-                except cx_Oracle.DatabaseError as e:  # pragma: no cover
-                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, e)
+                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -590,8 +590,8 @@ class OracleExecutor:
                     # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
-                except cx_Oracle.DatabaseError as e:  # pragma: no cover
-                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, e)
+                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -687,8 +687,8 @@ class OracleExecutor:
                     # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
-                except cx_Oracle.DatabaseError as e:  # pragma: no cover
-                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, e)
+                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -777,7 +777,7 @@ class OracleExecutor:
                     # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
-                except cx_Oracle.DatabaseError as e:  # pragma: no cover
-                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, e)
+                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
