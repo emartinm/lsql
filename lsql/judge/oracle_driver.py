@@ -87,7 +87,7 @@ def table_from_cursor(cursor):
         raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
     table['rows'] = [list(e) for e in batch]
 
-    return uniform_dict(table) # Represents datetime as uniform strings
+    return uniform_dict(table)  # Represents datetime as uniform strings
 
 
 def get_all_tables(conn):
@@ -389,20 +389,23 @@ class OracleExecutor:
             gestor = None
             return {"result": result, "db": db}
         except cx_Oracle.DatabaseError as excp:
-            # Workaround to fix some odd problem when failing to get connections from the pool
-            # But now it is not happening and I do not know how to re-produce it.
-            # if 'timeout' in str(e):
-            #     sleep(self.__SLEEP_AFTER_TIMEOUT / 1000)
             error_msg = str(excp)
             logger.info('Error when testing SELECT statements: %s - %s - %s', state, excp, select)
-            if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
+            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+                # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, select) from excp
             raise ExecutorException(state, error_msg, select) from excp
         finally:
             if conn:
                 conn.close()
             if user:
-                self.drop_user(user, gestor)
+                try:
+                    # Sometimes when TLE, the connections can be closed but the user cannot be dropped because
+                    # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
+                    # These users must be removed manually later
+                    self.drop_user(user, gestor)
+                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -473,20 +476,23 @@ class OracleExecutor:
 
             return {'pre': pre, 'post': post}
         except cx_Oracle.DatabaseError as excp:
-            # Workaround to fix some odd problem when failing to get connections from the pool
-            # But now it is not happening and I do not know how to re-produce it.
-            # if 'timeout' in str(e):
-            #     sleep(self.__SLEEP_AFTER_TIMEOUT / 1000)
             error_msg = str(excp)
             logger.info('Error when testing DML statements: %s - %s - %s', state, excp, stmt)
-            if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
+            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+                # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
             raise ExecutorException(state, error_msg, stmt) from excp
         finally:
             if conn:
                 conn.close()
             if user:
-                self.drop_user(user, gestor)
+                try:
+                    # Sometimes when TLE, the connections can be closed but the user cannot be dropped because
+                    # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
+                    # These users must be removed manually later
+                    self.drop_user(user, gestor)
+                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -569,20 +575,23 @@ class OracleExecutor:
 
             return {'db': db, 'results': results}
         except cx_Oracle.DatabaseError as excp:
-            # Workaround to fix some odd problem when failing to get connections from the pool
-            # But now it is not happening and I do not know how to re-produce it.
-            # if 'timeout' in str(e):
-            #     sleep(self.__SLEEP_AFTER_TIMEOUT / 1000)
-            logger.info('Error when testing function statements: %s - %s - %s',
-                        state, excp, stmt)
-            if 'ORA-3156' in str(excp) and state == OracleStatusCode.EXECUTE_USER_CODE:
+            error_msg = str(excp)
+            logger.info('Error when testing function statements: %s - %s - %s', state, excp, stmt)
+            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+                # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, excp, stmt) from excp
             raise ExecutorException(state, excp, stmt) from excp
         finally:
             if conn:
                 conn.close()
             if user:
-                self.drop_user(user, gestor)
+                try:
+                    # Sometimes when TLE, the connections can be closed but the user cannot be dropped because
+                    # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
+                    # These users must be removed manually later
+                    self.drop_user(user, gestor)
+                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -663,21 +672,23 @@ class OracleExecutor:
 
             return {'pre': db, 'post': post}
         except cx_Oracle.DatabaseError as excp:
-            # Workaround to fix some odd problem when failing to get connections from the pool
-            # But now it is not happening and I do not know how to re-produce it.
-            # if 'timeout' in str(e):
-            #     sleep(self.__SLEEP_AFTER_TIMEOUT / 1000)
             error_msg = str(excp)
-            logger.info('Error when testing procedure creation and call: %s - %s - %s',
-                        state, excp, stmt)
-            if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
+            logger.info('Error when testing procedure creation and call: %s - %s - %s', state, excp, stmt)
+            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+                # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
             raise ExecutorException(state, error_msg, stmt) from excp
         finally:
             if conn:
                 conn.close()
             if user:
-                self.drop_user(user, gestor)
+                try:
+                    # Sometimes when TLE, the connections can be closed but the user cannot be dropped because
+                    # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
+                    # These users must be removed manually later
+                    self.drop_user(user, gestor)
+                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -751,20 +762,22 @@ class OracleExecutor:
 
             return {'pre': db, 'post': post}
         except cx_Oracle.DatabaseError as excp:
-            # Workaround to fix some odd problem when failing to get connections from the pool
-            # But now it is not happening and I do not know how to re-produce it.
-            # if 'timeout' in str(e):
-            #     sleep(self.__SLEEP_AFTER_TIMEOUT / 1000)
             error_msg = str(excp)
-            logger.info('Error when testing procedure creation and call: %s - %s - %s',
-                        state, excp, stmt)
-            if 'ORA-3156' in error_msg and state == OracleStatusCode.EXECUTE_USER_CODE:
+            logger.info('Error when testing trigger creation and call: %s - %s - %s', state, excp, stmt)
+            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+                # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
             raise ExecutorException(state, error_msg, stmt) from excp
         finally:
             if conn:
                 conn.close()
             if user:
-                self.drop_user(user, gestor)
+                try:
+                    # Sometimes when TLE, the connections can be closed but the user cannot be dropped because
+                    # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
+                    # These users must be removed manually later
+                    self.drop_user(user, gestor)
+                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
