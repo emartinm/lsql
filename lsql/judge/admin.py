@@ -5,13 +5,14 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 Customize how to show add/edit forms for problems in the Admin
 """
 
+
 from django.contrib import admin
 
 from . import forms
 from .models import Collection, SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Problem, \
     Submission
 
-"Esto es una prueba"
+
 class SelectProblemAdmin(admin.ModelAdmin):
     """Model for SelectProblem"""
     fieldsets = [
