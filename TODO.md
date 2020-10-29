@@ -8,7 +8,7 @@
  * (Jesús) [**Dificultad alta**] [IMPRESCINDIBLE]
  Soporte multi-idioma para mostrar el sistema en inglés y (Daniel) otros idiomas incluidos los demás de España como el valenciano. (https://docs.djangoproject.com/en/3.1/topics/i18n/)
 
- * (Jesús) [**Dificultad baja**] [IMPRESCINDIBLE]
+ * (Jesús) [**Dificultad baja**] [IMPRESCINDIBLE] [**Tarea para Iker**]
  Botón para descargarse el *script* de creación de las tablas y carga de datos en cada problema.
 
  * (Jesús) [**Dificultad alta**] [INTERESANTE]
@@ -66,7 +66,7 @@ Sistema de comunicación con el profesor para resolver dudas de ejercicios espec
 Función para que el alumno pueda agregar algún caso de prueba específico => solo relativo a `INSERT VALUE`.
 Enrique: ojo a posibles problemas de injección.
 
-* (Tamara) [**Dificultad baja**] [**IMPRESCINDIBLE**]
+* (Tamara) [**Dificultad baja**] [**IMPRESCINDIBLE**] [**Tarea para Tamara**]
 En el apartado "Mis envíos" añadir un botón para descargar el código enviado de un ejercicio.
 
 * (Tamara e Iker) [**Dificultad media**] [**INTERESANTE**]
