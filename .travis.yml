@@ -27,7 +27,8 @@ install:
   - pip install -r requirements.txt
 # Set a non-blank password for 'posgres' user
 before_script:
-  - psql -c "ALTER USER postgres WITH PASSWORD 'travis';" -U postgres
+#  - psql -c "ALTER USER postgres WITH PASSWORD 'travis';" -U postgres
+  - psql -c "ALTER USER postgres WITH PASSWORD 'travis';"
 # command to run tests
 script:
   - ./pylint.sh
