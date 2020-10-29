@@ -3,7 +3,6 @@ language: python
 services:
   - postgresql  # version 12 by default
 python:
-  - "3.7"
   - "3.8"
 ## Configure Oracle 11g R2 XE from https://github.com/Vincit/travis-oracledb-xe
 ## You will be able to connect the Oracle database in localhost:1521 with user/pass: travis/travis
