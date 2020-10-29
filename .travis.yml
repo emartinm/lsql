@@ -1,7 +1,14 @@
 dist: focal # 20.04
 language: python
-services:
-  - postgresql  # version 12 by default
+##services:
+##  - postgresql  # version 12 by default
+addons:
+  postgresql: '12'
+  apt:
+    packages:
+      - postgresql-12
+      - postgresql-client-12
+      - postgresql-server-dev-12
 python:
   - "3.8"
 ## Configure Oracle 11g R2 XE from https://github.com/Vincit/travis-oracledb-xe
