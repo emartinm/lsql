@@ -81,3 +81,10 @@ permitir un nivel de persistencia asociado al usuario, por ejemplo
 hasta las 00:00 del día siguiente. O mejor aún, que se pueda
 configurar para cada usuario.
 
+* (Enrique) [**Dificultad baja**] [**IMPRESCINDIBLE**]
+Mejorar el mensaje de error cuando la consulta enviada no respeta el 
+esquema esperado, para especificar cuál es el primer atributo que es
+diferente. Realizar la comparación de nombres de columna sin tener 
+en cuenta mayúsculas-minúsculas.
+
+
