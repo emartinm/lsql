@@ -92,7 +92,7 @@ def show_submission(request, submission_id):
 
 
 @login_required
-def download(problem_id):
+def download(request,problem_id,date):
     """
    :param problem_id: id del problema
    :return: file SQL con creacione e insercion de los problemas
