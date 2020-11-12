@@ -6,11 +6,11 @@ Functions that process HTTP connections
 """
 
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
+from django.http.response import  HttpResponse
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from logzero import logger
-
 from .exceptions import ExecutorException
 from .forms import SubmitForm
 from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
@@ -92,6 +92,22 @@ def show_submission(request, submission_id):
 
 
 @login_required
+def download(problem_id):
+    """
+   :param problem_id: id del problema
+   :return: file SQL con creacione e insercion de los problemas
+   """
+    get_object_or_404(Problem, pk=problem_id)
+    # Look for problem pk in all the Problem classes
+    problem = get_child_problem(problem_id)
+    response = HttpResponse()
+    response['Content-Type'] = 'application/sql'
+    response['Content-Disposition'] = 'attachment; filename=create_insert.sql'
+    response.write(problem.create_sql+'\n'+problem.insert_sql)
+    return response
+
+
+@login_required
 # pylint does not understand the dynamic attributes in VeredictCode (TextChoices), so we need to disable
 # no-member warning in this specific function
 # pylint: disable=no-member
@@ -118,7 +134,7 @@ def submit(request, problem_id):
                     'veredict': VeredictCode.RE, 'title': VeredictCode.RE.label,
                     'message': VeredictCode.RE.message(),
                     'feedback': f'{excp.statement} --> {excp.message}' if problem.problem_type() == ProblemType.FUNCTION
-                                else excp.message}
+                    else excp.message}
             elif excp.error_code == OracleStatusCode.TLE_USER_CODE:
                 data = {'veredict': VeredictCode.TLE, 'title': VeredictCode.TLE.label,
                         'message': VeredictCode.TLE.message(), 'feedback': ''}

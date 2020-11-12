@@ -11,7 +11,6 @@
       <tr>
         <th scope="col">Nombre</th>
         <th scope="col">Número de envíos</th>
-        <th scope="col">Descargar script</th>
       </tr>
     </thead>
     <tbody>
@@ -26,16 +25,7 @@
         <a href="{% url 'judge:problem' p.pk %}">{{ p.title_html|safe }}</a>
       </td>
       <td>{{ p.num_submissions }}</td>
-      <td>
-        <!--revisar esto , sale boton pero ya
-         depurando en el navegador me lleva a :
-         http://127.0.0.1:8000/sql/tests/zip_files/problems.zip
-         investigar eso
-        -->
-        <a href="../tests/zip_files/problems.zip" download="prueba">
-          <button>Descargar</button>
-        </a>
-      </td>
+
     </tr>
     {% endfor %}
     </tbody>

@@ -7,22 +7,20 @@ Mapping from URL to views
 
 from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
-
 from . import views
 
 
 app_name = 'judge'
 urlpatterns = [
     path('', views.index, name='index'),
+
     path('collection/', views.show_collections, name='collections'),
     path('collection/<int:collection_id>', views.show_collection, name='collection'),
     path('problem/<int:problem_id>', views.show_problem, name='problem'),
-
     path('submit/<int:problem_id>', views.submit, name='submit'),
-
+    path('problem/<int:problem_id>/<str:date>', views.download),
     path('submission/', views.show_submissions, name='submissions'),
     path('submission/<int:submission_id>', views.show_submission, name='submission'),
-
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(template_name='logout.html'), name='logout'),
     path('password_change/',

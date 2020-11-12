@@ -1,8 +1,7 @@
+
 /**********************************************************
  * Copyright Enrique Martín Martín <emartinm@ucm.es> 2020 *
  **********************************************************/
-
-
 // Shows a modal window with a title and message
 function show_modal(title, message) {
     $('#modal_title').text(title);
