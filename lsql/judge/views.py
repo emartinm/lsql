@@ -92,7 +92,7 @@ def show_submission(request, submission_id):
 
 
 @login_required
-def download(request, problem_id, date):
+def download(request, problem_id):
     """
    :param problem_id: id del problema
    :param request: no se usa
@@ -104,7 +104,7 @@ def download(request, problem_id, date):
     problem = get_child_problem(problem_id)
     response = HttpResponse()
     response['Content-Type'] = 'application/sql'
-    response['Content-Disposition'] = f"attachment; filename={date}.{'sql'}"
+    response['Content-Disposition'] = f"attachment; filename={'create_insert'}.{'sql'}"
     response.write(problem.create_sql+'\n'+problem.insert_sql)
     return response
 

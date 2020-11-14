@@ -8,6 +8,7 @@ import os
 
 from django.test import TestCase, Client
 import django.contrib.auth
+from django.urls import reverse
 
 from judge.models import Collection, SelectProblem, Submission, FunctionProblem, DMLProblem, ProcProblem, \
     TriggerProblem
@@ -96,6 +97,11 @@ class ViewsTest(TestCase):
 
         # /sql/submission/X redirects to login
         response = client.get(f'/sql/submission/{submission.pk}', follow=True)
+        self.assertTrue(response.redirect_chain[0][0].startswith('/sql/login'))
+
+        # /sql/problem/X/create_insert redirects to login
+        url = reverse('judge:create_insert', args=[problem.pk])
+        response = client.get(url, follow=True)
         self.assertTrue(response.redirect_chain[0][0].startswith('/sql/login'))
 
     def test_logged(self):
@@ -225,7 +231,8 @@ class ViewsTest(TestCase):
         for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
             problem.clean()
             problem.save()
-            response = client.get(f'/sql/problem/{problem.pk}/create_insert', follow=True)
+            url = reverse('judge:create_insert', args=[problem.pk])
+            response = client.get(url, follow=True)
             script = problem.create_sql + '\n' + problem.insert_sql
 
             self.assertEqual(
@@ -237,3 +244,5 @@ class ViewsTest(TestCase):
                 "application/sql"
             )
             self.assertEqual(response.content.decode('UTF-8'), script)
+
+            self.assertTrue(response.status_code == 200)
