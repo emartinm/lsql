@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
-
 Unit tests for the feedback module by simulation connections
 """
 import os
@@ -200,3 +199,40 @@ class ViewsTest(TestCase):
             problem.save()
             response = client.get(f'/sql/problem/{problem.pk}', follow=True)
             self.assertTrue(response.status_code == 200 and problem.title_md in str(response.content))
+
+    def test_download(self):
+        """Download a script to problem"""
+        curr_path = os.path.dirname(__file__)
+        zip_select_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.SELECT_OK)
+        zip_dml_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.DML_OK)
+        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTIOM_OK)
+        zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
+        zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
+
+        collection = create_collection('Colleccion de prueba AAA')
+        user = create_user('54522', 'antonio')
+
+        select_problem = SelectProblem(zipfile=zip_select_path, collection=collection, author=user)
+        dml_problem = DMLProblem(zipfile=zip_dml_path, collection=collection, author=user)
+        function_problem = FunctionProblem(zipfile=zip_function_path, collection=collection, author=user)
+        proc_problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
+        trigger_problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
+
+        client = Client()
+        client.login(username='antonio', password='54522')
+
+        for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
+            problem.clean()
+            problem.save()
+            response = client.get(f'/sql/problem/{problem.pk}/create_insert', follow=True)
+            script = problem.create_sql + '\n' + problem.insert_sql
+
+            self.assertEquals(
+                response.get('Content-Disposition'),
+                "attachment; filename=create_insert.sql"
+            )
+            self.assertEquals(
+                response.get('Content-Type'),
+                "application/sql"
+            )
+            self.assertEqual(response.content.decode('UTF-8'), script)
