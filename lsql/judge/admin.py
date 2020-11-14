@@ -5,7 +5,6 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 Customize how to show add/edit forms for problems in the Admin
 """
 
-
 from django.contrib import admin
 
 from . import forms
