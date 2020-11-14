@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
+
 Unit tests for the feedback module by simulation connections
 """
 import os
@@ -227,11 +228,11 @@ class ViewsTest(TestCase):
             response = client.get(f'/sql/problem/{problem.pk}/create_insert', follow=True)
             script = problem.create_sql + '\n' + problem.insert_sql
 
-            self.assertEquals(
+            self.assertEqual(
                 response.get('Content-Disposition'),
-                "attachment; filename=create_insert.sql"
+                "attachment; filename=create_insert.sql",
             )
-            self.assertEquals(
+            self.assertEqual(
                 response.get('Content-Type'),
                 "application/sql"
             )
