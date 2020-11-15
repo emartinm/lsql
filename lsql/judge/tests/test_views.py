@@ -233,7 +233,7 @@ class ViewsTest(TestCase):
             problem.save()
             url = reverse('judge:create_insert', args=[problem.pk])
             response = client.get(url, follow=True)
-            script = problem.create_sql + '\n' + problem.insert_sql
+            script = problem.create_sql + '\n\n' + problem.insert_sql
 
             self.assertEqual(
                 response.get('Content-Disposition'),
