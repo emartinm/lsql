@@ -94,17 +94,15 @@ def show_submission(request, submission_id):
 @login_required
 def download(request, problem_id):
     """
-   :param problem_id: id del problema
-   :param request: no se usa
-   :param date es el nombre del fichero donde lo guardo
-   :return: file SQL con creacione e insercion de los problemas
+   :param problem_id: id of the problem
+   :return: Returns a script with the creation and insertion of the problem
    """
     get_object_or_404(Problem, pk=problem_id)
     # Look for problem pk in all the Problem classes
     problem = get_child_problem(problem_id)
     response = HttpResponse()
     response['Content-Type'] = 'application/sql'
-    response['Content-Disposition'] = f"attachment; filename={'create_insert'}.{'sql'}"
+    response['Content-Disposition'] = "attachment; filename=create_insert.sql"
     response.write(problem.create_sql+'\n'+problem.insert_sql)
     return response
 
