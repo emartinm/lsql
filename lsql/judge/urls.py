@@ -16,9 +16,8 @@ urlpatterns = [
     path('collection/', views.show_collections, name='collections'),
     path('collection/<int:collection_id>', views.show_collection, name='collection'),
     path('problem/<int:problem_id>', views.show_problem, name='problem'),
-
     path('submit/<int:problem_id>', views.submit, name='submit'),
-
+    path('problem/<int:problem_id>/create_insert', views.download, name='create_insert'),
     path('submission/', views.show_submissions, name='submissions'),
     path('submission/<int:submission_id>', views.show_submission, name='submission'),
 

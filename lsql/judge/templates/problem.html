@@ -21,10 +21,7 @@ General template for a problem. Provides the following blocks:
 {% endif %}
 </h2>
 <p>
-  <!--
-  <a href="/sql/collection/{{problem.collection}}"><button type="button" class="btn btn-primary">Volver a la colección</button></a>
-  <a href="/sql/submission/?problem={{problem.prob_id}}"><button type="button" class="btn btn-primary">Ver histórico de envíos</button></a>
-  -->
+
 </p>
 <div>
   {{ problem.text_html|safe }}
@@ -35,8 +32,12 @@ General template for a problem. Provides the following blocks:
 {% if problem.initial_db %}
 <h2>
   Base de datos
-  <!-- <a href="/sql/problem/{{problem.prob_id}}/db_sql/"><button type="button" class="btn btn-primary">Descargar</button></a>
-  -->
+
+  <a href="{% url 'judge:create_insert' problem.id %}" download="create_insert.sql" >
+       <button type="button" class="btn btn-primary" title="Script con la creacion de tablas e inserciones">Descargar Script</button>
+  </a>
+
+
 </h2>
 {% for name, table in problem.initial_db.items %}
   {% include 'show_table.html' with table=table name=name mark_rows=None %}

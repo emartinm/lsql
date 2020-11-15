@@ -8,6 +8,7 @@ import os
 
 from django.test import TestCase, Client
 import django.contrib.auth
+from django.urls import reverse
 
 from judge.models import Collection, SelectProblem, Submission, FunctionProblem, DMLProblem, ProcProblem, \
     TriggerProblem
@@ -96,6 +97,11 @@ class ViewsTest(TestCase):
 
         # /sql/submission/X redirects to login
         response = client.get(f'/sql/submission/{submission.pk}', follow=True)
+        self.assertTrue(response.redirect_chain[0][0].startswith('/sql/login'))
+
+        # /sql/problem/X/create_insert redirects to login
+        url = reverse('judge:create_insert', args=[problem.pk])
+        response = client.get(url, follow=True)
         self.assertTrue(response.redirect_chain[0][0].startswith('/sql/login'))
 
     def test_logged(self):
@@ -200,3 +206,43 @@ class ViewsTest(TestCase):
             problem.save()
             response = client.get(f'/sql/problem/{problem.pk}', follow=True)
             self.assertTrue(response.status_code == 200 and problem.title_md in str(response.content))
+
+    def test_download(self):
+        """Download a script to problem"""
+        curr_path = os.path.dirname(__file__)
+        zip_select_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.SELECT_OK)
+        zip_dml_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.DML_OK)
+        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTIOM_OK)
+        zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
+        zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
+
+        collection = create_collection('Colleccion de prueba AAA')
+        user = create_user('54522', 'antonio')
+
+        select_problem = SelectProblem(zipfile=zip_select_path, collection=collection, author=user)
+        dml_problem = DMLProblem(zipfile=zip_dml_path, collection=collection, author=user)
+        function_problem = FunctionProblem(zipfile=zip_function_path, collection=collection, author=user)
+        proc_problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
+        trigger_problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
+
+        client = Client()
+        client.login(username='antonio', password='54522')
+
+        for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
+            problem.clean()
+            problem.save()
+            url = reverse('judge:create_insert', args=[problem.pk])
+            response = client.get(url, follow=True)
+            script = problem.create_sql + '\n' + problem.insert_sql
+
+            self.assertEqual(
+                response.get('Content-Disposition'),
+                "attachment; filename=create_insert.sql",
+            )
+            self.assertEqual(
+                response.get('Content-Type'),
+                "application/sql"
+            )
+            self.assertEqual(response.content.decode('UTF-8'), script)
+
+            self.assertTrue(response.status_code == 200)
