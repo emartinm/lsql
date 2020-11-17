@@ -4,10 +4,11 @@
    * https://freesvg.org/red-cross-not-ok-vector-icon (dominio público)
    * https://icons.getbootstrap.com/ (MIT)
    
-# Mejoras asignadas:
-* (Jesús) [**Dificultad baja**] [IMPRESCINDIBLE] [**Tarea para Iker 28/10**]
+# Mejoras completadas:   
+* (Jesús) [**Dificultad baja**] [IMPRESCINDIBLE] [**Tarea para Iker 28/10-15/11 PR #15**]
  Botón para descargarse el *script* de creación de las tablas y carga de datos en cada problema.
  
+# Mejoras asignadas:
 * (Tamara) [**Dificultad baja**] [**IMPRESCINDIBLE**] [**Tarea para Tamara 28/10**]
 En el apartado "Mis envíos" añadir un botón para descargar el código enviado de un ejercicio.
 
@@ -16,6 +17,13 @@ En el apartado "Mis envíos" añadir un botón para descargar el código enviado
     
 * (Daniel) [**Dificultad baja**] [**Tarea para Daniel 11/11**]
 Subir solución como fichero SQL arrastrando o con botón.
+
+* (Enrique) [**Dificultad baja**] [**IMPRESCINDIBLE**] [**Tarea para Iker 17/11**]
+Mejorar el mensaje de error cuando la consulta enviada no respeta el 
+esquema esperado, para especificar cuál es el primer atributo que es
+diferente. Realizar la comparación de nombres de columna sin tener 
+en cuenta mayúsculas-minúsculas.
+
  
 # Mejoras propuestas:
 * (Jesús) [**Dificultad alta**] [IMPRESCINDIBLE]
@@ -81,11 +89,4 @@ en un esquema limpio de BD. Los esquemas generados de esta forma deben
 permitir un nivel de persistencia asociado al usuario, por ejemplo
 hasta las 00:00 del día siguiente. O mejor aún, que se pueda
 configurar para cada usuario.
-
-* (Enrique) [**Dificultad baja**] [**IMPRESCINDIBLE**]
-Mejorar el mensaje de error cuando la consulta enviada no respeta el 
-esquema esperado, para especificar cuál es el primer atributo que es
-diferente. Realizar la comparación de nombres de columna sin tener 
-en cuenta mayúsculas-minúsculas.
-
 
