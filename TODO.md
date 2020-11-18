@@ -90,3 +90,12 @@ permitir un nivel de persistencia asociado al usuario, por ejemplo
 hasta las 00:00 del día siguiente. O mejor aún, que se pueda
 configurar para cada usuario.
 
+* (Enrique) [**Dificultad baja**] [**INTERESANTE**]
+Mejorar la salida esperada en los ejercicios de procedimientos.
+Ahora mismo muestra todas las tablas que existen en la base de 
+datos después de invocar al procedimiento, pero sería mejor que
+mostrase únicamente las que han cambiado: tabla eliminada, tabla 
+nueva, tabla que tiene filas diferentes (añadidas, borradas o 
+modificadas).
+
+
