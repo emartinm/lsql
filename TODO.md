@@ -13,7 +13,9 @@
 En el apartado "Mis envíos" añadir un botón para descargar el código enviado de un ejercicio.
 
 * (Enrique) [**Dificultad baja**] [**INTERESANTE**] [**Tarea para Iván 11/11**]
- Mostrar al menos las tablas de manera más compacta, p.ej. mostrando solo la cabecera y que se pueda ampliar para ver el contenido pulsando en el típico "+".
+ Mostrar al menos las tablas de manera más compacta, p.ej. mostrando 
+ solo la cabecera y que se pueda ampliar para ver el contenido pulsando 
+ en el típico "+".
     
 * (Daniel) [**Dificultad baja**] [**Tarea para Daniel 11/11**]
 Subir solución como fichero SQL arrastrando o con botón.
