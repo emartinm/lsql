@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'dbbackup',  # django-dbbackup
 ]
 
 MIDDLEWARE = [
@@ -133,3 +134,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, "allstaticfiles")
 # Paths for the default authentication system
 LOGIN_URL = '/sql/login/'
 LOGIN_REDIRECT_URL = '/sql/'
+
+# Configuration of django-dbbackup
+DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DBBACKUP_CLEANUP_KEEP = 3
+DBBACKUP_CLEANUP_KEEP_MEDIA = 3
