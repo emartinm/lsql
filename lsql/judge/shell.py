@@ -18,7 +18,7 @@ def create_users_from_csv(csv_filename):
     Each line has the following fields:
       FOTOGRAFÍA,NOMBRE COMPLETO,DOCUMENTO,ASIGNATURA,MAT.,CONV.,OBSERVACIÓN,CORREO,TELÉFONO
     """
-    with open(csv_filename) as csvfile:
+    with open(csv_filename, encoding='utf_8') as csvfile:
         reader = csv.DictReader(csvfile)
         create_users_from_list(reader)
 
