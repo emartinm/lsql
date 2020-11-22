@@ -6,7 +6,7 @@ Functions that process HTTP connections
 """
 
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
-from django.http.response import  HttpResponse
+from django.http.response import HttpResponse
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -92,19 +92,17 @@ def show_submission(request, submission_id):
 
 
 @login_required
-def download(request, problem_id):
-    """
-   :param problem_id: id of the problem
-   :return: Returns a script with the creation and insertion of the problem
-   """
+def download(_, problem_id):
+    """Returns a script with the creation and insertion of the problem"""
     get_object_or_404(Problem, pk=problem_id)
     # Look for problem pk in all the Problem classes
     problem = get_child_problem(problem_id)
     response = HttpResponse()
     response['Content-Type'] = 'application/sql'
     response['Content-Disposition'] = "attachment; filename=create_insert.sql"
-    response.write(problem.create_sql+'\n'+problem.insert_sql)
+    response.write(problem.create_sql+'\n\n'+problem.insert_sql)
     return response
+
 
 @login_required
 # pylint does not understand the dynamic attributes in VeredictCode (TextChoices), so we need to disable

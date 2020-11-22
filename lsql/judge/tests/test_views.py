@@ -66,43 +66,62 @@ class ViewsTest(TestCase):
         user = create_user('1234')
         submission = create_submission(problem, user, VeredictCode.AC)
 
+        collections_url = reverse('judge:collections')
+        login_redirect_url = reverse('judge:login')
+        login_redirect_collections_url = f'{login_redirect_url}?next={collections_url}'
+
         # Root redirects to login
         response = client.get('/sql/', follow=True)
         self.assertEqual(response.redirect_chain,
-                         [('/sql/collection/', 302),
-                          ('/sql/login?next=/sql/collection/', 302),
-                          ('/sql/login/?next=%2Fsql%2Fcollection%2F', 301)])
+                         [(collections_url, 302),
+                          (login_redirect_collections_url, 302)])
 
-        # /sql/collection redirects to login
-        response = client.get('/sql/collection/', follow=True)
+        # Collections redirects to login
+        response = client.get(collections_url, follow=True)
         self.assertEqual(response.redirect_chain,
-                         [('/sql/login?next=/sql/collection/', 302),
-                          ('/sql/login/?next=%2Fsql%2Fcollection%2F', 301)])
+                         [(login_redirect_collections_url, 302)])
 
-        # /sql/collection/X redirects to login
-        response = client.get(f'/sql/collection/{collection.pk}', follow=True)
-        self.assertTrue(response.redirect_chain[0][0].startswith('/sql/login'))
+        # Collection redirects to login
+        collection_url = reverse('judge:collection', args=[collection.pk])
+        login_redirect_collection_url = f'{login_redirect_url}?next={collection_url}'
+        response = client.get(collection_url, follow=True)
+        self.assertEqual(response.redirect_chain,
+                         [(login_redirect_collection_url, 302)])
 
-        # /sql/problem/X redirects to login
-        response = client.get(f'/sql/problem/{problem.pk}', follow=True)
-        self.assertTrue(response.redirect_chain[0][0].startswith('/sql/login'))
+        # Problem redirects to login
+        problem_url = reverse('judge:problem', args=[problem.pk])
+        login_redirect_problem = f'{login_redirect_url}?next={problem_url}'
+        response = client.get(problem_url, follow=True)
+        self.assertEqual(response.redirect_chain,
+                         [(login_redirect_problem, 302)])
 
-        # POST /sql/submit/X redirects to login
-        response = client.post(f'/sql/submit/{problem.pk}', {'code': 'SELECT...'}, follow=True)
-        self.assertTrue(response.redirect_chain[0][0].startswith('/sql/login'))
+        # POST submit redirects to login
+        submit_url = reverse('judge:submit', args=[problem.pk])
+        login_redirect_submit = f'{login_redirect_url}?next={submit_url}'
+        response = client.post(submit_url, {'code': 'SELECT...'}, follow=True)
+        self.assertEqual(response.redirect_chain,
+                          [(login_redirect_submit, 302)])
 
-        # /sql/submission redirects to login
-        response = client.get('/sql/submission/', follow=True)
-        self.assertTrue(response.redirect_chain[0][0].startswith('/sql/login'))
+        # Submissions redirects to login
+        submissions_url = reverse('judge:submissions')
+        login_redirect_submissions = f'{login_redirect_url}?next={submissions_url}'
+        response = client.get(submissions_url, follow=True)
+        self.assertEqual(response.redirect_chain,
+                         [(login_redirect_submissions, 302)])
 
-        # /sql/submission/X redirects to login
-        response = client.get(f'/sql/submission/{submission.pk}', follow=True)
-        self.assertTrue(response.redirect_chain[0][0].startswith('/sql/login'))
+        # Submission redirects to login
+        submission_url = reverse('judge:submission', args=[submission.pk])
+        login_redirect_submission = f'{login_redirect_url}?next={submission_url}'
+        response = client.get(submission_url, follow=True)
+        self.assertEqual(response.redirect_chain,
+                         [(login_redirect_submission, 302)])
 
-        # /sql/problem/X/create_insert redirects to login
-        url = reverse('judge:create_insert', args=[problem.pk])
-        response = client.get(url, follow=True)
-        self.assertTrue(response.redirect_chain[0][0].startswith('/sql/login'))
+        # create_insert redirects to login
+        create_url = reverse('judge:create_insert', args=[problem.pk])
+        login_redirect_create = f'{login_redirect_url}?next={create_url}'
+        response = client.get(create_url, follow=True)
+        self.assertEqual(response.redirect_chain,
+                         [(login_redirect_create, 302)])
 
     def test_logged(self):
         """Connections from a logged user"""
@@ -114,70 +133,80 @@ class ViewsTest(TestCase):
         submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
         client.login(username='pepe', password='5555')
 
+        collections_url = reverse('judge:collections')
+        collection_url = reverse('judge:collection', args=[collection.pk])
+        problem_url = reverse('judge:problem', args=[problem.pk])
+        no_problem_url = reverse('judge:problem', args=[8888888])
+        submit_url = reverse('judge:submit', args=[problem.pk])
+        submissions_url = reverse('judge:submissions')
+        submission_url = reverse('judge:submission', args=[submission.pk])
+        pass_done_url = reverse('judge:password_change_done')
+
         # Root redirects to collection
         response = client.get('/sql/', follow=True)
-        self.assertTrue(response.redirect_chain[0][0].startswith('/sql/collection'))
+        self.assertEqual(response.redirect_chain,
+                         [(collections_url, 302)])
 
         # OK and one collection with title
-        response = client.get('/sql/collection/', follow=True)
+        response = client.get(collections_url, follow=True)
         self.assertTrue(response.status_code == 200 and collection.name_md in str(response.content))
 
-        # OK and one problem
-        response = client.get(f'/sql/collection/{collection.pk}', follow=True)
+        # OK and one problem in collection
+        response = client.get(collection_url, follow=True)
         self.assertTrue(response.status_code == 200 and problem.title_md in str(response.content))
 
-        # OK and title in page
-        response = client.get(f'/sql/problem/{problem.pk}', follow=True)
+        # OK and title in problem page
+        response = client.get(problem_url, follow=True)
         self.assertTrue(response.status_code == 200 and problem.title_md in str(response.content))
 
         # NotFound
-        response = client.get('/sql/problem/888888', follow=True)
+        response = client.get(no_problem_url, follow=True)
         self.assertTrue(response.status_code == 404)
 
         # JSON with AC
-        response = client.post(f'/sql/submit/{problem.pk}', {'code': problem.solution}, follow=True)
+        response = client.post(submit_url, {'code': problem.solution}, follow=True)
         self.assertTrue(response.json()['veredict'] == VeredictCode.AC)
 
         # JSON with WA
-        response = client.post(f'/sql/submit/{problem.pk}', {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        response = client.post(submit_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
         self.assertTrue(response.json()['veredict'] == VeredictCode.WA)
 
         # JSON with VE
-        response = client.post(f'/sql/submit/{problem.pk}', {'code': ''}, follow=True)
+        response = client.post(submit_url, {'code': ''}, follow=True)
         self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
 
         # JSON with VE
-        response = client.post(f'/sql/submit/{problem.pk}', {'code': 'select * from test; select * from test;'},
+        response = client.post(submit_url, {'code': 'select * from test; select * from test;'},
                                follow=True)
         self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
 
         # JSON with TLE
         tle = judge.tests.test_oracle.SELECT_TLE
-        response = client.post(f'/sql/submit/{problem.pk}', {'code': tle}, follow=True)
+        response = client.post(submit_url, {'code': tle}, follow=True)
         self.assertTrue(response.json()['veredict'] == VeredictCode.TLE)
 
         # JSON with RE (table and column do not exist)
-        response = client.post(f'/sql/submit/{problem.pk}', {'code': 'SELECT pumba FROM timon'}, follow=True)
+        response = client.post(submit_url, {'code': 'SELECT pumba FROM timon'}, follow=True)
         self.assertTrue(response.json()['veredict'] == VeredictCode.RE)
 
-        # There must be 5 submission to problem
-        response = client.get('/sql/submission/', follow=True)
+        # There must be 7 submission to problem
+        response = client.get(submissions_url, follow=True)
         html = str(response.content)
         self.assertEqual(html.count(problem.title_md), 7)
 
-        # Submssion contains user code
-        response = client.get(f'/sql/submission/{submission.pk}', follow=True)
+        # Submission contains user code
+        response = client.get(submission_url, follow=True)
         self.assertTrue('select *** from *** where *** and more' in str(response.content))
 
         # status_code OK
-        response = client.get('/sql/password_change_done/', follow=True)
+        response = client.get(pass_done_url, follow=True)
         self.assertEqual(response.status_code, 200)
 
         # Only submission from the same user
         client.logout()
         client.login(username='ana', password='1234')
         # Submssion contains user code
-        response = client.get(f'/sql/submission/{submission.pk}', follow=True)
+        response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, 403)
 
     def test_show_problems(self):
@@ -204,11 +233,12 @@ class ViewsTest(TestCase):
         for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
             problem.clean()
             problem.save()
-            response = client.get(f'/sql/problem/{problem.pk}', follow=True)
+            problem_url = reverse('judge:problem', args=[problem.pk])
+            response = client.get(problem_url, follow=True)
             self.assertTrue(response.status_code == 200 and problem.title_md in str(response.content))
 
     def test_download(self):
-        """Download a script to problem"""
+        """Download the script of a problem (CREATE + INSERT)"""
         curr_path = os.path.dirname(__file__)
         zip_select_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.SELECT_OK)
         zip_dml_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.DML_OK)
@@ -233,7 +263,7 @@ class ViewsTest(TestCase):
             problem.save()
             url = reverse('judge:create_insert', args=[problem.pk])
             response = client.get(url, follow=True)
-            script = problem.create_sql + '\n' + problem.insert_sql
+            script = problem.create_sql + '\n\n' + problem.insert_sql
 
             self.assertEqual(
                 response.get('Content-Disposition'),
