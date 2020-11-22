@@ -138,5 +138,6 @@ LOGIN_REDIRECT_URL = '/sql/'
 
 # Configuration of django-dbbackup
 DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
-DBBACKUP_CLEANUP_KEEP = 3
-DBBACKUP_CLEANUP_KEEP_MEDIA = 3
+DBBACKUP_STORAGE_OPTIONS = {'location': f"{os.environ.get('HOME')}/lsql_backups/"}
+DBBACKUP_CLEANUP_KEEP = 30
+DBBACKUP_CLEANUP_KEEP_MEDIA = 30
