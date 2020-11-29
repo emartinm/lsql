@@ -12,6 +12,7 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from logzero import logger
 from .exceptions import ExecutorException
+from .feedback import compile_error_to_html_table
 from .forms import SubmitForm
 from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
     Submission
@@ -138,6 +139,9 @@ def submit(request, problem_id):
             elif excp.error_code == OracleStatusCode.NUMBER_STATEMENTS:
                 data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
                         'message': VeredictCode.VE.message(), 'feedback': excp.message}
+            elif excp.error_code == OracleStatusCode.COMPILATION_ERROR:
+                data = {'veredict': VeredictCode.WA, 'title': VeredictCode.WA.label,
+                        'message': VeredictCode.WA.message(), 'feedback': compile_error_to_html_table(excp.message)}
     else:
         data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
                 'message': VeredictCode.VE.message(), 'feedback': ''}

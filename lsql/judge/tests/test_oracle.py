@@ -116,6 +116,8 @@ class OracleTest(TestCase):
                         INSERT INTO Club VALUES ('11111115X', 'Un otro equipo', 'Calle falsa, 123', 25478);"""
         incorrect2 = """INSERT INTO Club VALUES ('11111114X', 'Real Betis Balompié', 'Av. de Heliópolis, s/n', 45000);
                         INSERT INTO Club VALUES ('11111115Z', 'Un otro equipo', 'Calle falsa, 123', 25478);"""
+        syntax_err = """INSERT INTO Club VALUES ('11111114X', 'Real Betis Balompié', 'Av. de Heliópolis, s/n', 45000);
+                        INSERT INTO Club VALUE ('11111115X', 'Un otro equipo', 'Calle falsa, 123', 25478);"""
         solution_order = """
           INSERT INTO Club VALUES ('11111115X', 'Un otro equipo', 'Calle falsa, 123', 25478);
           INSERT INTO Club VALUES ('11111114X', 'Real Betis Balompié', 'Av. de Heliópolis, s/n', 45000);
@@ -213,6 +215,8 @@ class OracleTest(TestCase):
             lambda: problem.judge("""INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
                                      INSERT Club VALUES ('11111114X', 'R', 'A', 45000);""", oracle),
             OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(
+            lambda: problem.judge(syntax_err, oracle), OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
         self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
@@ -298,6 +302,15 @@ class OracleTest(TestCase):
                     END LOOP;  
                     RETURN 54;
                 END;"""
+        bad_name = """
+                    CREATE OR REPLACE FUNCTION golesLocalES(resultado VARCHAR2) RETURN NUMBER IS
+                        posGuion NUMBER;
+                        golesStr VARCHAR2(3);
+                    BEGIN
+                        posGuion := INSTR(resultado, '-');
+                        golesStr := SUBSTR(resultado, 0, posGuion - 1);
+                        RETURN TO_NUMBER(golesStr); 
+                    END;"""
         oracle = OracleExecutor.get()
         problem = FunctionProblem(title_md='Test Function', text_md='bla bla bla',
                                   create_sql=create, insert_sql=insert, collection=collection,
@@ -315,6 +328,8 @@ class OracleTest(TestCase):
         self.assert_executor_exception(lambda: problem.judge(runtime_error1, oracle),
                                        OracleStatusCode.EXECUTE_USER_CODE)
         self.assert_executor_exception(lambda: problem.judge(runtime_error2, oracle),
+                                       OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(bad_name, oracle),
                                        OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
@@ -391,6 +406,13 @@ class OracleTest(TestCase):
                 SELECT COUNT(*) INTO num_equipos FROM Club;
                 INSERT INTO CLUB VALUES ('22222222X', 'A', 'B', num_equipos + x + 2);
             END;"""
+        bad_name = """
+                    CREATE OR REPLACE PROCEDURE insertaR(x NUMBER) IS
+                        num_equipos NUMBER;
+                    BEGIN
+                        SELECT COUNT(*) INTO num_equipos FROM Club;
+                        INSERT INTO CLUB VALUES ('22222222X', 'A', 'B', num_equipos + x);
+                    END;"""
 
         oracle = OracleExecutor.get()
         problem = ProcProblem(title_md='Test Function', text_md='bla bla bla',
@@ -409,6 +431,8 @@ class OracleTest(TestCase):
         self.assert_executor_exception(lambda: problem.judge(runtime_error1, oracle),
                                        OracleStatusCode.EXECUTE_USER_CODE)
         self.assert_executor_exception(lambda: problem.judge(runtime_error2, oracle),
+                                       OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(bad_name, oracle),
                                        OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution

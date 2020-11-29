@@ -26,7 +26,7 @@ class ParseTest(TestCase):
 
     SELECT_OK = 'select_ok.zip'
     DML_OK = 'dml_ok.zip'
-    FUNCTIOM_OK = 'function_ok.zip'
+    FUNCTION_OK = 'function_ok.zip'
     PROC_OK = 'proc_ok.zip'
     TRIGGER_OK = 'trigger_ok.zip'
 
@@ -83,7 +83,7 @@ class ParseTest(TestCase):
         curr_path = os.path.dirname(__file__)
         zip_select_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_OK)
         zip_dml_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DML_OK)
-        zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTIOM_OK)
+        zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTION_OK)
         zip_proc_path = os.path.join(curr_path, self.ZIP_FOLDER, self.PROC_OK)
         zip_trigger_path = os.path.join(curr_path, self.ZIP_FOLDER, self.TRIGGER_OK)
 
@@ -101,7 +101,7 @@ class ParseTest(TestCase):
         curr_path = os.path.dirname(__file__)
         zip_select_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_OK)
         zip_dml_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DML_OK)
-        zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTIOM_OK)
+        zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTION_OK)
         zip_proc_path = os.path.join(curr_path, self.ZIP_FOLDER, self.PROC_OK)
         zip_trigger_path = os.path.join(curr_path, self.ZIP_FOLDER, self.TRIGGER_OK)
 
