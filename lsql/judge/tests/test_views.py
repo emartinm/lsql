@@ -123,13 +123,6 @@ class ViewsTest(TestCase):
         self.assertEqual(response.redirect_chain,
                          [(login_redirect_create, 302)])
 
-        # download_submission redirects to login
-        submission_url = reverse('judge:download_submission', args=[submission.pk])
-        login_redirect_submission = f'{login_redirect_url}?next={submission_url}'
-        response = client.get(submission_url, follow=True)
-        self.assertEqual(response.redirect_chain,
-                         [(login_redirect_submission, 302)])
-
     def test_logged(self):
         """Connections from a logged user"""
         client = Client()
@@ -216,30 +209,12 @@ class ViewsTest(TestCase):
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, 403)
 
-        # download_submission from different user
-        client.logout()
-        client.login(username='ana', password='1234')
-        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
-        client.logout()
-        client.login(username='pepe', password='5555')
-        response = client.get(submission_url, follow=True)
-        self.assertEqual(response.status_code, 200)
-        if submission.user != client.request(user):
-            self.assertEqual(response.status_code, 'Forbidden')
-
-        # download_submission from different user
-        client.logout()
-        client.login(username='ana', password='1234')
-        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
-        if submission.user != client.request(user):
-            self.assertEqual(response.status_code, 200)
-
     def test_show_problems(self):
         """Shows a problem of each type"""
         curr_path = os.path.dirname(__file__)
         zip_select_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.SELECT_OK)
         zip_dml_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.DML_OK)
-        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTIOM_OK)
+        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTION_OK)
         zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
         zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
 
@@ -267,7 +242,7 @@ class ViewsTest(TestCase):
         curr_path = os.path.dirname(__file__)
         zip_select_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.SELECT_OK)
         zip_dml_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.DML_OK)
-        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTIOM_OK)
+        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTION_OK)
         zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
         zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
 
@@ -301,3 +276,101 @@ class ViewsTest(TestCase):
             self.assertEqual(response.content.decode('UTF-8'), script)
 
             self.assertTrue(response.status_code == 200)
+
+    def test_compile_error(self):
+        """Submitting code for a function/procedure/trigger with a compile error does resturn a
+        OracleStatusCode.COMPILATION_ERROR"""
+        curr_path = os.path.dirname(__file__)
+        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTION_OK)
+        zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
+        zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
+
+        client = Client()
+        collection = create_collection('Colleccion de prueba AAA')
+        user = create_user('54522', 'antonio')
+        client.login(username='antonio', password='54522')
+
+        function_problem = FunctionProblem(zipfile=zip_function_path, collection=collection, author=user)
+        proc_problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
+        trigger_problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
+
+        funct_compile_error = """
+                            CREATE OR REPLACE FUNCTION golesLocal(resultado VARCHAR2) RETURN NUMBER IS
+                              posGuion NUMBER;
+                              golesStr VARCHAR2(3);
+                            BEGIN
+                              posGuion := INSTR(resultado, '-') -- Missing ';'
+                              golesStr := SUBSTR(resultado, 0, posGuion - 1);
+                              RETURN TO_NUMBER(golesStr); 
+                            END;"""
+        proc_compile_error = """
+            CREATE OR REPLACE PROCEDURE actualiza_socios(club_cif CHAR) IS
+                CURSOR cr_partidos IS SELECT CL.Nombre AS ClubL, CV.Nombre AS ClubV, COUNT(*) AS NAsistentes
+                                      FROM Enfrenta JOIN Asiste USING(CIF_local, CIF_visitante)
+                                           JOIN Club CL ON CL.CIF = CIF_Local
+                                           JOIN Club CV ON CV.CIF = CIF_visitante
+                                      WHERE CIF_local = club_cif OR CIF_visitante = club_cif
+                                      GROUP BY CIF_local, CIF_visitante, CL.Nombre, CV.Nombre;
+                incrPartido NUMBER;
+                incrTotal NUMBER := 0;
+                nPartido NUMBER := 1;
+                nombreClub VARCHAR2(200);
+            BEGIN
+                SELECT Nombre 
+                INTO nombreClub
+                FROM Club
+                WHERE CIF = club_cif;
+                    
+                FOR partido IN cr_partidos LOOP
+                  IF partido.NAsistentes > 3 THEN
+                    incrPartido := 100;
+                  ELSIF partido.NAsistentes > 1 -- Missing 'THEN'
+                    incrPartido := 10;
+                  ELSE 
+                    incrPartido := 0;
+                  END IF;
+                  incrTotal := incrTotal + incrPartido;
+                  nPartido := nPartido + 1;
+                END LOOP;
+                
+                UPDATE Club
+                SET Num_Socios = Num_Socios + incrTotal
+                WHERE CIF = club_cif;
+            END;"""
+
+        trigger_compile_error = """
+                                CREATE OR REPLACE TRIGGER DispCantidadFinanciacion
+                                BEFORE INSERT OR UPDATE
+                                ON Financia FOR EACH ROW
+                                DECLARE
+                                  numJug NUMBER;
+                                BEGIN
+                                  SELECT COUNT(*) INTO numJug
+                                  FROM Jugador
+                                  WHERE CIF = :NEW.CIF_C;
+                                
+                                  IF numJug >= 2 THEN
+                                    :NEW.Cantidad := :NEW.Cantidad  1.25; -- Missing operator
+                                  END IF;
+                                END;"""
+
+        for (problem, code) in [(function_problem, funct_compile_error),
+                                (proc_problem, proc_compile_error)]:
+            problem.clean()
+            problem.save()
+            submit_url = reverse('judge:submit', args=[problem.pk])
+            response = client.post(submit_url, {'code': code}, follow=True)
+            print(response.json()['feedback'])
+            self.assertTrue(response.json()['veredict'] == VeredictCode.WA)
+            self.assertIn('error', response.json()['feedback'])
+            self.assertIn('compil', response.json()['feedback'])
+
+        for (problem, code) in [(trigger_problem, trigger_compile_error)]:
+            # Compile error in trigger problems generates RE instead of CE (in cx_Oracle)
+            problem.clean()
+            problem.save()
+            submit_url = reverse('judge:submit', args=[problem.pk])
+            response = client.post(submit_url, {'code': code}, follow=True)
+            print(response.json()['feedback'])
+            self.assertTrue(response.json()['veredict'] == VeredictCode.RE)
+            self.assertIn('invalid', response.json()['feedback'])

@@ -12,6 +12,7 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from logzero import logger
 from .exceptions import ExecutorException
+from .feedback import compile_error_to_html_table
 from .forms import SubmitForm
 from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
     Submission
@@ -90,15 +91,6 @@ def show_submission(request, submission_id):
     submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
     return render(request, 'submission.html', {'submission': submission})
 
-@login_required
-def download_submission(_, submission_id):
-    """Returns a script with the code of submission"""
-    submission = get_object_or_404(Submission, pk=submission_id)
-    response = HttpResponse()
-    response['Content-Type'] = 'application/sql'
-    response['Content-Disposition'] = "attachment; filename=code.sql"
-    response.write(submission.code)
-    return response
 
 @login_required
 def download(_, problem_id):
@@ -147,6 +139,9 @@ def submit(request, problem_id):
             elif excp.error_code == OracleStatusCode.NUMBER_STATEMENTS:
                 data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
                         'message': VeredictCode.VE.message(), 'feedback': excp.message}
+            elif excp.error_code == OracleStatusCode.COMPILATION_ERROR:
+                data = {'veredict': VeredictCode.WA, 'title': VeredictCode.WA.label,
+                        'message': VeredictCode.WA.message(), 'feedback': compile_error_to_html_table(excp.message)}
     else:
         data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
                 'message': VeredictCode.VE.message(), 'feedback': ''}
