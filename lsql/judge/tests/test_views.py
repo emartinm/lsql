@@ -219,19 +219,14 @@ class ViewsTest(TestCase):
         # download_submission from different user
         client.logout()
         client.login(username='ana', password='1234')
-        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
         client.logout()
-        client.login(username='pepe', password='5555')
-        response = client.get(submission_url, follow=True)
-        self.assertEqual(response.status_code, 200)
-        if submission.user != client.request(user):
+        if submission.user != user:
             self.assertEqual(response.status_code, 'Forbidden')
 
         # download_submission from different user
         client.logout()
         client.login(username='ana', password='1234')
-        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
-        if submission.user != client.request(user):
+        if submission.user != user:
             self.assertEqual(response.status_code, 200)
 
     def test_show_problems(self):
