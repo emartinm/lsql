@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block menu %}
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li>
+        <a class="nav-link" href="#">Ayuda</a>
+      </li>
+    </ul>
+  </div>
+{% endblock %}
+{% block contenido %}
+{% if form.errors %}
+<div class="alert alert-danger" role="alert">
+  Usuario o contraseña no válidos
+</div>
+{% endif %}
+
+  <h2>Inicio de sesión</h2>
+<form action="{% url 'judge:login' %}" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+
+    <div class="form-group">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        <small id="emailHelp" class="form-text text-muted">
+            Es la parte de tu e-mail que precede a <code>@ucm.es</code>.
+        </small>
+    </div>
+
+    <div class="form-group">
+        {{ form.password.label_tag }}
+        {{ form.password }}
+      <small id="passwordHelp" class="form-text text-muted">Ponte en contacto con tu profesor si has olvidado tu contraseña.</small>
+    </div>
+  <button type="submit" class="btn btn-primary">Entrar</button>
+</form>
+{% endblock %}

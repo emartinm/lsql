@@ -1,0 +1,52 @@
+
+
+{% macro show_list_of_dicts(dlist) -%}
+{% if dlist %}
+{% set headers = dlist[0].keys() %}
+<table class="table table-striped">
+    <thead class="thead-dark">
+        <tr>
+        {% for hname in headers %}
+            <th scope="col">{{hname}}</th>
+        {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row_dict in dlist %}
+            <tr>
+            {% for elem in row_dict.values() %}
+                <td>{{elem}}</td>
+            {% endfor %}
+            </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+{% endif %}
+{%- endmacro %}
+
+{% macro show_submissions(submissions) %}
+    <table class="table">
+        <thead class="thead-dark">
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Usuario</th>
+            <th scope="col">Fecha</th>
+            <th scope="col">Problema</th>
+            <th scope="col">Veredicto</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for s in submissions %}
+        <tr>
+            <td>{{s.sid}}</td>
+            <td>{{s.email}}</td>
+            <td>{{s.creation_date_str}}</td>
+            <td><strong>{{s.title}}</strong></td>
+            <td>{% autoescape false %}{{s.veredict_code_html}}{% endautoescape %}</td>
+            <td><a href="/sql/submission/{{s.sid}}" title="Ver detalles del envío">Ver</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{%- endmacro %}

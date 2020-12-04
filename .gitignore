@@ -1,0 +1,9 @@
+venv
+.env
+.idea
+*.pyc
+config.sh
+postgres/
+lsql/problem_zips
+lsql/.coverage
+lsql/allstaticfiles/

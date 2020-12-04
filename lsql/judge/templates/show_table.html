@@ -1,0 +1,32 @@
+{% comment %}
+  Receives a 'table', a 'name' and a list of row indexes 'mark_rows' to remark
+{% endcomment %}
+{% if name %}
+<h3><code>{{name}}</code></h3>
+{% endif %}
+{% if mark_rows %}
+<table class="table">
+{% else %}
+<table class="table table-striped">
+{% endif %}
+    <thead class="thead-dark">
+        <tr>
+        {% for hname, _ in table.header %}
+            <th scope="col">{{hname}}</th>
+        {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table.rows %}
+            {% if forloop.counter0 in mark_rows %} {# loop.index starts **in 1** #}
+                <tr class="marked_row">
+            {% else %}
+                <tr>
+            {% endif %}
+            {% for elem in row %}
+                <td>{{elem}}</td>
+            {% endfor %}
+            </tr>
+      {% endfor %}
+      </tbody>
+    </table>
