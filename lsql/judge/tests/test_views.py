@@ -224,7 +224,6 @@ class ViewsTest(TestCase):
         if submission.user == user:
             url = reverse('judge:download_submission', args=[submission.pk])
             response = client.get(url, follow=True)
-            script = submission.code + '\n\n' + submission.code
             self.assertEqual(
                 response.get('Content-Disposition'),
                 "attachment; filename=code.sql",
