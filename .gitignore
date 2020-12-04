@@ -1,6 +1,0 @@
-venv
-.env
-.idea
-*.pyc
-config.sh
-postgres/
