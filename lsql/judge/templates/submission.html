@@ -30,6 +30,9 @@
                 <pre><code>
 {{submission.code}}
                 </code></pre>
+                <a href="{% url 'judge:download_submission' submission.id %}" download_submission="code.sql" >
+                <button type="button" class="btn btn-primary" title="Script con el código">Descargar</button>
+                </a>
             </td>
         </tr>
     </tbody>

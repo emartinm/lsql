@@ -123,6 +123,13 @@ class ViewsTest(TestCase):
         self.assertEqual(response.redirect_chain,
                          [(login_redirect_create, 302)])
 
+        # download_submission redirects to login
+        submission_url = reverse('judge:download_submission', args=[submission.pk])
+        login_redirect_submission = f'{login_redirect_url}?next={submission_url}'
+        response = client.get(submission_url, follow=True)
+        self.assertEqual(response.redirect_chain,
+                         [(login_redirect_submission, 302)])
+
     def test_logged(self):
         """Connections from a logged user"""
         client = Client()
@@ -208,6 +215,24 @@ class ViewsTest(TestCase):
         # Submssion contains user code
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, 403)
+
+        # download_submission from different user
+        client.logout()
+        client.login(username='ana', password='1234')
+        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
+        client.logout()
+        client.login(username='pepe', password='5555')
+        response = client.get(submission_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        if submission.user != client.request(user):
+            self.assertEqual(response.status_code, 'Forbidden')
+
+        # download_submission from different user
+        client.logout()
+        client.login(username='ana', password='1234')
+        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
+        if submission.user != client.request(user):
+            self.assertEqual(response.status_code, 200)
 
     def test_show_problems(self):
         """Shows a problem of each type"""
