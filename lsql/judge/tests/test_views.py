@@ -217,17 +217,24 @@ class ViewsTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
         # download_submission from different user
-        client.logout()
-        client.login(username='ana', password='1234')
-        client.logout()
         if submission.user != user:
             self.assertEqual(response.status_code, 'Forbidden')
 
-        # download_submission from different user
-        client.logout()
-        client.login(username='ana', password='1234')
-        if submission.user != user:
-            self.assertEqual(response.status_code, 200)
+        # download_submission from the same user
+        if submission.user == user:
+            url = reverse('judge:download_submission', args=[submission.pk])
+            response = client.get(url, follow=True)
+            script = submission.code + '\n\n' + submission.code
+            self.assertEqual(
+                response.get('Content-Disposition'),
+                "attachment; filename=code.sql",
+            )
+            self.assertEqual(
+                response.get('Content-Type'),
+                "application/sql"
+            )
+
+            self.assertTrue(response.status_code == 200)
 
     def test_show_problems(self):
         """Shows a problem of each type"""
