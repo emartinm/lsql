@@ -4,7 +4,7 @@ load-plugins=pylint_django         # Avoid missing attributes in models
 disable=
     C0114, # missing-module-docstring
     C0115, # missing-class-docstring
-    
+
 [FORMAT]
 max-line-length=120
 
