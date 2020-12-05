@@ -115,6 +115,19 @@ def download(_, problem_id):
 
 
 @login_required
+def download(_, problem_id):
+    """Returns a script with the creation and insertion of the problem"""
+    get_object_or_404(Problem, pk=problem_id)
+    # Look for problem pk in all the Problem classes
+    problem = get_child_problem(problem_id)
+    response = HttpResponse()
+    response['Content-Type'] = 'application/sql'
+    response['Content-Disposition'] = "attachment; filename=create_insert.sql"
+    response.write(problem.create_sql+'\n\n'+problem.insert_sql)
+    return response
+
+
+@login_required
 # pylint does not understand the dynamic attributes in VeredictCode (TextChoices), so we need to disable
 # no-member warning in this specific function
 # pylint: disable=no-member

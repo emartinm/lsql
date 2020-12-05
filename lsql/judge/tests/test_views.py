@@ -124,11 +124,11 @@ class ViewsTest(TestCase):
                          [(login_redirect_create, 302)])
 
         # download_submission redirects to login
-        submission_url = reverse('judge:download_submission', args=[submission.pk])
-        login_redirect_submission = f'{login_redirect_url}?next={submission_url}'
-        response = client.get(submission_url, follow=True)
+        download_url = reverse('judge:download_submission', args=[submission.pk])
+        login_redirect_submission_download = f'{login_redirect_url}?next={download_url}'
+        response = client.get(download_url, follow=True)
         self.assertEqual(response.redirect_chain,
-                         [(login_redirect_submission, 302)])
+                         [(login_redirect_submission_download, 302)])
 
     def test_logged(self):
         """Connections from a logged user"""
