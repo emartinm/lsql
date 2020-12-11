@@ -185,6 +185,19 @@ def execute_sql_script(conn, script):
                          conn.username, statements, time.time() - init)
 
 
+def get_compilation_errors(conn):
+    """
+    Extracts compilation errors from table SYS.USER_ERRORS and returns
+    :param conn: Open Oracle connection
+    :return: dict representing the table
+    """
+    with conn.cursor() as cursor:
+        cursor.execute('''SELECT NAME "Nombre de procedimiento", LINE "Línea", POSITION "Posición",
+                                 TEXT "Error detectado", ATTRIBUTE "Criticidad" 
+                          FROM SYS.USER_ERRORS''')
+        return table_from_cursor(cursor)
+
+
 # Dropping users will automatically remove all their objects
 # I keep this function just in case is useful in the future
 # def empty_schema(conn):
@@ -542,11 +555,7 @@ class OracleExecutor:
                 # Stops if there is some compilation error with the function
                 # We must handle it manually because executing a FUNCTION creation with failures does not throw
                 # any Oracle exception
-                cursor.execute('''SELECT NAME "Nombre de función", LINE "Línea", POSITION "Posición",
-                                         TEXT "Error detectado", ATTRIBUTE "Criticidad" 
-                                  FROM SYS.USER_ERRORS 
-                                  WHERE TYPE = \'FUNCTION\'''')
-                errors = table_from_cursor(cursor)
+                errors = get_compilation_errors(conn)
                 if len(errors['rows']) > 0:
                     raise ExecutorException(OracleStatusCode.COMPILATION_ERROR, message=errors, statement=stmt)
 
@@ -641,11 +650,10 @@ class OracleExecutor:
                 stmt = proc_creation
                 cursor.execute(stmt)
 
-                cursor.execute('''SELECT NAME "Nombre de procedimiento", LINE "Línea", POSITION "Posición",
-                                         TEXT "Error detectado", ATTRIBUTE "Criticidad" 
-                                  FROM SYS.USER_ERRORS 
-                                  WHERE TYPE = \'PROCEDURE\'''')
-                errors = table_from_cursor(cursor)
+                # Stops if there is some compilation error in the procedure
+                # We must handle it manually because executing a PROCEDURE creation with failures does not throw
+                # any Oracle exception
+                errors = get_compilation_errors(conn)
                 if len(errors['rows']) > 0:
                     raise ExecutorException(OracleStatusCode.COMPILATION_ERROR, message=errors, statement=stmt)
 
@@ -767,6 +775,10 @@ class OracleExecutor:
             if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
+            if 'ORA-04098' in error_msg:
+                # trigger is invalid and failed re-validation => compilation error
+                errors = get_compilation_errors(conn)
+                raise ExecutorException(OracleStatusCode.COMPILATION_ERROR, message=errors, statement=stmt) from excp
             raise ExecutorException(state, error_msg, stmt) from excp
         finally:
             if conn:

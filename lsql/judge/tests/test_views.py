@@ -355,22 +355,36 @@ class ViewsTest(TestCase):
                                 END;"""
 
         for (problem, code) in [(function_problem, funct_compile_error),
-                                (proc_problem, proc_compile_error)]:
+                                (proc_problem, proc_compile_error),
+                                (trigger_problem, trigger_compile_error)]:
             problem.clean()
             problem.save()
             submit_url = reverse('judge:submit', args=[problem.pk])
             response = client.post(submit_url, {'code': code}, follow=True)
-            print(response.json()['feedback'])
-            self.assertTrue(response.json()['veredict'] == VeredictCode.WA)
+            self.assertEqual(response.json()['veredict'], VeredictCode.WA)
             self.assertIn('error', response.json()['feedback'])
             self.assertIn('compil', response.json()['feedback'])
 
-        for (problem, code) in [(trigger_problem, trigger_compile_error)]:
-            # Compile error in trigger problems generates RE instead of CE (in cx_Oracle)
+    def test_plsql_correct(self):
+        """Accepted submissions to function/procedure/trigger problem"""
+
+        curr_path = os.path.dirname(__file__)
+        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTION_OK)
+        zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
+        zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
+
+        client = Client()
+        collection = create_collection('Colleccion de prueba AAA')
+        user = create_user('54522', 'antonio')
+        client.login(username='antonio', password='54522')
+
+        function_problem = FunctionProblem(zipfile=zip_function_path, collection=collection, author=user)
+        proc_problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
+        trigger_problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
+
+        for problem in [function_problem, proc_problem, trigger_problem]:
             problem.clean()
             problem.save()
             submit_url = reverse('judge:submit', args=[problem.pk])
-            response = client.post(submit_url, {'code': code}, follow=True)
-            print(response.json()['feedback'])
-            self.assertTrue(response.json()['veredict'] == VeredictCode.RE)
-            self.assertIn('invalid', response.json()['feedback'])
+            response = client.post(submit_url, {'code': problem.solution}, follow=True)
+            self.assertEqual(response.json()['veredict'], VeredictCode.AC)

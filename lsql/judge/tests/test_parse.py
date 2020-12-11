@@ -49,6 +49,7 @@ class ParseTest(TestCase):
     TRIGGER_MISSING_FILES = 'trigger_missing_files.zip'
     TRIGGER_EMPTY_TITLE = 'trigger_empty_title.zip'
     TRIGGER_TEXT_DECODE = 'trigger_text_decode.zip'
+    TRIGGER_BAD_INSERT = 'trigger_bad_insert.zip'
 
     def test_no_json(self):
         """Loading problem details form a ZIP without JSON file"""
@@ -163,8 +164,9 @@ class ParseTest(TestCase):
             problem = ProcProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)
 
-        # Procedure problems
-        for filename in [self.TRIGGER_MISSING_FILES, self.TRIGGER_EMPTY_TITLE, self.TRIGGER_TEXT_DECODE]:
+        # Trigger problems
+        for filename in [self.TRIGGER_MISSING_FILES, self.TRIGGER_EMPTY_TITLE, self.TRIGGER_TEXT_DECODE,
+                         self.TRIGGER_BAD_INSERT]:
             zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
             problem = TriggerProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)
