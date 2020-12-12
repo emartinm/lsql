@@ -50,22 +50,48 @@ def feedback_headers(expected, obtained):
     """
     if expected['header'] == obtained['header']:
         return ''
-    if len(expected['header']) == len(obtained['header']) and expected['header'] != obtained['header']:
+    """son diferentes"""
+    if len(expected['header']) != len(obtained['header']) and expected['header'] != obtained['header']:
         return render_to_string('feedback_wa_headers.html',
                                 {'expected': header_to_str(expected['header']),
-                                 'comment': "orden de las columnas",
+                                 'comment': "número de columnas obtenidas:",
                                  'expected_rows': expected['header'],
                                  'obtained_rows': obtained['header'],
                                  'obtained': header_to_str(obtained['header'])}
                                 )
+    """misma longitud pero diferentes"""
+    if len(expected['header']) == len(obtained['header']) and expected['header'] != obtained['header']:
 
-    return render_to_string('feedback_wa_headers.html',
-                            {'expected': header_to_str(expected['header']),
-                             'comment': "número de columnas",
-                             'expected_rows': expected['header'],
-                             'obtained_rows': obtained['header'],
-                             'obtained': header_to_str(obtained['header'])}
-                            )
+        longitud = len(expected['header'])
+        i = 0
+        while i < longitud:
+            name = expected['header'][i][0]
+            oracle_type = expected['header'][i][1]
+            name1 = obtained['header'][i][0]
+            oracle_type1 = obtained['header'][i][1]
+            if name != name1:
+                expected_r = "Columna con nombre "+name
+                obtained_r = "Columna con nombre "+name1
+                comment = "nombre de la columna numero: " + str(i+1)
+                return render_to_string('feedback_wa_headers.html',
+                                        {'expected': expected_r,
+                                         'comment': comment,
+                                         'expected_rows': expected['header'],
+                                         'obtained_rows': obtained['header'],
+                                         'obtained': obtained_r}
+                                        )
+            if name == name1 and oracle_type != oracle_type1:
+                expected_r = "Columna de tipo " + oracle_type
+                obtained_r = "Columna de tipo " + oracle_type1
+                comment = "tipo de la columna numero: " + str(i+1)
+                return render_to_string('feedback_wa_headers.html',
+                                        {'expected': expected_r,
+                                         'comment': comment,
+                                         'expected_rows': expected['header'],
+                                         'obtained_rows': obtained['header'],
+                                         'obtained': obtained_r}
+                                        )
+            i = i+1
 
 
 def feedback_rows(expected, obtained, order):
