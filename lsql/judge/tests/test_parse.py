@@ -26,7 +26,7 @@ class ParseTest(TestCase):
 
     SELECT_OK = 'select_ok.zip'
     DML_OK = 'dml_ok.zip'
-    FUNCTIOM_OK = 'function_ok.zip'
+    FUNCTION_OK = 'function_ok.zip'
     PROC_OK = 'proc_ok.zip'
     TRIGGER_OK = 'trigger_ok.zip'
 
@@ -49,6 +49,7 @@ class ParseTest(TestCase):
     TRIGGER_MISSING_FILES = 'trigger_missing_files.zip'
     TRIGGER_EMPTY_TITLE = 'trigger_empty_title.zip'
     TRIGGER_TEXT_DECODE = 'trigger_text_decode.zip'
+    TRIGGER_BAD_INSERT = 'trigger_bad_insert.zip'
 
     def test_no_json(self):
         """Loading problem details form a ZIP without JSON file"""
@@ -83,7 +84,7 @@ class ParseTest(TestCase):
         curr_path = os.path.dirname(__file__)
         zip_select_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_OK)
         zip_dml_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DML_OK)
-        zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTIOM_OK)
+        zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTION_OK)
         zip_proc_path = os.path.join(curr_path, self.ZIP_FOLDER, self.PROC_OK)
         zip_trigger_path = os.path.join(curr_path, self.ZIP_FOLDER, self.TRIGGER_OK)
 
@@ -101,7 +102,7 @@ class ParseTest(TestCase):
         curr_path = os.path.dirname(__file__)
         zip_select_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_OK)
         zip_dml_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DML_OK)
-        zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTIOM_OK)
+        zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTION_OK)
         zip_proc_path = os.path.join(curr_path, self.ZIP_FOLDER, self.PROC_OK)
         zip_trigger_path = os.path.join(curr_path, self.ZIP_FOLDER, self.TRIGGER_OK)
 
@@ -163,8 +164,9 @@ class ParseTest(TestCase):
             problem = ProcProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)
 
-        # Procedure problems
-        for filename in [self.TRIGGER_MISSING_FILES, self.TRIGGER_EMPTY_TITLE, self.TRIGGER_TEXT_DECODE]:
+        # Trigger problems
+        for filename in [self.TRIGGER_MISSING_FILES, self.TRIGGER_EMPTY_TITLE, self.TRIGGER_TEXT_DECODE,
+                         self.TRIGGER_BAD_INSERT]:
             zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
             problem = TriggerProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)

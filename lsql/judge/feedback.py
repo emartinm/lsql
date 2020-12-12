@@ -157,3 +157,13 @@ def compare_function_results(expected, obtained):
                                         {'call': call, 'expected': expected[call], 'obtained': obtained[call]})
             break
     return veredict, feedback
+
+
+def compile_error_to_html_table(tab):
+    """
+    Generates the wrong answer HTML response from a SQL table included in the COMPILE_ERROR exception
+    :param tab: dictionary with header and rows
+    :return: HTML message
+    """
+    feedback = render_to_string('feedback_ce.html', {'table': tab})
+    return feedback
