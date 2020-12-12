@@ -50,8 +50,20 @@ def feedback_headers(expected, obtained):
     """
     if expected['header'] == obtained['header']:
         return ''
+    if len(expected['header']) == len(obtained['header']) and expected['header'] != obtained['header']:
+        return render_to_string('feedback_wa_headers.html',
+                                {'expected': header_to_str(expected['header']),
+                                 'comment': "orden de las columnas",
+                                 'expected_rows': expected['header'],
+                                 'obtained_rows': obtained['header'],
+                                 'obtained': header_to_str(obtained['header'])}
+                                )
+
     return render_to_string('feedback_wa_headers.html',
                             {'expected': header_to_str(expected['header']),
+                             'comment': "número de columnas",
+                             'expected_rows': expected['header'],
+                             'obtained_rows': obtained['header'],
                              'obtained': header_to_str(obtained['header'])}
                             )
 

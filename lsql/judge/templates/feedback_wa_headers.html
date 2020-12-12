@@ -1,12 +1,15 @@
-<p>Hay diferencias en el esquema de las columnas:
+<p>Hay diferencias en el <strong><code class="code">{{comment}}</code> </strong> obtenidas:
     <ul>
         <li>
-            <strong>Esperado:</strong><br/>
+            <strong>Esperado: (<code class="code">{{expected_rows|length}}</code> columnas)</strong>  <br/>
             <code>{{expected}}</code>
         </li>
         <li>
-            <strong>Generado por tu código SQL:</strong><br/>
+            <strong>Generado por tu código SQL: (<code class="code">{{obtained_rows|length}}</code> columnas)</strong><br/>
             <code>{{obtained}}</code></li>
         </ul>
     Recuerda que tanto el nombre de cada columna como su tipo y el orden en el que aparecen debe coincidir <strong>exactamente</strong>.
 </p>
+<style>
+    .code{ color:black;}o
+</style>
