@@ -52,16 +52,17 @@ def feedback_headers(expected, obtained):
         return ''
 
     if len(expected['header']) != len(obtained['header']) and expected['header'] != obtained['header']:
-        _expected = "Esperado: ("+str(len(expected['header']))+" columnas)"
-        _obtained = "Generado por tu códigoSQL: ("+str(len(obtained['header']))+" columnas)"
+        _expected = f"Esperado: ({str(len(expected['header']))} columnas)"
+        _obtained = f"Generado por tu códigoSQL: ({str(len(obtained['header']))} columnas)"
+        comment ="Número de columnas obtenidas:"
         return render_to_string('feedback_wa_headers.html',
                                 {'expected': _expected,
-                                 'comment': "Número de columnas obtenidas:",
+                                 'comment': comment,
                                  'expected_rows': header_to_str(expected['header']),
                                  'obtained_rows': header_to_str(obtained['header']),
                                  'obtained': _obtained}
                                 )
-    if len(expected['header']) == len(obtained['header']) and expected['header'] != obtained['header']:
+    if len(expected['header']) == len(obtained['header']):
         longitud = len(expected['header'])
         i = 0
         while i < longitud:
@@ -70,26 +71,27 @@ def feedback_headers(expected, obtained):
             name_obtained = obtained['header'][i][0]
             oracle_type_obtained = obtained['header'][i][1]
             if name_expected.upper() != name_obtained.upper():
-                expected_r = "Nombre esperado: "+name_expected.upper()
-                obtained_r = "Nombre generado por tu código SQL: "+name_obtained.upper()
-                comment = "Nombre de la columna numero: " + str(i+1)
+                expected_r = f"Nombre esperado: {name_expected.upper()}"
+                obtained_r = f"Nombre generado por tu código SQL: {name_obtained.upper()}"
+                comment = "Nombre de la columna número: " + str(i + 1)
                 return render_to_string('feedback_wa_headers.html',
                                         {'expected': expected_r,
                                          'comment': comment,
                                          'obtained': obtained_r}
                                         )
-            if name_expected.upper() == name_obtained.upper() and\
+            if name_expected.upper() == name_obtained.upper() and \
                     oracle_type_expected.upper() != oracle_type_obtained.upper():
-                expected_r2 = "Tipo esperado: " + oracle_type_expected.upper()
-                obtained_r2 = "Tipo generado por tu código SQL: " + oracle_type_obtained.upper()
-                comment2 = "Tipo de la columna numero: " + str(i+1)
+                expected_r2 = f"Tipo esperado: {oracle_type_expected.upper()}"
+                obtained_r2 = f"Tipo generado por tu código SQL: {oracle_type_obtained.upper()}"
+                comment2 = f"Tipo de la columna número: {str(i + 1)}"
                 return render_to_string('feedback_wa_headers.html',
                                         {'expected': expected_r2,
                                          'comment': comment2,
                                          'obtained': obtained_r2}
                                         )
-            i = i+1
-    return ""
+            i = i + 1
+    return ''
+
 
 def feedback_rows(expected, obtained, order):
     """
