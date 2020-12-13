@@ -355,7 +355,7 @@ class OracleExecutor:
                     cursor.execute(self.__USER_CONNECTIONS, username=user[0])
                     connections = cursor.fetchall()
                     # Kills all the possible connections of username
-                    for connection in connections:
+                    for connection in connections:  # pragma: no cover
                         cursor.execute(self.__KILL_SESSION.format(connection[0], connection[1]))
                     self.drop_user(user[0], gestor)
         except cx_Oracle.DatabaseError as excp:  # pragma: no cover
