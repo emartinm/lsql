@@ -558,3 +558,56 @@ class OracleTest(TestCase):
         self.assertEqual(veredict, VeredictCode.AC)
         veredict, _ = problem.judge("SELECT TO_DATE('2003/07/09', 'yyyy/mm/dd') AS day FROM dual", oracle)
         self.assertEqual(veredict, VeredictCode.AC)
+
+    def test_dangling_users(self):
+        """Checks that removing dangling users does not increase the number of dangling users"""
+        collection = Collection()
+        collection.save()
+        create = '''CREATE TABLE Club(
+                                CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
+                                Nombre VARCHAR2(40) NOT NULL UNIQUE,
+                                Sede VARCHAR2(30) NOT NULL,
+                                Num_Socios NUMBER(10,0) NOT NULL,
+                                CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
+                            );'''
+        insert = """INSERT INTO Club VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
+                            INSERT INTO Club VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
+                            INSERT INTO Club VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);"""
+        solution = """
+                    CREATE OR REPLACE PROCEDURE inserta(x NUMBER) IS
+                        num_equipos NUMBER;
+                    BEGIN
+                        SELECT COUNT(*) INTO num_equipos FROM Club;
+                        INSERT INTO CLUB VALUES ('22222222X', 'A', 'B', num_equipos + x);
+                    END;"""
+        call = "inserta(4)"
+
+        # Time-limit
+        tle = """CREATE OR REPLACE PROCEDURE inserta(x NUMBER) IS
+                     num_equipos NUMBER;
+                     IN_TIME INT := 11; --num seconds
+                     v_now DATE;
+                 BEGIN
+                     SELECT SYSDATE INTO v_now FROM DUAL;
+                     SELECT COUNT(*) INTO num_equipos FROM Club;
+                     LOOP
+                         EXIT WHEN v_now + (IN_TIME * (1/86400)) <= SYSDATE;
+                     END LOOP;  
+                     INSERT INTO CLUB VALUES ('22222222X', 'A', 'B', num_equipos + x);
+                 END;
+                 """
+
+        oracle = OracleExecutor.get()
+        problem = ProcProblem(title_md='Test Function', text_md='bla bla bla',
+                              create_sql=create, insert_sql=insert, collection=collection,
+                              author=None, solution=solution, proc_call=call)
+        problem.clean()  # Needed to compute extra HTML fields and solutions
+        problem.save()
+
+        # Time-limit
+        self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+
+        before = oracle.get_number_dangling_users(age_seconds=1)
+        oracle.remove_dangling_users(age_seconds=1)
+        after = oracle.get_number_dangling_users(age_seconds=1)
+        self.assertGreaterEqual(before, after)

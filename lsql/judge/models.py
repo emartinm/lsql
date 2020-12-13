@@ -340,7 +340,6 @@ class TriggerProblem(Problem):
             raise ValidationError(excp) from excp
 
     def judge(self, code, executor):
-        # Does not neet to handle COMPILATION_ERROR because for triggers they generate a RUNTIME ERROR
         oracle_result = executor.execute_trigger_test(self.create_sql, self.insert_sql, code, self.tests,
                                                       pre_db=False)
         return compare_db_results(self.expected_result, oracle_result['post'])
