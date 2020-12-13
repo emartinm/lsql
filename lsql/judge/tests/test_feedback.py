@@ -121,7 +121,8 @@ class FeedbackTest(TestCase):
         self.assertEqual(compare_select_results(expected, obtained1, True)[0], VeredictCode.WA)
         self.assertIn("Nombre de la columna numero: 1", compare_select_results(expected, obtained1, False)[1])
         self.assertIn("Nombre esperado: ID", compare_select_results(expected, obtained1, False)[1])
-        self.assertIn("Nombre generado por tu código SQL: NOMBRE", compare_select_results(expected, obtained1, False)[1])
+        self.assertIn("Nombre generado por tu código SQL: NOMBRE",
+                      compare_select_results(expected, obtained1, False)[1])
 
         self.assertEqual(compare_select_results(expected, obtained4, False)[0], VeredictCode.WA)
         self.assertEqual(compare_select_results(expected, obtained4, True)[0], VeredictCode.WA)

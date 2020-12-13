@@ -442,7 +442,7 @@ class OracleTest(TestCase):
         self.assertEqual(problem.judge(wrong_answer, oracle)[0], VeredictCode.WA)
 
     def test_trigger(self):
-        """Tests for r.judge()"""
+        """Tests for TriggerProblem.judge()"""
         collection = Collection()
         collection.save()
         create = '''CREATE TABLE Club(
