@@ -561,10 +561,11 @@ class OracleTest(TestCase):
         self.assertEqual(veredict, VeredictCode.AC)
 
     def test_dangling_users(self):
-        """Checks removing a manually created dangling user"""
+        """Removes a manually created dangling user with an open connection"""
         oracle = OracleExecutor.get()
         gestor = oracle.connection_pool.acquire()
-        oracle.create_user(gestor)
+        user, passwd = oracle.create_user(gestor)
+        oracle.create_connection(user, passwd)
         oracle.connection_pool.release(gestor)
         time.sleep(2)
 
