@@ -76,6 +76,58 @@ class FeedbackTest(TestCase):
         self.assertEqual(compare_select_results(expected, obtained8, False)[0], VeredictCode.WA)
         self.assertEqual(compare_select_results(expected, obtained8, True)[0], VeredictCode.WA)
 
+    def test_feedback_headers(self):
+        """Test for feedback_headers"""
+        expected = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
+                    'rows': [[1, 'a'], [2, 'b']]}
+        obtained1 = {'header': [['NOMBRE', "<class 'cx_Oracle.STRING'>"], ['ID', "<class 'cx_Oracle.NUMBER'>"]],
+                     'rows': [['b', 2], ['a', 1]]}
+        obtained2 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"],
+                                ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
+                     'rows': [[1, 'a', 'a'], [2, 'b', 'b']]}
+
+        obtained3 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"]],
+                     'rows': [[1], [2]]}
+
+        obtained4 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.NUMBER'>"]],
+                     'rows': [[1, 'a'], [2, 'b']]}
+
+        self.assertEqual(compare_select_results(expected, expected, True)[0], VeredictCode.AC)
+        self.assertEqual(compare_select_results(expected, expected, False)[0], VeredictCode.AC)
+
+        self.assertEqual(compare_select_results(expected, obtained2, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained2, False)[0], VeredictCode.WA)
+
+        self.assertIn("Esperado: (2 columnas)", compare_select_results(expected, obtained2, True)[1])
+        self.assertIn("Generado por tu códigoSQL: (3 columnas)", compare_select_results(expected, obtained2, True)[1])
+        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained2, True)[1])
+
+        self.assertIn("Esperado: (2 columnas)", compare_select_results(expected, obtained2, False)[1])
+        self.assertIn("Generado por tu códigoSQL: (3 columnas)", compare_select_results(expected, obtained2, False)[1])
+        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained2, False)[1])
+
+        self.assertEqual(compare_select_results(expected, obtained3, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained3, False)[0], VeredictCode.WA)
+
+        self.assertIn("Esperado: (2 columnas)", compare_select_results(expected, obtained3, True)[1])
+        self.assertIn("Generado por tu códigoSQL: (1 columnas)", compare_select_results(expected, obtained3, True)[1])
+        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained3, True)[1])
+
+        self.assertIn("Esperado: (2 columnas)", compare_select_results(expected, obtained3, False)[1])
+        self.assertIn("Generado por tu códigoSQL: (1 columnas)", compare_select_results(expected, obtained3, False)[1])
+        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained3, False)[1])
+
+        self.assertEqual(compare_select_results(expected, obtained1, False)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained1, True)[0], VeredictCode.WA)
+        self.assertIn("Nombre de la columna numero: 1", compare_select_results(expected, obtained1, False)[1])
+        self.assertIn("Nombre esperado: ID", compare_select_results(expected, obtained1, False)[1])
+        self.assertIn("Nombre generado por tu código SQL: NOMBRE", compare_select_results(expected, obtained1, False)[1])
+
+        self.assertEqual(compare_select_results(expected, obtained4, False)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained4, True)[0], VeredictCode.WA)
+        self.assertIn("Tipo generado por tu código SQL: ", compare_select_results(expected, obtained4, True)[1])
+        self.assertIn("Tipo de la columna numero", compare_select_results(expected, obtained4, False)[1])
+
     def test_compare_db(self):
         """Tests for compare_db_results"""
         table1 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],

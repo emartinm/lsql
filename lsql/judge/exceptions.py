@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
-
 Custom exceptions when accesing the PostgreSQL database in LSQL
 """
 
