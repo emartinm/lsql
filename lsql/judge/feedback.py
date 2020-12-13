@@ -51,10 +51,10 @@ def feedback_headers(expected, obtained):
     if expected['header'] == obtained['header']:
         return ''
 
-    if len(expected['header']) != len(obtained['header']) and expected['header'] != obtained['header']:
+    if len(expected['header']) != len(obtained['header']):
         _expected = f"Esperado: {str(len(expected['header']))} columnas"
         _obtained = f"Generado por tu código SQL: {str(len(obtained['header']))} columnas"
-        comment ="número de columnas obtenidas:"
+        comment ="Nª de columnas obtenidas:"
         return render_to_string('feedback_wa_headers.html',
                                 {'expected': _expected,
                                  'comment': comment,
@@ -62,7 +62,7 @@ def feedback_headers(expected, obtained):
                                  'obtained_rows': header_to_str(obtained['header']),
                                  'obtained': _obtained}
                                 )
-    if len(expected['header']) == len(obtained['header']):
+    else:
         longitud = len(expected['header'])
         i = 0
         while i < longitud:
@@ -73,7 +73,7 @@ def feedback_headers(expected, obtained):
             if name_expected.upper() != name_obtained.upper():
                 expected_r = f"Nombre esperado: {name_expected.upper()}"
                 obtained_r = f"Nombre generado por tu código SQL: {name_obtained.upper()}"
-                comment = f"nombre de la columna número: {str(i + 1)}"
+                comment = f"nombre de la columna : {str(i + 1)}"
                 return render_to_string('feedback_wa_headers.html',
                                         {'expected': expected_r,
                                          'comment': comment,
