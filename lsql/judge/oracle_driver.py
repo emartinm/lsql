@@ -253,7 +253,18 @@ class OracleExecutor:
                            'create procedure, alter any procedure, drop any procedure, execute any procedure '
                            'TO {}')
     __DROP_USER_SCRIPT = 'DROP USER {} CASCADE'
-    __USER_CONNECTIONS = "select sid, serial# from v$session where username = '{}'"
+    __USER_CONNECTIONS = """SELECT s.sid, s.serial#, s.username
+                                FROM   gv$session s
+                                       JOIN gv$process p ON p.addr = s.paddr AND p.inst_id = s.inst_id
+                                WHERE  s.username = :username"""
+    __DANGLING_USERS = """SELECT USERNAME, CREATED
+                          FROM all_users
+                          WHERE USERNAME LIKE 'LSQ_%' AND (SYSDATE-CREATED)*24*60*60 > :age_seconds
+                          ORDER BY CREATED ASC"""
+    __NUM_DANGLING_USERS = """SELECT COUNT(USERNAME)
+                              FROM all_users
+                              WHERE USERNAME LIKE 'LSQ_%' AND (SYSDATE-CREATED)*24*60*60 > :age_seconds"""
+    __KILL_SESSION = """ALTER SYSTEM KILL SESSION '{},{}'"""
     __SLEEP_AFTER_TIMEOUT = 100
     # milliseconds to sleep after a timeout when obtaining a
     # a timeout error, so that user connections can be properly
@@ -327,6 +338,51 @@ class OracleExecutor:
         logger.debug('User %s - Granted privileges to user %s', connection.username, user_name)
         return user_name, user_passwd
 
+    def remove_dangling_users(self, age_seconds=60):
+        """
+        Removes all the LSQL_* users created more than 'age_seconds' ago
+        :param age_seconds: (int) number of seconds
+        :return: None
+        """
+        gestor = None
+        try:
+            gestor = self.connection_pool.acquire()
+            with gestor.cursor() as cursor:
+                cursor.execute(self.__DANGLING_USERS, age_seconds=age_seconds)
+                users = cursor.fetchall()
+                for user in users:
+                    logger.info('Removing dangling user %s created at %s', user[0], user[1])
+                    cursor.execute(self.__USER_CONNECTIONS, username=user[0])
+                    connections = cursor.fetchall()
+                    # Kills all the possible connections of username
+                    for connection in connections:
+                        cursor.execute(self.__KILL_SESSION.format(connection[0], connection[1]))
+                    self.drop_user(user[0], gestor)
+        except cx_Oracle.DatabaseError as excp:  # pragma: no cover
+            logger.error('Unable to remove dangling users. Reason: %s', excp)
+        finally:
+            if gestor is not None:
+                self.connection_pool.release(gestor)
+
+    def get_number_dangling_users(self, age_seconds=60):
+        """
+        Returns the number of dangling users, i.e., users created more than 'age_seconds' ago
+        :param age_seconds: (int) number of seconds
+        :return: None
+        """
+        gestor = None
+        try:
+            gestor = self.connection_pool.acquire()
+            with gestor.cursor() as cursor:
+                cursor.execute(self.__NUM_DANGLING_USERS, age_seconds=age_seconds)
+                row = cursor.fetchone()
+                return row[0]
+        except cx_Oracle.DatabaseError as excp:  # pragma: no cover
+            logger.error('Unable to get number of dangling users. Reason: %s', excp)
+        finally:
+            if gestor is not None:
+                self.connection_pool.release(gestor)
+
     def drop_user(self, user_name, connection):
         """
         Removes a user from the Oracle local DB
@@ -334,9 +390,8 @@ class OracleExecutor:
         :param connection: Connection with priviledges to drop users
         :return: None
         """
-        user_connections_script = self.__USER_CONNECTIONS.format(user_name)
         with connection.cursor() as cursor:
-            cursor.execute(user_connections_script)
+            cursor.execute(self.__USER_CONNECTIONS, username=user_name)
             active_connections = cursor.fetchall()
             logger.debug('User %s has %s active connections', user_name, len(active_connections))
             drop_script = self.__DROP_USER_SCRIPT.format(user_name)
