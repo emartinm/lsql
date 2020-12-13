@@ -111,33 +111,33 @@ class FeedbackTest(TestCase):
         self.assertEqual(compare_select_results(expected, obtained2, False)[0], VeredictCode.WA)
 
         # Obtenido con mas filas que el esperado, compruebo sus mensajes
-        self.assertIn("Esperado: (2 columnas)", compare_select_results(expected, obtained2, True)[1])
-        self.assertIn("Generado por tu códigoSQL: (3 columnas)", compare_select_results(expected, obtained2, True)[1])
-        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained2, True)[1])
+        self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained2, True)[1])
+        self.assertIn("Generado por tu código SQL: 3 columnas", compare_select_results(expected, obtained2, True)[1])
+        self.assertIn("número de columnas obtenidas:", compare_select_results(expected, obtained2, True)[1])
 
-        self.assertIn("Esperado: (2 columnas)", compare_select_results(expected, obtained2, False)[1])
-        self.assertIn("Generado por tu códigoSQL: (3 columnas)", compare_select_results(expected, obtained2, False)[1])
-        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained2, False)[1])
+        self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained2, False)[1])
+        self.assertIn("Generado por tu código SQL: 3 columnas", compare_select_results(expected, obtained2, False)[1])
+        self.assertIn("número de columnas obtenidas:", compare_select_results(expected, obtained2, False)[1])
 
         # Comprobacion de que salen WA
         self.assertEqual(compare_select_results(expected, obtained3, True)[0], VeredictCode.WA)
         self.assertEqual(compare_select_results(expected, obtained3, False)[0], VeredictCode.WA)
 
         # Obtenido con menos filas que el esperado, compruebo sus mensajes
-        self.assertIn("Esperado: (2 columnas)", compare_select_results(expected, obtained3, True)[1])
-        self.assertIn("Generado por tu códigoSQL: (1 columnas)", compare_select_results(expected, obtained3, True)[1])
-        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained3, True)[1])
+        self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained3, True)[1])
+        self.assertIn("Generado por tu código SQL: 1 columnas", compare_select_results(expected, obtained3, True)[1])
+        self.assertIn("número de columnas obtenidas:", compare_select_results(expected, obtained3, True)[1])
 
-        self.assertIn("Esperado: (2 columnas)", compare_select_results(expected, obtained3, False)[1])
-        self.assertIn("Generado por tu códigoSQL: (1 columnas)", compare_select_results(expected, obtained3, False)[1])
-        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained3, False)[1])
+        self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained3, False)[1])
+        self.assertIn("Generado por tu código SQL: 1 columnas", compare_select_results(expected, obtained3, False)[1])
+        self.assertIn("número de columnas obtenidas:", compare_select_results(expected, obtained3, False)[1])
 
         # Comprobacion de que salen WA
         self.assertEqual(compare_select_results(expected, obtained1, False)[0], VeredictCode.WA)
         self.assertEqual(compare_select_results(expected, obtained1, True)[0], VeredictCode.WA)
 
         # Comprobacion de que las columnas estan cambiadas Esperado: ID NOMBRE y obtengo NOMBRE ID
-        self.assertIn("Nombre de la columna número: 1", compare_select_results(expected, obtained1, False)[1])
+        self.assertIn("nombre de la columna número: 1", compare_select_results(expected, obtained1, False)[1])
         self.assertIn("Nombre esperado: ID", compare_select_results(expected, obtained1, False)[1])
         self.assertIn("Nombre generado por tu código SQL: NOMBRE",
                       compare_select_results(expected, obtained1, False)[1])
@@ -148,7 +148,7 @@ class FeedbackTest(TestCase):
 
         # Comprobacion de que los tipos no son los adecuados
         self.assertIn("Tipo generado por tu código SQL: ", compare_select_results(expected, obtained4, True)[1])
-        self.assertIn("Tipo de la columna NOMBRE", compare_select_results(expected, obtained4, False)[1])
+        self.assertIn("tipo de la columna NOMBRE", compare_select_results(expected, obtained4, False)[1])
 
     def test_compare_db(self):
         """Tests for compare_db_results"""
