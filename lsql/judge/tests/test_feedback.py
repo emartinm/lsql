@@ -148,7 +148,7 @@ class FeedbackTest(TestCase):
 
         # Comprobacion de que los tipos no son los adecuados
         self.assertIn("Tipo generado por tu código SQL: ", compare_select_results(expected, obtained4, True)[1])
-        self.assertIn("Tipo de la columna número", compare_select_results(expected, obtained4, False)[1])
+        self.assertIn("Tipo de la columna NOMBRE", compare_select_results(expected, obtained4, False)[1])
 
     def test_compare_db(self):
         """Tests for compare_db_results"""

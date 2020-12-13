@@ -83,7 +83,7 @@ def feedback_headers(expected, obtained):
                     oracle_type_expected.upper() != oracle_type_obtained.upper():
                 expected_r2 = f"Tipo esperado: {oracle_type_expected.upper()}"
                 obtained_r2 = f"Tipo generado por tu código SQL: {oracle_type_obtained.upper()}"
-                comment2 = f"Tipo de la columna número: {str(i + 1)}"
+                comment2 = f"Tipo de la columna {name_expected.upper()}:"
                 return render_to_string('feedback_wa_headers.html',
                                         {'expected': expected_r2,
                                          'comment': comment2,
