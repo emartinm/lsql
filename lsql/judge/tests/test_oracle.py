@@ -492,8 +492,9 @@ class OracleTest(TestCase):
             ON Club FOR EACH ROW
             DECLARE
                 numClubes NUMBER;
+            BEGIN
                 SELECT 4000 INTO numClubes FROM DUAL;
-                :NEW.Num_Socios := :NEW.Num_Socios + numClubes * 100; -- Missing operator
+                :NEW.Num_Socios := :NEW.Num_Socios + numClubes 100; -- missing operator
             END;"""
         # Division by zero
         runtime_error = """
@@ -527,8 +528,8 @@ class OracleTest(TestCase):
         # Time-limit
         self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
 
-        # Error when compiling user function (for triggers this happens during execution)
-        self.assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+        # Error when compiling user function
+        self.assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.COMPILATION_ERROR)
 
         # Error when invoking user function
         self.assert_executor_exception(lambda: problem.judge(runtime_error, oracle), OracleStatusCode.EXECUTE_USER_CODE)
