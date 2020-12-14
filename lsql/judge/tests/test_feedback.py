@@ -113,11 +113,11 @@ class FeedbackTest(TestCase):
         # Obtenido con mas filas que el esperado, compruebo sus mensajes
         self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained2, True)[1])
         self.assertIn("Generado por tu código SQL: 3 columnas", compare_select_results(expected, obtained2, True)[1])
-        self.assertIn("Nª de columnas obtenidas:", compare_select_results(expected, obtained2, True)[1])
+        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained2, True)[1])
 
         self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained2, False)[1])
         self.assertIn("Generado por tu código SQL: 3 columnas", compare_select_results(expected, obtained2, False)[1])
-        self.assertIn("Nª de columnas obtenidas:", compare_select_results(expected, obtained2, False)[1])
+        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained2, False)[1])
 
         # Comprobacion de que salen WA
         self.assertEqual(compare_select_results(expected, obtained3, True)[0], VeredictCode.WA)
@@ -126,18 +126,18 @@ class FeedbackTest(TestCase):
         # Obtenido con menos filas que el esperado, compruebo sus mensajes
         self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained3, True)[1])
         self.assertIn("Generado por tu código SQL: 1 columnas", compare_select_results(expected, obtained3, True)[1])
-        self.assertIn("Nª de columnas obtenidas:", compare_select_results(expected, obtained3, True)[1])
+        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained3, True)[1])
 
         self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained3, False)[1])
         self.assertIn("Generado por tu código SQL: 1 columnas", compare_select_results(expected, obtained3, False)[1])
-        self.assertIn("Nª de columnas obtenidas:", compare_select_results(expected, obtained3, False)[1])
+        self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained3, False)[1])
 
         # Comprobacion de que salen WA
         self.assertEqual(compare_select_results(expected, obtained1, False)[0], VeredictCode.WA)
         self.assertEqual(compare_select_results(expected, obtained1, True)[0], VeredictCode.WA)
 
         # Comprobacion de que las columnas estan cambiadas Esperado: ID NOMBRE y obtengo NOMBRE ID
-        self.assertIn("nombre de la columna : 1", compare_select_results(expected, obtained1, False)[1])
+        self.assertIn("nombre de la 1ª columna", compare_select_results(expected, obtained1, False)[1])
         self.assertIn("Nombre esperado: ID", compare_select_results(expected, obtained1, False)[1])
         self.assertIn("Nombre generado por tu código SQL: NOMBRE",
                       compare_select_results(expected, obtained1, False)[1])

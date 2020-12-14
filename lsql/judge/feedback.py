@@ -54,7 +54,7 @@ def feedback_headers(expected, obtained):
     if len(expected['header']) != len(obtained['header']):
         _expected = f"Esperado: {str(len(expected['header']))} columnas"
         _obtained = f"Generado por tu código SQL: {str(len(obtained['header']))} columnas"
-        comment ="Nª de columnas obtenidas:"
+        comment ="Número de columnas obtenidas:"
         return render_to_string('feedback_wa_headers.html',
                                 {'expected': _expected,
                                  'comment': comment,
@@ -62,7 +62,7 @@ def feedback_headers(expected, obtained):
                                  'obtained_rows': header_to_str(obtained['header']),
                                  'obtained': _obtained}
                                 )
-    else:
+    if len(expected['header']) == len(obtained['header']):
         longitud = len(expected['header'])
         i = 0
         while i < longitud:
@@ -71,9 +71,9 @@ def feedback_headers(expected, obtained):
             name_obtained = obtained['header'][i][0]
             oracle_type_obtained = obtained['header'][i][1]
             if name_expected.upper() != name_obtained.upper():
-                expected_r = f"Nombre esperado: {name_expected.upper()}"
-                obtained_r = f"Nombre generado por tu código SQL: {name_obtained.upper()}"
-                comment = f"nombre de la columna : {str(i + 1)}"
+                expected_r = f"Nombre esperado: {name_expected}"
+                obtained_r = f"Nombre generado por tu código SQL: {name_obtained}"
+                comment = f"nombre de la {str(i+1)}ª columna"
                 return render_to_string('feedback_wa_headers.html',
                                         {'expected': expected_r,
                                          'comment': comment,
@@ -81,9 +81,9 @@ def feedback_headers(expected, obtained):
                                         )
             if name_expected.upper() == name_obtained.upper() and \
                     oracle_type_expected.upper() != oracle_type_obtained.upper():
-                expected_r2 = f"Tipo esperado: {oracle_type_expected.upper()}"
-                obtained_r2 = f"Tipo generado por tu código SQL: {oracle_type_obtained.upper()}"
-                comment2 = f"tipo de la columna {name_expected.upper()}:"
+                expected_r2 = f"Tipo esperado: {oracle_type_expected}"
+                obtained_r2 = f"Tipo generado por tu código SQL: {oracle_type_obtained}"
+                comment2 = f"tipo de la columna {name_expected}:"
                 return render_to_string('feedback_wa_headers.html',
                                         {'expected': expected_r2,
                                          'comment': comment2,
