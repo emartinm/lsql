@@ -92,8 +92,8 @@ TOTAL                     1100      0   100%
 # Trabajar con *forks* y ramas
 Para evitar que los *pull request* acaben con muchos *commits* según avanza el tiempo
 y para tener el histórico de *git* lo más limpio posible, los cambios se realizarán
-en ramas que crearéis para cada una de ellos y **nunca en la rama *main***. 
-La idea es que **NUNCA** hagáis cambios directamente en la rama *main* sino que esta se 
+en ramas que crearéis para cada una de ellos y **nunca en la rama *master***. 
+La idea es que **NUNCA** hagáis cambios directamente en la rama *master* sino que esta se 
 quede siempre como una copia de *upstream*. Este flujo de trabajo se conoce como *fork-and-branch* 
 y podéis encontrar más información en 
 https://blog.scottlowe.org/2015/01/27/using-fork-branch-git-workflow/
@@ -101,7 +101,7 @@ https://blog.scottlowe.org/2015/01/27/using-fork-branch-git-workflow/
 Primero algo de terminología:
  * *origin*: nombre del enlace a vuestro repositorio remoto *fork*
  * *upstream*: nombre del enlace al repositorio remoto principal
- * *main*: rama de vuestro *fork* en la que nunca trabajaréis y que únicamente usáis para 
+ * *master*: rama de vuestro *fork* en la que nunca trabajaréis y que únicamente usáis para 
   sincronizar vuestra copia local con *upstream*
 
 Para ello hay que seguir estos pasos (desde el terminal):
@@ -119,12 +119,12 @@ El otro remoto que tendréis se llama *origin* y apunta al repositorio fork
     
     $ git remote add upstream <repositorio_principal>
 
-## Paso 4: Actualizar vuestra rama *main* local
-Antes de empezar, actualizar vuestra rama *main* desde *upstream* para 
+## Paso 4: Actualizar vuestra rama *master* local
+Antes de empezar, actualizar vuestra rama *master* desde *upstream* para 
 tener la última versión del código
 
-    $ git pull upstream main
-    $ git push origin main
+    $ git pull upstream master
+    $ git push origin master
 
 ## Paso 5: Crear una rama para trabajar
 Cada mejora se realizará en una rama concreta. La rama se crea antes de
@@ -138,11 +138,11 @@ El nombre de la rama deberia ser algo informativo de lo que hace: "descarga_envi
 ## Paso 6: Realizar cambios en los ficheros
 Hacer cambios en los ficheros y subirlos al fork, podéis hacer varios *commit*
 en la mejora sin ningún problema. Revisad que estáis trabajando en vuestra rama y no
-en *main* usando el comando: 
+en *master* usando el comando: 
 
     $ git branch
     * <nombre_rama>
-      main
+      master
 
 Si no estáis en la rama adecuada cambiar con:
 
@@ -155,15 +155,15 @@ Los cambios se suben de la manera usual:
     $ git push origin <nombre_rama>  # Subir cambios al repositorio remoto del fork (origin)
     
 **MUY IMPORTANTE**: en cualquier momento que haya cambios en *upstream* debéis
-actualizar vuestra rama *main* desde *upstream* y luego actualizar la rama de trabajo
-desde vuestra rama *main* (en ese orden):
+actualizar vuestra rama *master* desde *upstream* y luego actualizar la rama de trabajo
+desde vuestra rama *master* (en ese orden):
 
     $ git fetch upstream                # Descarga cambios en upstream
-    $ git checkout main                 # Cambia a rama main
-    $ git merge upstream/main           # Fusiona lo nuevo de upstream en main
+    $ git checkout master               # Cambia a rama master
+    $ git merge upstream/master         # Fusiona lo nuevo de upstream en master
     $ git merge checkout <nombre_rama>  # Cambia a rama de trabajo
-    $ git merge main                    # Fusiona la rama de trabajo con los nuevos 
-                                        # cambios de "upstream" que están en "main". 
+    $ git merge master                  # Fusiona la rama de trabajo con los nuevos 
+                                        # cambios de "upstream" que están en "master". 
 
 Si aparecen conflictos en algún fichero durante el último comando debéis 
 editar ese fichero a mano para resolverlos **a mano** y hacer *commit*.
@@ -179,13 +179,13 @@ Si se solicitan cambios (lo más usual), debéis modificar los ficheros como en 
 subirlos de nuevo a vuestro *fork*.
 
 ## Paso 9: Limpieza
-Cuando se acepte el *pull request* tenéis que actualizar vuestra rama *main* desde *upstream*
+Cuando se acepte el *pull request* tenéis que actualizar vuestra rama *master* desde *upstream*
 para que reciba vuestros cambios aceptados. 
 
-    $ git fetch upstream                      # Actualiza tu rama main local desde upstream (con el PR integrado)
-    $ git checkout main
-    $ git merge upstream/main                
-    $ git push origin main                    # Actualiza la rama main remota del fork
+    $ git fetch upstream                      # Actualiza tu rama master local desde upstream (con el PR integrado)
+    $ git checkout master
+    $ git merge upstream/master                
+    $ git push origin master                  # Actualiza la rama master remota del fork
 
 También hay que borrar la rama que habéis creado para la mejora:
 

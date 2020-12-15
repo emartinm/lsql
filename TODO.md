@@ -8,7 +8,7 @@
 * (Jesús) [**Dificultad baja**] [IMPRESCINDIBLE] [**Tarea para Iker 28/10-15/11 PR #15**]
  Botón para descargarse el *script* de creación de las tablas y carga de datos en cada problema.
  
- * (Enrique) [**Dificultad baja**] [**IMPRESCINDIBLE**] [**Tarea para Iker 17/11-14/15 PR#19**]
+ * (Enrique) [**Dificultad baja**] [**IMPRESCINDIBLE**] [**Tarea para Iker 17/11-14/12 PR#19**]
 Mejorar el mensaje de error cuando la consulta enviada no respeta el 
 esquema esperado, para especificar cuál es el primer atributo que es
 diferente. Realizar la comparación de nombres de columna sin tener 
