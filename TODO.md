@@ -25,6 +25,19 @@ En el apartado "Mis envíos" añadir un botón para descargar el código enviado
 * (Daniel) [**Dificultad baja**] [**Tarea para Daniel 11/11**]
 Subir solución como fichero SQL arrastrando o con botón.
 
+* [**Dificultad media**] [**IMPRESCINDIBLE**]  [**Tarea para Iker 21/12**]
+Agrupar usuarios en clases. Se podría utilizar los grupos de Django, lo que facilita bastante la cosa.
+
+* [**Dificultad media**] [**INTERESANTE**]  [**Tarea para Iker 21/12**]
+Mostrar la clasificación de los usuarios de una clase por cada colección. Los usuarios no se mostrarán en orden,
+únicamente se indicará el número de envíos y los problemas resueltos, además de información detallada de cada problema.
+
+* [**Dificultad baja**] [**INTERESANTE**]  [**Tarea para Iker 21/12**]
+Permitir que los administradores vean las clasificaciones todas las clases y todos los usuarios. 
+Incorporar orden al mostrar los resultados: número de problemas resueltos, número de envíos.
+
+* [**Dificultad baja**] [**INTERESANTE**]  [**Tarea para Iker 21/12**]
+Al hacer clic en la celda de la tabla de clasificación llevará al listado de todos los envíos de ese usuario para ese problema.  
 
 
  
@@ -36,15 +49,6 @@ Subir solución como fichero SQL arrastrando o con botón.
  Triggers: mejorar la comparación de resultados y diseño de casos de prueba.
 
 * (Jesús y Enrique) 
-     * [**Dificultad media**] [**IMPRESCINDIBLE**] Agrupar usuarios en clases. Se podría utilizar los grupos de Django, 
-     lo que facilita bastante la cosa.
-     * [**Dificultad media**] [**INTERESANTE**] Mostrar la clasificación de los usuarios de una clase por cada colección. Los
-       usuarios no se mostrarán en orden, únicamente se indicará el número de envíos y los problemas resueltos,
-       además de información detallada de cada problema.
-     * [**Dificultad baja**] [**INTERESANTE**] Permitir que los administradores vean las clasificaciones todas las clases y todos los
-       usuarios. Incorporar orden al mostrar los resultados: número de problemas resueltos, número de envíos.
-     * [**Dificultad baja**] [**INTERESANTE**] Al hacer clic en la celda de la tabla de clasificación llevará al listado de todos los 
-       envíos de ese usuario para ese problema.  
      * [**Dificultad baja**] [**INTERESANTE**] Permitir que cada problema tenga una puntuación diferente y que esos
        puntos generen la clasificación. Mostrar primer estudiante en resolver cada problema y generar un reporte (idealmente Moodle)
      * [**Dificultad alta**] [**INTERESANTE**] Modo examen: horario reducido, sin retroalimentación de solución o sin mostrar el resultado esperado. ¿Crear una agrupación concreta para cada examen con usuarios nuevos o reutilizar los existentes?
