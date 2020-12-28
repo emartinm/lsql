@@ -67,9 +67,9 @@ def feedback_headers(expected, obtained):
     i = 0
     while i < longitud:
         name_expected = expected['header'][i][0]
-        oracle_type_expected = expected['header'][i][1]
+        oracle_type_expected = pretty_type(expected['header'][i][1])
         name_obtained = obtained['header'][i][0]
-        oracle_type_obtained = obtained['header'][i][1]
+        oracle_type_obtained = pretty_type(obtained['header'][i][1])
         if name_expected.upper() != name_obtained.upper():
             expected_r = f"Nombre esperado: {name_expected}"
             obtained_r = f"Nombre generado por tu código SQL: {name_obtained}"
