@@ -1,6 +1,7 @@
 [MASTER]
-extension-pkg-whitelist=cx_Oracle  # Avoid missing methods
-load-plugins=pylint_django         # Avoid missing attributes in models
+extension-pkg-whitelist=cx_Oracle      # Avoid missing methods
+load-plugins=pylint_django             # Avoid missing attributes in models
+django-settings-module=lsql.settings   # Uses Django settings
 
 [FORMAT]
 max-line-length=120
