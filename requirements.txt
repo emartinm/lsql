@@ -13,7 +13,6 @@ lxml==4.6.2
 Markdown==3.3.3
 mccabe==0.6.1
 multiset==2.1.1
-pkg-resources==0.0.0
 psycopg2-binary==2.8.6
 pylint==2.6.0
 pylint-django==2.4.1
