@@ -39,6 +39,17 @@ def index(_):
 
 
 @login_required
+def show_results(request):
+    """show all collections"""
+    cols = Collection.objects.all().order_by('position', '-creation_date')
+    for results in cols:
+        # Templates can only invoke nullary functions or access object attribute, so we store
+        # the number of problems solved by the user in an attribute
+        results.num_solved = results.num_solved_by_user(request.user)
+    return render(request, 'result.html', {'results': cols})
+
+
+@login_required
 def show_collections(request):
     """Show all the collections"""
     cols = Collection.objects.all().order_by('position', '-creation_date')
