@@ -18,6 +18,7 @@ from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem,
     Submission
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
+from django.contrib.auth.models import User, Group
 
 
 def get_child_problem(problem_id):
@@ -36,6 +37,25 @@ def get_child_problem(problem_id):
 def index(_):
     """Redirect root access to collections"""
     return HttpResponseRedirect(reverse('judge:collections'))
+
+
+@login_required()
+def show_result(request, collection_id):
+    """show datatable of a collection"""
+    """Shows a collection"""
+    groups_user = request.user.groups.all().order_by('name')
+    request.user.total = 8
+    request.user.intentos = 29
+    collection = get_object_or_404(Collection, pk=collection_id)
+    users = User.objects.filter(groups__name=groups_user[0].name)
+    # New attribute to store the list of problems and include the number of submission in each problem
+    collection.problem_list = collection.problems()
+    collection.total_problem = collection.problem_list.count()
+    for problem in collection.problem_list:
+        problem.num_submissions = problem.num_submissions_by_user(request.user)
+        problem.solved = problem.solved_by_user(request.user)
+    return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
+                                            'login': request.user})
 
 
 @login_required
@@ -92,7 +112,15 @@ def show_submissions(request):
         submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
     return render(request, 'submissions.html', {'submissions': subs})
 
-
+"""mirar esto es para mis envios que sea el de uno en concreto"""
+"""@login_required
+def show_submissions(request):
+   
+    problema = get_child_problem(10)
+    subs = Submission.objects.filter(user=request.user).filter(problem=problema).order_by('-pk')
+    for submission in subs:
+        submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
+    return render(request, 'submissions.html', {'submissions': subs})"""
 @login_required
 def show_submission(request, submission_id):
     """Shows a submission of the current user"""

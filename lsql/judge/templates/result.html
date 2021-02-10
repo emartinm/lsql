@@ -1,7 +1,17 @@
 {% extends "base_menu.html" %}
 {% load static %}
 {% block contenido %}
+<!--
+<script src="{% static 'judge/js/result.js' %}">></script>
+<p>Grupo:
+<select name="clase" id="clase">
+  {% for group in groups %}
+  <option id = "{{group.name}}"> {{group.name}} </option>
+  {% endfor %}
+</select>
 
+</p>
+-->
   <table class="table" style="margin-top:6%">
     <thead class="thead-dark">
       <tr>
@@ -12,7 +22,7 @@
     {% for c in results %}
     <tr>
       <td>
-        <a href="{% url 'judge:collection' c.id %}">{{ c.name_html|safe }}</a>
+        <a href="{% url 'judge:result' c.id %}" title="{{c.name_html|safe}}">{{ c.name_html|safe }}</a>
       </td>
     </tr>
     {% endfor %}

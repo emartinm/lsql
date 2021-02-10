@@ -21,6 +21,7 @@ urlpatterns = [
     path('submission/', views.show_submissions, name='submissions'),
     path('submission/<int:submission_id>', views.show_submission, name='submission'),
     path('results/', views.show_results, name='results'),
+    path('results/<int:collection_id>', views.show_result, name='result'),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(template_name='logout.html'), name='logout'),
     path('password_change/',
