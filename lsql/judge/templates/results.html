@@ -1,0 +1,61 @@
+{% extends "base_menu.html" %}
+{% load static %}
+{% block contenido %}
+<h2 style="text-align:center">Colección: {{collection.name_html|safe}}</h2>
+
+<p>Grupo:
+<select name="clase" id="clase">
+  {% for group in groups %}
+  <option id = "{{group.name}}"> {{group.name}} </option>
+  {% endfor %}
+</select>
+  <table class="table">
+    <thead class="thead-dark">
+      <tr>
+          <th scope="col">Usuarios</th>
+          {% for p in collection.problem_list %}
+             <th scope="col">
+                 <a style="color:white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">Ejercicio {{forloop.counter}}</a>
+             </th>
+          {% endfor %}
+          <th scope="col">Intentos</th>
+          <th scope="col">Resueltos</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for p in users %}
+    <tr>
+        {% if p == login %}
+         <td style="background-color:violet; border: black 1px solid;">
+          {{p.username}}
+         </td>
+        {% elif p.is_staff %}
+         <td style="background-color:gray; border: black 1px solid;">
+          {{p.username}}
+         </td>
+        {%else%}
+          <td style="border: black 1px solid;">
+          {{p.username}}
+         </td>
+        {% endif %}
+
+          {% for pp in collection.problem_list %}
+          {% if pp.solved %}
+            <td style="background-color:green; border: black 1px solid;">{{ pp.num_submissions }}</td>
+           {% elif not pp.solved and pp.num_submissions > 0 %}
+            <td style="background-color:red; border: black 1px solid;">{{ pp.num_submissions }}</td>
+           {%else%}
+           <td style="border: black 1px solid;">{{ pp.num_submissions }}</td>
+         {% endif %}
+            {% endfor %}
+        <td style="border: black 1px solid;">
+            200
+        </td>
+        <td style="border: black 1px solid;">
+            200
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
