@@ -1,30 +1,62 @@
 {% extends "base_menu.html" %}
 {% load static %}
 {% block contenido %}
+<script src="{% static 'judge/js/result.js' %}">></script>
+<script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+
 <h2 style="text-align:center">Colección: {{collection.name_html|safe}}</h2>
 
 <p>Grupo:
 <select name="clase" id="clase">
+      <option id = "{{group0.name}}" value="{{group0.id}}_{{collection.id}}"> {{group0.name}} </option>
   {% for group in groups %}
-  <option id = "{{group.name}}"> {{group.name}} </option>
+  <option id = "{{group.name}}" value="{{group.id}}_{{collection.id}}"> {{group.name}} </option>
   {% endfor %}
 </select>
-  <table class="table">
+<button title="Leyenda" data-target="#exampleModal" data-toggle="modal" type="button" style="background-color:white;border:none;float:right"><i class="far fa-question-circle fa-2x"></i></button>
+    <!-- Trigger the modal with a button -->
+<!-- Button trigger modal -->
+
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header d-block">
+        <h5 class="modal-title text-center" id="exampleModalLabel">LEYENDA</h5>
+      </div>
+      <div class="modal-body">
+        <span class="badge rounded-pill bg-primary">Primary</span><br>
+          <span class="badge rounded-pill bg-secondary">Secondary</span><br>
+        <span class="badge rounded-pill bg-success">Success</span><br>
+        <span class="badge rounded-pill bg-danger">Danger</span><br>
+        <span class="badge rounded-pill bg-warning text-dark">Warning</span><br>
+        <span class="badge rounded-pill bg-info text-dark">Info</span><br>
+        <span class="badge rounded-pill bg-light text-dark">Light</span><br>
+        <span class="badge rounded-pill bg-dark">Dark</span>
+      </div>
+      <div class="modal-footer d-flex justify-content-center">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<table style="text-align:center;border: black 1px solid" class="table">
     <thead class="thead-dark">
       <tr>
-          <th scope="col">Usuarios</th>
+          <th scope="col" style="border: solid black 1px">Usuarios</th>
           {% for p in collection.problem_list %}
-             <th scope="col">
-                 <a style="color:white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">Ejercicio {{forloop.counter}}</a>
+             <th scope="col" style="border: solid black 1px">
+                 <a style="color:white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">EJ{{forloop.counter}}</a>
              </th>
           {% endfor %}
-          <th scope="col">Intentos</th>
-          <th scope="col">Resueltos</th>
+          <th scope="col" style="border: solid black 1px">Intentos</th>
+          <th scope="col" style="border: solid black 1px">Resueltos</th>
       </tr>
     </thead>
     <tbody>
     {% for p in users %}
-    <tr>
+    <tr style="color:black">
         {% if p == login %}
          <td style="background-color:violet; border: black 1px solid;">
           {{p.username}}
@@ -40,14 +72,28 @@
         {% endif %}
 
           {% for pp in collection.problem_list %}
-          {% if pp.solved %}
-            <td style="background-color:green; border: black 1px solid;">{{ pp.num_submissions }}</td>
-           {% elif not pp.solved and pp.num_submissions > 0 %}
-            <td style="background-color:red; border: black 1px solid;">{{ pp.num_submissions }}</td>
-           {%else%}
-           <td style="border: black 1px solid;">{{ pp.num_submissions }}</td>
-         {% endif %}
-            {% endfor %}
+              {% if pp.solved %}
+                {% if p == login %}
+                   <td style="background-color:green; border: black 1px solid;"><a href="#" style="color:black; text-decoration: none;">{{ pp.num_submissions }}</a></td>
+                {% else % }
+                    <td style="background-color:green; border: black 1px solid;">{{ pp.num_submissions }}</td>
+                {% endif%}
+
+              {% elif not pp.solved and pp.num_submissions > 0 %}
+                 {% if p == login %}
+                     <td style="background-color:red; border: black 1px solid;"><a href="#" style="color:black; text-decoration: none;">{{ pp.num_submissions }}</a></td>
+                 {%else%}
+                     <td style="background-color:red; border: black 1px solid;">{{ pp.num_submissions }}</td>
+                 {% endif %}
+              {%else%}
+                {% if p == login %}
+                      <td style="border: black 1px solid;"><a href="#" style="color:black; text-decoration: none;">{{ pp.num_submissions }}</a></td>
+                 {%else%}
+                      <td style="border: black 1px solid;">{{ pp.num_submissions }}</td>
+                 {% endif %}
+            {% endif %}
+
+           {% endfor %}
         <td style="border: black 1px solid;">
             200
         </td>
@@ -58,4 +104,9 @@
     {% endfor %}
     </tbody>
   </table>
+<script>
+$('#myModal').on('shown.bs.modal', function () {
+  $('#myInput').trigger('focus')
+})
+</script>
 {% endblock %}

@@ -40,33 +40,46 @@ def index(_):
 
 
 @login_required()
-def show_result(request, collection_id):
+def show_result(request, collection_id, group_id):
     """show datatable of a collection"""
     """Shows a collection"""
+
     groups_user = request.user.groups.all().order_by('name')
     request.user.total = 8
-    request.user.intentos = 29
-    collection = get_object_or_404(Collection, pk=collection_id)
-    users = User.objects.filter(groups__name=groups_user[0].name)
-    # New attribute to store the list of problems and include the number of submission in each problem
-    collection.problem_list = collection.problems()
-    collection.total_problem = collection.problem_list.count()
-    for problem in collection.problem_list:
-        problem.num_submissions = problem.num_submissions_by_user(request.user)
-        problem.solved = problem.solved_by_user(request.user)
-    return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
-                                            'login': request.user})
+    comprueba_group = groups_user.filter(id=group_id)
+    if comprueba_group.count() > 0:
+        request.user.intentos = 29
+        collection = get_object_or_404(Collection, pk=collection_id)
+        group0 = Group.objects.filter(id=group_id)
+        users = User.objects.filter(groups__name=group0.get().name)
+        group0.name = group0.get().name
+        group0.id = group_id
+        groups_user = groups_user.exclude(id=group_id)
+
+
+        # New attribute to store the list of problems and include the number of submission in each problem
+        collection.problem_list = collection.problems()
+        collection.total_problem = collection.problem_list.count()
+        for problem in collection.problem_list:
+            problem.num_submissions = problem.num_submissions_by_user(request.user)
+            problem.solved = problem.solved_by_user(request.user)
+
+        return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
+                                            'login': request.user,'group0': group0})
+    else:
+        return HttpResponseRedirect(reverse('judge:results'))
 
 
 @login_required
 def show_results(request):
     """show all collections"""
     cols = Collection.objects.all().order_by('position', '-creation_date')
+    groups_user = request.user.groups.all().order_by('name')
     for results in cols:
         # Templates can only invoke nullary functions or access object attribute, so we store
         # the number of problems solved by the user in an attribute
         results.num_solved = results.num_solved_by_user(request.user)
-    return render(request, 'result.html', {'results': cols})
+    return render(request, 'result.html', {'results': cols, 'group': groups_user[0]})
 
 
 @login_required
