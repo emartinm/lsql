@@ -120,10 +120,18 @@ def show_problem(request, problem_id):
 @login_required
 def show_submissions(request):
     """Shows all the submissions of the current user"""
-    subs = Submission.objects.filter(user=request.user).order_by('-pk')
+    if request.method == 'POST':
+        pk_problem = request.POST['id_problem']
+        problem = Problem.objects.filter(pk=pk_problem)
+        subs = Submission.objects.filter(user=request.user).filter(problem=problem.get().id).order_by('-pk')
+
+    else:
+        subs = Submission.objects.filter(user=request.user).order_by('-pk')
     for submission in subs:
         submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
     return render(request, 'submissions.html', {'submissions': subs})
+
+
 
 """mirar esto es para mis envios que sea el de uno en concreto"""
 """@login_required
