@@ -40,34 +40,34 @@ def index(_):
 
 
 @login_required()
-def show_result(request, collection_id, group_id):
+def show_result(request, collection_id):
     """show datatable of a collection"""
     """Shows a collection"""
-
     groups_user = request.user.groups.all().order_by('name')
-    request.user.total = 8
-    comprueba_group = groups_user.filter(id=group_id)
-    if comprueba_group.count() > 0:
-        request.user.intentos = 29
-        collection = get_object_or_404(Collection, pk=collection_id)
-        group0 = Group.objects.filter(id=group_id)
-        users = User.objects.filter(groups__name=group0.get().name)
-        group0.name = group0.get().name
-        group0.id = group_id
-        groups_user = groups_user.exclude(id=group_id)
-
-
-        # New attribute to store the list of problems and include the number of submission in each problem
-        collection.problem_list = collection.problems()
-        collection.total_problem = collection.problem_list.count()
-        for problem in collection.problem_list:
-            problem.num_submissions = problem.num_submissions_by_user(request.user)
-            problem.solved = problem.solved_by_user(request.user)
-
-        return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
-                                            'login': request.user,'group0': group0})
+    if request.method == 'POST':
+        group_id = request.POST['clase']
     else:
-        return HttpResponseRedirect(reverse('judge:results'))
+        group_id = groups_user[0].id
+
+    request.user.total = 8
+    request.user.intentos = 29
+    collection = get_object_or_404(Collection, pk=collection_id)
+    group0 = Group.objects.filter(id=group_id)
+    users = User.objects.filter(groups__name=group0.get().name)
+    group0.name = group0.get().name
+    group0.id = group_id
+    groups_user = groups_user.exclude(id=group_id)
+
+
+    # New attribute to store the list of problems and include the number of submission in each problem
+    collection.problem_list = collection.problems()
+    collection.total_problem = collection.problem_list.count()
+    for problem in collection.problem_list:
+        problem.num_submissions = problem.num_submissions_by_user(request.user)
+        problem.solved = problem.solved_by_user(request.user)
+
+    return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
+                                        'login': request.user, 'group0': group0})
 
 
 @login_required

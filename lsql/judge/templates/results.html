@@ -1,19 +1,28 @@
 {% extends "base_menu.html" %}
 {% load static %}
 {% block contenido %}
-<script src="{% static 'judge/js/result.js' %}">></script>
+<!--<script src="{% static 'judge/js/result.js' %}">></script> -->
 <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
 
 <h2 style="text-align:center">Colección: {{collection.name_html|safe}}</h2>
-
-<p>Grupo:
-<select name="clase" id="clase">
-      <option id = "{{group0.name}}" value="{{group0.id}}_{{collection.id}}"> {{group0.name}} </option>
-  {% for group in groups %}
-  <option id = "{{group.name}}" value="{{group.id}}_{{collection.id}}"> {{group.name}} </option>
-  {% endfor %}
+<div style="display:flex;justify-content:between">
+    <p>Grupo:</p>
+     <form method="post" action="{% url 'judge:result' collection.id %}">{% csrf_token %}
+    <select style="margin-left:3%" name="clase" id="clase" onchange="this.parentNode.submit()">
+      <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
+        {% for group in groups %}
+            <option id = "{{group.name}}" value="{{group.id}}"> {{group.name}} </option>
+        {% endfor %}
 </select>
-<button title="Leyenda" data-target="#exampleModal" data-toggle="modal" type="button" style="background-color:white;border:none;float:right"><i class="far fa-question-circle fa-2x"></i></button>
+   </form>
+
+<div class="col md-3">
+    <button title="Leyenda" data-target="#exampleModal" data-toggle="modal" type="button" style="background-color:white;border:none;float:right"><i class="far fa-question-circle fa-2x"></i></button>
+
+</div>
+</div>
+
+
     <!-- Trigger the modal with a button -->
 <!-- Button trigger modal -->
 
@@ -44,28 +53,32 @@
 <table style="text-align:center;border: black 1px solid" class="table">
     <thead class="thead-dark">
       <tr>
-          <th scope="col" style="border: solid black 1px">Usuarios</th>
+          <th scope="col" style="border: solid black 1px" width="3%">Pos</th>
+          <th scope="col" style="border: solid black 1px" width="10%">Usuarios</th>
           {% for p in collection.problem_list %}
-             <th scope="col" style="border: solid black 1px">
+             <th scope="col" style="border: solid black 1px" >
                  <a style="color:white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">EJ{{forloop.counter}}</a>
              </th>
           {% endfor %}
-          <th scope="col" style="border: solid black 1px">Intentos</th>
-          <th scope="col" style="border: solid black 1px">Resueltos</th>
+          <th scope="col" style="border: solid black 1px" width="3%">Intentos</th>
+          <th scope="col" style="border: solid black 1px" width="3%">Resueltos</th>
       </tr>
     </thead>
     <tbody>
     {% for p in users %}
     <tr style="color:black">
         {% if p == login %}
-         <td style="background-color:violet; border: black 1px solid;">
+         <td style="background-color:violet; border: black 1px solid;">{{forloop.counter}}</td>
+         <td style="border: black 1px solid;">
           {{p.username}}
          </td>
         {% elif p.is_staff %}
-         <td style="background-color:gray; border: black 1px solid;">
+         <td style="background-color:gray; border: black 1px solid;">{{forloop.counter}}</td>
+         <td style="border: black 1px solid;">
           {{p.username}}
          </td>
         {%else%}
+          <td style="border: black 1px solid;">{{forloop.counter}}</td>
           <td style="border: black 1px solid;">
           {{p.username}}
          </td>

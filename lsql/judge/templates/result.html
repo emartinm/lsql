@@ -22,7 +22,7 @@
     {% for c in results %}
     <tr>
       <td>
-        <a href="{% url 'judge:result' c.id group.id%}" title="{{c.name_html|safe}}">{{ c.name_html|safe }}</a>
+        <a href="{% url 'judge:result' c.id %}" title="{{c.name_html|safe}}">{{ c.name_html|safe }}</a>
       </td>
     </tr>
     {% endfor %}
