@@ -44,9 +44,9 @@ def show_result(request, collection_id):
     """show datatable of a collection"""
     """Shows a collection"""
     groups_user = request.user.groups.all().order_by('name')
-    if request.method == 'POST':
-        group_id = request.POST['clase']
-    else:
+
+    group_id = request.GET.get('clase')
+    if group_id == None:
         group_id = groups_user[0].id
 
     request.user.total = 8
@@ -54,20 +54,24 @@ def show_result(request, collection_id):
     collection = get_object_or_404(Collection, pk=collection_id)
     group0 = Group.objects.filter(id=group_id)
     users = User.objects.filter(groups__name=group0.get().name)
-    group0.name = group0.get().name
-    group0.id = group_id
-    groups_user = groups_user.exclude(id=group_id)
+    if users.filter(id=request.user.id):
+        group0.name = group0.get().name
+        group0.id = group_id
+        groups_user = groups_user.exclude(id=group_id)
 
 
-    # New attribute to store the list of problems and include the number of submission in each problem
-    collection.problem_list = collection.problems()
-    collection.total_problem = collection.problem_list.count()
-    for problem in collection.problem_list:
-        problem.num_submissions = problem.num_submissions_by_user(request.user)
-        problem.solved = problem.solved_by_user(request.user)
+        # New attribute to store the list of problems and include the number of submission in each problem
+        collection.problem_list = collection.problems()
+        collection.total_problem = collection.problem_list.count()
+        for problem in collection.problem_list:
+            problem.num_submissions = problem.num_submissions_by_user(request.user)
+            problem.solved = problem.solved_by_user(request.user)
 
-    return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
-                                        'login': request.user, 'group0': group0})
+        return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
+                                            'login': request.user, 'group0': group0})
+
+    else:
+        return HttpResponseRedirect(reverse('judge:results'))
 
 
 @login_required
@@ -79,7 +83,7 @@ def show_results(request):
         # Templates can only invoke nullary functions or access object attribute, so we store
         # the number of problems solved by the user in an attribute
         results.num_solved = results.num_solved_by_user(request.user)
-    return render(request, 'result.html', {'results': cols, 'group': groups_user[0]})
+    return render(request, 'result.html', {'results': cols, 'group': groups_user[0].id})
 
 
 @login_required
@@ -120,8 +124,9 @@ def show_problem(request, problem_id):
 @login_required
 def show_submissions(request):
     """Shows all the submissions of the current user"""
-    if request.method == 'POST':
-        pk_problem = request.POST['id_problem']
+
+    pk_problem = request.GET.get('id_problem')
+    if pk_problem != None:
         problem = Problem.objects.filter(pk=pk_problem)
         subs = Submission.objects.filter(user=request.user).filter(problem=problem.get().id).order_by('-pk')
 

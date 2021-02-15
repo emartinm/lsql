@@ -1,13 +1,14 @@
 {% extends "base_menu.html" %}
 {% load static %}
 {% block contenido %}
+
 <!--<script src="{% static 'judge/js/result.js' %}">></script> -->
 <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
 
 <h2 style="text-align:center">Colección: {{collection.name_html|safe}}</h2>
 <div style="display:flex;justify-content:between">
-    <p>Grupo:</p>
-     <form method="post" action="{% url 'judge:result' collection.id %}">{% csrf_token %}
+    <p style="font-size:20px">Grupo:</p>
+     <form method="get" action="{% url 'judge:result' collection.id %}">
     <select style="margin-left:3%" name="clase" id="clase" onchange="this.parentNode.submit()">
       <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
         {% for group in groups %}
@@ -68,7 +69,7 @@
     {% for p in users %}
     <tr style="color:black">
         {% if p == login %}
-         <td style="background-color:violet; border: black 1px solid;">{{forloop.counter}}</td>
+         <td class="bg-info" style=" border: black 1px solid;">{{forloop.counter}}</td>
          <td style="border: black 1px solid;">
           {{p.username}}
          </td>
@@ -87,25 +88,25 @@
           {% for pp in collection.problem_list %}
                 {% if pp.solved %}
                     {% if p == login %}
-                         <td style="background-color:green; border: black 1px solid;">
-                                  <form method="post" action="{% url 'judge:submissions' %}">{% csrf_token %}
+                         <td class="bg-success" style="border: black 1px solid;">
+                                  <form method="get" action="{% url 'judge:submissions' %}">
                             <input type="hidden" value="{{pp.id}}" name="id_problem">
                            <a onclick="this.parentNode.submit();" href="#" style="color:black; text-decoration: none;">{{ pp.num_submissions }}</a>
                        </form>
                         </td>
                     {% else %}
-                        <td style="background-color:green; border: black 1px solid;">{{ pp.num_submissions }}</td>
+                        <td class="bg-success" style="border: black 1px solid;">{{ pp.num_submissions }}</td>
                     {% endif%}
                 {% elif not pp.solved and pp.num_submissions > 0 %}
                      {% if p == login %}
-                       <td style="background-color:red; border: black 1px solid;">
-                            <form method="post" action="{% url 'judge:submissions' %}">{% csrf_token %}
+                       <td class="bg-danger" style="border: black 1px solid;">
+                            <form method="get" action="{% url 'judge:submissions' %}">
                                 <input type="hidden" value="{{pp.id}}" name="id_problem">
                                <a onclick="this.parentNode.submit();" href="#" style="color:black; text-decoration: none;">{{ pp.num_submissions }}</a>
                            </form>
                        </td>
                      {%else%}
-                         <td style="background-color:red; border: black 1px solid;">{{ pp.num_submissions }}</td>
+                         <td class="bg-danger" style="border: black 1px solid;">{{ pp.num_submissions }}</td>
                      {% endif %}
                 {%else%}
                     {% if p == login %}
