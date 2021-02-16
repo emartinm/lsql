@@ -43,35 +43,43 @@ def index(_):
 def show_result(request, collection_id):
     """show datatable of a collection"""
     """Shows a collection"""
-    groups_user = request.user.groups.all().order_by('name')
+    try:
+        groups_user = request.user.groups.all().order_by('name')
 
-    group_id = request.GET.get('clase')
-    if group_id == None:
-        group_id = groups_user[0].id
+        group_id = request.GET.get('group')
 
-    request.user.total = 8
-    request.user.intentos = 29
-    collection = get_object_or_404(Collection, pk=collection_id)
-    group0 = Group.objects.filter(id=group_id)
-    users = User.objects.filter(groups__name=group0.get().name)
-    if users.filter(id=request.user.id):
-        group0.name = group0.get().name
-        group0.id = group_id
-        groups_user = groups_user.exclude(id=group_id)
+        if group_id is None:
+            group_id = groups_user[0].id
+        int(group_id)
+        collection = get_object_or_404(Collection, pk=collection_id)
+        group0 = Group.objects.filter(id=group_id)
+        users = User.objects.filter(groups__name=group0.get().name)
+        if users.filter(id=request.user.id):
+            group0.name = group0.get().name
+            group0.id = group_id
+            groups_user = groups_user.exclude(id=group_id)
+            collection.problem_list = collection.problems()
+            collection.total_problem = collection.problem_list.count()
 
+            for i in users:
+                i.collection = []
+                i.intents = 0
+                i.resolved = 0
+                for z in range(0, collection.problem_list.count()):
+                    p = collection.problem_list[z]
+                    p.num_submissions = collection.problem_list[z].num_submissions_by_user(i)
+                    p.solved = collection.problem_list[z].solved_by_user(i)
+                    i.intents = i.intents + p.num_submissions
+                    if p.solved:
+                        i.resolved = i.resolved + 1
+                    i.collection.append(p)
 
-        # New attribute to store the list of problems and include the number of submission in each problem
-        collection.problem_list = collection.problems()
-        collection.total_problem = collection.problem_list.count()
-        for problem in collection.problem_list:
-            problem.num_submissions = problem.num_submissions_by_user(request.user)
-            problem.solved = problem.solved_by_user(request.user)
-
-        return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
-                                            'login': request.user, 'group0': group0})
-
-    else:
-        return HttpResponseRedirect(reverse('judge:results'))
+            return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
+                                                    'login': request.user, 'group0': group0})
+        else:
+            return HttpResponseForbidden("Forbidden")
+    except ValueError as ex:
+        return HttpResponseForbidden("Forbidden")
 
 
 @login_required
@@ -79,11 +87,14 @@ def show_results(request):
     """show all collections"""
     cols = Collection.objects.all().order_by('position', '-creation_date')
     groups_user = request.user.groups.all().order_by('name')
-    for results in cols:
-        # Templates can only invoke nullary functions or access object attribute, so we store
-        # the number of problems solved by the user in an attribute
-        results.num_solved = results.num_solved_by_user(request.user)
-    return render(request, 'result.html', {'results': cols, 'group': groups_user[0].id})
+    if groups_user.count() == 0:
+        return HttpResponseForbidden("Vacio, aquí crear un mensaje")
+    else:
+        for results in cols:
+            # Templates can only invoke nullary functions or access object attribute, so we store
+            # the number of problems solved by the user in an attribute
+            results.num_solved = results.num_solved_by_user(request.user)
+        return render(request, 'result.html', {'results': cols, 'group': groups_user[0].id})
 
 
 @login_required
@@ -125,17 +136,23 @@ def show_problem(request, problem_id):
 def show_submissions(request):
     """Shows all the submissions of the current user"""
 
-    pk_problem = request.GET.get('id_problem')
-    if pk_problem != None:
-        problem = Problem.objects.filter(pk=pk_problem)
-        subs = Submission.objects.filter(user=request.user).filter(problem=problem.get().id).order_by('-pk')
+    try:
+        pk_problem = request.GET.get('problem_id')
+        if pk_problem is not None:
+            int(pk_problem)
+            if not Problem.objects.filter(pk=pk_problem).exists():
+                return HttpResponseForbidden("Forbidden")
+            else:
+                problem = Problem.objects.filter(pk=pk_problem)
+                subs = Submission.objects.filter(user=request.user).filter(problem=problem.get().id).order_by('-pk')
 
-    else:
-        subs = Submission.objects.filter(user=request.user).order_by('-pk')
-    for submission in subs:
-        submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
-    return render(request, 'submissions.html', {'submissions': subs})
-
+        else:
+            subs = Submission.objects.filter(user=request.user).order_by('-pk')
+        for submission in subs:
+            submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
+        return render(request, 'submissions.html', {'submissions': subs})
+    except ValueError as ex:
+        return HttpResponseForbidden("Forbidden")
 
 
 """mirar esto es para mis envios que sea el de uno en concreto"""
@@ -147,6 +164,8 @@ def show_submissions(request):
     for submission in subs:
         submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
     return render(request, 'submissions.html', {'submissions': subs})"""
+
+
 @login_required
 def show_submission(request, submission_id):
     """Shows a submission of the current user"""
@@ -166,7 +185,7 @@ def download(_, problem_id):
     response = HttpResponse()
     response['Content-Type'] = 'application/sql'
     response['Content-Disposition'] = "attachment; filename=create_insert.sql"
-    response.write(problem.create_sql+'\n\n'+problem.insert_sql)
+    response.write(problem.create_sql + '\n\n' + problem.insert_sql)
     return response
 
 
@@ -197,7 +216,7 @@ def submit(request, problem_id):
                     'veredict': VeredictCode.RE, 'title': VeredictCode.RE.label,
                     'message': VeredictCode.RE.message(),
                     'feedback': f'{excp.statement} --> {excp.message}' if problem.problem_type() == ProblemType.FUNCTION
-                                else excp.message}
+                    else excp.message}
             elif excp.error_code == OracleStatusCode.TLE_USER_CODE:
                 data = {'veredict': VeredictCode.TLE, 'title': VeredictCode.TLE.label,
                         'message': VeredictCode.TLE.message(), 'feedback': ''}

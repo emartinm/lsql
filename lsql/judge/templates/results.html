@@ -9,7 +9,7 @@
 <div style="display:flex;justify-content:between">
     <p style="font-size:20px">Grupo:</p>
      <form method="get" action="{% url 'judge:result' collection.id %}">
-    <select style="margin-left:3%" name="clase" id="clase" onchange="this.parentNode.submit()">
+    <select style="margin-left:3%" name="group" id="clase" onchange="this.parentNode.submit()">
       <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
         {% for group in groups %}
             <option id = "{{group.name}}" value="{{group.id}}"> {{group.name}} </option>
@@ -85,12 +85,12 @@
          </td>
         {% endif %}
 
-          {% for pp in collection.problem_list %}
+        {% for pp in p.collection %}
                 {% if pp.solved %}
                     {% if p == login %}
                          <td class="bg-success" style="border: black 1px solid;">
                                   <form method="get" action="{% url 'judge:submissions' %}">
-                            <input type="hidden" value="{{pp.id}}" name="id_problem">
+                            <input type="hidden" value="{{pp.id}}" name="problem_id">
                            <a onclick="this.parentNode.submit();" href="#" style="color:black; text-decoration: none;">{{ pp.num_submissions }}</a>
                        </form>
                         </td>
@@ -101,7 +101,7 @@
                      {% if p == login %}
                        <td class="bg-danger" style="border: black 1px solid;">
                             <form method="get" action="{% url 'judge:submissions' %}">
-                                <input type="hidden" value="{{pp.id}}" name="id_problem">
+                                <input type="hidden" value="{{pp.id}}" name="problem_id">
                                <a onclick="this.parentNode.submit();" href="#" style="color:black; text-decoration: none;">{{ pp.num_submissions }}</a>
                            </form>
                        </td>
@@ -115,13 +115,12 @@
                           <td style="border: black 1px solid;">{{ pp.num_submissions }}</td>
                      {% endif %}
                 {% endif %}
-
-          {% endfor %}
+        {% endfor %}
         <td style="border: black 1px solid;">
-            200
+            {{p.intents}}
         </td>
         <td style="border: black 1px solid;">
-            200
+            {{p.resolved}}
         </td>
     </tr>
     {% endfor %}
