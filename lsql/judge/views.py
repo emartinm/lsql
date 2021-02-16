@@ -6,7 +6,7 @@ Functions that process HTTP connections
 """
 
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
-from django.http.response import HttpResponse
+from django.http.response import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -50,12 +50,11 @@ def show_result(request, collection_id):
 
         if group_id is None:
             group_id = groups_user[0].id
-        int(group_id)
         collection = get_object_or_404(Collection, pk=collection_id)
-        group0 = Group.objects.filter(id=group_id)
-        users = User.objects.filter(groups__name=group0.get().name)
+        group0 = get_object_or_404(Group, pk=group_id)
+        users = User.objects.filter(groups__name=group0.name)
         if users.filter(id=request.user.id):
-            group0.name = group0.get().name
+            group0.name = group0.name
             group0.id = group_id
             groups_user = groups_user.exclude(id=group_id)
             collection.problem_list = collection.problems()
@@ -79,7 +78,7 @@ def show_result(request, collection_id):
         else:
             return HttpResponseForbidden("Forbidden")
     except ValueError as ex:
-        return HttpResponseForbidden("Forbidden")
+        return HttpResponseNotFound("El identificador de grupo no tiene el formato correcto")
 
 
 @login_required
@@ -139,12 +138,8 @@ def show_submissions(request):
     try:
         pk_problem = request.GET.get('problem_id')
         if pk_problem is not None:
-            int(pk_problem)
-            if not Problem.objects.filter(pk=pk_problem).exists():
-                return HttpResponseForbidden("Forbidden")
-            else:
-                problem = Problem.objects.filter(pk=pk_problem)
-                subs = Submission.objects.filter(user=request.user).filter(problem=problem.get().id).order_by('-pk')
+            problem = get_object_or_404(Problem,pk=pk_problem)
+            subs = Submission.objects.filter(user=request.user).filter(problem=problem.id).order_by('-pk')
 
         else:
             subs = Submission.objects.filter(user=request.user).order_by('-pk')
@@ -152,7 +147,7 @@ def show_submissions(request):
             submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
         return render(request, 'submissions.html', {'submissions': subs})
     except ValueError as ex:
-        return HttpResponseForbidden("Forbidden")
+        return HttpResponseNotFound("EL identificador no tiene el formato correcto")
 
 
 """mirar esto es para mis envios que sea el de uno en concreto"""
