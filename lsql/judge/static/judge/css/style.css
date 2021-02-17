@@ -20,13 +20,3 @@ div#codigo {
     width: 100%;
     margin: auto;
 }
-
-td.aprobado{
-    background-color:green;
-    border: black 1px solid;
-}
-
-table.fallo td {
-    background-color:red;
-    border: black 1px solid;
-}

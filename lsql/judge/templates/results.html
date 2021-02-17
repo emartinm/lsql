@@ -36,14 +36,23 @@
         <h5 class="modal-title text-center" id="exampleModalLabel">LEYENDA</h5>
       </div>
       <div class="modal-body">
-        <span class="badge rounded-pill bg-primary">Primary</span><br>
-          <span class="badge rounded-pill bg-secondary">Secondary</span><br>
-        <span class="badge rounded-pill bg-success">Success</span><br>
-        <span class="badge rounded-pill bg-danger">Danger</span><br>
-        <span class="badge rounded-pill bg-warning text-dark">Warning</span><br>
-        <span class="badge rounded-pill bg-info text-dark">Info</span><br>
-        <span class="badge rounded-pill bg-light text-dark">Light</span><br>
-        <span class="badge rounded-pill bg-dark">Dark</span>
+          <div class="d-flex p-2">
+               <div class="bg-info h-40 w-25 text-center mb-1 border border-dark">1</div>
+               <div class="text-center w-75">Posición del usuario</div>
+          </div>
+          <div class="d-flex p-2">
+               <div class="bg-success h-40 w-25 text-center mb-1 border border-dark">3/8</div>
+               <div class="text-center w-75">Ejercicio resuelto 3 veces de 8 intentos</div>
+          </div>
+          <div class="d-flex p-2">
+               <div class="bg-danger h-40 w-25 text-center mb-1 border border-dark">0/9</div>
+              <div class="text-center w-75">Ejercicio resuelto 0 veces de 9 intentos</div>
+          </div>
+          <div class="d-flex p-2">
+               <div class="bg-white h-40 w-25 text-center mb-1 border border-dark">0/0</div>
+              <div class="text-center w-75">Ejercicio no intentado</div>
+          </div>
+
       </div>
       <div class="modal-footer d-flex justify-content-center">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
@@ -69,17 +78,17 @@
     {% for p in users %}
     <tr style="color:black">
         {% if p == login %}
-         <td class="bg-info" style=" border: black 1px solid;">{{forloop.counter}}</td>
+         <td class="bg-info" style=" border: black 1px solid;">{{p.pos}}</td>
          <td style="border: black 1px solid;">
           {{p.username}}
          </td>
         {% elif p.is_staff %}
-         <td style="background-color:gray; border: black 1px solid;">{{forloop.counter}}</td>
+         <td style="background-color:gray; border: black 1px solid;">{{p.pos}}</td>
          <td style="border: black 1px solid;">
           {{p.username}}
          </td>
         {%else%}
-          <td style="border: black 1px solid;">{{forloop.counter}}</td>
+          <td style="border: black 1px solid;">{{p.pos}}</td>
           <td style="border: black 1px solid;">
           {{p.username}}
          </td>
@@ -97,7 +106,7 @@
                     {% else %}
                         <td class="bg-success" style="border: black 1px solid;">{{ pp.num_submissions }}</td>
                     {% endif%}
-                {% elif not pp.solved and pp.num_submissions > 0 %}
+                {% elif not pp.solved and pp.num_submissions != '0/0' %}
                      {% if p == login %}
                        <td class="bg-danger" style="border: black 1px solid;">
                             <form method="get" action="{% url 'judge:submissions' %}">
