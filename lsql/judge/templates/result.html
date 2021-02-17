@@ -24,6 +24,7 @@
       <td>
         <form method="get" action="{% url 'judge:result' c.id %}">
           <input type="hidden" value="{{group}}" name="group">
+          
           <a title="{{c.name_html|safe}}" onclick="this.parentNode.submit();" href="#">{{ c.name_html|safe }}</a>
         </form>
 
