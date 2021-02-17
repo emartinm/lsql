@@ -36,21 +36,8 @@ def get_child_problem(problem_id):
 
 def pos(user_1, user_2):
     """compare exercises for positions"""
-    first = 0
-    second = 0
-    print('hola')
     if user_1.resolved == user_2.resolved and user_1.intents == user_2.intents:
-        for z in range(0, len(user_1.collection)):
-            print(f'Comparando los hechos en el momento {z} : {user_1.collection[z].resuelto} y {user_2.collection[z].resuelto}')
-            if user_1.collection[z].resuelto < user_2.collection[z].resuelto:
-                first = first + 1
-            else:
-                second = second + 1
-
-        if second > first:
-            return False
-        else:
-            return True
+        return False
     else:
         return True
 
@@ -83,47 +70,43 @@ def show_result(request, collection_id):
             collection.total_problem = collection.problem_list.count()
             users = users.exclude(is_staff=True)
             for i in users:
-                print(i.username)
                 i.collection = []
                 i.intents = 0
                 i.resolved = 0
-
+                i.res = 0
                 for z in range(0, collection.problem_list.count()):
                     ex = 0
                     intents = 0
                     p = collection.problem_list[z]
-                    p.resuelto = 0
+
                     subs = Submission.objects.filter(user=i).filter(problem=p.id).order_by('pk')
                     for submission in range(0, len(subs)):
 
                         if VeredictCode(subs[submission].veredict_code) == 'AC':
                             ex = ex + 1
                             if ex == 1:
-                                print(submission)
-                                p.resuelto = submission + 1
+                                i.res = i.res + submission + 1
                             intents = intents + 1
                         else:
                             intents = intents + 1
-                    p.num_submissions = f"{ex}/{intents}" #collection.problem_list[z].num_submissions_by_user(i)
+                    p.num_submissions = f"{ex}/{intents}"  # collection.problem_list[z].num_submissions_by_user(i)
                     p.solved = collection.problem_list[z].solved_by_user(i)
                     i.intents = i.intents + collection.problem_list[z].num_submissions_by_user(i)
                     if p.solved:
                         i.resolved = i.resolved + 1
                     i.collection.append(p)
 
-            users = sorted(users, key=lambda x: (x.resolved, -x.intents), reverse=True)
-            print(len(users))
+            users = sorted(users, key=lambda x: (x.resolved, -x.intents, -x.res), reverse=True)
             for i in range(0, len(users)):
-                print('entra')
                 if i != len(users) - 1:
-                    if pos(users[i], users[i+1]):
+                    if pos(users[i], users[i + 1]):
                         users[i].pos = position
                         position = position + 1
                     else:
                         users[i].pos = position
 
                 else:
-                    if pos(users[i], users[i-1]):
+                    if pos(users[i], users[i - 1]):
                         users[i].pos = position
                         position = position + 1
                     else:
