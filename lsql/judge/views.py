@@ -36,7 +36,7 @@ def get_child_problem(problem_id):
 
 def pos(user_1, user_2):
     """compare exercises for positions"""
-    if user_1.resolved == user_2.resolved and user_1.intents == user_2.intents:
+    if user_1.resolved == user_2.resolved and user_1.score == user_2.score:
         return False
     else:
         return True
@@ -54,9 +54,7 @@ def show_result(request, collection_id):
     position = 1
     try:
         groups_user = request.user.groups.all().order_by('name')
-
         group_id = request.GET.get('group')
-
         if group_id is None:
             group_id = groups_user[0].id
         collection = get_object_or_404(Collection, pk=collection_id)
@@ -71,9 +69,8 @@ def show_result(request, collection_id):
             users = users.exclude(is_staff=True)
             for i in users:
                 i.collection = []
-                i.intents = 0
                 i.resolved = 0
-                i.res = 0
+                i.score = 0
                 for z in range(0, collection.problem_list.count()):
                     ex = 0
                     intents = 0
@@ -81,26 +78,25 @@ def show_result(request, collection_id):
                     i.first_AC = 0
                     subs = Submission.objects.filter(user=i).filter(problem=p.id).order_by('pk')
                     for submission in range(0, len(subs)):
-
                         if VeredictCode(subs[submission].veredict_code) == 'AC':
                             ex = ex + 1
                             if ex == 1:
                                 i.first_AC = submission + 1
-                                i.res = i.res + submission + 1
-                            intents = intents + 1
-                        else:
-                            intents = intents + 1
+                                i.score = i.score + submission + 1
+                        intents = intents + 1
+
                     if intents > 0 and i.first_AC == 0:
                         p.num_submissions = f"{ex}/{intents} ({intents})"
                     else:
                         p.num_submissions = f"{ex}/{intents} ({i.first_AC})"  # collection.problem_list[z].num_submissions_by_user(i)
                     p.solved = collection.problem_list[z].solved_by_user(i)
-                    i.intents = i.intents + collection.problem_list[z].num_submissions_by_user(i)
+                    #i.intents = i.intents + collection.problem_list[z].num_submissions_by_user(i)
                     if p.solved:
                         i.resolved = i.resolved + 1
                     i.collection.append(p)
 
-            users = sorted(users, key=lambda x: (x.resolved, -x.res), reverse=True)
+            users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
+
             for i in range(0, len(users)):
                 if i != len(users) - 1:
                     if pos(users[i], users[i + 1]):
@@ -115,6 +111,7 @@ def show_result(request, collection_id):
                         position = position + 1
                     else:
                         users[i].pos = position
+
             return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
                                                     'login': request.user, 'group0': group0})
         else:

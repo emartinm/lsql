@@ -42,19 +42,19 @@
           </div>
           <div class="d-flex p-2">
                <div class="bg-success h-40 w-25 text-center mb-1 border border-dark">3/8 (5)</div>
-               <div class="text-center w-75">Ejercicio resuelto 3 veces de 8 intentos (1º AC en el 5 intento)</div>
+               <div class="text-left ml-1 w-75">Ejercicio resuelto 3 veces de 8 intentos (1er envío aceptado en el 5º intento)</div>
           </div>
           <div class="d-flex p-2">
                <div class="bg-danger h-40 w-25 text-center mb-1 border border-dark">0/9 (9)</div>
-              <div class="text-center w-75">Ejercicio resuelto 0 veces de 9 intentos (9 intentos sin AC)</div>
+              <div class="text-center w-75">Ejercicio resuelto 0 veces de 9 intentos (9 intentos sin envío aceptado)</div>
           </div>
           <div class="d-flex p-2">
                <div class="bg-white h-40 w-25 text-center mb-1 border border-dark">0/0 (0)</div>
-              <div class="text-center w-75">Ejercicio no intentado (0 intentos sin AC)</div>
+              <div class="text-center w-75">Ejercicio no intentado (0 intentos sin envío aceptado)</div>
           </div>
           <div class="d-flex p-2">
                <div class="bg-dark h-40 w-25 text-center mb-1 border border-dark text-white">Puntuación</div>
-              <div class="text-center w-75">Suma del primer AC de cada ejercicio</div>
+              <div class="text-center w-75">Suma del primer envío aceptado de cada ejercicio</div>
           </div>
           <div class="d-flex p-2">
                <div class="bg-dark h-40 w-25 text-center mb-1 border border-dark text-white
@@ -136,7 +136,7 @@
                 {% endif %}
         {% endfor %}
         <td style="border: black 1px solid;">
-            {{p.res}}
+            {{p.score}}
         </td>
         <td style="border: black 1px solid;">
             {{p.resolved}}
