@@ -49,8 +49,7 @@ def index(_):
 
 @login_required()
 def show_result(request, collection_id):
-    """show datatable of a collection"""
-    """Shows a collection"""
+    """show datatable of a group"""
     position = 1
     try:
         groups_user = request.user.groups.all().order_by('name')
@@ -88,9 +87,8 @@ def show_result(request, collection_id):
                     if intents > 0 and i.first_AC == 0:
                         p.num_submissions = f"{ex}/{intents} ({intents})"
                     else:
-                        p.num_submissions = f"{ex}/{intents} ({i.first_AC})"  # collection.problem_list[z].num_submissions_by_user(i)
+                        p.num_submissions = f"{ex}/{intents} ({i.first_AC})"
                     p.solved = collection.problem_list[z].solved_by_user(i)
-                    #i.intents = i.intents + collection.problem_list[z].num_submissions_by_user(i)
                     if p.solved:
                         i.resolved = i.resolved + 1
                     i.collection.append(p)
