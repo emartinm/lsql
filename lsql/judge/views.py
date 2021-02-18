@@ -78,25 +78,29 @@ def show_result(request, collection_id):
                     ex = 0
                     intents = 0
                     p = collection.problem_list[z]
-
+                    i.first_AC = 0
                     subs = Submission.objects.filter(user=i).filter(problem=p.id).order_by('pk')
                     for submission in range(0, len(subs)):
 
                         if VeredictCode(subs[submission].veredict_code) == 'AC':
                             ex = ex + 1
                             if ex == 1:
+                                i.first_AC = submission + 1
                                 i.res = i.res + submission + 1
                             intents = intents + 1
                         else:
                             intents = intents + 1
-                    p.num_submissions = f"{ex}/{intents}"  # collection.problem_list[z].num_submissions_by_user(i)
+                    if intents > 0 and i.first_AC == 0:
+                        p.num_submissions = f"{ex}/{intents} ({intents})"
+                    else:
+                        p.num_submissions = f"{ex}/{intents} ({i.first_AC})"  # collection.problem_list[z].num_submissions_by_user(i)
                     p.solved = collection.problem_list[z].solved_by_user(i)
                     i.intents = i.intents + collection.problem_list[z].num_submissions_by_user(i)
                     if p.solved:
                         i.resolved = i.resolved + 1
                     i.collection.append(p)
 
-            users = sorted(users, key=lambda x: (x.resolved, -x.intents, -x.res), reverse=True)
+            users = sorted(users, key=lambda x: (x.resolved, -x.res), reverse=True)
             for i in range(0, len(users)):
                 if i != len(users) - 1:
                     if pos(users[i], users[i + 1]):
