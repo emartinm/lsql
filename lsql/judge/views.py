@@ -124,7 +124,7 @@ def show_results(request):
     cols = Collection.objects.all().order_by('position', '-creation_date')
     groups_user = request.user.groups.all().order_by('name')
     if groups_user.count() == 0:
-        return HttpResponseForbidden("Vacio, aquí crear un mensaje")
+        return render(request, 'error_group.html')
     else:
         for results in cols:
             # Templates can only invoke nullary functions or access object attribute, so we store
