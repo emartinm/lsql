@@ -30,6 +30,19 @@ def create_select_problem(collection, name='Ejemplo'):
     return problem
 
 
+def create_dml_problem(collection, name='Ejemplo'):
+    """Creates and stores a DML Problem accepting between 2 and 3 SQL sentences"""
+    create = 'CREATE TABLE test (n NUMBER);'
+    insert = "INSERT INTO test VALUES (901)"
+    solution = 'INSERT INTO test VALUES (25); INSERT INTO test VALUES (50); INSERT INTO test VALUES (75);'
+    problem = DMLProblem(title_md=name, text_md='texto largo',
+                            create_sql=create, insert_sql=insert, collection=collection,
+                            solution=solution, min_stmt=2, max_stmt=3)
+    problem.clean()
+    problem.save()
+    return problem
+
+
 def create_collection(name='Prueba'):
     """Creates and stores a collection"""
     collection = Collection(name_md=name, description_md='texto explicativo')
@@ -100,7 +113,7 @@ class ViewsTest(TestCase):
         login_redirect_submit = f'{login_redirect_url}?next={submit_url}'
         response = client.post(submit_url, {'code': 'SELECT...'}, follow=True)
         self.assertEqual(response.redirect_chain,
-                          [(login_redirect_submit, 302)])
+                         [(login_redirect_submit, 302)])
 
         # Submissions redirects to login
         submissions_url = reverse('judge:submissions')
@@ -388,3 +401,39 @@ class ViewsTest(TestCase):
             submit_url = reverse('judge:submit', args=[problem.pk])
             response = client.post(submit_url, {'code': problem.solution}, follow=True)
             self.assertEqual(response.json()['veredict'], VeredictCode.AC)
+
+    def test_validation_error(self):
+        """Test messages obtained in submission that do not containt the correct number of statements"""
+        client = Client()
+        collection = create_collection('Colleccion de prueba XYZ')
+        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        dml_problem = create_dml_problem(collection, 'DML Problem')
+        create_user('5555', 'pepe')
+        client.login(username='pepe', password='5555')
+
+        submit_url_select = reverse('judge:submit', args=[select_problem.pk])
+        submit_url_dml = reverse('judge:submit', args=[dml_problem.pk])
+
+        # JSON with VE and correct message for one SQL
+        response = client.post(submit_url_select, {'code': f'{select_problem.solution}; {select_problem.solution}'},
+                               follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        self.assertIn('exactamente 1 sentencia SQL', response.json()['message'])
+
+        # JSON with VE and correct message for 1--3 SQL
+        stmt = 'INSERT INTO test VALUES (25);'
+        response = client.post(submit_url_dml, {'code': stmt}, follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        self.assertIn('entre 2 y 3 sentencias SQL', response.json()['message'])
+
+        stmt = 'INSERT INTO test VALUES (25); INSERT INTO test VALUES (50); INSERT INTO test VALUES (75);' \
+               'INSERT INTO test VALUES (100);'
+        response = client.post(submit_url_dml, {'code': stmt}, follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        self.assertIn('entre 2 y 3 sentencias SQL', response.json()['message'])
+
+        # JSON with VE and correct message for less than 10 characters
+        stmt = 'holis'
+        response = client.post(submit_url_dml, {'code': stmt}, follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        self.assertIn('tu solución no está vacía', response.json()['message'])

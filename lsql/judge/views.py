@@ -254,7 +254,7 @@ def submit(request, problem_id):
                         'message': VeredictCode.TLE.message(), 'feedback': ''}
             elif excp.error_code == OracleStatusCode.NUMBER_STATEMENTS:
                 data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
-                        'message': VeredictCode.VE.message(), 'feedback': excp.message}
+                        'message': VeredictCode.VE.message(problem), 'feedback': excp.message}
             elif excp.error_code == OracleStatusCode.COMPILATION_ERROR:
                 data = {'veredict': VeredictCode.WA, 'title': VeredictCode.WA.label,
                         'message': VeredictCode.WA.message(), 'feedback': compile_error_to_html_table(excp.message)}
