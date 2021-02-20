@@ -36,8 +36,8 @@ def create_dml_problem(collection, name='Ejemplo'):
     insert = "INSERT INTO test VALUES (901)"
     solution = 'INSERT INTO test VALUES (25); INSERT INTO test VALUES (50); INSERT INTO test VALUES (75);'
     problem = DMLProblem(title_md=name, text_md='texto largo',
-                            create_sql=create, insert_sql=insert, collection=collection,
-                            solution=solution, min_stmt=2, max_stmt=3)
+                         create_sql=create, insert_sql=insert, collection=collection,
+                         solution=solution, min_stmt=2, max_stmt=3)
     problem.clean()
     problem.save()
     return problem
@@ -437,3 +437,21 @@ class ViewsTest(TestCase):
         response = client.post(submit_url_dml, {'code': stmt}, follow=True)
         self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
         self.assertIn('tu solución no está vacía', response.json()['message'])
+
+    def test_select_no_output(self):
+        """Test that SQL statements that produce no results generate WA in a SELECT problem because
+        the schema is different"""
+        client = Client()
+        collection = create_collection('Colleccion de prueba XYZ')
+        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        create_user('5555', 'pepe')
+        client.login(username='pepe', password='5555')
+        stmts = ["CREATE VIEW my_test(n) AS SELECT n FROM test;",
+                 "INSERT INTO test VALUES (89547);",
+                 ]
+        submit_url_select = reverse('judge:submit', args=[select_problem.pk])
+
+        for stmt in stmts:
+            response = client.post(submit_url_select, {'code': stmt}, follow=True)
+            self.assertTrue(response.json()['veredict'] == VeredictCode.WA)
+            self.assertIn('Generado por tu código SQL: 0 columnas', response.json()['feedback'])
