@@ -9,6 +9,8 @@ from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidde
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import login_required
 from logzero import logger
 from .exceptions import ExecutorException
@@ -18,7 +20,6 @@ from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem,
     Submission
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
-from django.contrib.auth.models import User, Group
 
 
 def get_child_problem(problem_id):
@@ -38,13 +39,43 @@ def pos(user_1, user_2):
     """compare exercises for positions"""
     if user_1.resolved == user_2.resolved and user_1.score == user_2.score:
         return False
-    else:
-        return True
+    return True
 
 
 def index(_):
     """Redirect root access to collections"""
     return HttpResponseRedirect(reverse('judge:collections'))
+
+
+def for_loop(i, collection):
+    """loop"""
+    for numb in range(0, collection.problem_list.count()):
+        _success = 0
+        intents = 0
+        problem = collection.problem_list[numb]
+        i.first_AC = 0
+        subs = Submission.objects.filter(user=i).filter(problem=problem.id).order_by('pk')
+        _len = len(subs)
+        for submission in range(0, _len):
+            if VeredictCode(subs[submission].veredict_code) == 'AC':
+                _success = _success + 1
+            if _success == 1:
+                i.first_AC = submission + 1
+                i.score = i.score + submission + 1
+            intents = intents + 1
+        resolved(intents, i, problem, _success, collection, numb)
+
+
+def resolved(intents, i, problem, _success, collection, numb):
+    """Resolved intents"""
+    if intents > 0 and i.first_AC == 0:
+        problem.num_submissions = f"{_success}/{intents} ({intents})"
+    else:
+        problem.num_submissions = f"{_success}/{intents} ({i.first_AC})"
+    problem.solved = collection.problem_list[numb].solved_by_user(i)
+    if problem.solved:
+        i.resolved = i.resolved + 1
+    i.collection.append(problem)
 
 
 @login_required()
@@ -58,7 +89,7 @@ def show_result(request, collection_id):
             group_id = groups_user[0].id
         collection = get_object_or_404(Collection, pk=collection_id)
         group0 = get_object_or_404(Group, pk=group_id)
-        users = User.objects.filter(groups__name=group0.name)
+        users = get_user_model().objects.filter(groups__name=group0.name)
         if users.filter(id=request.user.id):
             group0.name = group0.name
             group0.id = group_id
@@ -70,32 +101,10 @@ def show_result(request, collection_id):
                 i.collection = []
                 i.resolved = 0
                 i.score = 0
-                for z in range(0, collection.problem_list.count()):
-                    ex = 0
-                    intents = 0
-                    p = collection.problem_list[z]
-                    i.first_AC = 0
-                    subs = Submission.objects.filter(user=i).filter(problem=p.id).order_by('pk')
-                    for submission in range(0, len(subs)):
-                        if VeredictCode(subs[submission].veredict_code) == 'AC':
-                            ex = ex + 1
-                            if ex == 1:
-                                i.first_AC = submission + 1
-                                i.score = i.score + submission + 1
-                        intents = intents + 1
-
-                    if intents > 0 and i.first_AC == 0:
-                        p.num_submissions = f"{ex}/{intents} ({intents})"
-                    else:
-                        p.num_submissions = f"{ex}/{intents} ({i.first_AC})"
-                    p.solved = collection.problem_list[z].solved_by_user(i)
-                    if p.solved:
-                        i.resolved = i.resolved + 1
-                    i.collection.append(p)
-
+                for_loop(i, collection)
             users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
-
-            for i in range(0, len(users)):
+            _len = len(users)
+            for i in range(0, _len):
                 if i != len(users) - 1:
                     if pos(users[i], users[i + 1]):
                         users[i].pos = position
@@ -112,9 +121,9 @@ def show_result(request, collection_id):
 
             return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
                                                     'login': request.user, 'group0': group0})
-        else:
-            return HttpResponseForbidden("Forbidden")
-    except ValueError as ex:
+
+        return HttpResponseForbidden("Forbidden")
+    except ValueError:
         return HttpResponseNotFound("El identificador de grupo no tiene el formato correcto")
 
 
@@ -125,12 +134,12 @@ def show_results(request):
     groups_user = request.user.groups.all().order_by('name')
     if groups_user.count() == 0:
         return render(request, 'error_group.html')
-    else:
-        for results in cols:
-            # Templates can only invoke nullary functions or access object attribute, so we store
-            # the number of problems solved by the user in an attribute
-            results.num_solved = results.num_solved_by_user(request.user)
-        return render(request, 'result.html', {'results': cols, 'group': groups_user[0].id})
+
+    for results in cols:
+        # Templates can only invoke nullary functions or access object attribute, so we store
+        # the number of problems solved by the user in an attribute
+        results.num_solved = results.num_solved_by_user(request.user)
+    return render(request, 'result.html', {'results': cols, 'group': groups_user[0].id})
 
 
 @login_required
@@ -183,19 +192,8 @@ def show_submissions(request):
         for submission in subs:
             submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
         return render(request, 'submissions.html', {'submissions': subs})
-    except ValueError as ex:
+    except ValueError:
         return HttpResponseNotFound("EL identificador no tiene el formato correcto")
-
-
-"""mirar esto es para mis envios que sea el de uno en concreto"""
-"""@login_required
-def show_submissions(request):
-   
-    problema = get_child_problem(10)
-    subs = Submission.objects.filter(user=request.user).filter(problem=problema).order_by('-pk')
-    for submission in subs:
-        submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
-    return render(request, 'submissions.html', {'submissions': subs})"""
 
 
 @login_required

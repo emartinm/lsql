@@ -9,7 +9,7 @@ import os
 from django.test import TestCase, Client
 import django.contrib.auth
 from django.urls import reverse
-
+from django.contrib.auth.models import Group
 from judge.models import Collection, SelectProblem, Submission, FunctionProblem, DMLProblem, ProcProblem, \
     TriggerProblem
 from judge.types import VeredictCode
@@ -36,8 +36,8 @@ def create_dml_problem(collection, name='Ejemplo'):
     insert = "INSERT INTO test VALUES (901)"
     solution = 'INSERT INTO test VALUES (25); INSERT INTO test VALUES (50); INSERT INTO test VALUES (75);'
     problem = DMLProblem(title_md=name, text_md='texto largo',
-                            create_sql=create, insert_sql=insert, collection=collection,
-                            solution=solution, min_stmt=2, max_stmt=3)
+                         create_sql=create, insert_sql=insert, collection=collection,
+                         solution=solution, min_stmt=2, max_stmt=3)
     problem.clean()
     problem.save()
     return problem
@@ -58,6 +58,11 @@ def create_user(passwd, username='usuario'):
         email='email@ucm.es',
         password=passwd)
     return user
+
+
+def create_group(name='nombre'):
+    group = Group.objects.create(name=name)
+    return group
 
 
 def create_submission(problem, user, veredict, code='nada'):
@@ -135,6 +140,8 @@ class ViewsTest(TestCase):
         response = client.get(create_url, follow=True)
         self.assertEqual(response.redirect_chain,
                          [(login_redirect_create, 302)])
+
+
 
     def test_logged(self):
         """Connections from a logged user"""
@@ -289,6 +296,38 @@ class ViewsTest(TestCase):
             self.assertEqual(response.content.decode('UTF-8'), script)
 
             self.assertTrue(response.status_code == 200)
+
+    def test_show_result(self):
+        client = Client()
+        #Creo 2 colecciones
+        collection = create_collection('Coleccion 1')
+        collection_2 = create_collection('Coleccion 2')
+        #Creo 2 usuarios
+        user = create_user('123456', 'pepe')
+        user2 = create_user('123456', 'ana')
+        #Creo 1 grupo y se lo asigno SOLO a un usuario
+        groupA = create_group('1A')
+        groupA.user_set.add(user)
+        result_url = reverse('judge:results')
+        #El usuario con grupo puede visitar la pagina results
+        client.login(username=user.username, password='123456')
+
+
+        response = client.get(result_url, follow=True)
+        title = 'Nombre de las colecciones'
+        self.assertTrue(response.status_code == 200 and collection.name_md in str(response.content))
+        self.assertTrue(response.status_code == 200 and collection_2.name_md in str(response.content))
+        self.assertTrue(response.status_code == 200 and title in str(response.content))
+
+        #El usuario sin grupo no puede visitar la pagina results
+        client_2 = Client()
+        client_2.login(username=user2.username, password='123456')
+        response = client_2.get(result_url, follow=True)
+        msg = 'Lo sentimos! No tienes asignado un grupo de la asignatura'
+        msg1 = 'Por favor, habla con el profesor para que se te un grupo de clase.'
+
+        self.assertTrue(response.status_code == 200 and msg in str(response.content))
+        self.assertTrue(response.status_code == 200 and msg1 in str(response.content))
 
     def test_compile_error(self):
         """Submitting code for a function/procedure/trigger with a compile error does resturn a
