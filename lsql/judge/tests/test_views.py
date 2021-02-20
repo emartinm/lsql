@@ -141,7 +141,12 @@ class ViewsTest(TestCase):
         self.assertEqual(response.redirect_chain,
                          [(login_redirect_create, 302)])
 
-
+        # results redirects to login
+        result_url = reverse('judge:results')
+        login_redirect_results = f'{login_redirect_url}?next={result_url}'
+        response = client.get(result_url, follow=True)
+        self.assertEqual(response.redirect_chain,
+                         [(login_redirect_results, 302)])
 
     def test_logged(self):
         """Connections from a logged user"""
@@ -299,36 +304,35 @@ class ViewsTest(TestCase):
 
     def test_show_result(self):
         client = Client()
-        #Creo 2 colecciones
+        # Creo 2 colecciones
         collection = create_collection('Coleccion 1')
         collection_2 = create_collection('Coleccion 2')
-        #Creo 2 usuarios
+        # Creo 2 usuarios
         user = create_user('123456', 'pepe')
         user2 = create_user('123456', 'ana')
-        #Creo 1 grupo y se lo asigno SOLO a un usuario
+        # Creo 1 grupo y se lo asigno SOLO a un usuario
         groupA = create_group('1A')
         groupA.user_set.add(user)
         result_url = reverse('judge:results')
-        #El usuario con grupo puede visitar la pagina results
+        # El usuario con grupo puede visitar la pagina results
         client.login(username=user.username, password='123456')
-
 
         response = client.get(result_url, follow=True)
         title = 'Nombre de las colecciones'
         self.assertTrue(response.status_code == 200 and collection.name_md in str(response.content))
         self.assertTrue(response.status_code == 200 and collection_2.name_md in str(response.content))
         self.assertTrue(response.status_code == 200 and title in str(response.content))
-
-        #El usuario sin grupo no puede visitar la pagina results
-        client_2 = Client()
-        client_2.login(username=user2.username, password='123456')
-        response = client_2.get(result_url, follow=True)
+        client.logout()
+        # El usuario sin grupo no puede visitar la pagina results
+        client.login(username=user2.username, password='123456')
+        response = client.get(result_url, follow=True)
         msg = 'Lo sentimos! No tienes asignado un grupo de la asignatura'
         msg1 = 'Por favor, habla con el profesor para que se te un grupo de clase.'
 
         self.assertTrue(response.status_code == 200 and msg in str(response.content))
         self.assertTrue(response.status_code == 200 and msg1 in str(response.content))
-
+        client.logout()
+        
     def test_compile_error(self):
         """Submitting code for a function/procedure/trigger with a compile error does resturn a
         OracleStatusCode.COMPILATION_ERROR"""
