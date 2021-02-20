@@ -61,6 +61,7 @@ def create_user(passwd, username='usuario'):
 
 
 def create_group(name='nombre'):
+    """Creates and stores a group"""
     group = Group.objects.create(name=name)
     return group
 
@@ -303,6 +304,7 @@ class ViewsTest(TestCase):
             self.assertTrue(response.status_code == 200)
 
     def test_show_result(self):
+        """Test to enter the results page where you can see the collections."""
         client = Client()
         # Creo 2 colecciones
         collection = create_collection('Coleccion 1')
@@ -311,8 +313,8 @@ class ViewsTest(TestCase):
         user = create_user('123456', 'pepe')
         user2 = create_user('123456', 'ana')
         # Creo 1 grupo y se lo asigno SOLO a un usuario
-        groupA = create_group('1A')
-        groupA.user_set.add(user)
+        group = create_group('1A')
+        group.user_set.add(user)
         result_url = reverse('judge:results')
         # El usuario con grupo puede visitar la pagina results
         client.login(username=user.username, password='123456')
@@ -332,7 +334,7 @@ class ViewsTest(TestCase):
         self.assertTrue(response.status_code == 200 and msg in str(response.content))
         self.assertTrue(response.status_code == 200 and msg1 in str(response.content))
         client.logout()
-        
+
     def test_compile_error(self):
         """Submitting code for a function/procedure/trigger with a compile error does resturn a
         OracleStatusCode.COMPILATION_ERROR"""
