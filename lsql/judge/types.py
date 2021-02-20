@@ -25,7 +25,7 @@ class VeredictCode(models.TextChoices):
             return f'<span class="text-success">{self.label}</span>'
         return f'<span class ="text-danger">{self.label}</span>'
 
-    def message(self):
+    def message(self, problem=None):
         """Message to show in the modal window in the webpage"""
         msg = _('Error inesperado al ejecutar tu código. Por favor, inténtalo de nuevo.')
         if self == self.AC:
@@ -41,7 +41,16 @@ class VeredictCode(models.TextChoices):
             msg = _('Tu código SQL ha generado resultados erróneos. Consulta el cuadro rojo en la parte inferior '
                     'de la página para ver los detalles.')
         elif self == self.VE:
-            msg = _('Error de validación de tu código.')  # self == self.VE:
+            msg = _('Comprueba que tu solución no está vacía, que la cantidad de sentencias SQL enviadas '
+                    'es la adecuada y que estás enviando texto plano con letras del alfabeto inglés '
+                    '(sin tildes).')
+            if problem is not None and problem.min_stmt == problem.max_stmt:
+                ending = "sentencias SQL" if problem.max_stmt > 1 else "sentencia SQL"
+                msg = _(f'Se esperaba exactamente {problem.min_stmt} {ending}.')
+            elif problem is not None:
+                ending = "sentencias SQL" if problem.max_stmt > 1 else "sentencia SQL"
+                msg = _(f'Tu envío debe estar formado por entre {problem.min_stmt} y {problem.max_stmt} {ending}.')
+
         return msg
 
 

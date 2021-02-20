@@ -516,7 +516,7 @@ class OracleExecutor:
             init = time.time()
             statements = clean_sql(dml, min_stmt, max_stmt)
             if not statements:
-                logger.debug('User %s - <<%s>> contains more unexpected number of statements [%s - %s]',
+                logger.debug('User %s - <<%s>> contains unexpected number of statements [%s - %s]',
                              conn.username, statements, min_stmt, max_stmt)
                 raise ExecutorException(OracleStatusCode.NUMBER_STATEMENTS)
             with conn.cursor() as cursor:
