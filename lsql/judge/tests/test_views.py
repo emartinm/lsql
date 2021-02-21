@@ -60,6 +60,14 @@ def create_user(passwd, username='usuario'):
     return user
 
 
+def create_superuser(passwd, username='staff'):
+    """Creates and stores a super user"""
+    user = django.contrib.auth.get_user_model().objects.create_superuser(
+        username=username,
+        password=passwd)
+    return user
+
+
 def create_group(name='nombre'):
     """Creates and stores a group"""
     group = Group.objects.create(name=name)
@@ -302,6 +310,112 @@ class ViewsTest(TestCase):
             self.assertEqual(response.content.decode('UTF-8'), script)
 
             self.assertTrue(response.status_code == 200)
+
+    def test_show_result_classification(self):
+        """test to show the classification"""
+        client = Client()
+        # Creo 1 coleccion
+        collection = create_collection('Coleccion 1')
+        # Creo 2 problemas
+        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        dml_problem = create_dml_problem(collection, 'insert a Number')
+        # Creo 3 usuarios (2 normales y 1 profesor)
+
+        user_1 = create_user('12345', 'pepe')
+        user_2 = create_user('12345', 'ana')
+        teacher = create_superuser('12345', 'iker')
+        group_a = create_group('1A')
+        group_b = create_group('1B')
+        # añado al a todos y al b solo al profesor
+        group_a.user_set.add(user_1)
+        group_a.user_set.add(user_2)
+        group_a.user_set.add(teacher)
+
+        group_b.user_set.add(teacher)
+
+        # me conecto con el profesor para ver los dos grupos
+        client.login(username=teacher.username, password='12345')
+        classification_url = reverse('judge:result', args=[collection.pk])
+        submit_select_url = reverse('judge:submit', args=[select_problem.pk])
+        submit_dml_url = reverse('judge:submit', args=[dml_problem.pk])
+        # me conecto al grupo B donde esta el profesor solo
+        # como el profesor no sale en la tabla, esta vacia
+        response = client.get(classification_url, {'group': group_b.id}, follow=True)
+        self.assertTrue(response.status_code == 200 and user_1.username not in str(response.content))
+        self.assertTrue(response.status_code == 200 and user_2.username not in str(response.content))
+
+        # compruebo tambien que dentro de esa coleccion estan los dos ejercicios
+        self.assertTrue(response.status_code == 200 and select_problem.title_md in str(response.content))
+        self.assertTrue(response.status_code == 200 and dml_problem.title_md in str(response.content))
+
+        # me conecto al grupo A donde estan los dos alumnos
+        # como el profesor no sale , solo aparecen dos alumnos
+        response = client.get(classification_url, {'group': group_a.id}, follow=True)
+        self.assertTrue(response.status_code == 200 and user_1.username in str(response.content))
+        self.assertTrue(response.status_code == 200 and user_2.username in str(response.content))
+        print(response.content)
+        # me conecto a un grupo inexistente
+        response = client.get(classification_url, {'group': 999}, follow=True)
+        self.assertTrue(response.status_code == 404)
+
+        # me conecto a un grupo que no sea numerico
+        response = client.get(classification_url, {'group': '1A'}, follow=True)
+        msg = 'El identificador de grupo no tiene el formato correcto'
+        self.assertTrue(response.status_code == 404 and msg in str(response.content))
+        client.logout()
+        client.login(username=user_1.username, password='12345')
+
+        # me intento conectar con el usuario pepe a 1B que no puedo
+        response = client.get(classification_url, {'group': group_b.id}, follow=True)
+        self.assertTrue(response.status_code == 403)
+
+        # Hago un fallo del primer ejercicio y al segundo intento acierto
+        response = client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.WA)
+        response = client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.AC)
+
+        # Hago 3 fallos del segundo ejercicio y al cuarto hacierto
+        response = client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        response = client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        response = client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        response = client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.AC)
+
+        # me meto a 1A y compruebo que encuentro 1/2 (2) y 1/4 (4)
+        # Puntuacion = 6 y Resueltos 2
+        response = client.get(classification_url, {'group': group_a.id}, follow=True)
+        self.assertTrue(response.status_code == 200 and '1/2 (2)' in str(response.content))
+        self.assertTrue(response.status_code == 200 and '1/4 (4)' in str(response.content))
+        self.assertTrue(response.status_code == 200 and '6' in str(response.content))
+        self.assertTrue(response.status_code == 200 and '2' in str(response.content))
+
+        client.logout()
+        client.login(username=user_2.username, password='12345')
+
+        # Hago del primer ejercicio 3 aciertos de 3 intentos (3/3 (1))
+        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+
+        # Hago del segundo ejercicio, dos fallos y despues acierto (1/3 (3))
+        client.post(submit_dml_url, {'code': 'Select * from test'}, follow=True)
+        client.post(submit_dml_url, {'code': 'Select * from test'}, follow=True)
+        client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
+
+        response = client.get(classification_url, {'group': group_a.id}, follow=True)
+        self.assertTrue(response.status_code == 200 and '3/3 (1)' in str(response.content))
+        self.assertTrue(response.status_code == 200 and '1/3 (3)' in str(response.content))
+        self.assertTrue(response.status_code == 200 and '4' in str(response.content))
+        self.assertTrue(response.status_code == 200 and '2' in str(response.content))
+
+        client.logout()
+        # se comprueba que ana va primera y pepe segundo aunque tengan mismos resueltos
+        # ana tiene menos intentos
+        # print(response.content)
 
     def test_show_result(self):
         """Test to enter the results page where you can see the collections."""
