@@ -241,7 +241,8 @@ class ViewsTest(TestCase):
 
         # problem_id is not numeric
         response = client.get(submissions_url, {'problem_id': 'problem'}, follow=True)
-        self.assertTrue(response.status_code == 404 and 'El identificador no tiene el formato correcto' in str(response.content))
+        self.assertTrue(response.status_code == 404 and
+                        'El identificador no tiene el formato correcto' in str(response.content))
 
         # Submission contains user code
         response = client.get(submission_url, follow=True)
@@ -393,20 +394,14 @@ class ViewsTest(TestCase):
         self.assertTrue(response.status_code == 403)
 
         # Hago un fallo del primer ejercicio y al segundo intento acierto
-        response = client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.WA)
-        response = client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.AC)
+        client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
 
         # Hago 3 fallos del segundo ejercicio y al cuarto hacierto
-        response = client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
-        response = client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
-        response = client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
-        response = client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.AC)
+        client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
 
         # me meto a 1A y compruebo que encuentro 1/2 (2) y 1/4 (4)
         # Puntuacion = 6 y Resueltos 2
