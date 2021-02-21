@@ -76,6 +76,12 @@ def table_from_cursor(cursor):
     max_rows = int(os.environ['ORACLE_MAX_ROWS'])
     table = dict()
 
+    if cursor.description is None:
+        # It's the result of an SQL statement that do not return results (CREATE VIEW, for example)
+        table['header'] = list()
+        table['rows'] = list()
+        return table  # return empty table (no columns, no rows)
+
     if len(cursor.description) > int(os.environ['ORACLE_MAX_COLS']):
         logger.debug('Too many columns in cursor')
         raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
