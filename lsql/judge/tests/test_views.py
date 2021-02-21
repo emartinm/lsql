@@ -162,6 +162,7 @@ class ViewsTest(TestCase):
         client = Client()
         collection = create_collection('Colleccion de prueba XYZ')
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        problem_dml = create_dml_problem(collection, 'DMLProblem')
         user = create_user('5555', 'pepe')
         create_user('1234', 'ana')
         submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
@@ -172,6 +173,7 @@ class ViewsTest(TestCase):
         problem_url = reverse('judge:problem', args=[problem.pk])
         no_problem_url = reverse('judge:problem', args=[8888888])
         submit_url = reverse('judge:submit', args=[problem.pk])
+        submit_dml_url = reverse('judge:submit', args=[problem_dml.pk])
         submissions_url = reverse('judge:submissions')
         submission_url = reverse('judge:submission', args=[submission.pk])
         pass_done_url = reverse('judge:password_change_done')
@@ -227,6 +229,19 @@ class ViewsTest(TestCase):
         response = client.get(submissions_url, follow=True)
         html = str(response.content)
         self.assertEqual(html.count(problem.title_md), 7)
+
+        # JSON with VE (new Problem)
+        response = client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+
+        # There must be 1 submission to new problem
+        response = client.get(submissions_url, {'problem_id': problem_dml.pk}, follow=True)
+        html = str(response.content)
+        self.assertEqual(html.count(problem_dml.title_md), 1)
+
+        # problem_id is not numeric
+        response = client.get(submissions_url, {'problem_id': 'problem'}, follow=True)
+        self.assertTrue(response.status_code == 404 and 'El identificador no tiene el formato correcto' in str(response.content))
 
         # Submission contains user code
         response = client.get(submission_url, follow=True)
@@ -319,6 +334,7 @@ class ViewsTest(TestCase):
         # Creo 2 problemas
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         dml_problem = create_dml_problem(collection, 'insert a Number')
+        select_problem_2 = create_select_problem(collection, 'SelectProblem 2 DEF ABC')
         # Creo 3 usuarios (2 normales y 1 profesor)
 
         user_1 = create_user('12345', 'pepe')
@@ -337,6 +353,7 @@ class ViewsTest(TestCase):
         client.login(username=teacher.username, password='12345')
         classification_url = reverse('judge:result', args=[collection.pk])
         submit_select_url = reverse('judge:submit', args=[select_problem.pk])
+        submit_select_2_url = reverse('judge:submit', args=[select_problem_2.pk])
         submit_dml_url = reverse('judge:submit', args=[dml_problem.pk])
         # me conecto al grupo B donde esta el profesor solo
         # como el profesor no sale en la tabla, esta vacia
@@ -347,16 +364,22 @@ class ViewsTest(TestCase):
         # compruebo tambien que dentro de esa coleccion estan los dos ejercicios
         self.assertTrue(response.status_code == 200 and select_problem.title_md in str(response.content))
         self.assertTrue(response.status_code == 200 and dml_problem.title_md in str(response.content))
+        self.assertTrue(response.status_code == 200 and select_problem_2.title_md in str(response.content))
 
         # me conecto al grupo A donde estan los dos alumnos
         # como el profesor no sale , solo aparecen dos alumnos
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
         self.assertTrue(response.status_code == 200 and user_1.username in str(response.content))
         self.assertTrue(response.status_code == 200 and user_2.username in str(response.content))
-        print(response.content)
+
         # me conecto a un grupo inexistente
         response = client.get(classification_url, {'group': 999}, follow=True)
         self.assertTrue(response.status_code == 404)
+
+        # me conecto sin un grupo del get y me coge el primer grupo, 1A
+        response = client.get(classification_url, follow=True)
+        self.assertTrue(response.status_code == 200 and user_1.username in str(response.content))
+        self.assertTrue(response.status_code == 200 and user_2.username in str(response.content))
 
         # me conecto a un grupo que no sea numerico
         response = client.get(classification_url, {'group': '1A'}, follow=True)
@@ -412,10 +435,16 @@ class ViewsTest(TestCase):
         self.assertTrue(response.status_code == 200 and '4' in str(response.content))
         self.assertTrue(response.status_code == 200 and '2' in str(response.content))
 
-        client.logout()
         # se comprueba que ana va primera y pepe segundo aunque tengan mismos resueltos
         # ana tiene menos intentos
         # print(response.content)
+
+        # Fallo el tercer ejercicio
+        client.post(submit_select_2_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        response = client.get(classification_url, {'group': group_a.id}, follow=True)
+        self.assertTrue(response.status_code == 200 and '0/1 (1)' in str(response.content))
+
+        client.logout()
 
     def test_show_result(self):
         """Test to enter the results page where you can see the collections."""
