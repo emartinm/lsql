@@ -193,7 +193,7 @@ def show_submissions(request):
             submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
         return render(request, 'submissions.html', {'submissions': subs})
     except ValueError:
-        return HttpResponseNotFound("Elcd identificador no tiene el formato correcto")
+        return HttpResponseNotFound("El identificador no tiene el formato correcto")
 
 
 @login_required
