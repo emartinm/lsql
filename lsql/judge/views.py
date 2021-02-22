@@ -50,31 +50,31 @@ def index(_):
 def for_loop(user, collection):
     """loop"""
     for numb in range(0, collection.problem_list.count()):
-        successful = 0
+        num_accepted = 0
         enter = False
         intents = 0
         problem = collection.problem_list[numb]
         user.first_AC = 0
         subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
-        longitude = len(subs)
-        for submission in range(0,  longitude):
+        length = len(subs)
+        for submission in range(0,  length):
             if subs[submission].veredict_code == VeredictCode.AC:
-                successful = successful + 1
-            if successful == 1 and not enter:
+                num_accepted = num_accepted + 1
+            if num_accepted == 1 and not enter:
                 enter = True
                 user.first_AC = submission + 1
                 user.score = user.score + submission + 1
             intents = intents + 1
 
-        resolved(intents, user, problem, successful, collection, numb)
+        solved(intents, user, problem, num_accepted, collection, numb)
 
 
-def resolved(intents, user, problem, successful, collection, numb):
+def solved(intents, user, problem, num_accepted, collection, numb):
     """Poner en ingles aqui"""
     if intents > 0 and user.first_AC == 0:
-        problem.num_submissions = f"{successful}/{intents} ({intents})"
+        problem.num_submissions = f"{num_accepted}/{intents} ({intents})"
     else:
-        problem.num_submissions = f"{successful}/{intents} ({user.first_AC})"
+        problem.num_submissions = f"{num_accepted}/{intents} ({user.first_AC})"
     problem.solved = collection.problem_list[numb].solved_by_user(user)
     if problem.solved:
         user.resolved = user.resolved + 1
@@ -106,8 +106,8 @@ def show_result(request, collection_id):
                 user.score = 0
                 for_loop(user, collection)
             users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
-            _len = len(users)
-            for i in range(0, _len):
+            length = len(users)
+            for i in range(0, length):
                 if i != len(users) - 1:
                     if pos(users[i], users[i + 1]):
                         users[i].pos = position
