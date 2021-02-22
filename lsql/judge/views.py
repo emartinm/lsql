@@ -47,38 +47,41 @@ def index(_):
     return HttpResponseRedirect(reverse('judge:collections'))
 
 
-def for_loop(i, collection):
+def for_loop(user, collection):
     """loop"""
     for numb in range(0, collection.problem_list.count()):
-        _success = 0
+        successful = 0
+        enter = False
         intents = 0
         problem = collection.problem_list[numb]
-        i.first_AC = 0
-        subs = Submission.objects.filter(user=i).filter(problem=problem.id).order_by('pk')
-        _len = len(subs)
-        for submission in range(0, _len):
-            if VeredictCode(subs[submission].veredict_code) == 'AC':
-                _success = _success + 1
-            if _success == 1:
-                i.first_AC = submission + 1
-                i.score = i.score + submission + 1
+        user.first_AC = 0
+        subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
+        longitude = len(subs)
+        for submission in range(0,  longitude):
+            if subs[submission].veredict_code == VeredictCode.AC:
+                successful = successful + 1
+            if successful == 1 and not enter:
+                enter = True
+                user.first_AC = submission + 1
+                user.score = user.score + submission + 1
             intents = intents + 1
-        resolved(intents, i, problem, _success, collection, numb)
+
+        resolved(intents, user, problem, successful, collection, numb)
 
 
-def resolved(intents, i, problem, _success, collection, numb):
-    """Resolved intents"""
-    if intents > 0 and i.first_AC == 0:
-        problem.num_submissions = f"{_success}/{intents} ({intents})"
+def resolved(intents, user, problem, successful, collection, numb):
+    """Poner en ingles aqui"""
+    if intents > 0 and user.first_AC == 0:
+        problem.num_submissions = f"{successful}/{intents} ({intents})"
     else:
-        problem.num_submissions = f"{_success}/{intents} ({i.first_AC})"
-    problem.solved = collection.problem_list[numb].solved_by_user(i)
+        problem.num_submissions = f"{successful}/{intents} ({user.first_AC})"
+    problem.solved = collection.problem_list[numb].solved_by_user(user)
     if problem.solved:
-        i.resolved = i.resolved + 1
-    i.collection.append(problem)
+        user.resolved = user.resolved + 1
+    user.collection.append(problem)
 
 
-@login_required()
+@login_required
 def show_result(request, collection_id):
     """show datatable of a group"""
     position = 1
@@ -97,11 +100,11 @@ def show_result(request, collection_id):
             collection.problem_list = collection.problems()
             collection.total_problem = collection.problem_list.count()
             users = users.exclude(is_staff=True)
-            for i in users:
-                i.collection = []
-                i.resolved = 0
-                i.score = 0
-                for_loop(i, collection)
+            for user in users:
+                user.collection = []
+                user.resolved = 0
+                user.score = 0
+                for_loop(user, collection)
             users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
             _len = len(users)
             for i in range(0, _len):
@@ -129,7 +132,7 @@ def show_result(request, collection_id):
 
 @login_required
 def show_results(request):
-    """show all collections"""
+    """shows the links to enter the results of each collection"""
     cols = Collection.objects.all().order_by('position', '-creation_date')
     groups_user = request.user.groups.all().order_by('name')
     if groups_user.count() == 0:

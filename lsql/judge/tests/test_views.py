@@ -458,7 +458,7 @@ class ViewsTest(TestCase):
         client.login(username=user.username, password='123456')
 
         response = client.get(result_url, follow=True)
-        title = 'Nombre de las colecciones'
+        title = 'Nombre de las Colecciones'
         self.assertTrue(response.status_code == 200 and collection.name_md in str(response.content))
         self.assertTrue(response.status_code == 200 and collection_2.name_md in str(response.content))
         self.assertTrue(response.status_code == 200 and title in str(response.content))
@@ -467,7 +467,7 @@ class ViewsTest(TestCase):
         client.login(username=user2.username, password='123456')
         response = client.get(result_url, follow=True)
         msg = 'Lo sentimos! No tienes asignado un grupo de la asignatura'
-        msg1 = 'Por favor, habla con el profesor para que se te un grupo de clase.'
+        msg1 = 'Por favor, contacta con tu profesor para te asignen un grupo de clase.'
 
         self.assertTrue(response.status_code == 200 and msg in str(response.content))
         self.assertTrue(response.status_code == 200 and msg1 in str(response.content))
