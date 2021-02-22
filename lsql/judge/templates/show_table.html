@@ -1,11 +1,18 @@
 {% comment %}
   Receives a 'table', a 'name' and a list of row indexes 'mark_rows' to remark
 {% endcomment %}
+{% load random_tags %}
+{% random_id 15 as id %}
 {% if name %}
-<h3><code>{{name}}</code></h3>
+<div class="d-flex">
+    <h3><code>{{name}}</code></h3>
+    <button class="btn btn-light btn-outline-secondary ml-3 mb-3" data-toggle="collapse" data-target="#table-{{ id }}">+</button>
+</div>
 {% endif %}
 {% if mark_rows %}
 <table class="table">
+{% elif name %}
+<table class="table table-striped collapse show" id="table-{{ id }}">
 {% else %}
 <table class="table table-striped">
 {% endif %}
@@ -28,5 +35,8 @@
             {% endfor %}
             </tr>
       {% endfor %}
-      </tbody>
-    </table>
+    </tbody>
+</table>
+
+
+
