@@ -330,147 +330,137 @@ class ViewsTest(TestCase):
     def test_show_result_classification(self):
         """test to show the classification"""
         client = Client()
-        # Creo 1 coleccion
+        # Create 1 collection
         collection = create_collection('Coleccion 1')
-        # Creo 2 problemas
+        # Create 2 problems
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         dml_problem = create_dml_problem(collection, 'insert a Number')
         select_problem_2 = create_select_problem(collection, 'SelectProblem 2 DEF ABC')
-        # Creo 3 usuarios (2 normales y 1 profesor)
+        # Create 3 users (2 students y 1 professor)
 
         user_1 = create_user('12345', 'pepe')
         user_2 = create_user('12345', 'ana')
         teacher = create_superuser('12345', 'iker')
         group_a = create_group('1A')
         group_b = create_group('1B')
-        # añado al a todos y al b solo al profesor
+        # add to group a all and to group b only the teacher
         group_a.user_set.add(user_1)
         group_a.user_set.add(user_2)
         group_a.user_set.add(teacher)
 
         group_b.user_set.add(teacher)
 
-        # me conecto con el profesor para ver los dos grupos
+        # use the teacher to view the two groups
         client.login(username=teacher.username, password='12345')
         classification_url = reverse('judge:result', args=[collection.pk])
         submit_select_url = reverse('judge:submit', args=[select_problem.pk])
         submit_select_2_url = reverse('judge:submit', args=[select_problem_2.pk])
         submit_dml_url = reverse('judge:submit', args=[dml_problem.pk])
-        # me conecto al grupo B donde esta el profesor solo
-        # como el profesor no sale en la tabla, esta vacia
+        # I see group b where there is only the teacher
+        # the table is empty because there is only the teacher
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
-        self.assertTrue(response.status_code == 200 and user_1.username not in str(response.content))
-        self.assertTrue(response.status_code == 200 and user_2.username not in str(response.content))
+        self.assertEqual(response.status_code,200)
+        self.assertTrue(user_2.username not in str(response.content) and  user_1.username not in str(response.content))
 
-        # compruebo tambien que dentro de esa coleccion estan los dos ejercicios
-        self.assertTrue(response.status_code == 200 and select_problem.title_md in str(response.content))
-        self.assertTrue(response.status_code == 200 and dml_problem.title_md in str(response.content))
-        self.assertTrue(response.status_code == 200 and select_problem_2.title_md in str(response.content))
+        # I find that there are two exercises in the collection
+        self.assertIn(select_problem.title_md, str(response.content))
+        self.assertIn(dml_problem.title_md, str(response.content))
+        self.assertIn(select_problem_2.title_md, str(response.content))
 
-        # me conecto al grupo A donde estan los dos alumnos
-        # como el profesor no sale , solo aparecen dos alumnos
+        # I look at the group to where the students are
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertTrue(response.status_code == 200 and user_1.username in str(response.content))
-        self.assertTrue(response.status_code == 200 and user_2.username in str(response.content))
+        self.assertIn(user_1.username, str(response.content))
+        self.assertIn(user_2.username, str(response.content))
 
-        # me conecto a un grupo inexistente
+        # I am connected to a non-existent group
         response = client.get(classification_url, {'group': 999}, follow=True)
-        self.assertTrue(response.status_code == 404)
+        self.assertEqual(response.status_code, 404)
 
-        # me conecto sin un grupo del get y me coge el primer grupo, 1A
         response = client.get(classification_url, follow=True)
-        self.assertTrue(response.status_code == 200 and user_1.username in str(response.content))
-        self.assertTrue(response.status_code == 200 and user_2.username in str(response.content))
+        self.assertIn(user_1.username, str(response.content))
+        self.assertIn(user_2.username, str(response.content))
 
-        # me conecto a un grupo que no sea numerico
+        # I connect to a non-numeric group
         response = client.get(classification_url, {'group': '1A'}, follow=True)
         msg = 'El identificador de grupo no tiene el formato correcto'
         self.assertTrue(response.status_code == 404 and msg in str(response.content))
         client.logout()
         client.login(username=user_1.username, password='12345')
 
-        # me intento conectar con el usuario pepe a 1B que no puedo
+        # I connect to pepe at 1b
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
-        self.assertTrue(response.status_code == 403)
+        self.assertEqual(response.status_code, 403)
 
-        # Hago un fallo del primer ejercicio y al segundo intento acierto
         client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
         client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
 
-        # Hago 3 fallos del segundo ejercicio y al cuarto hacierto
         client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
         client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
         client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
         client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
 
-        # me meto a 1A y compruebo que encuentro 1/2 (2) y 1/4 (4)
-        # Puntuacion = 6 y Resueltos 2
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertTrue(response.status_code == 200 and '1/2 (2)' in str(response.content))
-        self.assertTrue(response.status_code == 200 and '1/4 (4)' in str(response.content))
-        self.assertTrue(response.status_code == 200 and '6' in str(response.content))
-        self.assertTrue(response.status_code == 200 and '2' in str(response.content))
+        self.assertIn('1/2 (2)', str(response.content))
+        self.assertIn('1/4 (4)', str(response.content))
+        self.assertIn('6', str(response.content))
 
         client.logout()
         client.login(username=user_2.username, password='12345')
 
-        # Hago del primer ejercicio 3 aciertos de 3 intentos (3/3 (1))
         client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
         client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
         client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
 
-        # Hago del segundo ejercicio, dos fallos y despues acierto (1/3 (3))
         client.post(submit_dml_url, {'code': 'Select * from test'}, follow=True)
         client.post(submit_dml_url, {'code': 'Select * from test'}, follow=True)
         client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
 
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertTrue(response.status_code == 200 and '3/3 (1)' in str(response.content))
-        self.assertTrue(response.status_code == 200 and '1/3 (3)' in str(response.content))
-        self.assertTrue(response.status_code == 200 and '4' in str(response.content))
-        self.assertTrue(response.status_code == 200 and '2' in str(response.content))
+        self.assertIn('3/3 (1)', str(response.content))
+        self.assertIn('1/3 (3)', str(response.content))
+        self.assertIn('4', str(response.content))
 
-        # se comprueba que ana va primera y pepe segundo aunque tengan mismos resueltos
-        # ana tiene menos intentos
-        # print(response.content)
+        # ana's position is better than pepe's position
+        index_ana = str(response.content).index('ana')
+        index_pepe = str(response.content).index('pepe')
+        self.assertTrue(index_ana < index_pepe)
 
-        # Fallo el tercer ejercicio
         client.post(submit_select_2_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertTrue(response.status_code == 200 and '0/1 (1)' in str(response.content))
+        self.assertIn('0/1 (1)', str(response.content))
 
         client.logout()
 
     def test_show_result(self):
         """Test to enter the results page where you can see the collections."""
         client = Client()
-        # Creo 2 colecciones
+        # Create 2 collections
         collection = create_collection('Coleccion 1')
         collection_2 = create_collection('Coleccion 2')
-        # Creo 2 usuarios
+        # Create 2 useres
         user = create_user('123456', 'pepe')
         user2 = create_user('123456', 'ana')
-        # Creo 1 grupo y se lo asigno SOLO a un usuario
+        # create 1 group  and assign it to a user
         group = create_group('1A')
         group.user_set.add(user)
         result_url = reverse('judge:results')
-        # El usuario con grupo puede visitar la pagina results
+        # user with group can view the page results
         client.login(username=user.username, password='123456')
 
         response = client.get(result_url, follow=True)
         title = 'Colecciones'
-        self.assertTrue(response.status_code == 200 and collection.name_md in str(response.content))
-        self.assertTrue(response.status_code == 200 and collection_2.name_md in str(response.content))
-        self.assertTrue(response.status_code == 200 and title in str(response.content))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(collection.name_md, str(response.content))
+        self.assertIn(collection_2.name_md, str(response.content))
+        self.assertIn(title, str(response.content))
         client.logout()
-        # El usuario sin grupo no puede visitar la pagina results
+        # the user without a group can't see the page results
         client.login(username=user2.username, password='123456')
         response = client.get(result_url, follow=True)
         msg = 'Lo sentimos! No tienes asignado un grupo de la asignatura'
         msg1 = 'Por favor, contacta con tu profesor para te asignen un grupo de clase.'
-
-        self.assertTrue(response.status_code == 200 and msg in str(response.content))
-        self.assertTrue(response.status_code == 200 and msg1 in str(response.content))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(msg1 in str(response.content) and msg in str(response.content))
         client.logout()
 
     def test_compile_error(self):

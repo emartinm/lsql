@@ -36,7 +36,7 @@ def get_child_problem(problem_id):
 
 
 def pos(user_1, user_2):
-    """compare exercises for positions"""
+    """compare if user_1 has a better ranking than user_2"""
     if user_1.resolved == user_2.resolved and user_1.score == user_2.score:
         return False
     return True
@@ -48,11 +48,11 @@ def index(_):
 
 
 def for_loop(user, collection):
-    """loop"""
+    """From each exercise of the collection assigns the attempts and success for each user"""
     for numb in range(0, collection.problem_list.count()):
         num_accepted = 0
         enter = False
-        intents = 0
+        attempts = 0
         problem = collection.problem_list[numb]
         user.first_AC = 0
         subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
@@ -64,17 +64,17 @@ def for_loop(user, collection):
                 enter = True
                 user.first_AC = submission + 1
                 user.score = user.score + submission + 1
-            intents = intents + 1
+            attempts = attempts + 1
 
-        solved(intents, user, problem, num_accepted, collection, numb)
+        solved(attempts, user, problem, num_accepted, collection, numb)
 
 
-def solved(intents, user, problem, num_accepted, collection, numb):
-    """Poner en ingles aqui"""
-    if intents > 0 and user.first_AC == 0:
-        problem.num_submissions = f"{num_accepted}/{intents} ({intents})"
+def solved(attempts, user, problem, num_accepted, collection, numb):
+    """Adds the problem to the user's collection and assigns the number of submissions"""
+    if attempts > 0 and user.first_AC == 0:
+        problem.num_submissions = f"{num_accepted}/{attempts} ({attempts})"
     else:
-        problem.num_submissions = f"{num_accepted}/{intents} ({user.first_AC})"
+        problem.num_submissions = f"{num_accepted}/{attempts} ({user.first_AC})"
     problem.solved = collection.problem_list[numb].solved_by_user(user)
     if problem.solved:
         user.resolved = user.resolved + 1
@@ -86,14 +86,17 @@ def show_result(request, collection_id):
     """show datatable of a group"""
     position = 1
     try:
-        groups_user = request.user.groups.all().order_by('name')
         group_id = request.GET.get('group')
+        collection = get_object_or_404(Collection, pk=collection_id)
+        if request.user.is_staff:
+            groups_user = Group.objects.all().order_by('name')
+        else:
+            groups_user = request.user.groups.all().order_by('name')
         if group_id is None:
             group_id = groups_user[0].id
-        collection = get_object_or_404(Collection, pk=collection_id)
         group0 = get_object_or_404(Group, pk=group_id)
         users = get_user_model().objects.filter(groups__name=group0.name)
-        if users.filter(id=request.user.id):
+        if users.filter(id=request.user.id) or request.user.is_staff:
             group0.name = group0.name
             group0.id = group_id
             groups_user = groups_user.exclude(id=group_id)
@@ -135,9 +138,13 @@ def show_results(request):
     """shows the links to enter the results of each collection"""
     cols = Collection.objects.all().order_by('position', '-creation_date')
     groups_user = request.user.groups.all().order_by('name')
-    if groups_user.count() == 0:
-        return render(request, 'error_group.html')
-
+    if groups_user.count() == 0 and not request.user.is_staff:
+        return render(request, 'generic_error_message.html',
+                      {'error': ['¡Lo sentimos! No tienes asignado un grupo de la asignatura.',
+                                'Por favor, contacta con tu profesor para te asignen un grupo de clase.']
+                       })
+    if groups_user.count() == 0 and request.user.is_staff:
+        groups_user = Group.objects.all().order_by('name')
     for results in cols:
         # Templates can only invoke nullary functions or access object attribute, so we store
         # the number of problems solved by the user in an attribute

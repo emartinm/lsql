@@ -2,11 +2,11 @@
 {% load static %}
 {% block contenido %}
 
-<h2 style="text-align:center">Colección: {{collection.name_html|safe}}</h2>
-<div style="display:flex;justify-content:between">
-    <p style="font-size:20px">Grupo:</p>
+<h2 class="text-center">Colección: {{collection.name_html|safe}}</h2>
+<div class="d-flex">
+    <p class="h4">Grupo:</p>
      <form method="get" action="{% url 'judge:result' collection.id %}">
-    <select style="margin-left:3%" name="group" id="clase" onchange="this.parentNode.submit()">
+    <select class="ml-1" name="group" id="clase" onchange="this.parentNode.submit()">
       <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
         {% for group in groups %}
             <option id = "{{group.name}}" value="{{group.id}}"> {{group.name}} </option>
@@ -15,7 +15,7 @@
    </form>
 
 <div class="col md-3">
-    <button title="Leyenda" data-target="#exampleModal" data-toggle="modal" type="button" style="background-color:white;border:none;float:right"><i class="far fa-question-circle fa-2x"></i></button>
+    <button class="bg-white border-0 float-right"title="Leyenda" data-target="#exampleModal" data-toggle="modal" type="button"><i class="far fa-question-circle fa-2x"></i></button>
 
 </div>
 </div>
@@ -62,36 +62,36 @@
     </div>
   </div>
 </div>
-<table style="text-align:center;border: black 1px solid" class="table">
+<table class="table text-center border border-dark">
     <thead class="thead-dark">
       <tr>
-          <th scope="col" style="border: solid black 1px">Pos.</th>
-          <th scope="col" style="border: solid black 1px">Usuario</th>
+          <th class=" border border-light" scope="col">Pos.</th>
+          <th  class=" border border-light" scope="col">Usuario</th>
           {% for p in collection.problem_list %}
-             <th scope="col" style="border: solid black 1px" >
-                 <a style="color:white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">EJ{{forloop.counter}}</a>
+             <th  class=" border border-light" scope="col" >
+                 <a class="text-white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">EJ{{forloop.counter}}</a>
              </th>
           {% endfor %}
-          <th scope="col" style="border: solid black 1px">Puntuación</th>
-          <th scope="col" style="border: solid black 1px">Resueltos</th>
+          <th  class=" border border-light" scope="col" >Puntuación</th>
+          <th  class=" border border-light" scope="col ">Resueltos</th>
       </tr>
     </thead>
     <tbody>
     {% for p in users %}
-    <tr style="color:black">
+    <tr class="text-dark">
         {% if p == login %}
-         <td class="bg-info" style=" border: black 1px solid;">{{p.pos}}</td>
-         <td style="border: black 1px solid;">
+         <td class="bg-info border border-dark">{{p.pos}}</td>
+         <td class="border border-dark">
           {{p.username}}
          </td>
         {% elif p.is_staff %}
-         <td style="background-color:gray; border: black 1px solid;">{{p.pos}}</td>
-         <td style="border: black 1px solid;">
+         <td class="bg-secondary border border-dark">{{p.pos}}</td>
+         <td class="border border-dark">
           {{p.username}}
          </td>
         {%else%}
-          <td style="border: black 1px solid;">{{p.pos}}</td>
-          <td style="border: black 1px solid;">
+          <td class="border border-dark">{{p.pos}}</td>
+          <td class="border border-dark">
           {{p.username}}
          </td>
         {% endif %}
@@ -99,38 +99,35 @@
         {% for pp in p.collection %}
                 {% if pp.solved %}
                     {% if p == login %}
-                         <td class="bg-success" style="border: black 1px solid;">
-                                  <form method="get" action="{% url 'judge:submissions' %}">
-                            <input type="hidden" value="{{pp.id}}" name="problem_id">
-                           <a onclick="this.parentNode.submit();" href="#" style="color:black; text-decoration: none;">{{ pp.num_submissions }}</a>
-                       </form>
+                         <td class="bg-success border border-dark" >
+                           <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
                         </td>
                     {% else %}
-                        <td class="bg-success" style="border: black 1px solid;">{{ pp.num_submissions }}</td>
+                        <td class="bg-success border border-dark">{{ pp.num_submissions }}</td>
                     {% endif%}
                 {% elif not pp.solved and pp.num_submissions != '0/0 (0)' %}
                      {% if p == login %}
-                       <td class="bg-danger" style="border: black 1px solid;">
-                            <form method="get" action="{% url 'judge:submissions' %}">
-                                <input type="hidden" value="{{pp.id}}" name="problem_id">
-                               <a onclick="this.parentNode.submit();" href="#" style="color:black; text-decoration: none;">{{ pp.num_submissions }}</a>
-                           </form>
+                       <td class="bg-danger border border-dark">
+                           <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
                        </td>
                      {%else%}
-                         <td class="bg-danger" style="border: black 1px solid;">{{ pp.num_submissions }}</td>
+                         <td class="bg-danger border border-dark" >{{ pp.num_submissions }}</td>
                      {% endif %}
                 {%else%}
                     {% if p == login %}
-                          <td style="border: black 1px solid;"><a href="#" style="color:black; text-decoration: none;">{{ pp.num_submissions }}</a></td>
+                           <td class="border border-dark">
+                           <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}"  class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+
+                        </td>
                      {%else%}
-                          <td style="border: black 1px solid;">{{ pp.num_submissions }}</td>
+                          <td class="border border-dark">{{ pp.num_submissions }}</td>
                      {% endif %}
                 {% endif %}
         {% endfor %}
-        <td style="border: black 1px solid;">
+        <td class="border border-dark"">
             {{p.score}}
         </td>
-        <td style="border: black 1px solid;">
+        <td class="border border-dark">
             {{p.resolved}}
         </td>
     </tr>
