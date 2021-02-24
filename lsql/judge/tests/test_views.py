@@ -235,12 +235,12 @@ class ViewsTest(TestCase):
         self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
 
         # There must be 1 submission to new problem
-        response = client.get(submissions_url, {'problem_id': problem_dml.pk}, follow=True)
+        response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
         html = str(response.content)
         self.assertEqual(html.count(problem_dml.title_md), 1)
 
         # problem_id is not numeric
-        response = client.get(submissions_url, {'problem_id': 'problem'}, follow=True)
+        response = client.get(submissions_url, {'problem_id': 'problem', 'user_id': 'user'}, follow=True)
         self.assertTrue(response.status_code == 404 and
                         'El identificador no tiene el formato correcto' in str(response.content))
 
@@ -258,6 +258,16 @@ class ViewsTest(TestCase):
         # Submssion contains user code
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, 403)
+        response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
+        self.assertIn('Forbidden', str(response.content))
+        client.logout()
+        # create a teacher and show submission to user pepe
+        teacher = create_superuser('1111', 'teacher')
+        client.login(username=teacher.username, password='1111')
+        response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
+        html = str(response.content)
+        self.assertEqual(html.count(problem_dml.title_md), 1)
+        client.logout()
 
     def test_show_problems(self):
         """Shows a problem of each type"""

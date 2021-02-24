@@ -193,9 +193,17 @@ def show_submissions(request):
 
     try:
         pk_problem = request.GET.get('problem_id')
-        if pk_problem is not None:
-            problem = get_object_or_404(Problem, pk=pk_problem)
-            subs = Submission.objects.filter(user=request.user).filter(problem=problem.id).order_by('-pk')
+        id_user = request.GET.get('user_id')
+        if pk_problem is not None or id_user is not None:
+            if int(id_user) == request.user.id and not request.user.is_staff:
+                problem = get_object_or_404(Problem, pk=pk_problem)
+                subs = Submission.objects.filter(user=request.user).filter(problem=problem.id).order_by('-pk')
+            elif request.user.is_staff:
+                problem = get_object_or_404(Problem, pk=pk_problem)
+                user = get_user_model().objects.filter(id=id_user)
+                subs = Submission.objects.filter(user=user.get()).filter(problem=problem.id).order_by('-pk')
+            else:
+                return HttpResponseForbidden("Forbidden")
 
         else:
             subs = Submission.objects.filter(user=request.user).order_by('-pk')
