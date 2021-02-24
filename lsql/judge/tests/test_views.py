@@ -377,7 +377,7 @@ class ViewsTest(TestCase):
         self.assertEqual(response.status_code, 404)
 
         response = client.get(classification_url, follow=True)
-        self.assertIn(user_1.username, str(response.content))
+        self.assertTrue(user_1.username, str(response.content))
         self.assertIn(user_2.username, str(response.content))
 
         # I connect to a non-numeric group
@@ -462,6 +462,11 @@ class ViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(msg1 in str(response.content) and msg in str(response.content))
         client.logout()
+        # I connect with a teacher without groups
+        teacher = create_superuser('12345','teacher')
+        client.login(username=teacher.username, password='12345')
+        response = client.get(result_url, follow=True)
+        self.assertEqual(response.status_code, 200)
 
     def test_compile_error(self):
         """Submitting code for a function/procedure/trigger with a compile error does resturn a
