@@ -218,7 +218,7 @@ def show_submissions(request):
 def show_submission(request, submission_id):
     """Shows a submission of the current user"""
     submission = get_object_or_404(Submission, pk=submission_id)
-    if submission.user != request.user:
+    if submission.user != request.user and not request.user.is_staff:
         return HttpResponseForbidden("Forbidden")
     submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
     return render(request, 'submission.html', {'submission': submission})
