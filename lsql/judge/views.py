@@ -6,9 +6,11 @@ Functions that process HTTP connections
 """
 
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
-from django.http.response import HttpResponse
+from django.http.response import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import login_required
 from logzero import logger
 from .exceptions import ExecutorException
@@ -33,9 +35,121 @@ def get_child_problem(problem_id):
     return problem
 
 
+def pos(user_1, user_2):
+    """compare if user_1 has a better ranking than user_2"""
+    if user_1.resolved == user_2.resolved and user_1.score == user_2.score:
+        return False
+    return True
+
+
 def index(_):
     """Redirect root access to collections"""
     return HttpResponseRedirect(reverse('judge:collections'))
+
+
+def for_loop(user, collection):
+    """From each exercise of the collection assigns the attempts and success for each user"""
+    for numb in range(0, collection.problem_list.count()):
+        num_accepted = 0
+        enter = False
+        attempts = 0
+        problem = collection.problem_list[numb]
+        user.first_AC = 0
+        subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
+        length = len(subs)
+        for submission in range(0,  length):
+            if subs[submission].veredict_code == VeredictCode.AC:
+                num_accepted = num_accepted + 1
+            if num_accepted == 1 and not enter:
+                enter = True
+                user.first_AC = submission + 1
+                user.score = user.score + submission + 1
+            attempts = attempts + 1
+
+        solved(attempts, user, problem, num_accepted, collection, numb)
+
+
+def solved(attempts, user, problem, num_accepted, collection, numb):
+    """Adds the problem to the user's collection and assigns the number of submissions"""
+    if attempts > 0 and user.first_AC == 0:
+        problem.num_submissions = f"{num_accepted}/{attempts} ({attempts})"
+    else:
+        problem.num_submissions = f"{num_accepted}/{attempts} ({user.first_AC})"
+    problem.solved = collection.problem_list[numb].solved_by_user(user)
+    if problem.solved:
+        user.resolved = user.resolved + 1
+    user.collection.append(problem)
+
+
+@login_required
+def show_result(request, collection_id):
+    """show datatable of a group"""
+    position = 1
+    try:
+        group_id = request.GET.get('group')
+        collection = get_object_or_404(Collection, pk=collection_id)
+        if request.user.is_staff:
+            groups_user = Group.objects.all().order_by('name')
+        else:
+            groups_user = request.user.groups.all().order_by('name')
+        if group_id is None:
+            group_id = groups_user[0].id
+        group0 = get_object_or_404(Group, pk=group_id)
+        users = get_user_model().objects.filter(groups__name=group0.name)
+        if users.filter(id=request.user.id) or request.user.is_staff:
+            group0.name = group0.name
+            group0.id = group_id
+            groups_user = groups_user.exclude(id=group_id)
+            collection.problem_list = collection.problems()
+            collection.total_problem = collection.problem_list.count()
+            users = users.exclude(is_staff=True)
+            for user in users:
+                user.collection = []
+                user.resolved = 0
+                user.score = 0
+                for_loop(user, collection)
+            users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
+            length = len(users)
+            for i in range(0, length):
+                if i != len(users) - 1:
+                    if pos(users[i], users[i + 1]):
+                        users[i].pos = position
+                        position = position + 1
+                    else:
+                        users[i].pos = position
+
+                else:
+                    if pos(users[i], users[i - 1]):
+                        users[i].pos = position
+                        position = position + 1
+                    else:
+                        users[i].pos = position
+
+            return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
+                                                    'login': request.user, 'group0': group0})
+
+        return HttpResponseForbidden("Forbidden")
+    except ValueError:
+        return HttpResponseNotFound("El identificador de grupo no tiene el formato correcto")
+
+
+@login_required
+def show_results(request):
+    """shows the links to enter the results of each collection"""
+    cols = Collection.objects.all().order_by('position', '-creation_date')
+    groups_user = request.user.groups.all().order_by('name')
+    if groups_user.count() == 0 and not request.user.is_staff:
+        return render(request, 'generic_error_message.html',
+                      {'error': ['¡Lo sentimos! No tienes asignado un grupo de la asignatura.',
+                                'Por favor, contacta con tu profesor para te asignen un grupo de clase.']
+                       })
+    if groups_user.count() == 0 and request.user.is_staff:
+        groups_user = Group.objects.all().order_by('name')
+    for results in cols:
+        # Templates can only invoke nullary functions or access object attribute, so we store
+        # the number of problems solved by the user in an attribute
+        results.num_solved = results.num_solved_by_user(request.user)
+    return render(request, 'result.html', {'results': cols, 'group': groups_user[0].id})
 
 
 @login_required
@@ -76,17 +190,35 @@ def show_problem(request, problem_id):
 @login_required
 def show_submissions(request):
     """Shows all the submissions of the current user"""
-    subs = Submission.objects.filter(user=request.user).order_by('-pk')
-    for submission in subs:
-        submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
-    return render(request, 'submissions.html', {'submissions': subs})
+
+    try:
+        pk_problem = request.GET.get('problem_id')
+        id_user = request.GET.get('user_id')
+        if pk_problem is not None or id_user is not None:
+            if int(id_user) == request.user.id and not request.user.is_staff:
+                problem = get_object_or_404(Problem, pk=pk_problem)
+                subs = Submission.objects.filter(user=request.user).filter(problem=problem.id).order_by('-pk')
+            elif request.user.is_staff:
+                problem = get_object_or_404(Problem, pk=pk_problem)
+                user = get_user_model().objects.filter(id=id_user)
+                subs = Submission.objects.filter(user=user.get()).filter(problem=problem.id).order_by('-pk')
+            else:
+                return HttpResponseForbidden("Forbidden")
+
+        else:
+            subs = Submission.objects.filter(user=request.user).order_by('-pk')
+        for submission in subs:
+            submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
+        return render(request, 'submissions.html', {'submissions': subs})
+    except ValueError:
+        return HttpResponseNotFound("El identificador no tiene el formato correcto")
 
 
 @login_required
 def show_submission(request, submission_id):
     """Shows a submission of the current user"""
     submission = get_object_or_404(Submission, pk=submission_id)
-    if submission.user != request.user:
+    if submission.user != request.user and not request.user.is_staff:
         return HttpResponseForbidden("Forbidden")
     submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
     return render(request, 'submission.html', {'submission': submission})
@@ -101,7 +233,7 @@ def download(_, problem_id):
     response = HttpResponse()
     response['Content-Type'] = 'application/sql'
     response['Content-Disposition'] = "attachment; filename=create_insert.sql"
-    response.write(problem.create_sql+'\n\n'+problem.insert_sql)
+    response.write(problem.create_sql + '\n\n' + problem.insert_sql)
     return response
 
 
@@ -132,7 +264,7 @@ def submit(request, problem_id):
                     'veredict': VeredictCode.RE, 'title': VeredictCode.RE.label,
                     'message': VeredictCode.RE.message(),
                     'feedback': f'{excp.statement} --> {excp.message}' if problem.problem_type() == ProblemType.FUNCTION
-                                else excp.message}
+                    else excp.message}
             elif excp.error_code == OracleStatusCode.TLE_USER_CODE:
                 data = {'veredict': VeredictCode.TLE, 'title': VeredictCode.TLE.label,
                         'message': VeredictCode.TLE.message(), 'feedback': ''}
