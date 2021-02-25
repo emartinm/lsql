@@ -11,8 +11,6 @@
 {% endif %}
 {% if mark_rows %}
 <table class="table">
-{% elif name %}
-<table class="table table-striped collapse show" id="table-{{ id }}">
 {% else %}
 <table class="table table-striped">
 {% endif %}
@@ -23,7 +21,11 @@
         {% endfor %}
         </tr>
     </thead>
+    {% if name %}
+    <tbody class="collapse show" id="table-{{ id }}">
+    {% else %}
     <tbody>
+    {% endif %}
         {% for row in table.rows %}
             {% if forloop.counter0 in mark_rows %} {# loop.index starts **in 1** #}
                 <tr class="marked_row">
@@ -37,6 +39,7 @@
       {% endfor %}
     </tbody>
 </table>
+
 
 
 
