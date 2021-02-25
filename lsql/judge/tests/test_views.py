@@ -269,6 +269,38 @@ class ViewsTest(TestCase):
         self.assertEqual(html.count(problem_dml.title_md), 1)
         client.logout()
 
+    def test_visibility_submission(self):
+        """Checks that only the owner and superusers can see the submission details"""
+        client = Client()
+        collection = create_collection('Colleccion de prueba XYZ')
+        problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        user = create_user('5555', 'pepe')
+        create_superuser('aaaa', 'mr_teacher')
+        create_user('1234', 'ana')
+        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
+        submission_url = reverse('judge:submission', args=[submission.pk])
+
+        # The same user can access submission details
+        client.login(username='pepe', password='5555')
+        response = client.get(submission_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('select *** from *** where *** and more', str(response.content))
+        client.logout()
+
+        # A teacher can access submission details from a different user
+        client.login(username='mr_teacher', password='aaaa')
+        response = client.get(submission_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('select *** from *** where *** and more', str(response.content))
+        client.logout()
+
+        # Non-teacher user cannot access submission details from a different uset
+        client.login(username='ana', password='1234')
+        response = client.get(submission_url, follow=True)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('Forbidden', str(response.content))
+        client.logout()
+
     def test_show_problems(self):
         """Shows a problem of each type"""
         curr_path = os.path.dirname(__file__)
@@ -369,8 +401,8 @@ class ViewsTest(TestCase):
         # I see group b where there is only the teacher
         # the table is empty because there is only the teacher
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
-        self.assertEqual(response.status_code,200)
-        self.assertTrue(user_2.username not in str(response.content) and  user_1.username not in str(response.content))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(user_2.username not in str(response.content) and user_1.username not in str(response.content))
 
         # I find that there are two exercises in the collection
         self.assertIn(select_problem.title_md, str(response.content))
@@ -473,7 +505,7 @@ class ViewsTest(TestCase):
         self.assertTrue(msg1 in str(response.content) and msg in str(response.content))
         client.logout()
         # I connect with a teacher without groups
-        teacher = create_superuser('12345','teacher')
+        teacher = create_superuser('12345', 'teacher')
         client.login(username=teacher.username, password='12345')
         response = client.get(result_url, follow=True)
         self.assertEqual(response.status_code, 200)
