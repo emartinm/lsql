@@ -17,6 +17,16 @@ en cuenta mayúsculas-minúsculas.
 * [**Dificultad media**] [**IMPRESCINDIBLE**]  [**Tarea para Iker 21/12-08/02**] [**No hay PR, se usa Django, comentar memoria**]
 Agrupar usuarios en clases. Se podría utilizar los grupos de Django, lo que facilita bastante la cosa.
 
+* [**Dificultad media**] [**INTERESANTE**]  [**Tarea para Iker 21/12-25/02 PR#26**]
+Mostrar la clasificación de los usuarios de una clase por cada colección. Los usuarios no se mostrarán en orden,
+únicamente se indicará el número de envíos y los problemas resueltos, además de información detallada de cada problema.
+Permitir que los administradores vean las clasificaciones todas las clases y todos los usuarios. 
+Incorporar orden al mostrar los resultados: número de problemas resueltos, número de envíos.
+Un usuario puede estar en varios cursos. Staff lo ve todo.
+
+* [**Dificultad baja**] [**INTERESANTE**]  [**Tarea para Iker 21/12-25/02 PR#26**]
+Al hacer clic en la celda de la tabla de clasificación llevará al listado de todos los envíos de ese usuario para ese problema.  
+
 # Mejoras asignadas:
 * (Tamara) [**Dificultad baja**] [**IMPRESCINDIBLE**] [**Tarea para Tamara 28/10**]
 En el apartado "Mis envíos" añadir un botón para descargar el código enviado de un ejercicio.
@@ -29,20 +39,6 @@ En el apartado "Mis envíos" añadir un botón para descargar el código enviado
 * (Daniel) [**Dificultad baja**] [**Tarea para Daniel 11/11**]
 Subir solución como fichero SQL arrastrando o con botón.
 
-
-
-* [**Dificultad media**] [**INTERESANTE**]  [**Tarea para Iker 21/12**]
-Mostrar la clasificación de los usuarios de una clase por cada colección. Los usuarios no se mostrarán en orden,
-únicamente se indicará el número de envíos y los problemas resueltos, además de información detallada de cada problema.
-Permitir que los administradores vean las clasificaciones todas las clases y todos los usuarios. 
-Incorporar orden al mostrar los resultados: número de problemas resueltos, número de envíos.
-Un usuario puede estar en varios cursos. Staff lo ve todo.
-
-* [**Dificultad baja**] [**INTERESANTE**]  [**Tarea para Iker 21/12**]
-Al hacer clic en la celda de la tabla de clasificación llevará al listado de todos los envíos de ese usuario para ese problema.  
-
-
- 
 # Mejoras propuestas:
 * (Enrique y Jesús) [**Dificultad baja**] [INTERESANTE]
   Descargar el listado de envíos de la pestaña 'Resultados'
