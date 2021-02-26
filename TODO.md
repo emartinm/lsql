@@ -39,13 +39,13 @@ En el apartado "Mis envíos" añadir un botón para descargar el código enviado
 * (Daniel) [**Dificultad baja**] [**Tarea para Daniel 11/11**]
 Subir solución como fichero SQL arrastrando o con botón.
 
+* (Enrique y Jesús) [**Dificultad media**] [INTERESANTE] [**Tarea para Iker 26/02**]
+  En la pestaña 'Resultados' añadir un selector de fechas inicio(inicio curso) y fin (tope día de hoy) que ajuste los resultados a las fechas restringidas
+
 # Mejoras propuestas:
 * (Enrique y Jesús) [**Dificultad baja**] [INTERESANTE]
   Descargar el listado de envíos de la pestaña 'Resultados'
   
-* (Enrique y Jesús) [**Dificultad media**] [INTERESANTE]
-  En la pestaña 'Resultados' añadir un selector de fechas inicio(inicio curso) y fin (tope día de hoy) que ajuste los resultados a las fechas restringidas
-
 * (Jesús) [**Dificultad alta**] [IMPRESCINDIBLE]
  Soporte multi-idioma para mostrar el sistema en inglés y (Daniel) otros idiomas incluidos los demás de España como el valenciano. (https://docs.djangoproject.com/en/3.1/topics/i18n/)
 
