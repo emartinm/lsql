@@ -19,6 +19,7 @@ from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem,
     Submission
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
+from datetime import date
 
 
 def get_child_problem(problem_id):
@@ -123,9 +124,16 @@ def show_result(request, collection_id):
                         position = position + 1
                     else:
                         users[i].pos = position
+            hasta = date.today().strftime('%Y-%m-%d')
+            if 1 <= date.today().month < 9:
+                desde = date(date.today().year-1, 9, 1).strftime('%Y-%m-%d')
+            else:
+                desde = date(date.today().year, 9, 1).strftime('%Y-%m-%d')
 
+
+            print(desde)
             return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
-                                                    'login': request.user, 'group0': group0})
+                                                    'login': request.user, 'group0': group0, 'hasta': hasta, 'desde': desde})
 
         return HttpResponseForbidden("Forbidden")
     except ValueError:
