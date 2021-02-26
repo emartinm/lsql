@@ -6,7 +6,7 @@
 {% if name %}
 <div class="d-flex">
     <h3><code>{{name}}</code></h3>
-    <button class="btn btn-light btn-outline-secondary ml-3 mb-3" data-toggle="collapse" data-target="#table-{{ id }}">+</button>
+    <button class="btn btn-primary btn-sm mt-1 ml-3 mb-3" data-toggle="collapse" data-target="#table-{{ id }}">+</button>
 </div>
 {% endif %}
 {% if mark_rows %}
@@ -22,7 +22,7 @@
         </tr>
     </thead>
     {% if name %}
-    <tbody class="collapse show" id="table-{{ id }}">
+    <tbody class="collapse" id="table-{{ id }}">
     {% else %}
     <tbody>
     {% endif %}
