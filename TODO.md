@@ -25,17 +25,18 @@ Incorporar orden al mostrar los resultados: número de problemas resueltos, núm
 Un usuario puede estar en varios cursos. Staff lo ve todo.
 
 * [**Dificultad baja**] [**INTERESANTE**]  [**Tarea para Iker 21/12-25/02 PR#26**]
-Al hacer clic en la celda de la tabla de clasificación llevará al listado de todos los envíos de ese usuario para ese problema.  
+Al hacer clic en la celda de la tabla de clasificación llevará al listado de todos los envíos de ese usuario para ese problema.
+
+* (Enrique) [**Dificultad baja**] [**INTERESANTE**] [**Tarea para Iván 11/11-26/02/2021 PR #27**]
+ Mostrar al menos las tablas de manera más compacta, p.ej. mostrando 
+ solo la cabecera y que se pueda ampliar para ver el contenido pulsando 
+ en el típico "+".
+
 
 # Mejoras asignadas:
 * (Tamara) [**Dificultad baja**] [**IMPRESCINDIBLE**] [**Tarea para Tamara 28/10**]
 En el apartado "Mis envíos" añadir un botón para descargar el código enviado de un ejercicio.
 
-* (Enrique) [**Dificultad baja**] [**INTERESANTE**] [**Tarea para Iván 11/11**]
- Mostrar al menos las tablas de manera más compacta, p.ej. mostrando 
- solo la cabecera y que se pueda ampliar para ver el contenido pulsando 
- en el típico "+".
-    
 * (Daniel) [**Dificultad baja**] [**Tarea para Daniel 11/11**]
 Subir solución como fichero SQL arrastrando o con botón.
 
