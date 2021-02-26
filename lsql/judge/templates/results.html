@@ -1,58 +1,128 @@
 {% extends "base_menu.html" %}
 {% load static %}
 {% block contenido %}
-<h2 style="text-align:center">Colección: {{collection.name_html|safe}}</h2>
 
-<p>Grupo:
-<select name="clase" id="clase">
-  {% for group in groups %}
-  <option id = "{{group.name}}"> {{group.name}} </option>
-  {% endfor %}
+<h2 class="text-center">Colección: {{collection.name_html|safe}}</h2>
+<div class="d-flex">
+    <p class="h4">Grupo:</p>
+     <form method="get" action="{% url 'judge:result' collection.id %}">
+    <select class="ml-1" name="group" id="clase" onchange="this.parentNode.submit()">
+      <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
+        {% for group in groups %}
+            <option id = "{{group.name}}" value="{{group.id}}"> {{group.name}} </option>
+        {% endfor %}
 </select>
-  <table class="table">
+   </form>
+
+<div class="col md-3">
+    <button class="bg-white border-0 float-right"title="Leyenda" data-target="#exampleModal" data-toggle="modal" type="button"><i class="far fa-question-circle fa-2x"></i></button>
+
+</div>
+</div>
+
+
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog  modal-lg">
+    <div class="modal-content">
+      <div class="modal-header d-block">
+        <h5 class="modal-title text-center" id="exampleModalLabel">LEYENDA</h5>
+      </div>
+      <div class="modal-body">
+          <div class="d-flex p-2">
+               <div class="bg-info h-40 w-25 text-center mb-1 border border-dark">1</div>
+               <div class="text-center w-75">Posición del usuario</div>
+          </div>
+          <div class="d-flex p-2">
+               <div class="bg-success h-40 w-25 text-center mb-1 border border-dark">3/8 (5)</div>
+               <div class="text-left ml-1 w-75">Ejercicio resuelto 3 veces de 8 intentos (1er envío aceptado en el 5º intento)</div>
+          </div>
+          <div class="d-flex p-2">
+               <div class="bg-danger h-40 w-25 text-center mb-1 border border-dark">0/9 (9)</div>
+              <div class="text-center w-75">Ejercicio resuelto 0 veces de 9 intentos (9 intentos sin envío aceptado)</div>
+          </div>
+          <div class="d-flex p-2">
+               <div class="bg-white h-40 w-25 text-center mb-1 border border-dark">0/0 (0)</div>
+              <div class="text-center w-75">Ejercicio no intentado (0 intentos sin envío aceptado)</div>
+          </div>
+          <div class="d-flex p-2">
+               <div class="bg-dark h-40 w-25 text-center mb-1 border border-dark text-white">Puntuación</div>
+              <div class="text-center w-75">Suma del primer envío aceptado de cada ejercicio</div>
+          </div>
+          <div class="d-flex p-2">
+               <div class="bg-dark h-40 w-25 text-center mb-1 border border-dark text-white
+               justify-content-center align-self-center ">Ranking</div>
+              <div class="text-center w-75">1º Alumno con más Resueltos<br>2º En caso de empate
+              alumno con menos Puntuación<br>3º En caso de empate , se comparte posición</div>
+          </div>
+
+      </div>
+      <div class="modal-footer d-flex justify-content-center">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<table class="table text-center border border-dark">
     <thead class="thead-dark">
       <tr>
-          <th scope="col">Usuarios</th>
+          <th class=" border border-light" scope="col">Pos.</th>
+          <th  class=" border border-light" scope="col">Usuario</th>
           {% for p in collection.problem_list %}
-             <th scope="col">
-                 <a style="color:white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">Ejercicio {{forloop.counter}}</a>
+             <th  class=" border border-light" scope="col" >
+                 <a class="text-white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">EJ{{forloop.counter}}</a>
              </th>
           {% endfor %}
-          <th scope="col">Intentos</th>
-          <th scope="col">Resueltos</th>
+          <th  class=" border border-light" scope="col" >Puntuación</th>
+          <th  class=" border border-light" scope="col ">Resueltos</th>
       </tr>
     </thead>
     <tbody>
     {% for p in users %}
-    <tr>
+    <tr class="text-dark">
         {% if p == login %}
-         <td style="background-color:violet; border: black 1px solid;">
+         <td class="bg-info border border-dark">{{p.pos}}</td>
+         <td class="border border-dark">
           {{p.username}}
          </td>
         {% elif p.is_staff %}
-         <td style="background-color:gray; border: black 1px solid;">
+         <td class="bg-secondary border border-dark">{{p.pos}}</td>
+         <td class="border border-dark">
           {{p.username}}
          </td>
         {%else%}
-          <td style="border: black 1px solid;">
+          <td class="border border-dark">{{p.pos}}</td>
+          <td class="border border-dark">
           {{p.username}}
          </td>
         {% endif %}
 
-          {% for pp in collection.problem_list %}
-          {% if pp.solved %}
-            <td style="background-color:green; border: black 1px solid;">{{ pp.num_submissions }}</td>
-           {% elif not pp.solved and pp.num_submissions > 0 %}
-            <td style="background-color:red; border: black 1px solid;">{{ pp.num_submissions }}</td>
-           {%else%}
-           <td style="border: black 1px solid;">{{ pp.num_submissions }}</td>
-         {% endif %}
-            {% endfor %}
-        <td style="border: black 1px solid;">
-            200
+        {% for pp in p.collection %}
+                {% if pp.solved %}
+                    {% if p == login or login.is_staff%}
+                         <td class="bg-success border border-dark" >
+                           <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                        </td>
+                    {% else %}
+                        <td class="bg-success border border-dark">{{ pp.num_submissions }}</td>
+                    {% endif%}
+                {% elif not pp.solved and pp.num_submissions != '0/0 (0)' %}
+                     {% if p == login or login.is_staff %}
+                       <td class="bg-danger border border-dark">
+                           <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                       </td>
+                     {%else%}
+                         <td class="bg-danger border border-dark" >{{ pp.num_submissions }}</td>
+                     {% endif %}
+                {%else%}
+
+                          <td class="border border-dark">{{ pp.num_submissions }}</td>
+                {% endif %}
+        {% endfor %}
+        <td class="border border-dark">
+            {{p.score}}
         </td>
-        <td style="border: black 1px solid;">
-            200
+        <td class="border border-dark">
+            {{p.resolved}}
         </td>
     </tr>
     {% endfor %}

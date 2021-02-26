@@ -9,7 +9,7 @@ import os
 from django.test import TestCase, Client
 import django.contrib.auth
 from django.urls import reverse
-
+from django.contrib.auth.models import Group
 from judge.models import Collection, SelectProblem, Submission, FunctionProblem, DMLProblem, ProcProblem, \
     TriggerProblem
 from judge.types import VeredictCode
@@ -58,6 +58,20 @@ def create_user(passwd, username='usuario'):
         email='email@ucm.es',
         password=passwd)
     return user
+
+
+def create_superuser(passwd, username='staff'):
+    """Creates and stores a super user"""
+    user = django.contrib.auth.get_user_model().objects.create_superuser(
+        username=username,
+        password=passwd)
+    return user
+
+
+def create_group(name='nombre'):
+    """Creates and stores a group"""
+    group = Group.objects.create(name=name)
+    return group
 
 
 def create_submission(problem, user, veredict, code='nada'):
@@ -136,11 +150,19 @@ class ViewsTest(TestCase):
         self.assertEqual(response.redirect_chain,
                          [(login_redirect_create, 302)])
 
+        # results redirects to login
+        result_url = reverse('judge:results')
+        login_redirect_results = f'{login_redirect_url}?next={result_url}'
+        response = client.get(result_url, follow=True)
+        self.assertEqual(response.redirect_chain,
+                         [(login_redirect_results, 302)])
+
     def test_logged(self):
         """Connections from a logged user"""
         client = Client()
         collection = create_collection('Colleccion de prueba XYZ')
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        problem_dml = create_dml_problem(collection, 'DMLProblem')
         user = create_user('5555', 'pepe')
         create_user('1234', 'ana')
         submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
@@ -151,6 +173,7 @@ class ViewsTest(TestCase):
         problem_url = reverse('judge:problem', args=[problem.pk])
         no_problem_url = reverse('judge:problem', args=[8888888])
         submit_url = reverse('judge:submit', args=[problem.pk])
+        submit_dml_url = reverse('judge:submit', args=[problem_dml.pk])
         submissions_url = reverse('judge:submissions')
         submission_url = reverse('judge:submission', args=[submission.pk])
         pass_done_url = reverse('judge:password_change_done')
@@ -207,6 +230,20 @@ class ViewsTest(TestCase):
         html = str(response.content)
         self.assertEqual(html.count(problem.title_md), 7)
 
+        # JSON with VE (new Problem)
+        response = client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+
+        # There must be 1 submission to new problem
+        response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
+        html = str(response.content)
+        self.assertEqual(html.count(problem_dml.title_md), 1)
+
+        # problem_id is not numeric
+        response = client.get(submissions_url, {'problem_id': 'problem', 'user_id': 'user'}, follow=True)
+        self.assertTrue(response.status_code == 404 and
+                        'El identificador no tiene el formato correcto' in str(response.content))
+
         # Submission contains user code
         response = client.get(submission_url, follow=True)
         self.assertTrue('select *** from *** where *** and more' in str(response.content))
@@ -221,6 +258,48 @@ class ViewsTest(TestCase):
         # Submssion contains user code
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, 403)
+        response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
+        self.assertIn('Forbidden', str(response.content))
+        client.logout()
+        # create a teacher and show submission to user pepe
+        teacher = create_superuser('1111', 'teacher')
+        client.login(username=teacher.username, password='1111')
+        response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
+        html = str(response.content)
+        self.assertEqual(html.count(problem_dml.title_md), 1)
+        client.logout()
+
+    def test_visibility_submission(self):
+        """Checks that only the owner and superusers can see the submission details"""
+        client = Client()
+        collection = create_collection('Colleccion de prueba XYZ')
+        problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        user = create_user('5555', 'pepe')
+        create_superuser('aaaa', 'mr_teacher')
+        create_user('1234', 'ana')
+        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
+        submission_url = reverse('judge:submission', args=[submission.pk])
+
+        # The same user can access submission details
+        client.login(username='pepe', password='5555')
+        response = client.get(submission_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('select *** from *** where *** and more', str(response.content))
+        client.logout()
+
+        # A teacher can access submission details from a different user
+        client.login(username='mr_teacher', password='aaaa')
+        response = client.get(submission_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('select *** from *** where *** and more', str(response.content))
+        client.logout()
+
+        # Non-teacher user cannot access submission details from a different uset
+        client.login(username='ana', password='1234')
+        response = client.get(submission_url, follow=True)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('Forbidden', str(response.content))
+        client.logout()
 
     def test_show_problems(self):
         """Shows a problem of each type"""
@@ -289,6 +368,147 @@ class ViewsTest(TestCase):
             self.assertEqual(response.content.decode('UTF-8'), script)
 
             self.assertTrue(response.status_code == 200)
+
+    def test_show_result_classification(self):
+        """test to show the classification"""
+        client = Client()
+        # Create 1 collection
+        collection = create_collection('Coleccion 1')
+        # Create 2 problems
+        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        dml_problem = create_dml_problem(collection, 'insert a Number')
+        select_problem_2 = create_select_problem(collection, 'SelectProblem 2 DEF ABC')
+        # Create 3 users (2 students y 1 professor)
+
+        user_1 = create_user('12345', 'pepe')
+        user_2 = create_user('12345', 'ana')
+        teacher = create_superuser('12345', 'iker')
+        group_a = create_group('1A')
+        group_b = create_group('1B')
+        # add to group a all and to group b only the teacher
+        group_a.user_set.add(user_1)
+        group_a.user_set.add(user_2)
+        group_a.user_set.add(teacher)
+
+        group_b.user_set.add(teacher)
+
+        # use the teacher to view the two groups
+        client.login(username=teacher.username, password='12345')
+        classification_url = reverse('judge:result', args=[collection.pk])
+        submit_select_url = reverse('judge:submit', args=[select_problem.pk])
+        submit_select_2_url = reverse('judge:submit', args=[select_problem_2.pk])
+        submit_dml_url = reverse('judge:submit', args=[dml_problem.pk])
+        # I see group b where there is only the teacher
+        # the table is empty because there is only the teacher
+        response = client.get(classification_url, {'group': group_b.id}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(user_2.username not in str(response.content) and user_1.username not in str(response.content))
+
+        # I find that there are two exercises in the collection
+        self.assertIn(select_problem.title_md, str(response.content))
+        self.assertIn(dml_problem.title_md, str(response.content))
+        self.assertIn(select_problem_2.title_md, str(response.content))
+
+        # I look at the group to where the students are
+        response = client.get(classification_url, {'group': group_a.id}, follow=True)
+        self.assertIn(user_1.username, str(response.content))
+        self.assertIn(user_2.username, str(response.content))
+
+        # I am connected to a non-existent group
+        response = client.get(classification_url, {'group': 999}, follow=True)
+        self.assertEqual(response.status_code, 404)
+
+        response = client.get(classification_url, follow=True)
+        self.assertTrue(user_1.username, str(response.content))
+        self.assertIn(user_2.username, str(response.content))
+
+        # I connect to a non-numeric group
+        response = client.get(classification_url, {'group': '1A'}, follow=True)
+        msg = 'El identificador de grupo no tiene el formato correcto'
+        self.assertTrue(response.status_code == 404 and msg in str(response.content))
+        client.logout()
+        client.login(username=user_1.username, password='12345')
+
+        # I connect to pepe at 1b
+        response = client.get(classification_url, {'group': group_b.id}, follow=True)
+        self.assertEqual(response.status_code, 403)
+
+        client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+
+        client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
+
+        response = client.get(classification_url, {'group': group_a.id}, follow=True)
+        self.assertIn('1/2 (2)', str(response.content))
+        self.assertIn('1/4 (4)', str(response.content))
+        self.assertIn('6', str(response.content))
+
+        client.logout()
+        client.login(username=user_2.username, password='12345')
+
+        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+
+        client.post(submit_dml_url, {'code': 'Select * from test'}, follow=True)
+        client.post(submit_dml_url, {'code': 'Select * from test'}, follow=True)
+        client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
+
+        response = client.get(classification_url, {'group': group_a.id}, follow=True)
+        self.assertIn('3/3 (1)', str(response.content))
+        self.assertIn('1/3 (3)', str(response.content))
+        self.assertIn('4', str(response.content))
+
+        # ana's position is better than pepe's position
+        index_ana = str(response.content).index('ana')
+        index_pepe = str(response.content).index('pepe')
+        self.assertTrue(index_ana < index_pepe)
+
+        client.post(submit_select_2_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        response = client.get(classification_url, {'group': group_a.id}, follow=True)
+        self.assertIn('0/1 (1)', str(response.content))
+
+        client.logout()
+
+    def test_show_result(self):
+        """Test to enter the results page where you can see the collections."""
+        client = Client()
+        # Create 2 collections
+        collection = create_collection('Coleccion 1')
+        collection_2 = create_collection('Coleccion 2')
+        # Create 2 useres
+        user = create_user('123456', 'pepe')
+        user2 = create_user('123456', 'ana')
+        # create 1 group  and assign it to a user
+        group = create_group('1A')
+        group.user_set.add(user)
+        result_url = reverse('judge:results')
+        # user with group can view the page results
+        client.login(username=user.username, password='123456')
+
+        response = client.get(result_url, follow=True)
+        title = 'Colecciones'
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(collection.name_md, str(response.content))
+        self.assertIn(collection_2.name_md, str(response.content))
+        self.assertIn(title, str(response.content))
+        client.logout()
+        # the user without a group can't see the page results
+        client.login(username=user2.username, password='123456')
+        response = client.get(result_url, follow=True)
+        msg = 'Lo sentimos! No tienes asignado un grupo de la asignatura'
+        msg1 = 'Por favor, contacta con tu profesor para te asignen un grupo de clase.'
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(msg1 in str(response.content) and msg in str(response.content))
+        client.logout()
+        # I connect with a teacher without groups
+        teacher = create_superuser('12345', 'teacher')
+        client.login(username=teacher.username, password='12345')
+        response = client.get(result_url, follow=True)
+        self.assertEqual(response.status_code, 200)
 
     def test_compile_error(self):
         """Submitting code for a function/procedure/trigger with a compile error does resturn a
