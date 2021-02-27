@@ -86,10 +86,14 @@ def show_result(request, collection_id):
     """show datatable of a group"""
     position = 1
     try:
+        start = ""
+        end = ""
         group_id = request.GET.get('group')
         collection = get_object_or_404(Collection, pk=collection_id)
         if request.user.is_staff:
             groups_user = Group.objects.all().order_by('name')
+            start = request.GET.get('start')
+            end = request.GET.get('end')
         else:
             groups_user = request.user.groups.all().order_by('name')
         if group_id is None:
@@ -124,16 +128,10 @@ def show_result(request, collection_id):
                         position = position + 1
                     else:
                         users[i].pos = position
-            hasta = date.today().strftime('%Y-%m-%d')
-            if 1 <= date.today().month < 9:
-                desde = date(date.today().year-1, 9, 1).strftime('%Y-%m-%d')
-            else:
-                desde = date(date.today().year, 9, 1).strftime('%Y-%m-%d')
 
-
-            print(desde)
             return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
-                                                    'login': request.user, 'group0': group0, 'hasta': hasta, 'desde': desde})
+                                                    'login': request.user, 'group0': group0,
+                                                    'hasta': end, 'desde': start})
 
         return HttpResponseForbidden("Forbidden")
     except ValueError:
@@ -156,7 +154,12 @@ def show_results(request):
         # Templates can only invoke nullary functions or access object attribute, so we store
         # the number of problems solved by the user in an attribute
         results.num_solved = results.num_solved_by_user(request.user)
-    return render(request, 'result.html', {'results': cols, 'group': groups_user[0].id})
+    up_to_classification = date.today().strftime('%Y-%m-%d')
+    from_classification = date(date.today().year, 9, 1).strftime('%Y-%m-%d')
+    if 1 <= date.today().month < 9:
+        from_classification = date(date.today().year - 1, 9, 1).strftime('%Y-%m-%d')
+    return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
+                                           'desde': from_classification, 'hasta': up_to_classification})
 
 
 @login_required
