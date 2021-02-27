@@ -20,3 +20,7 @@ div#codigo {
     width: 100%;
     margin: auto;
 }
+
+.custom-file-input ~ .custom-file-label::after {
+    content: "Explorar";
+}
