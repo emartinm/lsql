@@ -3,19 +3,29 @@
 {% block contenido %}
 
 {% if login.is_staff %}
-    <h2 class="text-center mb-3">Colección: {{collection.name_html|safe}} Resultados desde {{desde}} hasta {{hasta}}</h2>
+<div class="d-flex mb-3">
+    <h2 class="float-left">Colección: {{collection.name_html|safe}}</h2>
+<div class="col md-3">
+    <h2 class="float-right">Desde {{desde}} hasta {{hasta}}</h2>
+</div>
+</div>
 {% else %}
     <h2 class="text-center mb-3">Colección: {{collection.name_html|safe}}</h2>
 {% endif %}
 <div class="d-flex">
     <p class="h4">Grupo:</p>
      <form method="get" action="{% url 'judge:result' collection.id %}">
+
     <select class="ml-1" name="group" id="clase" onchange="this.parentNode.submit()">
       <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
         {% for group in groups %}
             <option id = "{{group.name}}" value="{{group.id}}"> {{group.name}} </option>
         {% endfor %}
 </select>
+         {% if login.is_staff %}
+          <input name="start" type="hidden" value="{{desde}}">
+         <input  name="end" type="hidden" value="{{hasta}}">
+         {% endif %}
    </form>
 
             {% if login.is_staff %}
@@ -36,7 +46,7 @@
 
 </div>
 </div>
-
+<p>{{hola}}</p>
 
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog  modal-lg">
@@ -114,7 +124,7 @@
         {% endif %}
 
         {% for pp in p.collection %}
-                {% if pp.solved %}
+                {% if pp.solved and pp.num_submissions != '0/0 (0)'  %}
                     {% if p == login or login.is_staff%}
                          <td class="bg-success border border-dark" >
                            <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>

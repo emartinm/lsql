@@ -47,7 +47,14 @@ def index(_):
     return HttpResponseRedirect(reverse('judge:collections'))
 
 
-def for_loop(user, collection):
+def firstDayOfCourse():
+    """Returned on the first day of the academic year"""
+    if 1 <= date.today().month < 9:
+        return date(date.today().year-1, 9, 1).strftime('%Y-%m-%d')
+    return date(date.today().year, 9, 1).strftime('%Y-%m-%d')
+
+
+def for_loop(user_loggued, user, collection, start, end):
     """From each exercise of the collection assigns the attempts and success for each user"""
     for numb in range(0, collection.problem_list.count()):
         num_accepted = 0
@@ -55,9 +62,14 @@ def for_loop(user, collection):
         attempts = 0
         problem = collection.problem_list[numb]
         user.first_AC = 0
-        subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
+        if user_loggued.is_staff:
+            subs = Submission.objects.filter(user=user, creation_date__gte=start,
+                                             creation_date__lte=end, problem=problem.id).order_by('pk')
+
+        else:
+            subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
         length = len(subs)
-        for submission in range(0,  length):
+        for submission in range(0, length):
             if subs[submission].veredict_code == VeredictCode.AC:
                 num_accepted = num_accepted + 1
             if num_accepted == 1 and not enter:
@@ -66,17 +78,17 @@ def for_loop(user, collection):
                 user.score = user.score + submission + 1
             attempts = attempts + 1
 
-        solved(attempts, user, problem, num_accepted, collection, numb)
+        solved(attempts, user, problem, num_accepted, collection, numb, enter)
 
 
-def solved(attempts, user, problem, num_accepted, collection, numb):
+def solved(attempts, user, problem, num_accepted, collection, numb, enter):
     """Adds the problem to the user's collection and assigns the number of submissions"""
     if attempts > 0 and user.first_AC == 0:
         problem.num_submissions = f"{num_accepted}/{attempts} ({attempts})"
     else:
         problem.num_submissions = f"{num_accepted}/{attempts} ({user.first_AC})"
     problem.solved = collection.problem_list[numb].solved_by_user(user)
-    if problem.solved:
+    if problem.solved and enter:
         user.resolved = user.resolved + 1
     user.collection.append(problem)
 
@@ -111,7 +123,7 @@ def show_result(request, collection_id):
                 user.collection = []
                 user.resolved = 0
                 user.score = 0
-                for_loop(user, collection)
+                for_loop(request.user, user, collection, start, end)
             users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
             length = len(users)
             for i in range(0, length):
@@ -146,7 +158,7 @@ def show_results(request):
     if groups_user.count() == 0 and not request.user.is_staff:
         return render(request, 'generic_error_message.html',
                       {'error': ['¡Lo sentimos! No tienes asignado un grupo de la asignatura.',
-                                'Por favor, contacta con tu profesor para te asignen un grupo de clase.']
+                                 'Por favor, contacta con tu profesor para te asignen un grupo de clase.']
                        })
     if groups_user.count() == 0 and request.user.is_staff:
         groups_user = Group.objects.all().order_by('name')
@@ -155,9 +167,7 @@ def show_results(request):
         # the number of problems solved by the user in an attribute
         results.num_solved = results.num_solved_by_user(request.user)
     up_to_classification = date.today().strftime('%Y-%m-%d')
-    from_classification = date(date.today().year, 9, 1).strftime('%Y-%m-%d')
-    if 1 <= date.today().month < 9:
-        from_classification = date(date.today().year - 1, 9, 1).strftime('%Y-%m-%d')
+    from_classification = firstDayOfCourse()
     return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
                                            'desde': from_classification, 'hasta': up_to_classification})
 
