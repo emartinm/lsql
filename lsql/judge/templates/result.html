@@ -1,0 +1,22 @@
+{% extends "base_menu.html" %}
+{% block contenido %}
+
+  <table class="table mt-5">
+    <thead class="thead-dark">
+      <tr>
+        <th class="text-center" scope="col">Colecciones</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for c in results %}
+    <tr>
+      <td>
+          <a title="{{c.name_html|safe}}" href="{% url 'judge:result' c.id %}?group={{group}}">
+            {{ c.name_html|safe }}
+          </a>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
