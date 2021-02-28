@@ -56,13 +56,13 @@ General template for a problem. Provides the following blocks:
   <form onchange="javascript:load_submission_code(event);" class="mb-3">
 	<div class="custom-file">
 		<input type="file" class="custom-file-input" id="customFile" lang="es">
-        <label class="custom-file-label" for="customFile">Elige un archivo</label>
+      <label class="custom-file-label" for="customFile"><i>Selecciona o arrastra el archivo con la solución</i></label>
     </div>
     <script>
 		// The name of the file appear on select
 		$(".custom-file-input").on("change", function() {
 			var fileName = $(this).val().split("\\").pop();
-			$(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+			$(".custom-file-label").addClass("selected").text(fileName);
 		});
     </script>
   </form>

@@ -97,7 +97,7 @@ function load_submission_code(event){
     var reader = new FileReader();
     reader.onload = function(){
         var text = reader.result;
-        ace.edit('user_code').setValue(reader.result.substring(0));
+        ace.edit('user_code').setValue(reader.result);
         ace.edit('user_code').selection.clearSelection();
     };
     reader.readAsText(input.files[0]);
