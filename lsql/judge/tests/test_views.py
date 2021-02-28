@@ -717,7 +717,7 @@ class ViewsTest(TestCase):
         if submission.user != user:
             self.assertRedirects(response, 'Forbidden')
 
-        # Superuser download the code submission of submission
+        # Superuser download code submission
         teacher = create_superuser('1111', 'teacher')
         client.login(username=teacher.username, password='1111')
 
