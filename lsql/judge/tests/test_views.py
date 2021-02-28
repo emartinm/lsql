@@ -472,7 +472,7 @@ class ViewsTest(TestCase):
         self.assertEqual(response.redirect_chain,
                          [(login_redirect_submission, 302)])
 
-        # # Download your own code submission
+        # Download your own code submission
         user = create_user('2222', 'tamara')
         create_user('3333', 'juan')
         client.login(username='tamara', password='2222')
@@ -480,14 +480,35 @@ class ViewsTest(TestCase):
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
 
-        if submission.user == user:
-            url = reverse('judge:download_submission', args=[submission.pk])
-            response = client.get(url, follow=True)
-            self.assertEqual(
-                response.get('Content-Disposition'),
-                "attachment; filename=code.sql",
-            )
+        url = reverse('judge:download_submission', args=[submission.pk])
+        response = client.get(url, follow=True)
+        self.assertEqual(
+            response.get('Content-Disposition'),
+            "attachment; filename=code.sql",
+        )
+
+        self.assertTrue('select *** from *** where *** and more' in str(response.content))
+
 
         # Download code submission from another user
+        user.logout()
+        client.login(username='juan', password='3333')
+
         if submission.user != user:
             self.assertRedirects(response, 'Forbidden')
+
+        # Superuser download the code submission of submission
+        teacher = create_superuser('1111', 'teacher')
+        client.login(username=teacher.username, password='1111')
+
+        url = reverse('judge:download_submission', args=[submission.pk])
+        response = client.get(url, follow=True)
+        self.assertEqual(
+            response.get('Content-Disposition'),
+            "attachment; filename=code.sql",
+        )
+
+        self.assertTrue('select *** from *** where *** and more' in str(response.content))
+
+
+

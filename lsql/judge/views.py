@@ -95,11 +95,16 @@ def show_submission(request, submission_id):
 def download_submission(request, submission_id):
     """Returns a script with the code of submission"""
     submission = get_object_or_404(Submission, pk=submission_id)
-    response = HttpResponse()
-    response['Content-Type'] = 'application/sql'
-    response['Content-Disposition'] = "attachment; filename=code.sql"
-    response.write(submission.code)
-    return response
+
+    if submission.user == request.user or request.user.is_staff:
+        response = HttpResponse()
+        response['Content-Type'] = 'application/sql'
+        response['Content-Disposition'] = "attachment; filename=code.sql"
+        response.write(submission.code)
+        return response
+    else:
+         return HttpResponseForbidden("Forbidden")
+
 
 @login_required
 def download(_, problem_id):
