@@ -679,7 +679,9 @@ class ViewsTest(TestCase):
     def test_download_submission(self):
         """ Test to download code of submission """
         client = Client()
-        user = create_user('2222')
+        user = create_user('2222', 'tamara')
+        create_user('3333', 'juan')
+        teacher = create_superuser('1111', 'teacher')
         login_redirect_url = reverse('judge:login')
         collection = create_collection('Colleccion de prueba TTT')
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
@@ -693,13 +695,7 @@ class ViewsTest(TestCase):
                          [(login_redirect_submission, 302)])
 
         # Download your own code submission
-        user = create_user('2222', 'tamara')
-        create_user('3333', 'juan')
         client.login(username='tamara', password='2222')
-        collection = create_collection('Colleccion de prueba TTT')
-        problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
-
         url = reverse('judge:download_submission', args=[submission.pk])
         response = client.get(url, follow=True)
         self.assertEqual(
@@ -719,9 +715,8 @@ class ViewsTest(TestCase):
         self.assertIn('Forbidden', str(response.content))
 
         # Superuser download code submission
-        teacher = create_superuser('1111', 'teacher')
+        client.logout()
         client.login(username=teacher.username, password='1111')
-
         url = reverse('judge:download_submission', args=[submission.pk])
         response = client.get(url, follow=True)
         self.assertEqual(
