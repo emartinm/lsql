@@ -677,7 +677,7 @@ class ViewsTest(TestCase):
             self.assertIn('Generado por tu código SQL: 0 columnas', response.json()['feedback'])
 
     def test_download_submission(self):
-        "Test to download code of submission"
+        """ Test to download code of submission """
         client = Client()
         user = create_user('2222')
         login_redirect_url = reverse('judge:login')
@@ -706,16 +706,17 @@ class ViewsTest(TestCase):
             response.get('Content-Disposition'),
             "attachment; filename=code.sql",
         )
-
-        self.assertTrue('select *** from *** where *** and more' in str(response.content))
-
+        self.assertEqual(
+            response.get('Content-Type'),
+            "application/sql"
+        )
+        self.assertEqual(response.content.decode('UTF-8'), submission.code)
 
         # Download code submission from another user
-        user.logout()
+        client.logout()
         client.login(username='juan', password='3333')
-
-        if submission.user != user:
-            self.assertRedirects(response, 'Forbidden')
+        response = client.get(url, follow=True)
+        self.assertIn('Forbidden', str(response.content))
 
         # Superuser download code submission
         teacher = create_superuser('1111', 'teacher')
@@ -727,8 +728,8 @@ class ViewsTest(TestCase):
             response.get('Content-Disposition'),
             "attachment; filename=code.sql",
         )
-
-        self.assertTrue('select *** from *** where *** and more' in str(response.content))
-
-
-
+        self.assertEqual(
+            response.get('Content-Type'),
+            "application/sql"
+        )
+        self.assertEqual(response.content.decode('UTF-8'), submission.code)

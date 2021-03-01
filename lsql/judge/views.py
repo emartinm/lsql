@@ -223,19 +223,18 @@ def show_submission(request, submission_id):
     submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
     return render(request, 'submission.html', {'submission': submission})
 
+
 @login_required
 def download_submission(request, submission_id):
-    """Returns a script with the code of submission"""
+    """ Return a script with te code of submission """
     submission = get_object_or_404(Submission, pk=submission_id)
-
-    if submission.user == request.user or request.user.is_staff:
-        response = HttpResponse()
-        response['Content-Type'] = 'application/sql'
-        response['Content-Disposition'] = "attachment; filename=code.sql"
-        response.write(submission.code)
-        return response
-    else:
+    if submission.user != request.user and not request.user.is_staff:
         return HttpResponseForbidden("Forbidden")
+    response = HttpResponse()
+    response['Content-Type'] = 'application/sql'
+    response['Content-Disposition'] = "attachment; filename=code.sql"
+    response.write(submission.code)
+    return response
 
 
 @login_required
