@@ -6,7 +6,7 @@
 <div class="d-flex mb-3">
     <h2 class="float-left">Colección: {{collection.name_html|safe}}</h2>
 <div class="col md-3">
-    <h2 class="float-right">Desde {{desde}} hasta {{hasta}}</h2>
+    <h2 class="float-right">Desde {{desde}} hasta {{hasta_string.1}}</h2>
 </div>
 </div>
 {% else %}
@@ -126,17 +126,29 @@
         {% for pp in p.collection %}
                 {% if pp.solved and pp.num_submissions != '0/0 (0)'  %}
                     {% if p == login or login.is_staff%}
-                         <td class="bg-success border border-dark" >
-                           <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
-                        </td>
+                         {% if login.is_staff %}
+                               <td class="bg-success border border-dark">
+                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}&start={{desde}}&end={{hasta}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                                 </td>
+                        {% else %}
+                           <td class="bg-success border border-dark">
+                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                           </td>
+                        {% endif %}
                     {% else %}
                         <td class="bg-success border border-dark">{{ pp.num_submissions }}</td>
                     {% endif%}
                 {% elif not pp.solved and pp.num_submissions != '0/0 (0)' %}
                      {% if p == login or login.is_staff %}
-                       <td class="bg-danger border border-dark">
-                           <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
-                       </td>
+                        {% if login.is_staff %}
+                               <td class="bg-danger border border-dark">
+                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}&start={{desde}}&end={{hasta}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                                 </td>
+                        {% else %}
+                           <td class="bg-danger border border-dark">
+                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                           </td>
+                        {% endif %}
                      {%else%}
                          <td class="bg-danger border border-dark" >{{ pp.num_submissions }}</td>
                      {% endif %}

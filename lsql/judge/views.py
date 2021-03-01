@@ -50,8 +50,8 @@ def index(_):
 def firstDayOfCourse():
     """Returned on the first day of the academic year"""
     if 1 <= date.today().month < 9:
-        return date(date.today().year, 2, 17).strftime('%Y-%m-%d')
-    return date(date.today().year, 2, 17).strftime('%Y-%m-%d')
+        return date(date.today().year , 2, 17).strftime('%Y-%m-%d')
+    return date(date.today().year, 9, 1).strftime('%Y-%m-%d')
 
 
 def for_loop(user_loggued, user, collection, start, end):
@@ -97,15 +97,15 @@ def show_result(request, collection_id):
     """show datatable of a group"""
     position = 1
     try:
-        start = ""
-        end = ""
+        start = request.GET.get('start')
+        end = request.GET.get('end')
         group_id = request.GET.get('group')
         collection = get_object_or_404(Collection, pk=collection_id)
         if request.user.is_staff:
             groups_user = Group.objects.all().order_by('name')
-            start = request.GET.get('start')
-            end = request.GET.get('end')
         else:
+            if start is not None or end is not None:
+                return HttpResponseForbidden("Forbidden")
             groups_user = request.user.groups.all().order_by('name')
         if group_id is None:
             group_id = groups_user[0].id
@@ -166,9 +166,13 @@ def show_results(request):
         # the number of problems solved by the user in an attribute
         results.num_solved = results.num_solved_by_user(request.user)
     up_to_classification = date.today().strftime('%Y-%m-%d')
+    desde_ = date.today().strftime('%d/%M/%y')
     from_classification = firstDayOfCourse()
     return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
-                                           'desde': from_classification, 'hasta': up_to_classification})
+                                           'desde': from_classification,
+                                           'desdestring': from_classification.split("-"),
+                                           'hasta': up_to_classification,
+                                           'hasta_string': up_to_classification})
 
 
 @login_required
@@ -215,12 +219,19 @@ def show_submissions(request):
         id_user = request.GET.get('user_id')
         if pk_problem is not None or id_user is not None:
             if int(id_user) == request.user.id and not request.user.is_staff:
+                start = request.GET.get('start')
+                end = request.GET.get('end')
+                if start is not None or end is not None:
+                    return HttpResponseForbidden("Forbidden")
                 problem = get_object_or_404(Problem, pk=pk_problem)
                 subs = Submission.objects.filter(user=request.user).filter(problem=problem.id).order_by('-pk')
             elif request.user.is_staff:
+                start = request.GET.get('start')
+                end = request.GET.get('end')
                 problem = get_object_or_404(Problem, pk=pk_problem)
                 user = get_user_model().objects.filter(id=id_user)
-                subs = Submission.objects.filter(user=user.get()).filter(problem=problem.id).order_by('-pk')
+                subs = Submission.objects.filter(user=user.get())\
+                    .filter(problem=problem.id, creation_date__range=[start, end]).order_by('-pk')
             else:
                 return HttpResponseForbidden("Forbidden")
 
