@@ -675,3 +675,56 @@ class ViewsTest(TestCase):
             response = client.post(submit_url_select, {'code': stmt}, follow=True)
             self.assertTrue(response.json()['veredict'] == VeredictCode.WA)
             self.assertIn('Generado por tu código SQL: 0 columnas', response.json()['feedback'])
+
+    def test_download_submission(self):
+        """ Test to download code of submission """
+        client = Client()
+        user = create_user('2222', 'tamara')
+        create_user('3333', 'juan')
+        teacher = create_superuser('1111', 'teacher')
+        login_redirect_url = reverse('judge:login')
+        collection = create_collection('Colleccion de prueba TTT')
+        problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
+
+        # Submission redirects to login
+        submission_url = reverse('judge:submission', args=[submission.pk])
+        login_redirect_submission = f'{login_redirect_url}?next={submission_url}'
+        response = client.get(submission_url, follow=True)
+        self.assertEqual(response.redirect_chain,
+                         [(login_redirect_submission, 302)])
+
+        # Download your own code submission
+        client.login(username='tamara', password='2222')
+        url = reverse('judge:download_submission', args=[submission.pk])
+        response = client.get(url, follow=True)
+        self.assertEqual(
+            response.get('Content-Disposition'),
+            "attachment; filename=code.sql",
+        )
+        self.assertEqual(
+            response.get('Content-Type'),
+            "application/sql"
+        )
+        self.assertEqual(response.content.decode('UTF-8'), submission.code)
+
+        # Download code submission from another user
+        client.logout()
+        client.login(username='juan', password='3333')
+        response = client.get(url, follow=True)
+        self.assertIn('Forbidden', str(response.content))
+
+        # Superuser download code submission
+        client.logout()
+        client.login(username=teacher.username, password='1111')
+        url = reverse('judge:download_submission', args=[submission.pk])
+        response = client.get(url, follow=True)
+        self.assertEqual(
+            response.get('Content-Disposition'),
+            "attachment; filename=code.sql",
+        )
+        self.assertEqual(
+            response.get('Content-Type'),
+            "application/sql"
+        )
+        self.assertEqual(response.content.decode('UTF-8'), submission.code)

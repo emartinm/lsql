@@ -20,6 +20,7 @@ urlpatterns = [
     path('problem/<int:problem_id>/create_insert', views.download, name='create_insert'),
     path('submission/', views.show_submissions, name='submissions'),
     path('submission/<int:submission_id>', views.show_submission, name='submission'),
+    path('submission/<int:submission_id>/download_submission', views.download_submission, name='download_submission'),
     path('results/', views.show_results, name='results'),
     path('results/<int:collection_id>', views.show_result, name='result'),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
