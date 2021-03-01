@@ -35,8 +35,9 @@ class VeredictCode(models.TextChoices):
                     'código SQL no es suficientemente eficiente. Vuelve a enviarlo en unos minutos y si sigues '
                     'obteniendo el mismo veredicto trata de reescribir tu código para ser más eficiente.')
         elif self == self.RE:
-            msg = _('Tu código SQL ha producido un error durante la ejecución. Consulta el cuadro rojo en '
-                    'la parte inferior de la página para ver los detalles.')
+            msg = _('Tu código SQL ha producido un error durante la ejecución. Consulta el cuadro rojo '
+                    'de retroalimentación en la parte inferior de la página para ver los detalles e inspecciona '
+                    'el código resaltado en el editor.')
         elif self == self.WA:
             msg = _('Tu código SQL ha generado resultados erróneos. Consulta el cuadro rojo en la parte inferior '
                     'de la página para ver los detalles.')

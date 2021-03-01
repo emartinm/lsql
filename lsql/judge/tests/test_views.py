@@ -728,3 +728,27 @@ class ViewsTest(TestCase):
             "application/sql"
         )
         self.assertEqual(response.content.decode('UTF-8'), submission.code)
+
+    def test_position_select_re(self):
+        """Test that the error message received contains the position of the error"""
+        client = Client()
+        create_user('5555', 'pepe')
+        client.login(username='pepe', password='5555')
+        collection = create_collection('Colleccion de prueba XYZ')
+        problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        submit_url = reverse('judge:submit', args=[problem.pk])
+
+        response = client.post(submit_url, {'code': "SELOCT cif FROM Club"}, follow=True)
+        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
+        self.assertEqual(response.json()['position'], [0, 0])
+
+        response = client.post(submit_url, {'code': "SELECT noexiste FROM test"}, follow=True)
+        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
+        self.assertEqual(response.json()['position'], [0, 7])
+
+        stmt = """SELECT n
+FROM test
+WHERE 0 < noexiste"""
+        response = client.post(submit_url, {'code': stmt}, follow=True)
+        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
+        self.assertEqual(response.json()['position'], [2, 10])

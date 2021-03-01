@@ -49,6 +49,20 @@ function show_feedback(html) {
     }
 }
 
+// Selects in the editor the fragment of SQL code that generates a problem if offset if provided
+function select_error_in_editor(myJson) {
+    if (myJson.position) {
+        let line = myJson.position[0];
+        let col = myJson.position[1];
+        ace.edit('user_code').selection.moveCursorTo(line, col, false);
+        ace.edit('user_code').selection.selectAWord();
+        $('#feedback_line').removeAttr('hidden');
+        $('#feedback_line').text("Posición: línea " + (line+1) + ", columna " + (col+1));
+    } else {
+        $('#feedback_line').attr('hidden', true);
+    }
+}
+
 // Submits the solution and receives and shows the veredict
 function send_solution() {
     // Get endpoint from the form
@@ -82,6 +96,7 @@ function send_solution() {
           console.log(myJson);
           mark_solved(myJson);
           show_feedback(myJson.feedback);
+          select_error_in_editor(myJson);
           show_modal(myJson.title, myJson.message);
           update_page_submission_received();
       }).catch(function(e) {
