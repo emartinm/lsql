@@ -26,3 +26,4 @@ else:
     from .settings_deploy import *
 
 USE_L10N = True
+USE_TZ = False

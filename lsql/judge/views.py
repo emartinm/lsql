@@ -50,8 +50,8 @@ def index(_):
 def firstDayOfCourse():
     """Returned on the first day of the academic year"""
     if 1 <= date.today().month < 9:
-        return date(date.today().year-1, 9, 1).strftime('%Y-%m-%d')
-    return date(date.today().year, 9, 1).strftime('%Y-%m-%d')
+        return date(date.today().year, 2, 17).strftime('%Y-%m-%d')
+    return date(date.today().year, 2, 17).strftime('%Y-%m-%d')
 
 
 def for_loop(user_loggued, user, collection, start, end):
@@ -63,8 +63,7 @@ def for_loop(user_loggued, user, collection, start, end):
         problem = collection.problem_list[numb]
         user.first_AC = 0
         if user_loggued.is_staff:
-            subs = Submission.objects.filter(user=user, creation_date__gte=start,
-                                             creation_date__lte=end, problem=problem.id).order_by('pk')
+            subs = Submission.objects.filter(user=user, creation_date__range=(start, end), problem=problem.id).order_by('pk')
 
         else:
             subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
