@@ -53,6 +53,19 @@ General template for a problem. Provides the following blocks:
 {% block solution %}
 <h2>Solución</h2>
   <script src="{% static 'judge/js/submit.js' %}"></script>
+  <form onchange="javascript:load_submission_code(event);" class="mb-3">
+	<div class="custom-file">
+		<input type="file" class="custom-file-input" id="customFile" lang="es">
+      <label class="custom-file-label" for="customFile"><i>Selecciona o arrastra el archivo con la solución</i></label>
+    </div>
+    <script>
+		// The name of the file appear on select
+		$(".custom-file-input").on("change", function() {
+			var fileName = $(this).val().split("\\").pop();
+			$(".custom-file-label").addClass("selected").text(fileName);
+		});
+    </script>
+  </form>
   <form action="javascript:send_solution();">
     {% csrf_token %} {# Includes a hidden input with the CSRF token #}
     <input type="hidden" id="endpoint" name="endpoint" value="{% url 'judge:submit' problem.pk %}">

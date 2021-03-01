@@ -90,3 +90,15 @@ function send_solution() {
           update_page_submission_received();
       });
 }
+
+function load_submission_code(event){
+    var input = event.target;
+
+    var reader = new FileReader();
+    reader.onload = function(){
+        var text = reader.result;
+        ace.edit('user_code').setValue(reader.result);
+        ace.edit('user_code').selection.clearSelection();
+    };
+    reader.readAsText(input.files[0]);
+}
