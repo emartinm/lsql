@@ -3,7 +3,7 @@
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 Functions that process HTTP connections
 """
-
+from datetime import date
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
@@ -19,7 +19,6 @@ from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem,
     Submission
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
-from datetime import date
 
 
 def get_child_problem(problem_id):
@@ -50,11 +49,11 @@ def index(_):
 def firstDayOfCourse():
     """Returned on the first day of the academic year"""
     if 1 <= date.today().month < 9:
-        return date(date.today().year , 2, 17).strftime('%Y-%m-%d')
+        return date(date.today().year-1, 9, 1).strftime('%Y-%m-%d')
     return date(date.today().year, 9, 1).strftime('%Y-%m-%d')
 
 
-def for_loop(user_loggued, user, collection, start, end):
+def for_loop(user_logged, user, collection, start, end):
     """From each exercise of the collection assigns the attempts and success for each user"""
     for numb in range(0, collection.problem_list.count()):
         num_accepted = 0
@@ -62,8 +61,9 @@ def for_loop(user_loggued, user, collection, start, end):
         attempts = 0
         problem = collection.problem_list[numb]
         user.first_AC = 0
-        if user_loggued.is_staff:
-            subs = Submission.objects.filter(user=user, creation_date__range=(start, end), problem=problem.id).order_by('pk')
+        if user_logged.is_staff:
+            subs = Submission.objects.filter(user=user,
+                                             creation_date__range=(start, end), problem=problem.id).order_by('pk')
 
         else:
             subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
@@ -166,13 +166,10 @@ def show_results(request):
         # the number of problems solved by the user in an attribute
         results.num_solved = results.num_solved_by_user(request.user)
     up_to_classification = date.today().strftime('%Y-%m-%d')
-    desde_ = date.today().strftime('%d/%M/%y')
     from_classification = firstDayOfCourse()
     return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
                                            'desde': from_classification,
-                                           'desdestring': from_classification.split("-"),
-                                           'hasta': up_to_classification,
-                                           'hasta_string': up_to_classification})
+                                           'hasta': up_to_classification})
 
 
 @login_required
