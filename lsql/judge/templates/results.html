@@ -6,7 +6,7 @@
 <div class="d-flex mb-3">
     <h2 class="float-left">Colección: {{collection.name_html|safe}}</h2>
 <div class="col md-3">
-    <h2 class="float-right">Desde {{desde}} hasta {{hasta_string.1}}</h2>
+    <h2 class="float-right">Desde {{desde}} hasta {{hasta}}</h2>
 </div>
 </div>
 {% else %}
@@ -31,15 +31,51 @@
             {% if login.is_staff %}
         <div class="d-flex justify-content-center ml-">
     <p class="h4 ml-3 mr-1">Desde: </p>
-<input type="date" data-date="" data-date-format="DD MMMM YYYY" value="{{desde}}" min="{{desde}}" max="{{hasta}}">
+<input id="desde_date" type="date" data-date="{{hasta}}" data-date-format="DD MMMM YYYY"
+       value="{{desde}}" min="{{desde}}" max="{{hasta}}">
         <p class="h4 ml-3 mr-1">Hasta: </p>
-<input type="date" data-date="" data-date-format="DD MMMM YYYY" value="{{hasta}}" max="{{hasta}}" min="{{desde}}">
-       <button type="button" class="btn btn-primary ml-3" title="Filtro de ejercicios entre dos periodos">
+<input id= "hasta_date" type="date" data-date="{{desde}}" data-date-format="DD MMMM YYYY"
+       value="{{hasta}}" max="{{hasta}}" min="{{desde}}">
+
+       <button id="filterButton" type="button" class="btn btn-primary ml-3"
+               title="Filtro de ejercicios entre dos periodos">
            <i class="fas fa-filter"></i> Filtrar</button>
               </div>
     {% endif %}
 
+<script>
+    $('#filterButton').on('click', function (e) {
+    var desde = document.getElementById('desde_date').value;
+    var hasta = document.getElementById('hasta_date').value;
+    var hasta_max = document.getElementById('hasta_date').max;
+    var hasta_min = document.getElementById('hasta_date').min;
+    var desde_max = document.getElementById('desde_date').max;
+    var desde_min = document.getElementById('desde_date').min;
+    if(desde== null){
+      alert('La fecha desde no puede ser nula, inserte una válida.')
+    }
+    else if(hasta == null){
+      alert('La fecha hasta no puede ser nula, inserte una válida.')
+    }
+    else if(desde_min > desde){
+     alert('La fecha desde no puede ser menor que la fecha ' + desde_min + ', inserte una fecha válida')
+    }
+    else if(desde_max < desde){
+         alert('La fecha desde no puede ser mayor que la fecha ' + desde_max + ', inserte una fecha válida')
 
+    }
+   else if(hasta_min > hasta){
+            alert('La fecha hasta no puede ser menor que la fecha ' + hasta_min + ', inserte una fecha válida')
+    }
+    else if(hasta_max < hasta){
+             alert('La fecha hasta no puede ser mayor que la fecha ' + hasta_max + ', inserte una fecha válida')
+    }
+    else if(hasta < desde){
+        alert('La fecha desde no puede ser mayor que la fecha hasta, inserte fechas válidas')
+    }
+
+})
+</script>
 
 <div class="col md-3">
     <button class="bg-white border-0 float-right"title="Leyenda" data-target="#exampleModal" data-toggle="modal" type="button"><i class="far fa-question-circle fa-2x"></i></button>
