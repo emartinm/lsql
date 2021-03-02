@@ -6,7 +6,7 @@
 <div class="d-flex mb-3">
     <h2 class="float-left">Colección: {{collection.name_html|safe}}</h2>
 <div class="col md-3">
-    <h2 class="float-right">Desde {{fecha|date:"d/m/Y"}} hasta {{fecha|date:"d/m/Y"}}</h2>
+    <h2 class="float-right">Desde {{from_date|date:"d/m/Y"}} hasta {{to_date|date:"d/m/Y"}}</h2>
 </div>
 </div>
 {% else %}
@@ -23,11 +23,11 @@
         </select>
         {% if login.is_staff %}
             <p class="h4 ml-3 mr-1">Desde: </p>
-            <input name="start" id="desde_date" type="date" data-date="{{hasta}}" data-date-format="DD MMMM YYYY"
-            value="{{desde}}" min="{{desde_fijo}}" max="{{hasta_fijo}}">
+            <input name="start" id="desde_date" type="date" data-date="{{start_date}}" data-date-format="DD MMMM YYYY"
+            value="{{start_date}}" min="{{from_fixed}}" max="{{to_fixed}}">
             <p class="h4 ml-3 mr-1">Hasta: </p>
-            <input name="end" id= "hasta_date" type="date" data-date="{{desde}}" data-date-format="DD MMMM YYYY"
-            value="{{hasta}}" max="{{hasta_fijo}}" min="{{desde_fijo}}">
+            <input name="end" id= "hasta_date" type="date" data-date="{{end_date}}" data-date-format="DD MMMM YYYY"
+            value="{{end_date}}" max="{{to_fixed}}" min="{{from_fixed}}">
             <button id="filterButton" type="submit"  class="btn btn-primary ml-3"
                 title="Filtro de ejercicios entre dos periodos">
                 <i class="fas fa-filter"></i> Filtrar
@@ -122,7 +122,7 @@
                     {% if p == login or login.is_staff%}
                          {% if login.is_staff %}
                                <td class="bg-success border border-dark">
-                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}&start={{desde}}&end={{hasta}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}&start={{start_date}}&end={{end_date}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
                                  </td>
                         {% else %}
                            <td class="bg-success border border-dark">
@@ -136,7 +136,7 @@
                      {% if p == login or login.is_staff %}
                         {% if login.is_staff %}
                                <td class="bg-danger border border-dark">
-                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}&start={{desde}}&end={{hasta}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}&start={{start_date}}&end={{end_date}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
                                  </td>
                         {% else %}
                            <td class="bg-danger border border-dark">

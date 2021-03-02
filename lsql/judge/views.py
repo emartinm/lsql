@@ -146,12 +146,16 @@ def show_result(request, collection_id):
                         users[i].pos = position
             up_to_classification = datetime.datetime.today().strftime('%Y-%m-%d')
             from_classification = firstDayOfCourse()
-
-            return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
-                                                    'login': request.user, 'group0': group0,
-                                                    'hasta_fijo': up_to_classification,
-                                                    'desde_fijo': from_classification,
-                                                    'hasta': end, 'desde': start})
+            up_to_classification_date = datetime.datetime.strptime(end, '%Y-%m-%d')
+            from_classification_date = datetime.datetime.strptime(start, '%Y-%m-%d')
+            return render(request, 'results.html', {'collection': collection, 'groups': groups_user,
+                                                    'users': users, 'login': request.user,
+                                                    'group0': group0,
+                                                    'to_fixed': up_to_classification,
+                                                    'from_date': from_classification_date,
+                                                    'to_date': up_to_classification_date,
+                                                    'from_fixed': from_classification,
+                                                    'end_date': end, 'start_date': start})
 
         return HttpResponseForbidden("Forbidden")
     except ValueError:
@@ -180,10 +184,11 @@ def show_results(request):
     from_classification = firstDayOfCourse()
     from_classification_date = datetime.datetime.strptime(from_classification, '%Y-%m-%d')
     return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
-                                           'desde': from_classification, 'desde_fijo': from_classification,
-                                           'fecha': datetime.datetime.now(), 'hasta_date': datetime.datetime.now(),
-                                           'hasta_fijo': up_to_classification,
-                                           'hasta': up_to_classification})
+                                           'start_date': from_classification, 'from_fixed': from_classification,
+                                           'from_date': from_classification_date,
+                                           'to_date': up_to_classification_date,
+                                           'to_fixed': up_to_classification,
+                                           'end_date': up_to_classification})
 
 
 @login_required

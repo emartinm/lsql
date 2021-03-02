@@ -12,7 +12,7 @@
     <tr>
       <td>
         {% if user.is_staff %}
-          <a title="{{c.name_html|safe}}" href="{% url 'judge:result' c.id %}?group={{group}}&start={{desde}}&end={{hasta}}">
+          <a title="{{c.name_html|safe}}" href="{% url 'judge:result' c.id %}?group={{group}}&start={{start_date}}&end={{end_date}}">
             {{ c.name_html|safe }}
           </a>
         {% else %}
