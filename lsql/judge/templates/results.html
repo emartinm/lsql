@@ -6,7 +6,7 @@
 <div class="d-flex mb-3">
     <h2 class="float-left">Colección: {{collection.name_html|safe}}</h2>
 <div class="col md-3">
-    <h2 class="float-right">Desde {{desdeDate}} hasta {{hasta_date|date:"d/m/Y"}}</h2>
+    <h2 class="float-right">Desde {{fecha|date:"d/m/Y"}} hasta {{fecha|date:"d/m/Y"}}</h2>
 </div>
 </div>
 {% else %}
@@ -118,7 +118,7 @@
         {% endif %}
 
         {% for pp in p.collection %}
-                {% if pp.solved and pp.num_submissions != '0/0 (0)'  %}
+                {% if pp.solved and pp.num_submissions != '0/0 (0)'%}
                     {% if p == login or login.is_staff%}
                          {% if login.is_staff %}
                                <td class="bg-success border border-dark">

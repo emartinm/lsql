@@ -4,6 +4,7 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 Functions that process HTTP connections
 """
 import datetime
+from datetime import timedelta
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
@@ -62,8 +63,11 @@ def for_loop(user_logged, user, collection, start, end):
         problem = collection.problem_list[numb]
         user.first_AC = 0
         if user_logged.is_staff:
+            starts = datetime.datetime.strptime(start, '%Y-%m-%d')
+            ends = datetime.datetime.strptime(end, '%Y-%m-%d')
             subs = Submission.objects.filter(user=user,
-                                             creation_date__range=(start, end), problem=problem.id).order_by('pk')
+                                             problem=problem.id,
+                                             creation_date__range=[starts, ends + timedelta(days=1)]).order_by('pk')
 
         else:
             subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
@@ -84,9 +88,10 @@ def solved(attempts, user, problem, num_accepted, collection, numb, enter):
     """Adds the problem to the user's collection and assigns the number of submissions"""
     if attempts > 0 and user.first_AC == 0:
         problem.num_submissions = f"{num_accepted}/{attempts} ({attempts})"
+        problem.solved = False
     else:
         problem.num_submissions = f"{num_accepted}/{attempts} ({user.first_AC})"
-    problem.solved = collection.problem_list[numb].solved_by_user(user)
+        problem.solved = collection.problem_list[numb].solved_by_user(user)
     if problem.solved and enter:
         user.resolved = user.resolved + 1
     user.collection.append(problem)
@@ -174,12 +179,9 @@ def show_results(request):
 
     from_classification = firstDayOfCourse()
     from_classification_date = datetime.datetime.strptime(from_classification, '%Y-%m-%d')
-    print(type(datetime.datetime.now()))
     return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
-                                           'desde': from_classification,
-                                           'desde_fijo': from_classification,
-                                           'desdeDate': datetime.datetime.now(),
-                                           'hasta_date': datetime.datetime.now(),
+                                           'desde': from_classification, 'desde_fijo': from_classification,
+                                           'fecha': datetime.datetime.now(), 'hasta_date': datetime.datetime.now(),
                                            'hasta_fijo': up_to_classification,
                                            'hasta': up_to_classification})
 

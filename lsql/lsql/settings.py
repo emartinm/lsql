@@ -25,6 +25,6 @@ else:
     logger.debug('Loading DEPLOY settings')
     from .settings_deploy import *
 
-USE_L10N = True
+USE_L10N = False
 USE_TZ = False
 
