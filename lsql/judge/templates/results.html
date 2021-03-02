@@ -6,83 +6,41 @@
 <div class="d-flex mb-3">
     <h2 class="float-left">Colección: {{collection.name_html|safe}}</h2>
 <div class="col md-3">
-    <h2 class="float-right">Desde {{desde}} hasta {{hasta}}</h2>
+    <h2 class="float-right">Desde {{desde_date|date:'Y-m-d H:i'}} hasta {{hasta_date}}</h2>
 </div>
 </div>
 {% else %}
     <h2 class="text-center mb-3">Colección: {{collection.name_html|safe}}</h2>
 {% endif %}
 <div class="d-flex">
-    <p class="h4">Grupo:</p>
-     <form method="get" action="{% url 'judge:result' collection.id %}">
+    <form class="d-flex" method="get" action="{% url 'judge:result' collection.id %}">
+        <p class="h4">Grupo:</p>
+        <select class="ml-1" name="group" id="clase" onchange="this.parentNode.submit()">
+        <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
+            {% for group in groups %}
+                <option id = "{{group.name}}" value="{{group.id}}"> {{group.name}} </option>
+            {% endfor %}
+        </select>
+        {% if login.is_staff %}
+            <p class="h4 ml-3 mr-1">Desde: </p>
+            <input name="start" id="desde_date" type="date" data-date="{{hasta}}" data-date-format="DD MMMM YYYY"
+            value="{{desde}}" min="{{desde_fijo}}" max="{{hasta_fijo}}">
+            <p class="h4 ml-3 mr-1">Hasta: </p>
+            <input name="end" id= "hasta_date" type="date" data-date="{{desde}}" data-date-format="DD MMMM YYYY"
+            value="{{hasta}}" max="{{hasta_fijo}}" min="{{desde_fijo}}">
+            <button id="filterButton" type="submit"  class="btn btn-primary ml-3"
+                title="Filtro de ejercicios entre dos periodos">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+        {% endif %}
+    </form>
 
-    <select class="ml-1" name="group" id="clase" onchange="this.parentNode.submit()">
-      <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
-        {% for group in groups %}
-            <option id = "{{group.name}}" value="{{group.id}}"> {{group.name}} </option>
-        {% endfor %}
-</select>
-         {% if login.is_staff %}
-          <input name="start" type="hidden" value="{{desde}}">
-         <input  name="end" type="hidden" value="{{hasta}}">
-         {% endif %}
-   </form>
-
-            {% if login.is_staff %}
-        <div class="d-flex justify-content-center ml-">
-    <p class="h4 ml-3 mr-1">Desde: </p>
-<input id="desde_date" type="date" data-date="{{hasta}}" data-date-format="DD MMMM YYYY"
-       value="{{desde}}" min="{{desde}}" max="{{hasta}}">
-        <p class="h4 ml-3 mr-1">Hasta: </p>
-<input id= "hasta_date" type="date" data-date="{{desde}}" data-date-format="DD MMMM YYYY"
-       value="{{hasta}}" max="{{hasta}}" min="{{desde}}">
-
-       <button id="filterButton" type="button" class="btn btn-primary ml-3"
-               title="Filtro de ejercicios entre dos periodos">
-           <i class="fas fa-filter"></i> Filtrar</button>
-              </div>
-    {% endif %}
-
-<script>
-    $('#filterButton').on('click', function (e) {
-    var desde = document.getElementById('desde_date').value;
-    var hasta = document.getElementById('hasta_date').value;
-    var hasta_max = document.getElementById('hasta_date').max;
-    var hasta_min = document.getElementById('hasta_date').min;
-    var desde_max = document.getElementById('desde_date').max;
-    var desde_min = document.getElementById('desde_date').min;
-    if(desde== null){
-      alert('La fecha desde no puede ser nula, inserte una válida.')
-    }
-    else if(hasta == null){
-      alert('La fecha hasta no puede ser nula, inserte una válida.')
-    }
-    else if(desde_min > desde){
-     alert('La fecha desde no puede ser menor que la fecha ' + desde_min + ', inserte una fecha válida')
-    }
-    else if(desde_max < desde){
-         alert('La fecha desde no puede ser mayor que la fecha ' + desde_max + ', inserte una fecha válida')
-
-    }
-   else if(hasta_min > hasta){
-            alert('La fecha hasta no puede ser menor que la fecha ' + hasta_min + ', inserte una fecha válida')
-    }
-    else if(hasta_max < hasta){
-             alert('La fecha hasta no puede ser mayor que la fecha ' + hasta_max + ', inserte una fecha válida')
-    }
-    else if(hasta < desde){
-        alert('La fecha desde no puede ser mayor que la fecha hasta, inserte fechas válidas')
-    }
-
-})
-</script>
-
-<div class="col md-3">
-    <button class="bg-white border-0 float-right"title="Leyenda" data-target="#exampleModal" data-toggle="modal" type="button"><i class="far fa-question-circle fa-2x"></i></button>
-
+    <div class="col">
+        <button class="bg-white border-0 float-right"title="Leyenda" data-target="#exampleModal" data-toggle="modal"
+                type="button"><i class="far fa-question-circle fa-2x"></i></button>
+    </div>
 </div>
-</div>
-<p>{{hola}}</p>
+
 
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog  modal-lg">

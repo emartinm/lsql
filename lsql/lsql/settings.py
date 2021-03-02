@@ -24,6 +24,3 @@ if os.environ.get('DJANGO_DEVELOPMENT'):
 else:
     logger.debug('Loading DEPLOY settings')
     from .settings_deploy import *
-
-USE_L10N = True
-USE_TZ = False

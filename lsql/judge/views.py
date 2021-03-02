@@ -3,7 +3,7 @@
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 Functions that process HTTP connections
 """
-from datetime import date
+from datetime import datetime
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
@@ -48,9 +48,9 @@ def index(_):
 
 def firstDayOfCourse():
     """Returned on the first day of the academic year"""
-    if 1 <= date.today().month < 9:
-        return date(date.today().year-1, 9, 1).strftime('%Y-%m-%d')
-    return date(date.today().year, 9, 1).strftime('%Y-%m-%d')
+    if 1 <= datetime.today().month < 9:
+        return datetime(datetime.today().year-1, 9, 1).strftime('%Y-%m-%d')
+    return datetime(datetime.today().year, 9, 1).strftime('%Y-%m-%d')
 
 
 def for_loop(user_logged, user, collection, start, end):
@@ -139,9 +139,12 @@ def show_result(request, collection_id):
                         position = position + 1
                     else:
                         users[i].pos = position
-
+            up_to_classification = datetime.today().strftime('%Y-%m-%d')
+            from_classification = firstDayOfCourse()
             return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
                                                     'login': request.user, 'group0': group0,
+                                                    'hasta_fijo': up_to_classification,
+                                                    'desde_fijo': from_classification,
                                                     'hasta': end, 'desde': start})
 
         return HttpResponseForbidden("Forbidden")
@@ -165,10 +168,15 @@ def show_results(request):
         # Templates can only invoke nullary functions or access object attribute, so we store
         # the number of problems solved by the user in an attribute
         results.num_solved = results.num_solved_by_user(request.user)
-    up_to_classification = date.today().strftime('%Y-%m-%d')
+    up_to_classification = datetime.today().strftime('%Y-%m-%d')
+    up_to_classification_date = datetime.strptime(up_to_classification, '%Y-%m-%d')
+
     from_classification = firstDayOfCourse()
+    from_classification_date = datetime.strptime(from_classification, '%Y-%m-%d')
     return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
                                            'desde': from_classification,
+                                           'desde_fijo': from_classification,
+                                           'hasta_fijo': up_to_classification,
                                            'hasta': up_to_classification})
 
 
