@@ -5,8 +5,8 @@
 {% random_id 15 as id %}
 {% if name %}
 <div class="d-flex">
-    <h3><code>{{name}}</code></h3>
-    <button class="btn btn-primary btn-sm mt-1 ml-3 mb-3" data-toggle="collapse" data-target="#table-{{ id }}">+</button>
+    <h3><div class="tableName">{{name}}</div></h3>
+    <button class="btn btn-primary btn-sm mt-1 m-1" data-toggle="collapse" data-target="#table-{{ id }}">+</button>
 </div>
 {% endif %}
 {% if mark_rows %}

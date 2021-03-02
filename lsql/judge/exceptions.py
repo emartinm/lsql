@@ -16,9 +16,10 @@ class ZipFileParsingException(Exception):
 
 class ExecutorException(Exception):
     """Exception when calling the DB executor"""
-    def __init__(self, error_code, message='', statement=''):
+    def __init__(self, error_code, message='', statement='', position=(0, 0)):
         super().__init__(message)
         self.message = message
         # value from types.SelectStatusCode
         self.error_code = error_code
         self.statement = statement
+        self.position = position

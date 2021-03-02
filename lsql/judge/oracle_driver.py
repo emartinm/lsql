@@ -25,7 +25,7 @@ from .types import OracleStatusCode
 
 def clean_sql(code, min_stmt=None, max_stmt=None):
     """
-    Parses SQL code into statements (removing comments and empty lines).
+    Parses SQL code into statements (removing ';').
     :param code: str containing SQL code
     :param min_stmt: minimum number of statements
     :param max_stmt: maximum number of statements
@@ -33,8 +33,7 @@ def clean_sql(code, min_stmt=None, max_stmt=None):
     """
     if code is None:
         code = ""
-    statements = [sqlparse.format(s, strip_comments=True).rstrip('\n\t ;') for s in sqlparse.split(code)]
-    statements = [s for s in statements if len(s) > 0]
+    statements = [s.replace(';', ' ') for s in sqlparse.split(code)]
     num_sql = len(statements)
     if (min_stmt and num_sql < min_stmt) or (max_stmt and num_sql > max_stmt):
         statements = None
@@ -52,6 +51,23 @@ def random_str(alphabet, size=8):
     for _ in range(size):
         ret += random.choice(alphabet)
     return ret
+
+
+def line_col_from_offset(code: str, offset: int):
+    """
+    Returns the line and columns of an offset in a code
+    :param offset:
+    :param code:
+    :return: pair (int, int) of (line, col)
+    """
+    line = 0
+    last_line_init = 0
+    for i in range(offset):
+        if code[i] == '\n':
+            last_line_init = i+1
+            line += 1
+    col = offset - last_line_init
+    return line, col
 
 
 def uniform_dict(dictionary):
@@ -202,6 +218,14 @@ def get_compilation_errors(conn):
                                  TEXT "Error detectado", ATTRIBUTE "Criticidad" 
                           FROM SYS.USER_ERRORS''')
         return table_from_cursor(cursor)
+
+
+def offset_from_oracle_exception(excp: cx_Oracle.DatabaseError) -> int:
+    """Extracts the offset from a DataBaseError"""
+    # pylint---: disable = no-member
+    # Locally disabled memeber checks because pylint thinks oracle_error is str
+    oracle_error, = excp.args
+    return oracle_error.offset
 
 
 # Dropping users will automatically remove all their objects
@@ -374,20 +398,22 @@ class OracleExecutor:
         """
         Returns the number of dangling users, i.e., users created more than 'age_seconds' ago
         :param age_seconds: (int) number of seconds
-        :return: None
+        :return: (int), -1 if error
         """
         gestor = None
+        num = -1
         try:
             gestor = self.connection_pool.acquire()
             with gestor.cursor() as cursor:
                 cursor.execute(self.__NUM_DANGLING_USERS, age_seconds=age_seconds)
                 row = cursor.fetchone()
-                return row[0]
+                num = row[0]
         except cx_Oracle.DatabaseError as excp:  # pragma: no cover
             logger.error('Unable to get number of dangling users. Reason: %s', excp)
         finally:
             if gestor is not None:
                 self.connection_pool.release(gestor)
+        return num
 
     def drop_user(self, user_name, connection):
         """
@@ -468,7 +494,8 @@ class OracleExecutor:
             if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, select) from excp
-            raise ExecutorException(state, error_msg, select) from excp
+            pos = line_col_from_offset(select, offset_from_oracle_exception(excp))
+            raise ExecutorException(state, error_msg, select, pos) from excp
         finally:
             if conn:
                 conn.close()

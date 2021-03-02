@@ -20,3 +20,13 @@ div#codigo {
     width: 100%;
     margin: auto;
 }
+
+div#feedback_line {
+    font-weight: bold;
+    font-style: oblique;
+}
+
+.tableName {
+    font-weight: bold;
+    font-size:smaller;
+}

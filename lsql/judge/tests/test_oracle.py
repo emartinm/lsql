@@ -8,7 +8,7 @@ import time
 
 from django.test import TestCase
 
-from judge.oracle_driver import OracleExecutor, clean_sql
+from judge.oracle_driver import OracleExecutor, clean_sql, line_col_from_offset
 from judge.models import SelectProblem, Collection, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem
 from judge.types import VeredictCode, OracleStatusCode
 from judge.exceptions import ExecutorException
@@ -574,3 +574,17 @@ class OracleTest(TestCase):
         oracle.remove_dangling_users(age_seconds=1)
         after = oracle.get_number_dangling_users(age_seconds=1)
         self.assertGreater(before, after)  # There are less dangling users (we cannot assure all have dissapear )
+
+    def test_pos_from_offset(self):
+        """Test the extraction of line-col from offset"""
+        code = """SELECT cif, sede
+FROM club
+WHERE num_socios > 0
+      AND num_socios < 10;"""
+        self.assertEqual(line_col_from_offset(code, 0), (0, 0))
+        self.assertEqual(line_col_from_offset(code, 12), (0, 12))
+        self.assertEqual(line_col_from_offset(code, 16), (0, 16))
+        self.assertEqual(line_col_from_offset(code, 22), (1, 5))
+        self.assertEqual(line_col_from_offset(code, 27), (2, 0))
+        self.assertEqual(line_col_from_offset(code, 33), (2, 6))
+        self.assertEqual(line_col_from_offset(code, 71), (3, 23))
