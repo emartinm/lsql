@@ -252,6 +252,19 @@ def show_submission(request, submission_id):
 
 
 @login_required
+def download_submission(request, submission_id):
+    """ Return a script with te code of submission """
+    submission = get_object_or_404(Submission, pk=submission_id)
+    if submission.user != request.user and not request.user.is_staff:
+        return HttpResponseForbidden("Forbidden")
+    response = HttpResponse()
+    response['Content-Type'] = 'application/sql'
+    response['Content-Disposition'] = "attachment; filename=code.sql"
+    response.write(submission.code)
+    return response
+
+
+@login_required
 def download(_, problem_id):
     """Returns a script with the creation and insertion of the problem"""
     get_object_or_404(Problem, pk=problem_id)
@@ -288,10 +301,13 @@ def submit(request, problem_id):
             # Exceptions when judging: RE, TLE, VE or IE
             if excp.error_code == OracleStatusCode.EXECUTE_USER_CODE:
                 data = {
-                    'veredict': VeredictCode.RE, 'title': VeredictCode.RE.label,
+                    'veredict': VeredictCode.RE,
+                    'title': VeredictCode.RE.label,
                     'message': VeredictCode.RE.message(),
                     'feedback': f'{excp.statement} --> {excp.message}' if problem.problem_type() == ProblemType.FUNCTION
-                    else excp.message}
+                    else excp.message,
+                    'position': excp.position
+                }
             elif excp.error_code == OracleStatusCode.TLE_USER_CODE:
                 data = {'veredict': VeredictCode.TLE, 'title': VeredictCode.TLE.label,
                         'message': VeredictCode.TLE.message(), 'feedback': ''}
