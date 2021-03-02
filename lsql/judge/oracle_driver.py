@@ -220,6 +220,14 @@ def get_compilation_errors(conn):
         return table_from_cursor(cursor)
 
 
+def offset_from_oracle_exception(excp: cx_Oracle.DatabaseError) -> int:
+    """Extracts the offset from a DataBaseError"""
+    # pylint---: disable = no-member
+    # Locally disabled memeber checks because pylint thinks oracle_error is str
+    oracle_error, = excp.args
+    return oracle_error.offset
+
+
 # Dropping users will automatically remove all their objects
 # I keep this function just in case is useful in the future
 # def empty_schema(conn):
@@ -486,10 +494,7 @@ class OracleExecutor:
             if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, select) from excp
-            # pylint: disable = no-member
-            # Locally disabled memeber checks because thinks oracle_error is str
-            oracle_error, = excp.args
-            pos = line_col_from_offset(select, oracle_error.offset)
+            pos = line_col_from_offset(select, offset_from_oracle_exception(excp))
             raise ExecutorException(state, error_msg, select, pos) from excp
         finally:
             if conn:
