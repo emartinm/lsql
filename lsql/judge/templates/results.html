@@ -6,13 +6,13 @@
 <div class="d-flex mb-3">
     <h2 class="float-left">Colección: {{collection.name_html|safe}}</h2>
 <div class="col md-3">
-    <h2 class="float-right">Desde {{desde_date|date:'Y-m-d H:i'}} hasta {{hasta_date}}</h2>
+    <h2 class="float-right">Desde {{desdeDate}} hasta {{hasta_date|date:"d/m/Y"}}</h2>
 </div>
 </div>
 {% else %}
     <h2 class="text-center mb-3">Colección: {{collection.name_html|safe}}</h2>
 {% endif %}
-<div class="d-flex">
+<div class="d-flex mb-1">
     <form class="d-flex" method="get" action="{% url 'judge:result' collection.id %}">
         <p class="h4">Grupo:</p>
         <select class="ml-1" name="group" id="clase" onchange="this.parentNode.submit()">
