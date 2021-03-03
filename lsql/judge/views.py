@@ -54,9 +54,13 @@ def first_day_of_course():
     return datetime.datetime(datetime.datetime.today().year, 9, 1).strftime('%Y-%m-%d')
 
 
-def for_loop(user_logged, user, collection, start, end):
-    """From each exercise of the collection assigns the attempts and success for each user"""
-    for numb in range(0, collection.problem_list.count()):
+def update_user_with_scores(user_logged, user, collection, start, end):
+    """Updates user object with information about submissions to problems in collection:
+       - user.score (int)
+       - user.collection (list of str representing "accepted submissions/all submission (first AC)") for problems in
+         collection (THE SAME ORDER)
+    """
+    for numb in range(collection.problem_list.count()):
         num_accepted = 0
         enter = False
         attempts = 0
@@ -71,17 +75,15 @@ def for_loop(user_logged, user, collection, start, end):
 
         else:
             subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
-        length = len(subs)
-        for submission in range(0, length):
-            if subs[submission].veredict_code == VeredictCode.AC:
+        for (submission_pos, submission) in enumerate(subs):
+            if submission.veredict_code == VeredictCode.AC:
                 num_accepted = num_accepted + 1
             if num_accepted == 1 and not enter:
                 enter = True
-                user.first_AC = submission + 1
-                user.score = user.score + submission + 1
+                user.first_AC = submission_pos + 1
+                user.score = user.score + submission_pos + 1
             attempts = attempts + 1
-
-        solved(attempts, user, problem, num_accepted, collection, numb, enter)
+        update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb, enter)
 
 
 def check_dates(request, start, end, up_to_classification_date, from_classification_date,
@@ -108,8 +110,8 @@ def check_dates(request, start, end, up_to_classification_date, from_classificat
     return None
 
 
-def solved(attempts, user, problem, num_accepted, collection, numb, enter):
-    """Adds the problem to the user's collection and assigns the number of submissions"""
+def update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb, enter):
+    """Updates user.collection list with problem information:  "accepted submissions/all submission (first AC)"""
     if attempts > 0 and user.first_AC == 0:
         problem.num_submissions = f"{num_accepted}/{attempts} ({attempts})"
         problem.solved = False
@@ -123,18 +125,16 @@ def solved(attempts, user, problem, num_accepted, collection, numb, enter):
 
 @login_required
 def show_result(request, collection_id):
-    """show datatable of a group"""
+    """show the ranking of a group (GET param) for collection_id"""
     if not Group.objects.all():
         # Show an informative message if there are not groups in the system
         return render(request, 'generic_error_message.html',
-                      {'error': ['¡Lo sentimos! No se han configurado grupos configurados en el juez para ver '
-                                 'resultados']})
+                      {'error': ['¡Lo sentimos! No existe ningún grupo para ver resultados']})
     position = 1
     try:
         start = request.GET.get('start')
         end = request.GET.get('end')
         group_id = request.GET.get('group')
-        print(start)
         up_to_classification_date = None
         from_classification_date = None
         up_to_classification = datetime.datetime.today().strftime('%Y-%m-%d')
@@ -168,10 +168,10 @@ def show_result(request, collection_id):
                 user.collection = []
                 user.resolved = 0
                 user.score = 0
-                for_loop(request.user, user, collection, start, end)
+                update_user_with_scores(request.user, user, collection, start, end)
             users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
             length = len(users)
-            for i in range(0, length):
+            for i in range(length):
                 if i != len(users) - 1:
                     if pos(users[i], users[i + 1]):
                         users[i].pos = position
@@ -205,8 +205,7 @@ def show_results(request):
     if not Group.objects.all():
         # Show an informative message if there are not groups in the system
         return render(request, 'generic_error_message.html',
-                      {'error': ['¡Lo sentimos! No se han configurado grupos configurados en el juez para ver '
-                                 'resultados']})
+                      {'error': ['¡Lo sentimos! No existe ningún grupo para ver resultados']})
 
     cols = Collection.objects.all().order_by('position', '-creation_date')
     groups_user = request.user.groups.all().order_by('name')
