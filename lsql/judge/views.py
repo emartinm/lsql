@@ -46,30 +46,32 @@ def index(_):
     return HttpResponseRedirect(reverse('judge:collections'))
 
 
-def for_loop(user, collection):
-    """From each exercise of the collection assigns the attempts and success for each user"""
-    for numb in range(0, collection.problem_list.count()):
+def update_user_with_scores(user, collection):
+    """Updates user object with information about submissions to problems in collection:
+       - user.score (int)
+       - user.collection (list of str representing "accepted submissions/all submission (first AC)") for problems in
+         collection (THE SAME ORDER)
+    """
+    for numb in range(collection.problem_list.count()):
         num_accepted = 0
         enter = False
         attempts = 0
         problem = collection.problem_list[numb]
         user.first_AC = 0
         subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
-        length = len(subs)
-        for submission in range(0,  length):
-            if subs[submission].veredict_code == VeredictCode.AC:
+        for (submission_pos, submission) in enumerate(subs):
+            if submission.veredict_code == VeredictCode.AC:
                 num_accepted = num_accepted + 1
             if num_accepted == 1 and not enter:
                 enter = True
-                user.first_AC = submission + 1
-                user.score = user.score + submission + 1
+                user.first_AC = submission_pos + 1
+                user.score = user.score + submission_pos + 1
             attempts = attempts + 1
+        update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb)
 
-        solved(attempts, user, problem, num_accepted, collection, numb)
 
-
-def solved(attempts, user, problem, num_accepted, collection, numb):
-    """Adds the problem to the user's collection and assigns the number of submissions"""
+def update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb):
+    """Updates user.collection list with problem information:  "accepted submissions/all submission (first AC)"""
     if attempts > 0 and user.first_AC == 0:
         problem.num_submissions = f"{num_accepted}/{attempts} ({attempts})"
     else:
@@ -82,12 +84,11 @@ def solved(attempts, user, problem, num_accepted, collection, numb):
 
 @login_required
 def show_result(request, collection_id):
-    """show datatable of a group"""
+    """show the ranking of a group (GET param) for collection_id"""
     if not Group.objects.all():
         # Show an informative message if there are not groups in the system
         return render(request, 'generic_error_message.html',
-                      {'error': ['¡Lo sentimos! No se han configurado grupos configurados en el juez para ver '
-                                 'resultados']})
+                      {'error': ['¡Lo sentimos! No existe ningún grupo para ver resultados']})
     position = 1
     try:
         group_id = request.GET.get('group')
@@ -111,10 +112,10 @@ def show_result(request, collection_id):
                 user.collection = []
                 user.resolved = 0
                 user.score = 0
-                for_loop(user, collection)
+                update_user_with_scores(user, collection)
             users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
             length = len(users)
-            for i in range(0, length):
+            for i in range(length):
                 if i != len(users) - 1:
                     if pos(users[i], users[i + 1]):
                         users[i].pos = position
@@ -142,8 +143,7 @@ def show_results(request):
     if not Group.objects.all():
         # Show an informative message if there are not groups in the system
         return render(request, 'generic_error_message.html',
-                      {'error': ['¡Lo sentimos! No se han configurado grupos configurados en el juez para ver '
-                                 'resultados']})
+                      {'error': ['¡Lo sentimos! No existe ningún grupo para ver resultados']})
 
     cols = Collection.objects.all().order_by('position', '-creation_date')
     groups_user = request.user.groups.all().order_by('name')

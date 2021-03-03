@@ -180,73 +180,72 @@ class ViewsTest(TestCase):
 
         # Root redirects to collection
         response = client.get('/sql/', follow=True)
-        self.assertEqual(response.redirect_chain,
-                         [(collections_url, 302)])
+        self.assertEqual(response.redirect_chain, [(collections_url, 302)])
 
         # OK and one collection with title
         response = client.get(collections_url, follow=True)
-        self.assertTrue(response.status_code == 200 and collection.name_md in str(response.content))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(collection.name_md, response.content.decode('utf-8'))
 
         # OK and one problem in collection
         response = client.get(collection_url, follow=True)
-        self.assertTrue(response.status_code == 200 and problem.title_md in str(response.content))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(problem.title_md, response.content.decode('utf-8'))
 
         # OK and title in problem page
         response = client.get(problem_url, follow=True)
-        self.assertTrue(response.status_code == 200 and problem.title_md in str(response.content))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(problem.title_md, response.content.decode('utf-8'))
 
         # NotFound
         response = client.get(no_problem_url, follow=True)
-        self.assertTrue(response.status_code == 404)
+        self.assertEqual(response.status_code, 404)
 
         # JSON with AC
         response = client.post(submit_url, {'code': problem.solution}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.AC)
+        self.assertEqual(response.json()['veredict'], VeredictCode.AC)
 
         # JSON with WA
         response = client.post(submit_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.WA)
+        self.assertEqual(response.json()['veredict'], VeredictCode.WA)
 
         # JSON with VE
         response = client.post(submit_url, {'code': ''}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
 
         # JSON with VE
-        response = client.post(submit_url, {'code': 'select * from test; select * from test;'},
-                               follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        response = client.post(submit_url, {'code': 'select * from test; select * from test;'}, follow=True)
+        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
 
         # JSON with TLE
         tle = judge.tests.test_oracle.SELECT_TLE
         response = client.post(submit_url, {'code': tle}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.TLE)
+        self.assertEqual(response.json()['veredict'], VeredictCode.TLE)
 
         # JSON with RE (table and column do not exist)
         response = client.post(submit_url, {'code': 'SELECT pumba FROM timon'}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.RE)
+        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
 
         # There must be 7 submission to problem
         response = client.get(submissions_url, follow=True)
-        html = str(response.content)
-        self.assertEqual(html.count(problem.title_md), 7)
+        self.assertEqual(response.content.decode('utf-8').count(problem.title_md), 7)
 
         # JSON with VE (new Problem)
         response = client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
 
         # There must be 1 submission to new problem
         response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
-        html = str(response.content)
-        self.assertEqual(html.count(problem_dml.title_md), 1)
+        self.assertEqual(response.content.decode('utf-8').count(problem_dml.title_md), 1)
 
         # problem_id is not numeric
         response = client.get(submissions_url, {'problem_id': 'problem', 'user_id': 'user'}, follow=True)
-        self.assertTrue(response.status_code == 404 and
-                        'El identificador no tiene el formato correcto' in str(response.content))
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('El identificador no tiene el formato correcto', response.content.decode('utf-8'))
 
         # Submission contains user code
         response = client.get(submission_url, follow=True)
-        self.assertTrue('select *** from *** where *** and more' in str(response.content))
+        self.assertIn('select *** from *** where *** and more', response.content.decode('utf-8'))
 
         # status_code OK
         response = client.get(pass_done_url, follow=True)
@@ -259,14 +258,13 @@ class ViewsTest(TestCase):
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, 403)
         response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
-        self.assertIn('Forbidden', str(response.content))
+        self.assertIn('Forbidden', response.content.decode('utf-8'))
         client.logout()
         # create a teacher and show submission to user pepe
         teacher = create_superuser('1111', 'teacher')
         client.login(username=teacher.username, password='1111')
         response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
-        html = str(response.content)
-        self.assertEqual(html.count(problem_dml.title_md), 1)
+        self.assertEqual(response.content.decode('utf-8').count(problem_dml.title_md), 1)
         client.logout()
 
     def test_visibility_submission(self):
@@ -284,21 +282,21 @@ class ViewsTest(TestCase):
         client.login(username='pepe', password='5555')
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('select *** from *** where *** and more', str(response.content))
+        self.assertIn('select *** from *** where *** and more', response.content.decode('utf-8'))
         client.logout()
 
         # A teacher can access submission details from a different user
         client.login(username='mr_teacher', password='aaaa')
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('select *** from *** where *** and more', str(response.content))
+        self.assertIn('select *** from *** where *** and more', response.content.decode('utf-8'))
         client.logout()
 
         # Non-teacher user cannot access submission details from a different uset
         client.login(username='ana', password='1234')
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, 403)
-        self.assertIn('Forbidden', str(response.content))
+        self.assertIn('Forbidden', response.content.decode('utf-8'))
         client.logout()
 
     def test_show_problems(self):
@@ -327,7 +325,8 @@ class ViewsTest(TestCase):
             problem.save()
             problem_url = reverse('judge:problem', args=[problem.pk])
             response = client.get(problem_url, follow=True)
-            self.assertTrue(response.status_code == 200 and problem.title_md in str(response.content))
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(problem.title_md, response.content.decode('utf-8'))
 
     def test_download(self):
         """Download the script of a problem (CREATE + INSERT)"""
@@ -367,7 +366,7 @@ class ViewsTest(TestCase):
             )
             self.assertEqual(response.content.decode('UTF-8'), script)
 
-            self.assertTrue(response.status_code == 200)
+            self.assertEqual(response.status_code, 200)
 
     def test_show_result_classification(self):
         """test to show the classification"""
@@ -401,31 +400,34 @@ class ViewsTest(TestCase):
         # I see group b where there is only the teacher
         # the table is empty because there is only the teacher
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
+        html = response.content.decode('utf-8')
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(user_2.username not in str(response.content) and user_1.username not in str(response.content))
+        self.assertNotIn(user_2.username, html)
+        self.assertNotIn(user_1.username, html)
 
         # I find that there are two exercises in the collection
-        self.assertIn(select_problem.title_md, str(response.content))
-        self.assertIn(dml_problem.title_md, str(response.content))
-        self.assertIn(select_problem_2.title_md, str(response.content))
+        self.assertIn(select_problem.title_md, html)
+        self.assertIn(dml_problem.title_md, html)
+        self.assertIn(select_problem_2.title_md, html)
 
         # I look at the group to where the students are
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertIn(user_1.username, str(response.content))
-        self.assertIn(user_2.username, str(response.content))
+        self.assertIn(user_1.username, response.content.decode('utf-8'))
+        self.assertIn(user_2.username, response.content.decode('utf-8'))
 
         # I am connected to a non-existent group
         response = client.get(classification_url, {'group': 999}, follow=True)
         self.assertEqual(response.status_code, 404)
 
         response = client.get(classification_url, follow=True)
-        self.assertTrue(user_1.username, str(response.content))
-        self.assertIn(user_2.username, str(response.content))
+        self.assertIn(user_1.username, response.content.decode('utf-8'))
+        self.assertIn(user_2.username, response.content.decode('utf-8'))
 
         # I connect to a non-numeric group
         response = client.get(classification_url, {'group': '1A'}, follow=True)
         msg = 'El identificador de grupo no tiene el formato correcto'
-        self.assertTrue(response.status_code == 404 and msg in str(response.content))
+        self.assertEqual(response.status_code, 404)
+        self.assertIn(msg, response.content.decode('utf-8'))
         client.logout()
         client.login(username=user_1.username, password='12345')
 
@@ -442,9 +444,9 @@ class ViewsTest(TestCase):
         client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
 
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertIn('1/2 (2)', str(response.content))
-        self.assertIn('1/4 (4)', str(response.content))
-        self.assertIn('6', str(response.content))
+        self.assertIn('1/2 (2)', response.content.decode('utf-8'))
+        self.assertIn('1/4 (4)', response.content.decode('utf-8'))
+        self.assertIn('6', response.content.decode('utf-8'))
 
         client.logout()
         client.login(username=user_2.username, password='12345')
@@ -458,18 +460,16 @@ class ViewsTest(TestCase):
         client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
 
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertIn('3/3 (1)', str(response.content))
-        self.assertIn('1/3 (3)', str(response.content))
-        self.assertIn('4', str(response.content))
+        html = response.content.decode('utf-8')
+        for fragment in ['3/3 (1)', '1/3 (3)', '4']:
+            self.assertIn(fragment, html)
 
         # ana's position is better than pepe's position
-        index_ana = str(response.content).index('ana')
-        index_pepe = str(response.content).index('pepe')
-        self.assertTrue(index_ana < index_pepe)
+        self.assertLess(html.index('ana'), html.index('pepe'))
 
         client.post(submit_select_2_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertIn('0/1 (1)', str(response.content))
+        self.assertIn('0/1 (1)', response.content.decode('utf-8'))
 
         client.logout()
 
@@ -492,9 +492,9 @@ class ViewsTest(TestCase):
         response = client.get(result_url, follow=True)
         title = 'Colecciones'
         self.assertEqual(response.status_code, 200)
-        self.assertIn(collection.name_md, str(response.content))
-        self.assertIn(collection_2.name_md, str(response.content))
-        self.assertIn(title, str(response.content))
+        self.assertIn(collection.name_md, response.content.decode('utf-8'))
+        self.assertIn(collection_2.name_md, response.content.decode('utf-8'))
+        self.assertIn(title, response.content.decode('utf-8'))
         client.logout()
         # the user without a group can't see the page results
         client.login(username=user2.username, password='123456')
@@ -502,8 +502,11 @@ class ViewsTest(TestCase):
         msg = 'Lo sentimos! No tienes asignado un grupo de la asignatura'
         msg1 = 'Por favor, contacta con tu profesor para te asignen un grupo de clase.'
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(msg1 in str(response.content) and msg in str(response.content))
+        html = response.content.decode('utf-8')
+        self.assertIn(msg, html)
+        self.assertIn(msg1, html)
         client.logout()
+
         # I connect with a teacher without groups
         teacher = create_superuser('12345', 'teacher')
         client.login(username=teacher.username, password='12345')
@@ -521,20 +524,20 @@ class ViewsTest(TestCase):
         # URL for connections
         result_url = reverse('judge:results')
         classification_url = reverse('judge:result', args=[collection.pk])
-        msg = 'Lo sentimos! No se han configurado grupos configurados en el juez para ver resultados'
+        msg = '¡Lo sentimos! No existe ningún grupo para ver resultados'
 
         client.login(username=user.username, password='123456')
         for url in [result_url, classification_url]:
             response = client.get(url, follow=True)
             self.assertEqual(response.status_code, 200)
-            self.assertIn(msg, str(response.content))
+            self.assertIn(msg, response.content.decode('utf-8'))
         client.logout()
 
         client.login(username=teacher.username, password='12345')
         for url in [result_url, classification_url]:
             response = client.get(url, follow=True)
             self.assertEqual(response.status_code, 200)
-            self.assertIn(msg, str(response.content))
+            self.assertIn(msg, response.content.decode('utf-8'))
 
     def test_compile_error(self):
         """Submitting code for a function/procedure/trigger with a compile error does resturn a
@@ -663,25 +666,25 @@ class ViewsTest(TestCase):
         # JSON with VE and correct message for one SQL
         response = client.post(submit_url_select, {'code': f'{select_problem.solution}; {select_problem.solution}'},
                                follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
         self.assertIn('exactamente 1 sentencia SQL', response.json()['message'])
 
         # JSON with VE and correct message for 1--3 SQL
         stmt = 'INSERT INTO test VALUES (25);'
         response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
         self.assertIn('entre 2 y 3 sentencias SQL', response.json()['message'])
 
         stmt = 'INSERT INTO test VALUES (25); INSERT INTO test VALUES (50); INSERT INTO test VALUES (75);' \
                'INSERT INTO test VALUES (100);'
         response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
         self.assertIn('entre 2 y 3 sentencias SQL', response.json()['message'])
 
         # JSON with VE and correct message for less than 10 characters
         stmt = 'holis'
         response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertTrue(response.json()['veredict'] == VeredictCode.VE)
+        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
         self.assertIn('tu solución no está vacía', response.json()['message'])
 
     def test_select_no_output(self):
@@ -699,7 +702,7 @@ class ViewsTest(TestCase):
 
         for stmt in stmts:
             response = client.post(submit_url_select, {'code': stmt}, follow=True)
-            self.assertTrue(response.json()['veredict'] == VeredictCode.WA)
+            self.assertEqual(response.json()['veredict'], VeredictCode.WA)
             self.assertIn('Generado por tu código SQL: 0 columnas', response.json()['feedback'])
 
     def test_download_submission(self):
@@ -738,7 +741,7 @@ class ViewsTest(TestCase):
         client.logout()
         client.login(username='juan', password='3333')
         response = client.get(url, follow=True)
-        self.assertIn('Forbidden', str(response.content))
+        self.assertIn('Forbidden', response.content.decode('UTF-8'))
 
         # Superuser download code submission
         client.logout()
