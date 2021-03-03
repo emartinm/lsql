@@ -510,6 +510,32 @@ class ViewsTest(TestCase):
         response = client.get(result_url, follow=True)
         self.assertEqual(response.status_code, 200)
 
+    def test_results_no_groups(self):
+        """The system does not crash if there are not groups defined"""
+        client = Client()
+        # Create 2 collections
+        collection = create_collection('Coleccion 1')
+        # Create 1 user and 1 superuser
+        user = create_user('123456', 'pepe')
+        teacher = create_superuser('12345', 'teacher')
+        # URL for connections
+        result_url = reverse('judge:results')
+        classification_url = reverse('judge:result', args=[collection.pk])
+        msg = 'Lo sentimos! No se han configurado grupos configurados en el juez para ver resultados'
+
+        client.login(username=user.username, password='123456')
+        for url in [result_url, classification_url]:
+            response = client.get(url, follow=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(msg, str(response.content))
+        client.logout()
+
+        client.login(username=teacher.username, password='12345')
+        for url in [result_url, classification_url]:
+            response = client.get(url, follow=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(msg, str(response.content))
+
     def test_compile_error(self):
         """Submitting code for a function/procedure/trigger with a compile error does resturn a
         OracleStatusCode.COMPILATION_ERROR"""
@@ -728,27 +754,3 @@ class ViewsTest(TestCase):
             "application/sql"
         )
         self.assertEqual(response.content.decode('UTF-8'), submission.code)
-
-    def test_position_select_re(self):
-        """Test that the error message received contains the position of the error"""
-        client = Client()
-        create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
-        collection = create_collection('Colleccion de prueba XYZ')
-        problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        submit_url = reverse('judge:submit', args=[problem.pk])
-
-        response = client.post(submit_url, {'code': "SELOCT cif FROM Club"}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
-        self.assertEqual(response.json()['position'], [0, 0])
-
-        response = client.post(submit_url, {'code': "SELECT noexiste FROM test"}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
-        self.assertEqual(response.json()['position'], [0, 7])
-
-        stmt = """SELECT n
-FROM test
-WHERE 0 < noexiste"""
-        response = client.post(submit_url, {'code': stmt}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
-        self.assertEqual(response.json()['position'], [2, 10])

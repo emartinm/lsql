@@ -84,6 +84,11 @@ def solved(attempts, user, problem, num_accepted, collection, numb):
 @login_required
 def show_result(request, collection_id):
     """show datatable of a group"""
+    if not Group.objects.all():
+        # Show an informative message if there are not groups in the system
+        return render(request, 'generic_error_message.html',
+                      {'error': ['¡Lo sentimos! No se han configurado grupos configurados en el juez para ver '
+                                 'resultados']})
     position = 1
     try:
         group_id = request.GET.get('group')
@@ -117,7 +122,6 @@ def show_result(request, collection_id):
                         position = position + 1
                     else:
                         users[i].pos = position
-
                 else:
                     if pos(users[i], users[i - 1]):
                         users[i].pos = position
@@ -136,6 +140,12 @@ def show_result(request, collection_id):
 @login_required
 def show_results(request):
     """shows the links to enter the results of each collection"""
+    if not Group.objects.all():
+        # Show an informative message if there are not groups in the system
+        return render(request, 'generic_error_message.html',
+                      {'error': ['¡Lo sentimos! No se han configurado grupos configurados en el juez para ver '
+                                 'resultados']})
+
     cols = Collection.objects.all().order_by('position', '-creation_date')
     groups_user = request.user.groups.all().order_by('name')
     if groups_user.count() == 0 and not request.user.is_staff:
