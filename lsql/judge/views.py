@@ -105,9 +105,14 @@ def show_result(request, collection_id):
         start = request.GET.get('start')
         end = request.GET.get('end')
         group_id = request.GET.get('group')
+        print(start)
+        up_to_classification_date = None
+        from_classification_date = None
         collection = get_object_or_404(Collection, pk=collection_id)
         if request.user.is_staff:
             groups_user = Group.objects.all().order_by('name')
+            up_to_classification_date = datetime.datetime.strptime(end, '%Y-%m-%d')
+            from_classification_date = datetime.datetime.strptime(start, '%Y-%m-%d')
         else:
             if start is not None or end is not None:
                 return HttpResponseForbidden("Forbidden")
@@ -146,8 +151,7 @@ def show_result(request, collection_id):
                         users[i].pos = position
             up_to_classification = datetime.datetime.today().strftime('%Y-%m-%d')
             from_classification = firstDayOfCourse()
-            up_to_classification_date = datetime.datetime.strptime(end, '%Y-%m-%d')
-            from_classification_date = datetime.datetime.strptime(start, '%Y-%m-%d')
+
             return render(request, 'results.html', {'collection': collection, 'groups': groups_user,
                                                     'users': users, 'login': request.user,
                                                     'group0': group0,
