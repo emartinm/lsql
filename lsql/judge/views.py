@@ -47,7 +47,7 @@ def index(_):
     return HttpResponseRedirect(reverse('judge:collections'))
 
 
-def firstDayOfCourse():
+def first_day_of_course():
     """Returned on the first day of the academic year"""
     if 1 <= datetime.datetime.today().month < 9:
         return datetime.datetime(datetime.datetime.today().year - 1, 9, 1).strftime('%Y-%m-%d')
@@ -84,8 +84,8 @@ def for_loop(user_logged, user, collection, start, end):
         solved(attempts, user, problem, num_accepted, collection, numb, enter)
 
 
-def checkDates(request, start, end, up_to_classification_date, from_classification_date,
-               up_to_classification, from_classification):
+def check_dates(request, start, end, up_to_classification_date, from_classification_date,
+                up_to_classification, from_classification):
     """Function that checks the inserted dates"""
     if len(start) == 0:
         return render(request, 'generic_error_message.html',
@@ -138,14 +138,14 @@ def show_result(request, collection_id):
         up_to_classification_date = None
         from_classification_date = None
         up_to_classification = datetime.datetime.today().strftime('%Y-%m-%d')
-        from_classification = firstDayOfCourse()
+        from_classification = first_day_of_course()
         collection = get_object_or_404(Collection, pk=collection_id)
         if request.user.is_staff:
             groups_user = Group.objects.all().order_by('name')
             up_to_classification_date = datetime.datetime.strptime(end, '%Y-%m-%d')
             from_classification_date = datetime.datetime.strptime(start, '%Y-%m-%d')
-            ret = checkDates(request, start, end, up_to_classification_date, from_classification_date,
-                             up_to_classification, from_classification)
+            ret = check_dates(request, start, end, up_to_classification_date, from_classification_date,
+                              up_to_classification, from_classification)
             if ret is not None:
                 return ret
 
@@ -224,7 +224,7 @@ def show_results(request):
     up_to_classification = datetime.datetime.today().strftime('%Y-%m-%d')
     up_to_classification_date = datetime.datetime.strptime(up_to_classification, '%Y-%m-%d')
 
-    from_classification = firstDayOfCourse()
+    from_classification = first_day_of_course()
     from_classification_date = datetime.datetime.strptime(from_classification, '%Y-%m-%d')
     return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
                                            'start_date': from_classification, 'from_fixed': from_classification,
