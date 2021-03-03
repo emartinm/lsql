@@ -50,7 +50,7 @@ def index(_):
 def firstDayOfCourse():
     """Returned on the first day of the academic year"""
     if 1 <= datetime.datetime.today().month < 9:
-        return datetime.datetime(datetime.datetime.today().year-1, 9, 1).strftime('%Y-%m-%d')
+        return datetime.datetime(datetime.datetime.today().year - 1, 9, 1).strftime('%Y-%m-%d')
     return datetime.datetime(datetime.datetime.today().year, 9, 1).strftime('%Y-%m-%d')
 
 
@@ -84,6 +84,30 @@ def for_loop(user_logged, user, collection, start, end):
         solved(attempts, user, problem, num_accepted, collection, numb, enter)
 
 
+def checkDates(request, start, end, up_to_classification_date, from_classification_date,
+               up_to_classification, from_classification):
+    """Function that checks the inserted dates"""
+    if len(start) == 0:
+        return render(request, 'generic_error_message.html',
+                      {'error': ['¡Vaya! Parece ser que se ha olvidado rellenar la fecha desde.']})
+    if len(end) == 0:
+        return render(request, 'generic_error_message.html',
+                      {'error': ['¡Vaya! Parece ser que se ha olvidado rellenar la fecha hasta.']})
+
+    if up_to_classification < end or from_classification > start:
+        return render(request, 'generic_error_message.html',
+                      {'error': ['¡Error! Ha insertado una fecha que no corresponde al año académico',
+                                 f"Por favor, la fecha desde mínimo debe ser {from_classification}"
+                                 f" y la fecha hasta máximo hoy "
+                                 f"{up_to_classification}"]})
+    if up_to_classification_date < from_classification_date:
+        return render(request, 'generic_error_message.html',
+                      {'error': ['¡Error! La fecha desde no puede ser mayor que la fecha hasta.',
+                                 f"Fecha desde insertada {from_classification_date.strftime('%Y-%m-%d')}, "
+                                 f"fecha hasta insertada {up_to_classification_date.strftime('%Y-%m-%d')}"]})
+    return None
+
+
 def solved(attempts, user, problem, num_accepted, collection, numb, enter):
     """Adds the problem to the user's collection and assigns the number of submissions"""
     if attempts > 0 and user.first_AC == 0:
@@ -113,11 +137,18 @@ def show_result(request, collection_id):
         print(start)
         up_to_classification_date = None
         from_classification_date = None
+        up_to_classification = datetime.datetime.today().strftime('%Y-%m-%d')
+        from_classification = firstDayOfCourse()
         collection = get_object_or_404(Collection, pk=collection_id)
         if request.user.is_staff:
             groups_user = Group.objects.all().order_by('name')
             up_to_classification_date = datetime.datetime.strptime(end, '%Y-%m-%d')
             from_classification_date = datetime.datetime.strptime(start, '%Y-%m-%d')
+            ret = checkDates(request, start, end, up_to_classification_date, from_classification_date,
+                             up_to_classification, from_classification)
+            if ret is not None:
+                return ret
+
         else:
             if start is not None or end is not None:
                 return HttpResponseForbidden("Forbidden")
@@ -153,8 +184,6 @@ def show_result(request, collection_id):
                         position = position + 1
                     else:
                         users[i].pos = position
-            up_to_classification = datetime.datetime.today().strftime('%Y-%m-%d')
-            from_classification = firstDayOfCourse()
 
             return render(request, 'results.html', {'collection': collection, 'groups': groups_user,
                                                     'users': users, 'login': request.user,
@@ -260,7 +289,7 @@ def show_submissions(request):
                 end = request.GET.get('end')
                 problem = get_object_or_404(Problem, pk=pk_problem)
                 user = get_user_model().objects.filter(id=id_user)
-                subs = Submission.objects.filter(user=user.get())\
+                subs = Submission.objects.filter(user=user.get()) \
                     .filter(problem=problem.id, creation_date__range=[start, end]).order_by('-pk')
             else:
                 return HttpResponseForbidden("Forbidden")
