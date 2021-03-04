@@ -322,5 +322,4 @@ def test_error_500(request):
     if request.user and request.user.is_staff:
         elems = list()
         return HttpResponse(elems[55])  # list index out of range, error 500
-    else:
-        return HttpResponseNotFound()
+    return HttpResponseNotFound()
