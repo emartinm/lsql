@@ -286,10 +286,12 @@ def show_submissions(request):
             elif request.user.is_staff:
                 start = request.GET.get('start')
                 end = request.GET.get('end')
+                starts = datetime.datetime.strptime(start, '%Y-%m-%d')
+                ends = datetime.datetime.strptime(end, '%Y-%m-%d')
                 problem = get_object_or_404(Problem, pk=pk_problem)
                 user = get_user_model().objects.filter(id=id_user)
                 subs = Submission.objects.filter(user=user.get()) \
-                    .filter(problem=problem.id, creation_date__range=[start, end]).order_by('-pk')
+                    .filter(problem=problem.id, creation_date__range=[starts, ends + timedelta(days=1)]).order_by('-pk')
             else:
                 return HttpResponseForbidden("Forbidden")
 
