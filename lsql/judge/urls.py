@@ -33,5 +33,6 @@ urlpatterns = [
          ),
          name='password_change'
          ),
-    path('password_change_done/', views.password_change_done, name='password_change_done')
+    path('password_change_done/', views.password_change_done, name='password_change_done'),
+    path('test_error_500/', views.test_error_500, name='test_error_500'),
 ]
