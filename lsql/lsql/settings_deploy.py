@@ -1,8 +1,10 @@
 """
 Django setting that will be loaded only when DJANGO_DEVELOPMENT is defined in the environment
 
-Can define new setting or override previous settings in settings_shared
+Can define new settings or override previous settings in settings_shared
 """
+
+import os
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -32,3 +34,13 @@ SESSION_COOKIE_SECURE = True
 
 # AntiCSRF cookies are only sent through HTTPS
 CSRF_COOKIE_SECURE = True
+
+# For error reporting, sending e-mail for internal error (500)
+ADMINS = [('Enrique Martín', 'emartinm@ucm.es')]
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_SUBJECT_PREFIX = 'Error en learn.fdi.ucm.es: '
+EMAIL_HOST_USER = os.environ.get('REPORT_EMAIL_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('REPORT_EMAIL_PASS')
+SERVER_EMAIL = EMAIL_HOST_USER

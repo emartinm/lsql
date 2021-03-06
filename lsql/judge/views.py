@@ -314,3 +314,11 @@ def submit(request, problem_id):
 def password_change_done(request):
     """Password change confirmation"""
     return render(request, 'password_change_done.html')
+
+
+def test_error_500(request):
+    """Generates a server internal error, only for testing error reporting in deployment"""
+    if request.user and request.user.is_staff:
+        elems = list()
+        return HttpResponse(elems[55])  # list index out of range, error 500
+    return HttpResponseNotFound()
