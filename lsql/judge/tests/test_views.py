@@ -55,9 +55,10 @@ def create_collection(name='Prueba'):
 
 def create_start_course():
     """function that creates the first day of the course"""
+    first_day = datetime.datetime(datetime.datetime.today().year, 9, 1).strftime('%Y-%m-%d')
     if 1 <= datetime.datetime.today().month < 9:
-        return datetime.datetime(datetime.datetime.today().year - 1, 9, 1).strftime('%Y-%m-%d')
-    return datetime.datetime(datetime.datetime.today().year, 9, 1).strftime('%Y-%m-%d')
+        first_day = datetime.datetime(datetime.datetime.today().year - 1, 9, 1).strftime('%Y-%m-%d')
+    return first_day
 
 
 def create_user(passwd, username='usuario'):

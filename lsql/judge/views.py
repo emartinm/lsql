@@ -50,9 +50,10 @@ def index(_):
 
 def first_day_of_course():
     """Returned on the first day of the academic year"""
+    first_day = datetime.datetime(datetime.datetime.today().year, 9, 1).strftime('%Y-%m-%d')
     if 1 <= datetime.datetime.today().month < 9:
-        return datetime.datetime(datetime.datetime.today().year - 1, 9, 1).strftime('%Y-%m-%d')
-    return datetime.datetime(datetime.datetime.today().year, 9, 1).strftime('%Y-%m-%d')
+        first_day = datetime.datetime(datetime.datetime.today().year - 1, 9, 1).strftime('%Y-%m-%d')
+    return first_day
 
 
 def error_value(err):
