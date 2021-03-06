@@ -757,3 +757,26 @@ class ViewsTest(TestCase):
             "application/sql"
         )
         self.assertEqual(response.content.decode('UTF-8'), submission.code)
+
+    def test_error_500(self):
+        """Test that test_error_500/ generates error 404 for users and raises exception for staff"""
+        client = Client()
+        create_user('2222', 'tamara')
+        create_superuser('1111', 'teacher')
+        error_500_rul = reverse('judge:test_error_500')
+
+        # Unauthenticated users obtains 404
+        response = client.get(error_500_rul, follow=True)
+        self.assertEqual(response.status_code, 404)
+
+        # Studend also obtains 404
+        client.login(username='tamara', password='2222')
+        response = client.get(error_500_rul, follow=True)
+        self.assertEqual(response.status_code, 404)
+        client.logout()
+
+        # Staff raises exception (will generate error 500)
+        client.login(username='teacher', password='1111')
+        with self.assertRaises(IndexError, msg='list index out of range'):
+            client.get(error_500_rul, follow=True)
+        client.logout()
