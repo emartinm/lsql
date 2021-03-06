@@ -200,7 +200,7 @@ def show_result(request, collection_id):
                                                     'end_date': end, 'start_date': start})
 
         return HttpResponseForbidden("Forbidden")
-    except Exception(TypeError, ValueError) as err:
+    except (TypeError, ValueError) as err:
         return error_value(err)
 
 

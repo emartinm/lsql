@@ -54,6 +54,7 @@ def create_collection(name='Prueba'):
 
 
 def create_start_course():
+    """function that creates the first day of the course"""
     if 1 <= datetime.datetime.today().month < 9:
         return datetime.datetime(datetime.datetime.today().year - 1, 9, 1).strftime('%Y-%m-%d')
     return datetime.datetime(datetime.datetime.today().year, 9, 1).strftime('%Y-%m-%d')
@@ -270,12 +271,11 @@ class ViewsTest(TestCase):
         client.logout()
         # create a teacher and show submission to user pepe
         teacher = create_superuser('1111', 'teacher')
-        start = create_start_course()
-        end = datetime.datetime.today().strftime('%Y-%m-%d')
         client.login(username=teacher.username, password='1111')
-        response = client.get(submissions_url,
-                              {'problem_id': problem_dml.pk, 'user_id': user.id,
-                               'start': start, 'end': end}, follow=True)
+        response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id,
+                                                'start': create_start_course(),
+                                                'end': datetime.datetime.today().strftime('%Y-%m-%d')},
+                              follow=True)
         self.assertEqual(response.content.decode('utf-8').count(problem_dml.title_md), 1)
         client.logout()
 
@@ -468,7 +468,7 @@ class ViewsTest(TestCase):
             'group': group_a.id, 'start': 'eee', 'end': end}, follow=True)
         self.assertIn("¡Cuidado! Formato de fechas incorrectas.", response.content.decode('utf-8'))
         response = client.get(classification_url, {
-            'group': group_a.id,  'end': end}, follow=True)
+            'group': group_a.id, 'end': end}, follow=True)
         self.assertIn("¡Cuidado! Ha eliminado una de las fechas, la página no existe.",
                       response.content.decode('utf-8'))
         response = client.get(classification_url, {
@@ -476,7 +476,6 @@ class ViewsTest(TestCase):
 
         for fragment in ['0/0 (0)', '0', '0']:
             self.assertIn(fragment, response.content.decode('utf-8'))
-
 
     def test_show_result_classification(self):
         """test to show the classification"""
