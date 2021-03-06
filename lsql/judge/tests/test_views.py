@@ -430,7 +430,7 @@ class ViewsTest(TestCase):
         client.logout()
         client.login(username=teacher.username, password='12345')
         response = client.get(classification_url, {
-            'group': group_a.id, 'start': start, 'end': end}, follow=True)
+             'start': start, 'end': end}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(user_2.username, response.content.decode('utf-8'))
         self.assertIn(user_1.username, response.content.decode('utf-8'))
