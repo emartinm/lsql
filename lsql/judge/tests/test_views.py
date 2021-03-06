@@ -383,12 +383,9 @@ class ViewsTest(TestCase):
 
     def test_show_result_classification_date(self):
         """test to show the classification whit dates"""
-        # esto es para modificar la fecha funciona
-        #   sub = Submission.objects.filter(user=user_1,
-        #  problem=select_problem.id).update(creation_date=datetime.datetime.today() -
-        #                                   timedelta(days=2))
-
         client = Client()
+        submissions_url = reverse('judge:submissions')
+
         # Create 1 collection
         collection = create_collection('Coleccion 1')
         classification_url = reverse('judge:result', args=[collection.pk])
@@ -427,6 +424,11 @@ class ViewsTest(TestCase):
         # the second student makes two submissions (1/2 (1))
         client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
         client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        response = client.get(submissions_url, {'problem_id': select_problem.pk, 'user_id': user_2.id,
+                                                'start': create_start_course(),
+                                                'end': datetime.datetime.today().strftime('%Y-%m-%d')},
+                              follow=True)
+        self.assertIn('Forbidden', response.content.decode('utf-8'))
         client.logout()
         client.login(username=teacher.username, password='12345')
         response = client.get(classification_url, {
