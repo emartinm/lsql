@@ -7,6 +7,7 @@ import datetime
 from datetime import timedelta
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.http.response import HttpResponse, HttpResponseNotFound
+from django.utils.dateparse import parse_datetime
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import get_user_model
@@ -54,6 +55,15 @@ def first_day_of_course():
     return datetime.datetime(datetime.datetime.today().year, 9, 1).strftime('%Y-%m-%d')
 
 
+def error_value(err):
+    """Return error to format date or group"""
+    if 'time data ' in err.__str__():
+        return HttpResponseNotFound("¡Cuidado! Formato de fechas incorrectas.")
+    if 'expected a number but got ' in err.__str__():
+        return HttpResponseNotFound("El identificador de grupo no tiene el formato correcto")
+    return HttpResponseNotFound("¡Cuidado! Ha eliminado una de las fechas, la página no existe.")
+
+
 def update_user_with_scores(user_logged, user, collection, start, end):
     """Updates user object with information about submissions to problems in collection:
        - user.score (int)
@@ -89,13 +99,6 @@ def update_user_with_scores(user_logged, user, collection, start, end):
 def check_dates(request, start, end, up_to_classification_date, from_classification_date,
                 up_to_classification, from_classification):
     """Function that checks the inserted dates"""
-    if len(start) == 0:
-        return render(request, 'generic_error_message.html',
-                      {'error': ['¡Vaya! Parece ser que se ha olvidado rellenar la fecha desde.']})
-    if len(end) == 0:
-        return render(request, 'generic_error_message.html',
-                      {'error': ['¡Vaya! Parece ser que se ha olvidado rellenar la fecha hasta.']})
-
     if up_to_classification < end or from_classification > start:
         return render(request, 'generic_error_message.html',
                       {'error': ['¡Error! Ha insertado una fecha que no corresponde al año académico',
@@ -142,6 +145,8 @@ def show_result(request, collection_id):
         collection = get_object_or_404(Collection, pk=collection_id)
         if request.user.is_staff:
             groups_user = Group.objects.all().order_by('name')
+            parse_datetime(start)
+            parse_datetime(end)
             up_to_classification_date = datetime.datetime.strptime(end, '%Y-%m-%d')
             from_classification_date = datetime.datetime.strptime(start, '%Y-%m-%d')
             ret = check_dates(request, start, end, up_to_classification_date, from_classification_date,
@@ -195,8 +200,8 @@ def show_result(request, collection_id):
                                                     'end_date': end, 'start_date': start})
 
         return HttpResponseForbidden("Forbidden")
-    except ValueError:
-        return HttpResponseNotFound("El identificador de grupo no tiene el formato correcto")
+    except Exception(TypeError, ValueError) as err:
+        return error_value(err)
 
 
 @login_required

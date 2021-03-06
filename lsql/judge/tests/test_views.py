@@ -4,6 +4,8 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Unit tests for the feedback module by simulation connections
 """
+import datetime
+from datetime import timedelta
 import os
 
 from django.test import TestCase, Client
@@ -49,6 +51,12 @@ def create_collection(name='Prueba'):
     collection.clean()
     collection.save()
     return collection
+
+
+def create_start_course():
+    if 1 <= datetime.datetime.today().month < 9:
+        return datetime.datetime(datetime.datetime.today().year - 1, 9, 1).strftime('%Y-%m-%d')
+    return datetime.datetime(datetime.datetime.today().year, 9, 1).strftime('%Y-%m-%d')
 
 
 def create_user(passwd, username='usuario'):
@@ -262,8 +270,12 @@ class ViewsTest(TestCase):
         client.logout()
         # create a teacher and show submission to user pepe
         teacher = create_superuser('1111', 'teacher')
+        start = create_start_course()
+        end = datetime.datetime.today().strftime('%Y-%m-%d')
         client.login(username=teacher.username, password='1111')
-        response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
+        response = client.get(submissions_url,
+                              {'problem_id': problem_dml.pk, 'user_id': user.id,
+                               'start': start, 'end': end}, follow=True)
         self.assertEqual(response.content.decode('utf-8').count(problem_dml.title_md), 1)
         client.logout()
 
@@ -368,6 +380,104 @@ class ViewsTest(TestCase):
 
             self.assertEqual(response.status_code, 200)
 
+    def test_show_result_classification_date(self):
+        """test to show the classification whit dates"""
+        # esto es para modificar la fecha funciona
+        #   sub = Submission.objects.filter(user=user_1,
+        #  problem=select_problem.id).update(creation_date=datetime.datetime.today() -
+        #                                   timedelta(days=2))
+
+        client = Client()
+        # Create 1 collection
+        collection = create_collection('Coleccion 1')
+        classification_url = reverse('judge:result', args=[collection.pk])
+        # Create 1 problem
+        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        submit_select_url = reverse('judge:submit', args=[select_problem.pk])
+        # Create 3 users (2 students y 1 professor)
+        user_1 = create_user('12345', 'pepe')
+        user_2 = create_user('12345', 'ana')
+        teacher = create_superuser('12345', 'iker')
+        # Create 1 group
+        group_a = create_group('1A')
+
+        # add to group a all
+        group_a.user_set.add(user_1)
+        group_a.user_set.add(user_2)
+        group_a.user_set.add(teacher)
+
+        # create course start date and today's date
+        start = create_start_course()
+        end = datetime.datetime.today().strftime('%Y-%m-%d')
+
+        # I connect to a student and in the url I insert dates
+        client.login(username=user_1.username, password='12345')
+        response = client.get(classification_url, {
+            'group': group_a.id, 'start': start, 'end': end}, follow=True)
+
+        html = response.content.decode('utf-8')
+        self.assertIn('Forbidden', html)
+        # the first student makes three submissions (1/3 (3))
+        client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+        client.logout()
+        client.login(username=user_2.username, password='12345')
+        # the second student makes two submissions (1/2 (1))
+        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+        client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        client.logout()
+        client.login(username=teacher.username, password='12345')
+        response = client.get(classification_url, {
+            'group': group_a.id, 'start': start, 'end': end}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(user_2.username, response.content.decode('utf-8'))
+        self.assertIn(user_1.username, response.content.decode('utf-8'))
+        for fragment in ['1/3 (3)', '3', '1', '1/2 (1)']:
+            self.assertIn(fragment, response.content.decode('utf-8'))
+        # Change the dates of submission of the student one, the first two failures
+        Submission.objects.filter(user=user_1, problem=select_problem.id).exclude(veredict_code='AC').update(
+            creation_date=datetime.datetime.today() - timedelta(days=2))
+        last_end_date = datetime.datetime.today() - timedelta(days=1)
+        last_end_date = last_end_date.strftime('%Y-%m-%d')
+        # For yesterday's date student one must have two failed submissions and no correct submissions 0/2 (2)
+        response = client.get(classification_url, {
+            'group': group_a.id, 'start': start, 'end': last_end_date}, follow=True)
+        for fragment in ['0/2 (2)', '0', '0', '0/0 (0)']:
+            self.assertIn(fragment, response.content.decode('utf-8'))
+
+        # I test date formatting and incorrect or misplaced dates
+        wrong_start_date = datetime.datetime(2019, 9, 1).strftime('%Y-%m-%d')
+        wrong_end_date = datetime.datetime(2222, 2, 2).strftime('%Y-%m-%d')
+        response = client.get(classification_url, {
+            'group': group_a.id, 'start': end, 'end': start}, follow=True)
+        self.assertIn('¡Error! La fecha desde no puede ser mayor que la fecha hasta.',
+                      response.content.decode('utf-8'))
+        response = client.get(classification_url, {
+            'group': group_a.id, 'start': wrong_start_date, 'end': end}, follow=True)
+
+        self.assertIn(f"Por favor, la fecha desde mínimo debe ser {start}", response.content.decode('utf-8'))
+        response = client.get(classification_url, {
+            'group': group_a.id, 'start': start, 'end': wrong_end_date}, follow=True)
+        self.assertIn(f"la fecha hasta máximo hoy {end}", response.content.decode('utf-8'))
+
+        response = client.get(classification_url, {
+            'group': group_a.id, 'start': start, 'end': ''}, follow=True)
+        self.assertIn("¡Cuidado! Formato de fechas incorrectas.", response.content.decode('utf-8'))
+        response = client.get(classification_url, {
+            'group': group_a.id, 'start': 'eee', 'end': end}, follow=True)
+        self.assertIn("¡Cuidado! Formato de fechas incorrectas.", response.content.decode('utf-8'))
+        response = client.get(classification_url, {
+            'group': group_a.id,  'end': end}, follow=True)
+        self.assertIn("¡Cuidado! Ha eliminado una de las fechas, la página no existe.",
+                      response.content.decode('utf-8'))
+        response = client.get(classification_url, {
+            'group': group_a.id, 'start': start, 'end': start}, follow=True)
+
+        for fragment in ['0/0 (0)', '0', '0']:
+            self.assertIn(fragment, response.content.decode('utf-8'))
+
+
     def test_show_result_classification(self):
         """test to show the classification"""
         client = Client()
@@ -390,7 +500,8 @@ class ViewsTest(TestCase):
         group_a.user_set.add(teacher)
 
         group_b.user_set.add(teacher)
-
+        start = create_start_course()
+        end = datetime.datetime.today().strftime('%Y-%m-%d')
         # use the teacher to view the two groups
         client.login(username=teacher.username, password='12345')
         classification_url = reverse('judge:result', args=[collection.pk])
@@ -399,7 +510,8 @@ class ViewsTest(TestCase):
         submit_dml_url = reverse('judge:submit', args=[dml_problem.pk])
         # I see group b where there is only the teacher
         # the table is empty because there is only the teacher
-        response = client.get(classification_url, {'group': group_b.id}, follow=True)
+        response = client.get(classification_url, {
+            'group': group_b.id, 'start': start, 'end': end}, follow=True)
         html = response.content.decode('utf-8')
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(user_2.username, html)
@@ -411,20 +523,19 @@ class ViewsTest(TestCase):
         self.assertIn(select_problem_2.title_md, html)
 
         # I look at the group to where the students are
-        response = client.get(classification_url, {'group': group_a.id}, follow=True)
+        response = client.get(classification_url,
+                              {'group': group_a.id, 'start': start, 'end': end}, follow=True)
         self.assertIn(user_1.username, response.content.decode('utf-8'))
         self.assertIn(user_2.username, response.content.decode('utf-8'))
 
         # I am connected to a non-existent group
-        response = client.get(classification_url, {'group': 999}, follow=True)
+        response = client.get(classification_url,
+                              {'group': 999, 'start': start, 'end': end}, follow=True)
         self.assertEqual(response.status_code, 404)
 
-        response = client.get(classification_url, follow=True)
-        self.assertIn(user_1.username, response.content.decode('utf-8'))
-        self.assertIn(user_2.username, response.content.decode('utf-8'))
-
         # I connect to a non-numeric group
-        response = client.get(classification_url, {'group': '1A'}, follow=True)
+        response = client.get(classification_url,
+                              {'group': '1A', 'start': start, 'end': end}, follow=True)
         msg = 'El identificador de grupo no tiene el formato correcto'
         self.assertEqual(response.status_code, 404)
         self.assertIn(msg, response.content.decode('utf-8'))
@@ -437,7 +548,6 @@ class ViewsTest(TestCase):
 
         client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
         client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
-
         client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
         client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
         client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
