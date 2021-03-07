@@ -4,8 +4,7 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Unit tests for the feedback module by simulation connections
 """
-import datetime
-from datetime import timedelta
+from datetime import datetime
 import os
 
 from django.test import TestCase, Client
@@ -17,6 +16,7 @@ from judge.models import Collection, SelectProblem, Submission, FunctionProblem,
 from judge.types import VeredictCode
 import judge.tests.test_oracle
 from judge.tests.test_parse import ParseTest
+from judge.views import first_day_of_course
 
 
 def create_select_problem(collection, name='Ejemplo'):
@@ -51,14 +51,6 @@ def create_collection(name='Prueba'):
     collection.clean()
     collection.save()
     return collection
-
-
-def create_start_course():
-    """function that creates the first day of the course"""
-    first_day = datetime.datetime(datetime.datetime.today().year, 9, 1).strftime('%Y-%m-%d')
-    if 1 <= datetime.datetime.today().month < 9:
-        first_day = datetime.datetime(datetime.datetime.today().year - 1, 9, 1).strftime('%Y-%m-%d')
-    return first_day
 
 
 def create_user(passwd, username='usuario'):
@@ -274,8 +266,8 @@ class ViewsTest(TestCase):
         teacher = create_superuser('1111', 'teacher')
         client.login(username=teacher.username, password='1111')
         response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id,
-                                                'start': create_start_course(),
-                                                'end': datetime.datetime.today().strftime('%Y-%m-%d')},
+                                                'start': first_day_of_course(datetime(2020, 9, 1)),
+                                                'end': datetime.today().strftime('%Y-%m-%d')},
                               follow=True)
         self.assertEqual(response.content.decode('utf-8').count(problem_dml.title_md), 1)
         client.logout()
@@ -382,7 +374,7 @@ class ViewsTest(TestCase):
             self.assertEqual(response.status_code, 200)
 
     def test_show_result_classification_date(self):
-        """test to show the classification whit dates"""
+        """test to show the classification with dates"""
         client = Client()
         submissions_url = reverse('judge:submissions')
 
@@ -391,58 +383,69 @@ class ViewsTest(TestCase):
         classification_url = reverse('judge:result', args=[collection.pk])
         # Create 1 problem
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        submit_select_url = reverse('judge:submit', args=[select_problem.pk])
         # Create 3 users (2 students y 1 professor)
         user_1 = create_user('12345', 'pepe')
         user_2 = create_user('12345', 'ana')
         teacher = create_superuser('12345', 'iker')
+
         # Create 1 group
         group_a = create_group('1A')
 
-        # add to group a all
+        # add the students and the teacher to the group a
         group_a.user_set.add(user_1)
         group_a.user_set.add(user_2)
         group_a.user_set.add(teacher)
 
         # create course start date and today's date
-        start = create_start_course()
-        end = datetime.datetime.today().strftime('%Y-%m-%d')
+        start = first_day_of_course(datetime(2020, 9, 1))
+        end = datetime(2021, 3, 7).strftime('%Y-%m-%d')
 
         # I connect to a student and in the url I insert dates
         client.login(username=user_1.username, password='12345')
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': end}, follow=True)
-
         html = response.content.decode('utf-8')
         self.assertIn('Forbidden', html)
         # the first student makes three submissions (1/3 (3))
-        client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+        sub1 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
+                                         user=user_1, veredict_code=VeredictCode.WA, problem=select_problem)
+        sub1.save()
+        Submission.objects.filter(id=sub1.id).update(creation_date=datetime(2021, 3, 5))
+        sub2 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
+                                         user=user_1, veredict_code=VeredictCode.WA, problem=select_problem)
+        sub2.save()
+        Submission.objects.filter(id=sub2.id).update(creation_date=datetime(2021, 3, 5))
+        sub3 = Submission.objects.create(code=select_problem.solution,
+                                         user=user_1, veredict_code=VeredictCode.AC, problem=select_problem)
+        sub3.save()
+        Submission.objects.filter(id=sub3.id).update(creation_date=datetime(2021, 3, 7))
+
         client.logout()
         client.login(username=user_2.username, password='12345')
         # the second student makes two submissions (1/2 (1))
-        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
-        client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        sub4 = Submission.objects.create(code=select_problem.solution,
+                                         user=user_2, veredict_code=VeredictCode.AC, problem=select_problem)
+        sub4.save()
+        Submission.objects.filter(id=sub4.id).update(creation_date=datetime(2021, 3, 7))
+        sub5 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
+                                         user=user_2, veredict_code=VeredictCode.WA, problem=select_problem)
+        sub5.save()
+        Submission.objects.filter(id=sub5.id).update(creation_date=datetime(2021, 3, 7))
         response = client.get(submissions_url, {'problem_id': select_problem.pk, 'user_id': user_2.id,
-                                                'start': create_start_course(),
-                                                'end': datetime.datetime.today().strftime('%Y-%m-%d')},
+                                                'start': first_day_of_course(datetime(2020, 9, 1)),
+                                                'end': datetime(2021, 3, 7).strftime('%Y-%m-%d')},
                               follow=True)
         self.assertIn('Forbidden', response.content.decode('utf-8'))
         client.logout()
         client.login(username=teacher.username, password='12345')
         response = client.get(classification_url, {
-             'start': start, 'end': end}, follow=True)
+            'start': start, 'end': end}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(user_2.username, response.content.decode('utf-8'))
         self.assertIn(user_1.username, response.content.decode('utf-8'))
         for fragment in ['1/3 (3)', '3', '1', '1/2 (1)']:
             self.assertIn(fragment, response.content.decode('utf-8'))
-        # Change the dates of submission of the student one, the first two failures
-        Submission.objects.filter(user=user_1, problem=select_problem.id).exclude(veredict_code='AC').update(
-            creation_date=datetime.datetime.today() - timedelta(days=2))
-        last_end_date = datetime.datetime.today() - timedelta(days=1)
-        last_end_date = last_end_date.strftime('%Y-%m-%d')
+        last_end_date = datetime(2021, 3, 5).strftime('%Y-%m-%d')
         # For yesterday's date student one must have two failed submissions and no correct submissions 0/2 (2)
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': last_end_date}, follow=True)
@@ -450,29 +453,29 @@ class ViewsTest(TestCase):
             self.assertIn(fragment, response.content.decode('utf-8'))
 
         # I test date formatting and incorrect or misplaced dates
-        wrong_start_date = datetime.datetime(2019, 9, 1).strftime('%Y-%m-%d')
-        wrong_end_date = datetime.datetime(2222, 2, 2).strftime('%Y-%m-%d')
+        wrong_start_date = datetime(2019, 9, 1).strftime('%Y-%m-%d')
+        wrong_end_date = datetime(2222, 2, 2).strftime('%Y-%m-%d')
         response = client.get(classification_url, {
             'group': group_a.id, 'start': end, 'end': start}, follow=True)
-        self.assertIn('¡Error! La fecha desde no puede ser mayor que la fecha hasta.',
+        self.assertIn('¡Error! La fecha inicial no puede ser mayor que la fecha final.',
                       response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': wrong_start_date, 'end': end}, follow=True)
 
-        self.assertIn(f"Por favor, la fecha desde mínimo debe ser {start}", response.content.decode('utf-8'))
+        self.assertIn(f"Por favor, la fecha inicial mínimo debe ser {start}", response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': wrong_end_date}, follow=True)
-        self.assertIn(f"la fecha hasta máximo hoy {end}", response.content.decode('utf-8'))
+        self.assertIn(f"la fecha final máximo hoy {end}", response.content.decode('utf-8'))
 
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': ''}, follow=True)
-        self.assertIn("¡Cuidado! Formato de fechas incorrectas.", response.content.decode('utf-8'))
+        self.assertIn("¡Cuidado! Formato incorrecto de fechas.", response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': 'eee', 'end': end}, follow=True)
-        self.assertIn("¡Cuidado! Formato de fechas incorrectas.", response.content.decode('utf-8'))
+        self.assertIn("¡Cuidado! Formato incorrecto de fechas.", response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'end': end}, follow=True)
-        self.assertIn("¡Cuidado! Ha eliminado una de las fechas, la página no existe.",
+        self.assertIn("Es necesario proporcionar tanto la fecha inicial como la fecha final.",
                       response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': start}, follow=True)
@@ -502,8 +505,8 @@ class ViewsTest(TestCase):
         group_a.user_set.add(teacher)
 
         group_b.user_set.add(teacher)
-        start = create_start_course()
-        end = datetime.datetime.today().strftime('%Y-%m-%d')
+        start = first_day_of_course(datetime(2020, 9, 1))
+        end = datetime.today().strftime('%Y-%m-%d')
         # use the teacher to view the two groups
         client.login(username=teacher.username, password='12345')
         classification_url = reverse('judge:result', args=[collection.pk])

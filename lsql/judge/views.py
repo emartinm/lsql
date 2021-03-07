@@ -3,8 +3,7 @@
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 Functions that process HTTP connections
 """
-import datetime
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.utils.dateparse import parse_datetime
@@ -48,21 +47,22 @@ def index(_):
     return HttpResponseRedirect(reverse('judge:collections'))
 
 
-def first_day_of_course():
-    """Returned on the first day of the academic year"""
-    first_day = datetime.datetime(datetime.datetime.today().year, 9, 1).strftime('%Y-%m-%d')
-    if 1 <= datetime.datetime.today().month < 9:
-        first_day = datetime.datetime(datetime.datetime.today().year - 1, 9, 1).strftime('%Y-%m-%d')
+def first_day_of_course(init_course):
+    """Returns the first day of the academic year"""
+    first_day = datetime(init_course.year, 9, 1).strftime('%Y-%m-%d')
+    if 1 <= init_course.month < 9:
+        first_day = datetime(init_course.year - 1, 9, 1).strftime('%Y-%m-%d')
     return first_day
 
 
 def error_value(err):
-    """Return error to format date or group"""
-    if 'time data ' in err.__str__():
-        return HttpResponseNotFound("¡Cuidado! Formato de fechas incorrectas.")
-    if 'expected a number but got ' in err.__str__():
+    """Function that receives an exception (of type ValueError or TypeError) and returns a message
+    according to the exception that has been raised."""
+    if 'time data ' in str(err):
+        return HttpResponseNotFound("¡Cuidado! Formato incorrecto de fechas.")
+    if 'expected a number but got ' in str(err):
         return HttpResponseNotFound("El identificador de grupo no tiene el formato correcto")
-    return HttpResponseNotFound("¡Cuidado! Ha eliminado una de las fechas, la página no existe.")
+    return HttpResponseNotFound("Es necesario proporcionar tanto la fecha inicial como la fecha final.")
 
 
 def update_user_with_scores(user_logged, user, collection, start, end):
@@ -78,8 +78,8 @@ def update_user_with_scores(user_logged, user, collection, start, end):
         problem = collection.problem_list[numb]
         user.first_AC = 0
         if user_logged.is_staff:
-            starts = datetime.datetime.strptime(start, '%Y-%m-%d')
-            ends = datetime.datetime.strptime(end, '%Y-%m-%d')
+            starts = datetime.strptime(start, '%Y-%m-%d')
+            ends = datetime.strptime(end, '%Y-%m-%d')
             subs = Submission.objects.filter(user=user,
                                              problem=problem.id,
                                              creation_date__range=[starts, ends + timedelta(days=1)]).order_by('pk')
@@ -103,14 +103,14 @@ def check_dates(request, start, end, up_to_classification_date, from_classificat
     if up_to_classification < end or from_classification > start:
         return render(request, 'generic_error_message.html',
                       {'error': ['¡Error! Ha insertado una fecha que no corresponde al año académico',
-                                 f"Por favor, la fecha desde mínimo debe ser {from_classification}"
-                                 f" y la fecha hasta máximo hoy "
+                                 f"Por favor, la fecha inicial mínimo debe ser {from_classification}"
+                                 f" y la fecha final máximo hoy "
                                  f"{up_to_classification}"]})
     if up_to_classification_date < from_classification_date:
         return render(request, 'generic_error_message.html',
-                      {'error': ['¡Error! La fecha desde no puede ser mayor que la fecha hasta.',
-                                 f"Fecha desde insertada {from_classification_date.strftime('%Y-%m-%d')}, "
-                                 f"fecha hasta insertada {up_to_classification_date.strftime('%Y-%m-%d')}"]})
+                      {'error': ['¡Error! La fecha inicial no puede ser mayor que la fecha final.',
+                                 f"Fecha inicial insertada {from_classification_date.strftime('%Y-%m-%d')}, "
+                                 f"fecha final insertada {up_to_classification_date.strftime('%Y-%m-%d')}"]})
     return None
 
 
@@ -141,15 +141,16 @@ def show_result(request, collection_id):
         group_id = request.GET.get('group')
         up_to_classification_date = None
         from_classification_date = None
-        up_to_classification = datetime.datetime.today().strftime('%Y-%m-%d')
-        from_classification = first_day_of_course()
+        up_to_classification = datetime.today().strftime('%Y-%m-%d')
+        from_classification = first_day_of_course(datetime.today())
         collection = get_object_or_404(Collection, pk=collection_id)
         if request.user.is_staff:
             groups_user = Group.objects.all().order_by('name')
+            # check that the dates are correct, otherwise an exception is triggered
             parse_datetime(start)
             parse_datetime(end)
-            up_to_classification_date = datetime.datetime.strptime(end, '%Y-%m-%d')
-            from_classification_date = datetime.datetime.strptime(start, '%Y-%m-%d')
+            up_to_classification_date = datetime.strptime(end, '%Y-%m-%d')
+            from_classification_date = datetime.strptime(start, '%Y-%m-%d')
             ret = check_dates(request, start, end, up_to_classification_date, from_classification_date,
                               up_to_classification, from_classification)
             if ret is not None:
@@ -226,11 +227,11 @@ def show_results(request):
         # Templates can only invoke nullary functions or access object attribute, so we store
         # the number of problems solved by the user in an attribute
         results.num_solved = results.num_solved_by_user(request.user)
-    up_to_classification = datetime.datetime.today().strftime('%Y-%m-%d')
-    up_to_classification_date = datetime.datetime.strptime(up_to_classification, '%Y-%m-%d')
+    up_to_classification = datetime.today().strftime('%Y-%m-%d')
+    up_to_classification_date = datetime.strptime(up_to_classification, '%Y-%m-%d')
 
-    from_classification = first_day_of_course()
-    from_classification_date = datetime.datetime.strptime(from_classification, '%Y-%m-%d')
+    from_classification = first_day_of_course(datetime.today())
+    from_classification_date = datetime.strptime(from_classification, '%Y-%m-%d')
     return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
                                            'start_date': from_classification, 'from_fixed': from_classification,
                                            'from_date': from_classification_date,
@@ -292,8 +293,8 @@ def show_submissions(request):
             elif request.user.is_staff:
                 start = request.GET.get('start')
                 end = request.GET.get('end')
-                starts = datetime.datetime.strptime(start, '%Y-%m-%d')
-                ends = datetime.datetime.strptime(end, '%Y-%m-%d')
+                starts = datetime.strptime(start, '%Y-%m-%d')
+                ends = datetime.strptime(end, '%Y-%m-%d')
                 problem = get_object_or_404(Problem, pk=pk_problem)
                 user = get_user_model().objects.filter(id=id_user)
                 subs = Submission.objects.filter(user=user.get()) \
