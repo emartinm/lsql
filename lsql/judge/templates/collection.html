@@ -11,6 +11,9 @@
       <tr>
         <th scope="col">Nombre</th>
         <th scope="col">Número de envíos</th>
+        <th scope="col" class="text-center">Primero</th>
+        <th scope="col" class="text-center">Segundo</th>
+        <th scope="col" class="text-center">Tercero</th>
       </tr>
     </thead>
     <tbody>
@@ -25,6 +28,9 @@
         <a href="{% url 'judge:problem' p.pk %}">{{ p.title_html|safe }}</a>
       </td>
       <td>{{ p.num_submissions }}</td>
+      <td class="text-center">{{ p.first }}</td>
+      <td class="text-center">{{ p.second }}</td>
+      <td class="text-center">{{ p.third }}</td>
     </tr>
     {% endfor %}
     </tbody>

@@ -44,6 +44,9 @@ class ModelsTest(TestCase):
                                  solution=solution)
         user1 = user_model.objects.create_user(username='usuario1', email='algo@ucm.es', password='1234')
         user2 = user_model.objects.create_user(username='usuario2', email='algodistinto@ucm.es', password='1234')
+        user3 = user_model.objects.create_user(username='usuario3', email='algo2@ucm.es', password='1234')
+        user4 = user_model.objects.create_user(username='usuario4', email='algo3@ucm.es', password='1234')
+        user5 = user_model.objects.create_user(username='usuario5', email='algo4@ucm.es', password='1234')
         problem1.clean()
         problem1.save()
         problem2.clean()
@@ -52,6 +55,9 @@ class ModelsTest(TestCase):
         problem3.save()
         user1.save()
         user2.save()
+        user3.save()
+        user4.save()
+        user5.save()
 
         sub1 = Submission(code='nada', veredict_code=VeredictCode.WA, user=user1, problem=problem1)
         sub2 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1)
@@ -59,10 +65,13 @@ class ModelsTest(TestCase):
         sub4 = Submission(code='nada', veredict_code=VeredictCode.RE, user=user1, problem=problem1)
         sub5 = Submission(code='nada', veredict_code=VeredictCode.VE, user=user1, problem=problem1)
         sub6 = Submission(code='nada', veredict_code=VeredictCode.IE, user=user1, problem=problem1)
+        sub7 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user3, problem=problem1)
+        sub8 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user4, problem=problem1)
+        sub9 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user5, problem=problem1)
         self.assertTrue('WA' in str(sub1))
         self.assertTrue('AC' in str(sub2))
 
-        for sub in [sub1, sub2, sub3, sub4, sub5, sub6]:
+        for sub in [sub1, sub2, sub3, sub4, sub5, sub6, sub7, sub8, sub9]:
             sub.save()
 
         # Problem solved
@@ -84,6 +93,30 @@ class ModelsTest(TestCase):
         # Numbers of problems solved by a user
         self.assertEqual(collection.num_solved_by_user(user1), 1)
         self.assertEqual(collection.num_solved_by_user(user2), 0)
+
+        # Podium
+        self.assertEqual(problem1.solved_first(), user1)
+        self.assertEqual(problem1.solved_second(), user3)
+        self.assertEqual(problem1.solved_third(), user4)
+
+        self.assertFalse(problem1.solved_first() == user2)
+        self.assertFalse(problem1.solved_first() == user3)
+        self.assertFalse(problem1.solved_first() == user4)
+        self.assertFalse(problem1.solved_first() == user5)
+
+        self.assertFalse(problem1.solved_second() == user1)
+        self.assertFalse(problem1.solved_second() == user2)
+        self.assertFalse(problem1.solved_second() == user4)
+        self.assertFalse(problem1.solved_second() == user5)
+
+        self.assertFalse(problem1.solved_third() == user1)
+        self.assertFalse(problem1.solved_third() == user2)
+        self.assertFalse(problem1.solved_third() == user3)
+        self.assertFalse(problem1.solved_third() == user5)
+
+        self.assertEqual(problem2.solved_first(), "-")
+        self.assertEqual(problem2.solved_second(), "-")
+        self.assertEqual(problem2.solved_third(), "-")
 
     def test_load_broken_zip(self):
         """Open corrupt ZIP files"""

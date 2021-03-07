@@ -182,6 +182,9 @@ def show_collection(request, collection_id):
     for problem in collection.problem_list:
         problem.num_submissions = problem.num_submissions_by_user(request.user)
         problem.solved = problem.solved_by_user(request.user)
+        problem.first = problem.solved_first()
+        problem.second = problem.solved_second()
+        problem.third = problem.solved_third()
     return render(request, 'collection.html', {'collection': collection})
 
 
