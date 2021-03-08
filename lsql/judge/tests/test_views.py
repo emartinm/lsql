@@ -810,20 +810,20 @@ class ViewsTest(TestCase):
                                      'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
                                                 ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
                                                 ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
-        resultAdded = {'ESTA SE AGREGA': {'rows': [['11111X', 'Gandia', 'Guillermo Olague', 70000]],
+        result_added = {'ESTA SE AGREGA': {'rows': [['11111X', 'Gandia', 'Guillermo Olague', 70000]],
                                      'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
                                                 ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
                                                 ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
                                                 ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]}}
-        resultModified = {'ESTA SE MODIFICA': {'rows': [['111X', '333X', '004X']],
+        result_modified = {'ESTA SE MODIFICA': {'rows': [['111X', '333X', '004X']],
                                      'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
                                                 ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
                                                 ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
-        resultRemoved = {'ESTA SE BORRA': {'rows': [['11111X', 'Real', 'Concha', 70000]],
+        result_removed = {'ESTA SE BORRA': {'rows': [['11111X', 'Real', 'Concha', 70000]],
                                      'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
                                                 ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
                                                 ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
                                                 ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]}}
-        self.assertEqual(filter_expected_db(expected, initial)[0], resultAdded)
-        self.assertEqual(filter_expected_db(expected, initial)[1], resultModified)
-        self.assertEqual(filter_expected_db(expected, initial)[2], resultRemoved)
+        self.assertEqual(filter_expected_db(expected, initial)[0], result_added)
+        self.assertEqual(filter_expected_db(expected, initial)[1], result_modified)
+        self.assertEqual(filter_expected_db(expected, initial)[2], result_removed)
