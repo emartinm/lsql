@@ -1,22 +1,5 @@
 {% extends "problem.html" %}
 {% block expected_result %}
 <h2>Resultado esperado</h2>
-{% if problem.show_added %}
-<h3><i>Tablas añadidas</i></h3>
-{% for name, table in problem.show_added.items %}
-    {% include 'show_table.html' with table=table name=name %}
-{% endfor %}
-{% endif %}
-{% if problem.show_modified %}
-<h3><i>Tablas modificadas</i></h3>
-{% for name, table in problem.show_modified.items %}
-    {% include 'show_table.html' with table=table name=name %}
-{% endfor %}
-{% endif %}
-{% if problem.show_removed %}
-<h3><i>Tablas borradas</i></h3>
-{% for name, table in problem.show_removed.items %}
-    {% include 'show_table.html' with table=table name=name %}
-{% endfor %}
-{% endif %}
+{% include 'show_expected_tables.html' with problem=problem%}
 {% endblock %}

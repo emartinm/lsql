@@ -824,6 +824,7 @@ class ViewsTest(TestCase):
                                                 ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
                                                 ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
                                                 ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]}}
-        self.assertEqual(filter_expected_db(expected, initial)[0], result_added)
-        self.assertEqual(filter_expected_db(expected, initial)[1], result_modified)
-        self.assertEqual(filter_expected_db(expected, initial)[2], result_removed)
+        ret_1, ret_2, ret_3 = filter_expected_db(expected, initial)
+        self.assertEqual(ret_1, result_added)
+        self.assertEqual(ret_2, result_modified)
+        self.assertEqual(ret_3, result_removed)

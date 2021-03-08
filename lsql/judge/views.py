@@ -332,27 +332,18 @@ def filter_expected_db(expected_db, initial_db):
     """Compare expected_db and initial_db and return all the modified, removed or added tables"""
     expected_tables = sorted(list(expected_db.keys()))
     initial_tables = sorted(list(initial_db.keys()))
-    add_list = []
-    modified_list = []
-    remove_list = []
     ret_added = {}
     ret_modified = {}
     ret_removed = {}
     if expected_tables != initial_tables:
-        add_list = [x for x in expected_tables if x not in initial_tables]
-        remove_list = [y for y in initial_tables if y not in expected_tables]
-        for element in add_list:
+        ret_added = {x: expected_db[x] for x in expected_tables if x not in initial_tables}
+        ret_removed = {x: initial_db[x] for x in initial_tables if x not in expected_tables}
+        for element in ret_added.keys():
             expected_tables.remove(element)
-        for element in remove_list:
+        for element in ret_removed.keys():
             initial_tables.remove(element)
     for table in expected_tables:
         veredict, _ = compare_select_results(expected_db[table], initial_db[table], order=False)
         if veredict != VeredictCode.AC:
-            modified_list.append(table)
-    for item in add_list:
-        ret_added[item] = expected_db[item]
-    for item in modified_list:
-        ret_modified[item] = expected_db[item]
-    for item in remove_list:
-        ret_removed[item] = initial_db[item]
+            ret_modified = {table: expected_db[table]}
     return ret_added, ret_modified, ret_removed
