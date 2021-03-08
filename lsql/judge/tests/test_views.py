@@ -476,7 +476,8 @@ class ViewsTest(TestCase):
                       response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': 'eee', 'end': end}, follow=True)
-        self.assertIn("¡Cuidado! Formato incorrecto de fechas.", response.content.decode('utf-8'))
+        self.assertIn("Es necesario proporcionar tanto la fecha inicial como la fecha final.",
+                      response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'end': end}, follow=True)
         self.assertIn("Es necesario proporcionar tanto la fecha inicial como la fecha final.",

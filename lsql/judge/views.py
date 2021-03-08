@@ -4,9 +4,9 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 Functions that process HTTP connections
 """
 from datetime import timedelta, datetime
+
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.http.response import HttpResponse, HttpResponseNotFound
-from django.utils.dateparse import parse_datetime
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import get_user_model
@@ -58,8 +58,6 @@ def first_day_of_course(init_course):
 def error_value(err):
     """Function that receives an exception (of type ValueError or TypeError) and returns a message
     according to the exception that has been raised."""
-    if 'time data ' in str(err):
-        return HttpResponseNotFound("¡Cuidado! Formato incorrecto de fechas.")
     if 'expected a number but got ' in str(err):
         return HttpResponseNotFound("El identificador de grupo no tiene el formato correcto")
     return HttpResponseNotFound("Es necesario proporcionar tanto la fecha inicial como la fecha final.")
@@ -78,11 +76,9 @@ def update_user_with_scores(user_logged, user, collection, start, end):
         problem = collection.problem_list[numb]
         user.first_AC = 0
         if user_logged.is_staff:
-            starts = datetime.strptime(start, '%Y-%m-%d')
-            ends = datetime.strptime(end, '%Y-%m-%d')
             subs = Submission.objects.filter(user=user,
                                              problem=problem.id,
-                                             creation_date__range=[starts, ends + timedelta(days=1)]).order_by('pk')
+                                             creation_date__range=[start, end + timedelta(days=1)]).order_by('pk')
 
         else:
             subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
@@ -100,7 +96,7 @@ def update_user_with_scores(user_logged, user, collection, start, end):
 def check_dates(request, end, up_to_classification_date, from_classification_date,
                 up_to_classification):
     """Function that checks the inserted dates"""
-    if up_to_classification < end:
+    if datetime.strptime(up_to_classification, '%Y-%m-%d') < datetime(end.year, end.month, end.day):
         return render(request, 'generic_error_message.html',
                       {'error': ['¡Error! Ha insertado una fecha que no corresponde al año académico',
                                  f"Por favor, la fecha final máximo hoy {up_to_classification}"]})
@@ -142,16 +138,14 @@ def show_result(request, collection_id):
 
         up_to_classification = datetime.today().strftime('%Y-%m-%d')
         collection = get_object_or_404(Collection, pk=collection_id)
-        if request.user.is_staff and result_form.is_valid():
+        if request.user.is_staff and result_form.is_valid() and result_form.clean():
             group_id = result_form.cleaned_data['group']
             start = result_form.cleaned_data['start']
             end = result_form.cleaned_data['end']
+            result_form.clean()
             groups_user = Group.objects.all().order_by('name')
-            # check that the dates are correct, otherwise an exception is triggered
-            parse_datetime(start)
-            parse_datetime(end)
-            up_to_classification_date = datetime.strptime(end, '%Y-%m-%d')
-            from_classification_date = datetime.strptime(start, '%Y-%m-%d')
+            up_to_classification_date = end
+            from_classification_date = start
             ret = check_dates(request, end, up_to_classification_date, from_classification_date,
                               up_to_classification)
             if ret is not None:

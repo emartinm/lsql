@@ -38,8 +38,8 @@ class LoginForm(forms.Form):
 class ResultForm(forms.Form):
     """Form used results"""
     group = forms.CharField(label='Grupo', max_length=20)
-    start = forms.CharField(label='Desde', max_length=10)
-    end = forms.CharField(label='Hasta', max_length=10)
+    start = forms.DateField(label='Desde', input_formats=['%Y-%m-%d'])
+    end = forms.DateField(label='Hasta', input_formats=['%Y-%m-%d'])
 
 
 class SubmitForm(forms.Form):
