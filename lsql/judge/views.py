@@ -97,8 +97,8 @@ def update_user_with_scores(user_logged, user, collection, start, end):
         update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb, enter)
 
 
-def check_dates(request, start, end, up_to_classification_date, from_classification_date,
-                up_to_classification, from_classification):
+def check_dates(request, end, up_to_classification_date, from_classification_date,
+                up_to_classification):
     """Function that checks the inserted dates"""
     if up_to_classification < end:
         return render(request, 'generic_error_message.html',
@@ -139,8 +139,8 @@ def show_result(request, collection_id):
         end = None
         up_to_classification_date = None
         from_classification_date = None
+
         up_to_classification = datetime.today().strftime('%Y-%m-%d')
-        from_classification = first_day_of_course(datetime.today())
         collection = get_object_or_404(Collection, pk=collection_id)
         if request.user.is_staff and result_form.is_valid():
             group_id = result_form.cleaned_data['group']
@@ -152,8 +152,8 @@ def show_result(request, collection_id):
             parse_datetime(end)
             up_to_classification_date = datetime.strptime(end, '%Y-%m-%d')
             from_classification_date = datetime.strptime(start, '%Y-%m-%d')
-            ret = check_dates(request, start, end, up_to_classification_date, from_classification_date,
-                              up_to_classification, from_classification)
+            ret = check_dates(request, end, up_to_classification_date, from_classification_date,
+                              up_to_classification)
             if ret is not None:
                 return ret
 
@@ -161,7 +161,7 @@ def show_result(request, collection_id):
             if result_form.is_valid():
                 return HttpResponseForbidden("Forbidden")
             groups_user = request.user.groups.all().order_by('name')
-        group_id = request.GET.get('group')
+            group_id = request.GET.get('group')
         if group_id is None:
             group_id = groups_user[0].id
         group0 = get_object_or_404(Group, pk=group_id)
