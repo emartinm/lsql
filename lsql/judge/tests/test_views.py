@@ -15,6 +15,7 @@ from judge.models import Collection, SelectProblem, Submission, FunctionProblem,
 from judge.types import VeredictCode
 import judge.tests.test_oracle
 from judge.tests.test_parse import ParseTest
+from judge.views import filter_expected_db
 
 
 def create_select_problem(collection, name='Ejemplo'):
@@ -780,3 +781,49 @@ class ViewsTest(TestCase):
         with self.assertRaises(IndexError, msg='list index out of range'):
             client.get(error_500_rul, follow=True)
         client.logout()
+
+    def test_filter_expected_db(self):
+        """Test for filter an expected db and transform for another to show"""
+        initial = { 'ESTA SE BORRA': {'rows': [['11111X', 'Real', 'Concha', 70000]],
+                                     'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]},
+                    'ESTA SE MODIFICA': {'rows': [['111X', '222X', '004X']],
+                                     'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]},
+                    'ESTA SE QUEDA IGUAL': {'rows': [['111X', '222X', '004X']],
+                                     'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
+        expected = {'ESTA SE AGREGA': {'rows': [['11111X', 'Gandia', 'Guillermo Olague', 70000]],
+                                     'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]},
+                    'ESTA SE MODIFICA': {'rows': [['111X', '333X', '004X']],
+                                     'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]},
+                    'ESTA SE QUEDA IGUAL': {'rows': [['111X', '222X', '004X']],
+                                     'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
+        resultAdded = {'ESTA SE AGREGA': {'rows': [['11111X', 'Gandia', 'Guillermo Olague', 70000]],
+                                     'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]}}
+        resultModified = {'ESTA SE MODIFICA': {'rows': [['111X', '333X', '004X']],
+                                     'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
+        resultRemoved = {'ESTA SE BORRA': {'rows': [['11111X', 'Real', 'Concha', 70000]],
+                                     'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]}}
+        self.assertEqual(filter_expected_db(expected, initial)[0], resultAdded)
+        self.assertEqual(filter_expected_db(expected, initial)[1], resultModified)
+        self.assertEqual(filter_expected_db(expected, initial)[2], resultRemoved)

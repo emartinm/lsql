@@ -14,7 +14,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import login_required
 from logzero import logger
 from .exceptions import ExecutorException
-from .feedback import compile_error_to_html_table
+from .feedback import compile_error_to_html_table, compare_select_results
 from .forms import SubmitForm
 from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
     Submission
@@ -194,6 +194,9 @@ def show_problem(request, problem_id):
     problem = get_child_problem(problem_id)
     # Stores the flag in an attribute so that the template can use it
     problem.solved = problem.solved_by_user(request.user)
+    # Filter the expected result to display it
+    problem.show_added, problem.show_modified, problem.show_removed = filter_expected_db(problem.expected_result,
+                                                                                         problem.initial_db)
     return render(request, problem.template(), {'problem': problem})
 
 
@@ -323,3 +326,33 @@ def test_error_500(request):
         elems = list()
         return HttpResponse(elems[55])  # list index out of range, error 500
     return HttpResponseNotFound()
+
+
+def filter_expected_db(expected_db, initial_db):
+    """Compare expected_db and initial_db and return all the modified, removed or added tables"""
+    expected_tables = sorted(list(expected_db.keys()))
+    initial_tables = sorted(list(initial_db.keys()))
+    add_list = []
+    modified_list = []
+    remove_list = []
+    ret_added = {}
+    ret_modified = {}
+    ret_removed = {}
+    if expected_tables != initial_tables:
+        add_list = [x for x in expected_tables if x not in initial_tables]
+        remove_list = [y for y in initial_tables if y not in expected_tables]
+        for element in add_list:
+            expected_tables.remove(element)
+        for element in remove_list:
+            initial_tables.remove(element)
+    for table in expected_tables:
+        veredict, _ = compare_select_results(expected_db[table], initial_db[table], order=False)
+        if veredict != VeredictCode.AC:
+            modified_list.append(table)
+    for item in add_list:
+        ret_added[item] = expected_db[item]
+    for item in modified_list:
+        ret_modified[item] = expected_db[item]
+    for item in remove_list:
+        ret_removed[item] = initial_db[item]
+    return ret_added, ret_modified, ret_removed
