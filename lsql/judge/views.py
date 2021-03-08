@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import login_required
 from logzero import logger
 from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table
-from .forms import SubmitForm
+from .forms import SubmitForm, ResultForm
 from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
     Submission
 from .oracle_driver import OracleExecutor
@@ -100,12 +100,10 @@ def update_user_with_scores(user_logged, user, collection, start, end):
 def check_dates(request, start, end, up_to_classification_date, from_classification_date,
                 up_to_classification, from_classification):
     """Function that checks the inserted dates"""
-    if up_to_classification < end or from_classification > start:
+    if up_to_classification < end:
         return render(request, 'generic_error_message.html',
                       {'error': ['¡Error! Ha insertado una fecha que no corresponde al año académico',
-                                 f"Por favor, la fecha inicial mínimo debe ser {from_classification}"
-                                 f" y la fecha final máximo hoy "
-                                 f"{up_to_classification}"]})
+                                 f"Por favor, la fecha final máximo hoy {up_to_classification}"]})
     if up_to_classification_date < from_classification_date:
         return render(request, 'generic_error_message.html',
                       {'error': ['¡Error! La fecha inicial no puede ser mayor que la fecha final.',
@@ -136,15 +134,18 @@ def show_result(request, collection_id):
                       {'error': ['¡Lo sentimos! No existe ningún grupo para ver resultados']})
     position = 1
     try:
-        start = request.GET.get('start')
-        end = request.GET.get('end')
-        group_id = request.GET.get('group')
+        result_form = ResultForm(request.GET)
+        start = None
+        end = None
         up_to_classification_date = None
         from_classification_date = None
         up_to_classification = datetime.today().strftime('%Y-%m-%d')
         from_classification = first_day_of_course(datetime.today())
         collection = get_object_or_404(Collection, pk=collection_id)
-        if request.user.is_staff:
+        if request.user.is_staff and result_form.is_valid():
+            group_id = result_form.cleaned_data['group']
+            start = result_form.cleaned_data['start']
+            end = result_form.cleaned_data['end']
             groups_user = Group.objects.all().order_by('name')
             # check that the dates are correct, otherwise an exception is triggered
             parse_datetime(start)
@@ -157,9 +158,10 @@ def show_result(request, collection_id):
                 return ret
 
         else:
-            if start is not None or end is not None:
+            if result_form.is_valid():
                 return HttpResponseForbidden("Forbidden")
             groups_user = request.user.groups.all().order_by('name')
+        group_id = request.GET.get('group')
         if group_id is None:
             group_id = groups_user[0].id
         group0 = get_object_or_404(Group, pk=group_id)
@@ -198,7 +200,6 @@ def show_result(request, collection_id):
                                                     'to_fixed': up_to_classification,
                                                     'from_date': from_classification_date,
                                                     'to_date': up_to_classification_date,
-                                                    'from_fixed': from_classification,
                                                     'end_date': end, 'start_date': start})
 
         return HttpResponseForbidden("Forbidden")
@@ -233,7 +234,7 @@ def show_results(request):
     from_classification = first_day_of_course(datetime.today())
     from_classification_date = datetime.strptime(from_classification, '%Y-%m-%d')
     return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
-                                           'start_date': from_classification, 'from_fixed': from_classification,
+                                           'start_date': from_classification,
                                            'from_date': from_classification_date,
                                            'to_date': up_to_classification_date,
                                            'to_fixed': up_to_classification,

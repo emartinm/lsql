@@ -402,6 +402,8 @@ class ViewsTest(TestCase):
 
         # I connect to a student and in the url I insert dates
         client.login(username=user_1.username, password='12345')
+        response = client.get(classification_url, follow=True)
+        self.assertEqual(200, response.status_code)
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': end}, follow=True)
         html = response.content.decode('utf-8')
@@ -439,7 +441,7 @@ class ViewsTest(TestCase):
         client.logout()
         client.login(username=teacher.username, password='12345')
         response = client.get(classification_url, {
-            'start': start, 'end': end}, follow=True)
+            'group': group_a.id, 'start': start, 'end': end}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(user_2.username, response.content.decode('utf-8'))
         self.assertIn(user_1.username, response.content.decode('utf-8'))
@@ -453,23 +455,25 @@ class ViewsTest(TestCase):
             self.assertIn(fragment, response.content.decode('utf-8'))
 
         # I test date formatting and incorrect or misplaced dates
-        wrong_start_date = datetime(2019, 9, 1).strftime('%Y-%m-%d')
+        good_start_date = datetime(2019, 9, 1).strftime('%Y-%m-%d')
         wrong_end_date = datetime(2222, 2, 2).strftime('%Y-%m-%d')
         response = client.get(classification_url, {
             'group': group_a.id, 'start': end, 'end': start}, follow=True)
         self.assertIn('¡Error! La fecha inicial no puede ser mayor que la fecha final.',
                       response.content.decode('utf-8'))
         response = client.get(classification_url, {
-            'group': group_a.id, 'start': wrong_start_date, 'end': end}, follow=True)
+            'group': group_a.id, 'start': good_start_date, 'end': end}, follow=True)
 
-        self.assertIn(f"Por favor, la fecha inicial mínimo debe ser {start}", response.content.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': wrong_end_date}, follow=True)
-        self.assertIn(f"la fecha final máximo hoy {end}", response.content.decode('utf-8'))
+        self.assertIn(f"la fecha final máximo hoy {datetime.today().strftime('%Y-%m-%d')}",
+                      response.content.decode('utf-8'))
 
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': ''}, follow=True)
-        self.assertIn("¡Cuidado! Formato incorrecto de fechas.", response.content.decode('utf-8'))
+        self.assertIn("Es necesario proporcionar tanto la fecha inicial como la fecha final.",
+                      response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': 'eee', 'end': end}, follow=True)
         self.assertIn("¡Cuidado! Formato incorrecto de fechas.", response.content.decode('utf-8'))
@@ -482,6 +486,19 @@ class ViewsTest(TestCase):
 
         for fragment in ['0/0 (0)', '0', '0']:
             self.assertIn(fragment, response.content.decode('utf-8'))
+
+    def test_first_day_of_course(self):
+        """Test that given a date returns you on the first day of the academic year"""
+        #
+        self.assertEqual('2020-09-01', first_day_of_course(datetime(2020, 10, 2)))
+        self.assertEqual('2020-09-01', first_day_of_course(datetime(2020, 9, 1)))
+        self.assertEqual('2019-09-01', first_day_of_course(datetime(2020, 3, 2)))
+        self.assertEqual('2020-09-01', first_day_of_course(datetime(2021, 7, 25)))
+        self.assertEqual('2021-09-01', first_day_of_course(datetime(2021, 9, 5)))
+        self.assertEqual('2020-09-01', first_day_of_course(datetime(2021, 8, 31)))
+        self.assertEqual('2023-09-01', first_day_of_course(datetime(2024, 2, 29)))
+        self.assertEqual('2002-09-01', first_day_of_course(datetime(2003, 1, 29)))
+        self.assertEqual('2035-09-01', first_day_of_course(datetime(2035, 10, 22)))
 
     def test_show_result_classification(self):
         """test to show the classification"""

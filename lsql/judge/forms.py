@@ -35,6 +35,13 @@ class LoginForm(forms.Form):
     password = forms.CharField(label='Contraseña', max_length=100, widget=forms.PasswordInput)
 
 
+class ResultForm(forms.Form):
+    """Form used results"""
+    group = forms.CharField(label='Grupo', max_length=20)
+    start = forms.CharField(label='Desde', max_length=10)
+    end = forms.CharField(label='Hasta', max_length=10)
+
+
 class SubmitForm(forms.Form):
     """Form used to validate user submissions"""
     code = forms.CharField(label='Codigo', min_length=10)
