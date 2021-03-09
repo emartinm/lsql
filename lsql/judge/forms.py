@@ -4,7 +4,7 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Forms used in LSQL
 """
-
+from datetime import date
 from django import forms
 
 
@@ -40,6 +40,17 @@ class ResultForm(forms.Form):
     group = forms.CharField(label='Grupo', max_length=20)
     start = forms.DateField(label='Desde', input_formats=['%Y-%m-%d'])
     end = forms.DateField(label='Hasta', input_formats=['%Y-%m-%d'])
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get("start")
+        end = cleaned_data.get("end")
+        if end is not None and start is not None:
+            if end < start:
+                raise ValueError("Validacion fechas")
+            if end > date.today():
+                raise ValueError("Validacion fecha fin")
+        return cleaned_data
 
 
 class SubmitForm(forms.Form):

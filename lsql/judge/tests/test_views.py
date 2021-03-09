@@ -442,6 +442,7 @@ class ViewsTest(TestCase):
         client.login(username=teacher.username, password='12345')
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': end}, follow=True)
+        self.assertIn(user_2.username, response.content.decode('utf-8'))
         self.assertEqual(response.status_code, 200)
         self.assertIn(user_2.username, response.content.decode('utf-8'))
         self.assertIn(user_1.username, response.content.decode('utf-8'))
@@ -463,11 +464,10 @@ class ViewsTest(TestCase):
                       response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': good_start_date, 'end': end}, follow=True)
-
         self.assertEqual(response.status_code, 200)
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': wrong_end_date}, follow=True)
-        self.assertIn(f"la fecha final máximo hoy {datetime.today().strftime('%Y-%m-%d')}",
+        self.assertIn("¡Error! La fecha final no puede ser mayor que la fecha de hoy.",
                       response.content.decode('utf-8'))
 
         response = client.get(classification_url, {

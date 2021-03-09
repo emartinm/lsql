@@ -60,6 +60,10 @@ def error_value(err):
     according to the exception that has been raised."""
     if 'expected a number but got ' in str(err):
         return HttpResponseNotFound("El identificador de grupo no tiene el formato correcto")
+    if 'Validacion fechas' in str(err):
+        return HttpResponseNotFound("¡Error! La fecha inicial no puede ser mayor que la fecha final.")
+    if 'Validacion fecha fin' in str(err):
+        return HttpResponseNotFound("¡Error! La fecha final no puede ser mayor que la fecha de hoy.")
     return HttpResponseNotFound("Es necesario proporcionar tanto la fecha inicial como la fecha final.")
 
 
@@ -92,22 +96,6 @@ def update_user_with_scores(user_logged, user, collection, start, end):
             attempts = attempts + 1
         update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb, enter)
 
-
-def check_dates(request, end, up_to_classification_date, from_classification_date,
-                up_to_classification):
-    """Function that checks the inserted dates"""
-    if datetime.strptime(up_to_classification, '%Y-%m-%d') < datetime(end.year, end.month, end.day):
-        return render(request, 'generic_error_message.html',
-                      {'error': ['¡Error! Ha insertado una fecha que no corresponde al año académico',
-                                 f"Por favor, la fecha final máximo hoy {up_to_classification}"]})
-    if up_to_classification_date < from_classification_date:
-        return render(request, 'generic_error_message.html',
-                      {'error': ['¡Error! La fecha inicial no puede ser mayor que la fecha final.',
-                                 f"Fecha inicial insertada {from_classification_date.strftime('%Y-%m-%d')}, "
-                                 f"fecha final insertada {up_to_classification_date.strftime('%Y-%m-%d')}"]})
-    return None
-
-
 def update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb, enter):
     """Updates user.collection list with problem information:  "accepted submissions/all submission (first AC)"""
     if attempts > 0 and user.first_AC == 0:
@@ -138,18 +126,13 @@ def show_result(request, collection_id):
 
         up_to_classification = datetime.today().strftime('%Y-%m-%d')
         collection = get_object_or_404(Collection, pk=collection_id)
-        if request.user.is_staff and result_form.is_valid() and result_form.clean():
+        if request.user.is_staff and result_form.is_valid():
             group_id = result_form.cleaned_data['group']
             start = result_form.cleaned_data['start']
             end = result_form.cleaned_data['end']
-            result_form.clean()
             groups_user = Group.objects.all().order_by('name')
             up_to_classification_date = end
             from_classification_date = start
-            ret = check_dates(request, end, up_to_classification_date, from_classification_date,
-                              up_to_classification)
-            if ret is not None:
-                return ret
 
         else:
             if result_form.is_valid():
