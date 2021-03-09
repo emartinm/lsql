@@ -55,18 +55,6 @@ def first_day_of_course(init_course):
     return first_day
 
 
-def error_value(err):
-    """Function that receives an exception (of type ValueError or TypeError) and returns a message
-    according to the exception that has been raised."""
-    if 'expected a number but got ' in str(err):
-        return HttpResponseNotFound("El identificador de grupo no tiene el formato correcto")
-    if 'Validacion fechas' in str(err):
-        return HttpResponseNotFound("¡Error! La fecha inicial no puede ser mayor que la fecha final.")
-    if 'Validacion fecha fin' in str(err):
-        return HttpResponseNotFound("¡Error! La fecha final no puede ser mayor que la fecha de hoy.")
-    return HttpResponseNotFound("Es necesario proporcionar tanto la fecha inicial como la fecha final.")
-
-
 def update_user_with_scores(user_logged, user, collection, start, end):
     """Updates user object with information about submissions to problems in collection:
        - user.score (int)
@@ -96,6 +84,7 @@ def update_user_with_scores(user_logged, user, collection, start, end):
             attempts = attempts + 1
         update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb, enter)
 
+
 def update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb, enter):
     """Updates user.collection list with problem information:  "accepted submissions/all submission (first AC)"""
     if attempts > 0 and user.first_AC == 0:
@@ -117,71 +106,68 @@ def show_result(request, collection_id):
         return render(request, 'generic_error_message.html',
                       {'error': ['¡Lo sentimos! No existe ningún grupo para ver resultados']})
     position = 1
-    try:
-        result_form = ResultForm(request.GET)
-        start = None
-        end = None
-        up_to_classification_date = None
-        from_classification_date = None
-
-        up_to_classification = datetime.today().strftime('%Y-%m-%d')
-        collection = get_object_or_404(Collection, pk=collection_id)
-        if request.user.is_staff and result_form.is_valid():
-            group_id = result_form.cleaned_data['group']
-            start = result_form.cleaned_data['start']
-            end = result_form.cleaned_data['end']
-            groups_user = Group.objects.all().order_by('name')
-            up_to_classification_date = end
-            from_classification_date = start
-
-        else:
-            if result_form.is_valid():
-                return HttpResponseForbidden("Forbidden")
-            groups_user = request.user.groups.all().order_by('name')
-            group_id = request.GET.get('group')
-        if group_id is None:
-            group_id = groups_user[0].id
-        group0 = get_object_or_404(Group, pk=group_id)
-        users = get_user_model().objects.filter(groups__name=group0.name)
-        if users.filter(id=request.user.id) or request.user.is_staff:
-            group0.name = group0.name
-            group0.id = group_id
-            groups_user = groups_user.exclude(id=group_id)
-            collection.problem_list = collection.problems()
-            collection.total_problem = collection.problem_list.count()
-            users = users.exclude(is_staff=True)
-            for user in users:
-                user.collection = []
-                user.resolved = 0
-                user.score = 0
-                update_user_with_scores(request.user, user, collection, start, end)
-            users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
-            length = len(users)
-            for i in range(length):
-                if i != len(users) - 1:
-                    if pos(users[i], users[i + 1]):
-                        users[i].pos = position
-                        position = position + 1
-                    else:
-                        users[i].pos = position
+    result_form = ResultForm(request.GET)
+    start = None
+    end = None
+    up_to_classification_date = None
+    from_classification_date = None
+    up_to_classification = datetime.today().strftime('%Y-%m-%d')
+    collection = get_object_or_404(Collection, pk=collection_id)
+    if request.user.is_staff and result_form.is_valid():
+        group_id = result_form.cleaned_data['group']
+        start = result_form.cleaned_data['start']
+        end = result_form.cleaned_data['end']
+        groups_user = Group.objects.all().order_by('name')
+        up_to_classification_date = end
+        from_classification_date = start
+    elif request.user.is_staff and not result_form.is_valid():
+        return HttpResponseNotFound(result_form.non_field_errors())
+    else:
+        if result_form.is_valid():
+            return HttpResponseForbidden("Forbidden")
+        groups_user = request.user.groups.all().order_by('name')
+        group_id = request.GET.get('group')
+    if group_id is None:
+        group_id = groups_user[0].id
+    group0 = get_object_or_404(Group, pk=group_id)
+    users = get_user_model().objects.filter(groups__name=group0.name)
+    if users.filter(id=request.user.id) or request.user.is_staff:
+        group0.name = group0.name
+        group0.id = group_id
+        groups_user = groups_user.exclude(id=group_id)
+        collection.problem_list = collection.problems()
+        collection.total_problem = collection.problem_list.count()
+        users = users.exclude(is_staff=True)
+        for user in users:
+            user.collection = []
+            user.resolved = 0
+            user.score = 0
+            update_user_with_scores(request.user, user, collection, start, end)
+        users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
+        length = len(users)
+        for i in range(length):
+            if i != len(users) - 1:
+                if pos(users[i], users[i + 1]):
+                    users[i].pos = position
+                    position = position + 1
                 else:
-                    if pos(users[i], users[i - 1]):
-                        users[i].pos = position
-                        position = position + 1
-                    else:
-                        users[i].pos = position
+                    users[i].pos = position
+            else:
+                if pos(users[i], users[i - 1]):
+                    users[i].pos = position
+                    position = position + 1
+                else:
+                    users[i].pos = position
 
-            return render(request, 'results.html', {'collection': collection, 'groups': groups_user,
-                                                    'users': users, 'login': request.user,
-                                                    'group0': group0,
-                                                    'to_fixed': up_to_classification,
-                                                    'from_date': from_classification_date,
-                                                    'to_date': up_to_classification_date,
-                                                    'end_date': end, 'start_date': start})
+        return render(request, 'results.html', {'collection': collection, 'groups': groups_user,
+                                                'users': users, 'login': request.user,
+                                                'group0': group0,
+                                                'to_fixed': up_to_classification,
+                                                'from_date': from_classification_date,
+                                                'to_date': up_to_classification_date,
+                                                'end_date': end, 'start_date': start})
 
-        return HttpResponseForbidden("Forbidden")
-    except (TypeError, ValueError) as err:
-        return error_value(err)
+    return HttpResponseForbidden("Forbidden")
 
 
 @login_required

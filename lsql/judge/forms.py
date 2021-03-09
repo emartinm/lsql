@@ -6,6 +6,7 @@ Forms used in LSQL
 """
 from datetime import date
 from django import forms
+from django.core.exceptions import ValidationError
 
 
 class FunctionProblemAdminForm(forms.ModelForm):
@@ -43,13 +44,20 @@ class ResultForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        group = cleaned_data.get("group")
         start = cleaned_data.get("start")
         end = cleaned_data.get("end")
+        if group is not None and not group.isdigit():
+            raise ValidationError("El identificador de grupo no tiene el formato correcto")
+        if end is None or start is None:
+            raise ValidationError("Es necesario proporcionar tanto la fecha inicial como la fecha final.")
         if end is not None and start is not None:
             if end < start:
-                raise ValueError("Validacion fechas")
+                raise ValidationError("¡Error! La fecha inicial no puede ser mayor que la fecha final.")
             if end > date.today():
-                raise ValueError("Validacion fecha fin")
+                raise ValidationError("¡Error! La fecha final no puede ser mayor que la fecha de hoy.")
+            if not isinstance(end, date) or not isinstance(start, date):
+                raise ValidationError("Es necesario proporcionar tanto la fecha inicial como la fecha final.")
         return cleaned_data
 
 

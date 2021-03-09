@@ -401,6 +401,7 @@ class ViewsTest(TestCase):
         end = datetime(2021, 3, 7).strftime('%Y-%m-%d')
 
         # I connect to a student and in the url I insert dates
+
         client.login(username=user_1.username, password='12345')
         response = client.get(classification_url, follow=True)
         self.assertEqual(200, response.status_code)
