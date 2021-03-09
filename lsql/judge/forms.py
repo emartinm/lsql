@@ -56,8 +56,6 @@ class ResultForm(forms.Form):
                 raise ValidationError("¡Error! La fecha inicial no puede ser mayor que la fecha final.")
             if end > date.today():
                 raise ValidationError("¡Error! La fecha final no puede ser mayor que la fecha de hoy.")
-            if not isinstance(end, date) or not isinstance(start, date):
-                raise ValidationError("Es necesario proporcionar tanto la fecha inicial como la fecha final.")
         return cleaned_data
 
 
