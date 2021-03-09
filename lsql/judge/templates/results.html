@@ -2,22 +2,43 @@
 {% load static %}
 {% block contenido %}
 
-<h2 class="text-center">Colección: {{collection.name_html|safe}}</h2>
-<div class="d-flex">
-    <p class="h4">Grupo:</p>
-     <form method="get" action="{% url 'judge:result' collection.id %}">
-    <select class="ml-1" name="group" id="clase" onchange="this.parentNode.submit()">
-      <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
-        {% for group in groups %}
-            <option id = "{{group.name}}" value="{{group.id}}"> {{group.name}} </option>
-        {% endfor %}
-</select>
-   </form>
-
+{% if login.is_staff %}
+<div class="d-flex mb-3">
+    <h2 class="float-left">Colección: {{collection.name_html|safe}}</h2>
 <div class="col md-3">
-    <button class="bg-white border-0 float-right"title="Leyenda" data-target="#exampleModal" data-toggle="modal" type="button"><i class="far fa-question-circle fa-2x"></i></button>
-
+    <h2 class="float-right">Desde {{from_date|date:"d/m/Y"}} hasta {{to_date|date:"d/m/Y"}}</h2>
 </div>
+</div>
+{% else %}
+    <h2 class="text-center mb-3">Colección: {{collection.name_html|safe}}</h2>
+{% endif %}
+<div class="d-flex mb-1">
+    <form class="d-flex" method="get" action="{% url 'judge:result' collection.id %}">
+        <p class="h4">Grupo:</p>
+        <select class="ml-1" name="group" id="clase" onchange="this.parentNode.submit()">
+        <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
+            {% for group in groups %}
+                <option id = "{{group.name}}" value="{{group.id}}"> {{group.name}} </option>
+            {% endfor %}
+        </select>
+        {% if login.is_staff %}
+            <p class="h4 ml-3 mr-1">Desde: </p>
+            <input name="start" id="desde_date" type="date" data-date="{{start_date}}" data-date-format="DD MMMM YYYY"
+            value="{{start_date|date:'Y-m-d'}}"  max="{{to_fixed}}">
+            <p class="h4 ml-3 mr-1">Hasta: </p>
+            <input name="end" id= "hasta_date" type="date" data-date="{{end_date}}" data-date-format="DD MMMM YYYY"
+            value="{{end_date|date:'Y-m-d'}}" max="{{to_fixed}}">
+            <button id="filterButton" type="submit"  class="btn btn-primary ml-3"
+                title="Filtro de ejercicios entre dos periodos">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+        {% endif %}
+    </form>
+
+    <div class="col">
+        <button class="bg-white border-0 float-right"title="Leyenda" data-target="#exampleModal" data-toggle="modal"
+                type="button"><i class="far fa-question-circle fa-2x"></i></button>
+    </div>
 </div>
 
 
@@ -97,19 +118,31 @@
         {% endif %}
 
         {% for pp in p.collection %}
-                {% if pp.solved %}
+                {% if pp.solved and pp.num_submissions != '0/0 (0)'%}
                     {% if p == login or login.is_staff%}
-                         <td class="bg-success border border-dark" >
-                           <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
-                        </td>
+                         {% if login.is_staff %}
+                               <td class="bg-success border border-dark">
+                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                                 </td>
+                        {% else %}
+                           <td class="bg-success border border-dark">
+                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                           </td>
+                        {% endif %}
                     {% else %}
                         <td class="bg-success border border-dark">{{ pp.num_submissions }}</td>
                     {% endif%}
                 {% elif not pp.solved and pp.num_submissions != '0/0 (0)' %}
                      {% if p == login or login.is_staff %}
-                       <td class="bg-danger border border-dark">
-                           <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
-                       </td>
+                        {% if login.is_staff %}
+                               <td class="bg-danger border border-dark">
+                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                                 </td>
+                        {% else %}
+                           <td class="bg-danger border border-dark">
+                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
+                           </td>
+                        {% endif %}
                      {%else%}
                          <td class="bg-danger border border-dark" >{{ pp.num_submissions }}</td>
                      {% endif %}

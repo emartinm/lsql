@@ -11,9 +11,15 @@
     {% for c in results %}
     <tr>
       <td>
-          <a title="{{c.name_html|safe}}" href="{% url 'judge:result' c.id %}?group={{group}}">
+        {% if user.is_staff %}
+          <a title="{{c.name_html|safe}}" href="{% url 'judge:result' c.id %}?group={{group}}&start={{start_date}}&end={{end_date}}">
             {{ c.name_html|safe }}
           </a>
+        {% else %}
+        <a title="{{c.name_html|safe}}" href="{% url 'judge:result' c.id %}?group={{group}}">
+            {{ c.name_html|safe }}
+        </a>
+        {% endif %}
       </td>
     </tr>
     {% endfor %}
