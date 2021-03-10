@@ -175,30 +175,30 @@ class Problem(models.Model):
 
     def solved_first(self):
         """Name of the user who solved first"""
-        pks = Submission.objects.filter(problem=self).filter(veredict_code="AC")\
+        pks = Submission.objects.filter(problem=self, veredict_code="AC")\
         .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
-        subs = Submission.objects.filter(pk__in=pks).order_by('pk')
+        subs = Submission.objects.filter(pk__in=pks).order_by('pk')[0:1]
         if len(subs) > 0 and subs[0] is not None:
             return subs[0].user
-        return "-"
+        return None
 
     def solved_second(self):
         """Name of the user who solved second"""
-        pks = Submission.objects.filter(problem=self).filter(veredict_code="AC")\
+        pks = Submission.objects.filter(problem=self, veredict_code="AC")\
         .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
-        subs = Submission.objects.filter(pk__in=pks).order_by('pk')
-        if len(subs) > 1 and subs[1] is not None:
-            return subs[1].user
-        return "-"
+        subs = Submission.objects.filter(pk__in=pks).order_by('pk')[1:2]
+        if len(subs) > 0 and subs[0] is not None:
+            return subs[0].user
+        return None
 
     def solved_third(self):
         """Name of the user who solved third"""
-        pks = Submission.objects.filter(problem=self).filter(veredict_code="AC")\
+        pks = Submission.objects.filter(problem=self, veredict_code="AC")\
         .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
-        subs = Submission.objects.filter(pk__in=pks).order_by('pk')
-        if len(subs) > 2 and subs[2] is not None:
-            return subs[2].user
-        return "-"
+        subs = Submission.objects.filter(pk__in=pks).order_by('pk')[2:3]
+        if len(subs) > 0 and subs[0] is not None:
+            return subs[0].user
+        return None
 
 
 class SelectProblem(Problem):

@@ -30,3 +30,19 @@ div#feedback_line {
     font-weight: bold;
     font-size:smaller;
 }
+
+.bg-grey{
+    background-color: #f7f7f7;
+}
+
+.gold{
+    color: #C9B037;
+}
+
+.silver{
+    color: #D7D7D7;
+}
+
+.bronze{
+    color: #AD8A56;
+}
