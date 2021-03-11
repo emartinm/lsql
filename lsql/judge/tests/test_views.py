@@ -16,7 +16,7 @@ from judge.models import Collection, SelectProblem, Submission, FunctionProblem,
 from judge.types import VeredictCode
 import judge.tests.test_oracle
 from judge.tests.test_parse import ParseTest
-from judge.views import first_day_of_course
+from judge.views import first_day_of_course, filter_expected_db
 
 
 def create_select_problem(collection, name='Ejemplo'):
@@ -40,6 +40,27 @@ def create_dml_problem(collection, name='Ejemplo'):
     problem = DMLProblem(title_md=name, text_md='texto largo',
                          create_sql=create, insert_sql=insert, collection=collection,
                          solution=solution, min_stmt=2, max_stmt=3)
+    problem.clean()
+    problem.save()
+    return problem
+
+
+def create_dml_complet_problem(collection, name='Ejemplo'):
+    """Creates and stores a DML Problem with an INSERT, a DELETE, a DROP and CREATE"""
+    create = 'CREATE TABLE test_table_1 (n NUMBER);\
+             CREATE TABLE test_table_2 (n NUMBER);\
+             CREATE TABLE test_table_3 (n NUMBER);'
+    insert = "INSERT INTO test_table_1 VALUES (1997);\
+             INSERT INTO test_table_2 VALUES (14);\
+             INSERT INTO test_table_3 VALUES (17);\
+             INSERT INTO test_table_3 VALUES (83)"
+    solution = 'INSERT INTO test_table_1 VALUES (312);\
+               DELETE FROM test_table_3 WHERE n = 83;\
+               CREATE TABLE new (n NUMBER);\
+               DROP TABLE test_table_2;'
+    problem = DMLProblem(title_md=name, text_md='texto largo',
+                         create_sql=create, insert_sql=insert, collection=collection,
+                         solution=solution, min_stmt=2, max_stmt=10)
     problem.clean()
     problem.save()
     return problem
@@ -912,3 +933,67 @@ class ViewsTest(TestCase):
         with self.assertRaises(IndexError, msg='list index out of range'):
             client.get(error_500_rul, follow=True)
         client.logout()
+
+    def test_filter_expected_db(self):
+        """"Test for filter an expected db and transform for another to show"""
+        initial = { 'ESTA SE BORRA': {'rows': [['11111X', 'Real', 'Concha', 70000]],
+                                 'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                        ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                        ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                        ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]},
+                    'ESTA SE MODIFICA': {'rows': [['111X', '222X', '004X']],
+                                 'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]},
+                    'ESTA SE QUEDA IGUAL': {'rows': [['111X', '222X', '004X']],
+                                 'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
+        expected = {'ESTA SE AGREGA': {'rows': [['11111X', 'Gandia', 'Guillermo Olague', 70000]],
+                                     'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                             ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                            ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]},
+                    'ESTA SE MODIFICA': {'rows': [['111X', '333X', '004X']],
+                                     'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]},
+                    'ESTA SE QUEDA IGUAL': {'rows': [['111X', '222X', '004X']],
+                                    'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
+        result_added = {'ESTA SE AGREGA': {'rows': [['11111X', 'Gandia', 'Guillermo Olague', 70000]],
+                                'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                            ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                            ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]}}
+        result_modified = {'ESTA SE MODIFICA': {'rows': [['111X', '333X', '004X']],
+                                'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
+        result_removed = {'ESTA SE BORRA': {'rows': [['11111X', 'Real', 'Concha', 70000]],
+                                'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                            ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                            ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                            ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]}}
+        ret_1, ret_2, ret_3 = filter_expected_db(expected, initial)
+        self.assertEqual(ret_1, result_added)
+        self.assertEqual(ret_2, result_modified)
+        self.assertEqual(ret_3, result_removed)
+
+    def test_expected_results_view(self):
+        '''Test for the view when show an expected result with tables'''
+        client = Client()
+        collection = create_collection('Colleccion de prueba XYZ')
+        dml_problem = create_dml_complet_problem(collection, 'random')
+
+        _ = create_user('5555', 'pepe')
+        client.login(username='pepe', password='5555')
+
+        problem_url = reverse('judge:problem', args=[dml_problem.pk])
+        response = client.get(problem_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('TEST_TABLE_1 (Tabla modificada)', response.content.decode('utf-8'))
+        self.assertIn('TEST_TABLE_2 (Tabla eliminada)', response.content.decode('utf-8'))
+        self.assertIn('TEST_TABLE_3 (Tabla modificada)', response.content.decode('utf-8'))
+        self.assertIn('NEW (Tabla añadida)', response.content.decode('utf-8'))

@@ -1,10 +1,9 @@
 {% extends "problem.html" %}
+
 {% block expected_result %}
 <h2>Llamada a procedimiento</h2>
 <pre><code>{{ problem.proc_call }}</code></pre>
 
 <h2>Resultado esperado</h2>
-{% for name, table in problem.expected_result.items %}
-    {% include 'show_table.html' with table=table name=name %}
-{% endfor %}
+{% include 'show_expected_tables.html' with problem=problem%}
 {% endblock %}

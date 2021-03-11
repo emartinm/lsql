@@ -1,0 +1,19 @@
+{% comment %}
+  Receives a 'problem'
+{% endcomment %}
+{% if problem.show_added %}
+{% for name, table in problem.show_added.items %}
+    {% include 'show_table.html' with table=table name=name|add:" (Tabla añadida)"%}
+{% endfor %}
+{% endif %}
+{% if problem.show_modified %}
+{% for name, table in problem.show_modified.items %}
+    {% include 'show_table.html' with table=table name=name|add:" (Tabla modificada)" %}
+{% endfor %}
+{% endif %}
+{% if problem.show_removed %}
+{% for name, table in problem.show_removed.items %}
+    {% include 'show_table.html' with name=name|add:" (Tabla eliminada)" %}
+{% endfor %}
+{% endif %}
+
