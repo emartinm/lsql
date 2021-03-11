@@ -11,6 +11,23 @@
       <tr>
         <th scope="col">Nombre</th>
         <th scope="col">Número de envíos</th>
+        <th scope="col" class="text-center">
+          
+          <i class="fas fa-award gold"></i>
+          <span>1º</span>
+          <i class="fas fa-award gold"></i>
+        </th>
+        <th scope="col" class="text-center">
+          <i class="fas fa-award silver"></i>
+          <span>2º</span>
+          <i class="fas fa-award silver"></i>
+        </th>
+        <th scope="col" class="text-center">
+
+          <i class="fas fa-award bronze"></i>
+          <span>3º</span>
+          <i class="fas fa-award bronze"></i>
+        </th>
       </tr>
     </thead>
     <tbody>
@@ -25,6 +42,15 @@
         <a href="{% url 'judge:problem' p.pk %}">{{ p.title_html|safe }}</a>
       </td>
       <td>{{ p.num_submissions }}</td>
+        <td class="text-center bg-grey">
+        {% if p.solved_first is not None %}{{ p.solved_first }}{% else %}-{% endif %}
+        </td>
+        <td class="text-center bg-grey">
+        {% if p.solved_second is not None %}{{ p.solved_second }}{% else %}-{% endif %}
+        </td>
+        <td class="text-center bg-grey">
+          {% if p.solved_third is not None %}{{ p.solved_third }}{% else %}-{% endif %}
+        </td>
     </tr>
     {% endfor %}
     </tbody>
