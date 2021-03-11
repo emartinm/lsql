@@ -4,7 +4,5 @@
 <pre><code>{{ problem.tests }}</code></pre>
 
 <h2>Resultado esperado</h2>
-{% for name, table in problem.expected_result.items %}
-    {% include 'show_table.html' with table=table name=name %}
-{% endfor %}
+{% include 'show_expected_tables.html' with problem=problem%}
 {% endblock %}
