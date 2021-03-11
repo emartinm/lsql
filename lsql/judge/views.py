@@ -121,7 +121,8 @@ def show_result(request, collection_id):
         up_to_classification_date = end
         from_classification_date = start
     elif request.user.is_staff and not result_form.is_valid():
-        return HttpResponseNotFound(result_form.non_field_errors())
+        # Error 404 with all the validation errors as HTML
+        return HttpResponseNotFound(str(result_form.errors))
     else:
         if result_form.is_valid():
             return HttpResponseForbidden("Forbidden")

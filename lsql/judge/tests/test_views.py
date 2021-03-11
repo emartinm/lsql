@@ -401,7 +401,6 @@ class ViewsTest(TestCase):
         end = datetime(2021, 3, 7).strftime('%Y-%m-%d')
 
         # I connect to a student and in the url I insert dates
-
         client.login(username=user_1.username, password='12345')
         response = client.get(classification_url, follow=True)
         self.assertEqual(200, response.status_code)
@@ -440,6 +439,7 @@ class ViewsTest(TestCase):
                               follow=True)
         self.assertIn('Forbidden', response.content.decode('utf-8'))
         client.logout()
+
         client.login(username=teacher.username, password='12345')
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': end}, follow=True)
@@ -473,15 +473,13 @@ class ViewsTest(TestCase):
 
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': ''}, follow=True)
-        self.assertIn("Es necesario proporcionar tanto la fecha inicial como la fecha final.",
-                      response.content.decode('utf-8'))
+        self.assertIn("field is required", response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': 'eee', 'end': end}, follow=True)
-        self.assertIn("Es necesario proporcionar tanto la fecha inicial como la fecha final.",
-                      response.content.decode('utf-8'))
+        self.assertIn("Enter a valid date", response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'end': end}, follow=True)
-        self.assertIn("Es necesario proporcionar tanto la fecha inicial como la fecha final.",
+        self.assertIn("field is required",
                       response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': start}, follow=True)
@@ -560,7 +558,7 @@ class ViewsTest(TestCase):
         # I connect to a non-numeric group
         response = client.get(classification_url,
                               {'group': '1A', 'start': start, 'end': end}, follow=True)
-        msg = 'El identificador de grupo no tiene el formato correcto'
+        msg = 'Enter a whole number'
         self.assertEqual(response.status_code, 404)
         self.assertIn(msg, response.content.decode('utf-8'))
         client.logout()
