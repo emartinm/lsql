@@ -45,7 +45,7 @@ def create_dml_problem(collection, name='Ejemplo'):
     return problem
 
 
-def create_dml_complet_problem(collection, name='Ejemplo'):
+def create_dml_complete_problem(collection, name='Ejemplo'):
     """Creates and stores a DML Problem with an INSERT, a DELETE, a DROP and CREATE"""
     create = 'CREATE TABLE test_table_1 (n NUMBER);\
              CREATE TABLE test_table_2 (n NUMBER);\
@@ -985,9 +985,9 @@ class ViewsTest(TestCase):
         '''Test for the view when show an expected result with tables'''
         client = Client()
         collection = create_collection('Colleccion de prueba XYZ')
-        dml_problem = create_dml_complet_problem(collection, 'random')
+        dml_problem = create_dml_complete_problem(collection, 'random')
 
-        _ = create_user('5555', 'pepe')
+        create_user('5555', 'pepe')
         client.login(username='pepe', password='5555')
 
         problem_url = reverse('judge:problem', args=[dml_problem.pk])
