@@ -35,13 +35,12 @@ Al hacer clic en la celda de la tabla de clasificación llevará al listado de t
  * (Daniel) [**Dificultad baja**] [**Tarea para Daniel 11/11/2020-28/02/2021 PR #33**]
 Subir solución como fichero SQL arrastrando o con botón.
 
+* (Enrique y Jesús) [**Dificultad media**] [INTERESANTE] [**Tarea para Iker 26/02-09/03 PR #42**]
+  En la pestaña 'Resultados' añadir un selector de fechas inicio(inicio curso) y fin (tope día de hoy) que ajuste los resultados a las fechas restringidas
 
 # Mejoras asignadas:
 * (Tamara) [**Dificultad baja**] [**IMPRESCINDIBLE**] [**Tarea para Tamara 28/10**]
 En el apartado "Mis envíos" añadir un botón para descargar el código enviado de un ejercicio.
-
-* (Enrique y Jesús) [**Dificultad media**] [INTERESANTE] [**Tarea para Iker 26/02**]
-  En la pestaña 'Resultados' añadir un selector de fechas inicio(inicio curso) y fin (tope día de hoy) que ajuste los resultados a las fechas restringidas
 
 # Mejoras propuestas:
 * (Enrique y Jesús) [**Dificultad baja**] [INTERESANTE]
