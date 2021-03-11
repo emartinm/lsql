@@ -90,7 +90,7 @@ class ModelsTest(TestCase):
         collection = Collection(name_md='ABC', description_md='blablabla')
         collection.clean()
         collection.save()
-        self.assertTrue('ABC' in str(collection))
+        self.assertIn('ABC', str(collection))
 
         user_model = django.contrib.auth.get_user_model()
 
