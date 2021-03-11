@@ -44,9 +44,6 @@ class ModelsTest(TestCase):
                                  solution=solution)
         user1 = user_model.objects.create_user(username='usuario1', email='algo@ucm.es', password='1234')
         user2 = user_model.objects.create_user(username='usuario2', email='algodistinto@ucm.es', password='1234')
-        user3 = user_model.objects.create_user(username='usuario3', email='algo2@ucm.es', password='1234')
-        user4 = user_model.objects.create_user(username='usuario4', email='algo3@ucm.es', password='1234')
-        user5 = user_model.objects.create_user(username='usuario5', email='algo4@ucm.es', password='1234')
         problem1.clean()
         problem1.save()
         problem2.clean()
@@ -55,9 +52,6 @@ class ModelsTest(TestCase):
         problem3.save()
         user1.save()
         user2.save()
-        user3.save()
-        user4.save()
-        user5.save()
 
         sub1 = Submission(code='nada', veredict_code=VeredictCode.WA, user=user1, problem=problem1)
         sub2 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1)
@@ -122,9 +116,9 @@ class ModelsTest(TestCase):
         user2.save()
         user3.save()
 
-        self.assertEqual(problem1.solved_first(), None)
-        self.assertEqual(problem1.solved_second(), None)
-        self.assertEqual(problem1.solved_third(), None)
+        self.assertIsNone(problem1.solved_first())
+        self.assertIsNone(problem1.solved_second())
+        self.assertIsNone(problem1.solved_third())
 
         sub1 = Submission(code='nada', veredict_code=VeredictCode.WA, user=user1, problem=problem1)
         sub2 = Submission(code='nada', veredict_code=VeredictCode.IE, user=user1, problem=problem1)
@@ -135,28 +129,28 @@ class ModelsTest(TestCase):
         for sub in [sub1, sub2, sub3, sub4, sub5]:
             sub.save()
 
-        self.assertEqual(problem1.solved_first(), None)
-        self.assertEqual(problem1.solved_second(), None)
-        self.assertEqual(problem1.solved_third(), None)
+        self.assertIsNone(problem1.solved_first())
+        self.assertIsNone(problem1.solved_second())
+        self.assertIsNone(problem1.solved_third())
 
         Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
 
         self.assertEqual(problem1.solved_first(), user1)
-        self.assertEqual(problem1.solved_second(), None)
-        self.assertEqual(problem1.solved_third(), None)
+        self.assertIsNone(problem1.solved_second())
+        self.assertIsNone(problem1.solved_third())
 
         Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
         Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
 
         self.assertEqual(problem1.solved_first(), user1)
-        self.assertEqual(problem1.solved_second(), None)
-        self.assertEqual(problem1.solved_third(), None)
+        self.assertIsNone(problem1.solved_second())
+        self.assertIsNone(problem1.solved_third())
 
         Submission(code='nada', veredict_code=VeredictCode.AC, user=user2, problem=problem1).save()
 
         self.assertEqual(problem1.solved_first(), user1)
         self.assertEqual(problem1.solved_second(), user2)
-        self.assertEqual(problem1.solved_third(), None)
+        self.assertIsNone(problem1.solved_third())
 
         Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
         Submission(code='nada', veredict_code=VeredictCode.AC, user=user3, problem=problem1).save()
@@ -173,9 +167,9 @@ class ModelsTest(TestCase):
         self.assertEqual(problem1.solved_second(), user2)
         self.assertEqual(problem1.solved_third(), user3)
 
-        self.assertEqual(problem2.solved_first(), None)
-        self.assertEqual(problem2.solved_second(), None)
-        self.assertEqual(problem2.solved_third(), None)
+        self.assertIsNone(problem2.solved_first())
+        self.assertIsNone(problem2.solved_second())
+        self.assertIsNone(problem2.solved_third())
 
     def test_load_broken_zip(self):
         """Open corrupt ZIP files"""

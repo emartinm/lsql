@@ -173,33 +173,26 @@ class Problem(models.Model):
         """Number of user submissions to the problem"""
         return Submission.objects.filter(problem=self, user=user).count()
 
-    def solved_first(self):
-        """Name of the user who solved first"""
+    def solved_n_position(self, position):
+        """Name of the user who solved the problem in 'position' position"""
         pks = Submission.objects.filter(problem=self, veredict_code="AC")\
         .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
-        subs = Submission.objects.filter(pk__in=pks).order_by('pk')[0:1]
+        subs = Submission.objects.filter(pk__in=pks).order_by('pk')[position-1:position]
         if len(subs) > 0 and subs[0] is not None:
             return subs[0].user
         return None
+
+    def solved_first(self):
+        """Name of the user who solved first"""
+        return self.solved_n_position(1)
 
     def solved_second(self):
         """Name of the user who solved second"""
-        pks = Submission.objects.filter(problem=self, veredict_code="AC")\
-        .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
-        subs = Submission.objects.filter(pk__in=pks).order_by('pk')[1:2]
-        if len(subs) > 0 and subs[0] is not None:
-            return subs[0].user
-        return None
+        return self.solved_n_position(2)
 
     def solved_third(self):
         """Name of the user who solved third"""
-        pks = Submission.objects.filter(problem=self, veredict_code="AC")\
-        .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
-        subs = Submission.objects.filter(pk__in=pks).order_by('pk')[2:3]
-        if len(subs) > 0 and subs[0] is not None:
-            return subs[0].user
-        return None
-
+        return self.solved_n_position(3)
 
 class SelectProblem(Problem):
     """Problem that requires a SELECT statement as solution"""
