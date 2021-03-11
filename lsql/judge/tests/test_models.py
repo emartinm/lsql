@@ -85,6 +85,92 @@ class ModelsTest(TestCase):
         self.assertEqual(collection.num_solved_by_user(user1), 1)
         self.assertEqual(collection.num_solved_by_user(user2), 0)
 
+    def test_podium(self):
+        """Test the correct performance of the podium"""
+        collection = Collection(name_md='ABC', description_md='blablabla')
+        collection.clean()
+        collection.save()
+        self.assertIn('ABC', str(collection))
+
+        user_model = django.contrib.auth.get_user_model()
+
+        create = 'CREATE TABLE mytable (dd DATE);'
+        insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'yyyy/mm/dd'))"
+        solution = 'SELECT * FROM mytable'
+        problem1 = SelectProblem(title_md='Dates', text_md='Example with dates',
+                                 create_sql=create, insert_sql=insert, collection=collection,
+                                 solution=solution)
+        problem2 = SelectProblem(title_md='Dates', text_md='Example with dates',
+                                 create_sql=create, insert_sql=insert, collection=collection,
+                                 solution=solution)
+        user1 = user_model.objects.create_user(username='usuario1', email='algo@ucm.es', password='1234')
+        user2 = user_model.objects.create_user(username='usuario2', email='algodistinto@ucm.es', password='1234')
+        user3 = user_model.objects.create_user(username='usuario3', email='algo2@ucm.es', password='1234')
+        user4 = user_model.objects.create_user(username='usuario4', email='algo3@ucm.es', password='1234')
+
+        problem1.clean()
+        problem1.save()
+        problem2.clean()
+        problem2.save()
+        user1.save()
+        user2.save()
+        user3.save()
+
+        self.assertIsNone(problem1.solved_first())
+        self.assertIsNone(problem1.solved_second())
+        self.assertIsNone(problem1.solved_third())
+
+        sub1 = Submission(code='nada', veredict_code=VeredictCode.WA, user=user1, problem=problem1)
+        sub2 = Submission(code='nada', veredict_code=VeredictCode.IE, user=user1, problem=problem1)
+        sub3 = Submission(code='nada', veredict_code=VeredictCode.TLE, user=user1, problem=problem1)
+        sub4 = Submission(code='nada', veredict_code=VeredictCode.RE, user=user1, problem=problem1)
+        sub5 = Submission(code='nada', veredict_code=VeredictCode.VE, user=user1, problem=problem1)
+
+        for sub in [sub1, sub2, sub3, sub4, sub5]:
+            sub.save()
+
+        self.assertIsNone(problem1.solved_first())
+        self.assertIsNone(problem1.solved_second())
+        self.assertIsNone(problem1.solved_third())
+
+        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
+
+        self.assertEqual(problem1.solved_first(), user1)
+        self.assertIsNone(problem1.solved_second())
+        self.assertIsNone(problem1.solved_third())
+
+        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
+        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
+
+        self.assertEqual(problem1.solved_first(), user1)
+        self.assertIsNone(problem1.solved_second())
+        self.assertIsNone(problem1.solved_third())
+
+        Submission(code='nada', veredict_code=VeredictCode.AC, user=user2, problem=problem1).save()
+
+        self.assertEqual(problem1.solved_first(), user1)
+        self.assertEqual(problem1.solved_second(), user2)
+        self.assertIsNone(problem1.solved_third())
+
+        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
+        Submission(code='nada', veredict_code=VeredictCode.AC, user=user3, problem=problem1).save()
+
+        self.assertEqual(problem1.solved_first(), user1)
+        self.assertEqual(problem1.solved_second(), user2)
+        self.assertEqual(problem1.solved_third(), user3)
+
+        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
+        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
+        Submission(code='nada', veredict_code=VeredictCode.AC, user=user4, problem=problem1).save()
+
+        self.assertEqual(problem1.solved_first(), user1)
+        self.assertEqual(problem1.solved_second(), user2)
+        self.assertEqual(problem1.solved_third(), user3)
+
+        self.assertIsNone(problem2.solved_first())
+        self.assertIsNone(problem2.solved_second())
+        self.assertIsNone(problem2.solved_third())
+
     def test_load_broken_zip(self):
         """Open corrupt ZIP files"""
         curr_path = os.path.dirname(__file__)

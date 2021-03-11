@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
-
 Functions that process HTTP connections
 """
+from datetime import timedelta, datetime
 
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.http.response import HttpResponse, HttpResponseNotFound
@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import login_required
 from logzero import logger
 from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table, compare_select_results
-from .forms import SubmitForm
+from .forms import SubmitForm, ResultForm
 from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
     Submission
 from .oracle_driver import OracleExecutor
@@ -47,7 +47,15 @@ def index(_):
     return HttpResponseRedirect(reverse('judge:collections'))
 
 
-def update_user_with_scores(user, collection):
+def first_day_of_course(init_course):
+    """Returns the first day of the academic year"""
+    first_day = datetime(init_course.year, 9, 1).strftime('%Y-%m-%d')
+    if 1 <= init_course.month < 9:
+        first_day = datetime(init_course.year - 1, 9, 1).strftime('%Y-%m-%d')
+    return first_day
+
+
+def update_user_with_scores(user_logged, user, collection, start, end):
     """Updates user object with information about submissions to problems in collection:
        - user.score (int)
        - user.collection (list of str representing "accepted submissions/all submission (first AC)") for problems in
@@ -59,7 +67,13 @@ def update_user_with_scores(user, collection):
         attempts = 0
         problem = collection.problem_list[numb]
         user.first_AC = 0
-        subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
+        if user_logged.is_staff:
+            subs = Submission.objects.filter(user=user,
+                                             problem=problem.id,
+                                             creation_date__range=[start, end + timedelta(days=1)]).order_by('pk')
+
+        else:
+            subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
         for (submission_pos, submission) in enumerate(subs):
             if submission.veredict_code == VeredictCode.AC:
                 num_accepted = num_accepted + 1
@@ -68,17 +82,18 @@ def update_user_with_scores(user, collection):
                 user.first_AC = submission_pos + 1
                 user.score = user.score + submission_pos + 1
             attempts = attempts + 1
-        update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb)
+        update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb, enter)
 
 
-def update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb):
+def update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb, enter):
     """Updates user.collection list with problem information:  "accepted submissions/all submission (first AC)"""
     if attempts > 0 and user.first_AC == 0:
         problem.num_submissions = f"{num_accepted}/{attempts} ({attempts})"
+        problem.solved = False
     else:
         problem.num_submissions = f"{num_accepted}/{attempts} ({user.first_AC})"
-    problem.solved = collection.problem_list[numb].solved_by_user(user)
-    if problem.solved:
+        problem.solved = collection.problem_list[numb].solved_by_user(user)
+    if problem.solved and enter:
         user.resolved = user.resolved + 1
     user.collection.append(problem)
 
@@ -91,51 +106,69 @@ def show_result(request, collection_id):
         return render(request, 'generic_error_message.html',
                       {'error': ['¡Lo sentimos! No existe ningún grupo para ver resultados']})
     position = 1
-    try:
+    result_form = ResultForm(request.GET)
+    start = None
+    end = None
+    up_to_classification_date = None
+    from_classification_date = None
+    up_to_classification = datetime.today().strftime('%Y-%m-%d')
+    collection = get_object_or_404(Collection, pk=collection_id)
+    if request.user.is_staff and result_form.is_valid():
+        group_id = result_form.cleaned_data['group']
+        start = result_form.cleaned_data['start']
+        end = result_form.cleaned_data['end']
+        groups_user = Group.objects.all().order_by('name')
+        up_to_classification_date = end
+        from_classification_date = start
+    elif request.user.is_staff and not result_form.is_valid():
+        # Error 404 with all the validation errors as HTML
+        return HttpResponseNotFound(str(result_form.errors))
+    else:
+        if result_form.is_valid():
+            return HttpResponseForbidden("Forbidden")
+        groups_user = request.user.groups.all().order_by('name')
         group_id = request.GET.get('group')
-        collection = get_object_or_404(Collection, pk=collection_id)
-        if request.user.is_staff:
-            groups_user = Group.objects.all().order_by('name')
-        else:
-            groups_user = request.user.groups.all().order_by('name')
-        if group_id is None:
-            group_id = groups_user[0].id
-        group0 = get_object_or_404(Group, pk=group_id)
-        users = get_user_model().objects.filter(groups__name=group0.name)
-        if users.filter(id=request.user.id) or request.user.is_staff:
-            group0.name = group0.name
-            group0.id = group_id
-            groups_user = groups_user.exclude(id=group_id)
-            collection.problem_list = collection.problems()
-            collection.total_problem = collection.problem_list.count()
-            users = users.exclude(is_staff=True)
-            for user in users:
-                user.collection = []
-                user.resolved = 0
-                user.score = 0
-                update_user_with_scores(user, collection)
-            users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
-            length = len(users)
-            for i in range(length):
-                if i != len(users) - 1:
-                    if pos(users[i], users[i + 1]):
-                        users[i].pos = position
-                        position = position + 1
-                    else:
-                        users[i].pos = position
+    if group_id is None:
+        group_id = groups_user[0].id
+    group0 = get_object_or_404(Group, pk=group_id)
+    users = get_user_model().objects.filter(groups__name=group0.name)
+    if users.filter(id=request.user.id) or request.user.is_staff:
+        group0.name = group0.name
+        group0.id = group_id
+        groups_user = groups_user.exclude(id=group_id)
+        collection.problem_list = collection.problems()
+        collection.total_problem = collection.problem_list.count()
+        users = users.exclude(is_staff=True)
+        for user in users:
+            user.collection = []
+            user.resolved = 0
+            user.score = 0
+            update_user_with_scores(request.user, user, collection, start, end)
+        users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
+        length = len(users)
+        for i in range(length):
+            if i != len(users) - 1:
+                if pos(users[i], users[i + 1]):
+                    users[i].pos = position
+                    position = position + 1
                 else:
-                    if pos(users[i], users[i - 1]):
-                        users[i].pos = position
-                        position = position + 1
-                    else:
-                        users[i].pos = position
+                    users[i].pos = position
+            else:
+                if pos(users[i], users[i - 1]):
+                    users[i].pos = position
+                    position = position + 1
+                else:
+                    users[i].pos = position
 
-            return render(request, 'results.html', {'collection': collection, 'groups': groups_user, 'users': users,
-                                                    'login': request.user, 'group0': group0})
+        return render(request, 'results.html', {'collection': collection, 'groups': groups_user,
+                                                'users': users, 'login': request.user,
+                                                'group0': group0,
+                                                'to_fixed': up_to_classification,
+                                                'from_date': from_classification_date,
+                                                'to_date': up_to_classification_date,
+                                                'end_date': end, 'start_date': start})
 
-        return HttpResponseForbidden("Forbidden")
-    except ValueError:
-        return HttpResponseNotFound("El identificador de grupo no tiene el formato correcto")
+    return HttpResponseForbidden("Forbidden")
 
 
 @login_required
@@ -159,7 +192,17 @@ def show_results(request):
         # Templates can only invoke nullary functions or access object attribute, so we store
         # the number of problems solved by the user in an attribute
         results.num_solved = results.num_solved_by_user(request.user)
-    return render(request, 'result.html', {'results': cols, 'group': groups_user[0].id})
+    up_to_classification = datetime.today().strftime('%Y-%m-%d')
+    up_to_classification_date = datetime.strptime(up_to_classification, '%Y-%m-%d')
+
+    from_classification = first_day_of_course(datetime.today())
+    from_classification_date = datetime.strptime(from_classification, '%Y-%m-%d')
+    return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
+                                           'start_date': from_classification,
+                                           'from_date': from_classification_date,
+                                           'to_date': up_to_classification_date,
+                                           'to_fixed': up_to_classification,
+                                           'end_date': up_to_classification})
 
 
 @login_required
@@ -209,12 +252,21 @@ def show_submissions(request):
         id_user = request.GET.get('user_id')
         if pk_problem is not None or id_user is not None:
             if int(id_user) == request.user.id and not request.user.is_staff:
+                start = request.GET.get('start')
+                end = request.GET.get('end')
+                if start is not None or end is not None:
+                    return HttpResponseForbidden("Forbidden")
                 problem = get_object_or_404(Problem, pk=pk_problem)
                 subs = Submission.objects.filter(user=request.user).filter(problem=problem.id).order_by('-pk')
             elif request.user.is_staff:
+                start = request.GET.get('start')
+                end = request.GET.get('end')
+                starts = datetime.strptime(start, '%Y-%m-%d')
+                ends = datetime.strptime(end, '%Y-%m-%d')
                 problem = get_object_or_404(Problem, pk=pk_problem)
                 user = get_user_model().objects.filter(id=id_user)
-                subs = Submission.objects.filter(user=user.get()).filter(problem=problem.id).order_by('-pk')
+                subs = Submission.objects.filter(user=user.get()) \
+                    .filter(problem=problem.id, creation_date__range=[starts, ends + timedelta(days=1)]).order_by('-pk')
             else:
                 return HttpResponseForbidden("Forbidden")
 
@@ -335,15 +387,12 @@ def filter_expected_db(expected_db, initial_db):
     ret_added = {}
     ret_modified = {}
     ret_removed = {}
+    common_tables = initial_db.keys() & expected_db.keys()
     if expected_tables != initial_tables:
         ret_added = {x: expected_db[x] for x in expected_tables if x not in initial_tables}
         ret_removed = {x: initial_db[x] for x in initial_tables if x not in expected_tables}
-        for element in ret_added.keys():
-            expected_tables.remove(element)
-        for element in ret_removed.keys():
-            initial_tables.remove(element)
-    for table in expected_tables:
+    for table in common_tables:
         veredict, _ = compare_select_results(expected_db[table], initial_db[table], order=False)
         if veredict != VeredictCode.AC:
-            ret_modified = {table: expected_db[table]}
+            ret_modified[table] = expected_db[table]
     return ret_added, ret_modified, ret_removed

@@ -173,6 +173,26 @@ class Problem(models.Model):
         """Number of user submissions to the problem"""
         return Submission.objects.filter(problem=self, user=user).count()
 
+    def solved_n_position(self, position):
+        """User who solved the problem in 'position' position"""
+        pks = Submission.objects.filter(problem=self, veredict_code="AC")\
+        .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
+        subs = Submission.objects.filter(pk__in=pks).order_by('pk')[position-1:position]
+        if len(subs) > 0 and subs[0] is not None:
+            return subs[0].user
+        return None
+
+    def solved_first(self):
+        """User who solved first"""
+        return self.solved_n_position(1)
+
+    def solved_second(self):
+        """User who solved second"""
+        return self.solved_n_position(2)
+
+    def solved_third(self):
+        """User who solved third"""
+        return self.solved_n_position(3)
 
 class SelectProblem(Problem):
     """Problem that requires a SELECT statement as solution"""

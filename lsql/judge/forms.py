@@ -4,8 +4,9 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Forms used in LSQL
 """
-
+from datetime import date
 from django import forms
+from django.core.exceptions import ValidationError
 
 
 class FunctionProblemAdminForm(forms.ModelForm):
@@ -33,6 +34,23 @@ class LoginForm(forms.Form):
     """Form used to validate user login"""
     username = forms.CharField(label='Nombre de usuario', max_length=100)
     password = forms.CharField(label='Contraseña', max_length=100, widget=forms.PasswordInput)
+
+
+class ResultForm(forms.Form):
+    """Form used results"""
+    group = forms.IntegerField(label='Grupo', min_value=1)
+    start = forms.DateField(label='Desde', input_formats=['%Y-%m-%d'])
+    end = forms.DateField(label='Hasta', input_formats=['%Y-%m-%d'])
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get("start")
+        end = cleaned_data.get("end")
+        if end is not None and start is not None:
+            if end < start:
+                raise ValidationError("¡Error! La fecha inicial no puede ser mayor que la fecha final.")
+            if end > date.today():
+                raise ValidationError("¡Error! La fecha final no puede ser mayor que la fecha de hoy.")
 
 
 class SubmitForm(forms.Form):

@@ -23,4 +23,4 @@ if os.environ.get('DJANGO_DEVELOPMENT'):
     from .settings_dev import *
 else:
     logger.debug('Loading DEPLOY settings')
-    from . settings_deploy import *
+    from .settings_deploy import *
