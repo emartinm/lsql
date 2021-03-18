@@ -10,7 +10,8 @@ import os
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from judge.shell import create_users_from_csv
+from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Collection, Problem
+from judge.shell import create_users_from_csv, adapt_db_result_to_list
 
 
 class ShellTest(TestCase):
@@ -54,3 +55,63 @@ class ShellTest(TestCase):
             path = os.path.join(curr_path, self.FILE_FOLDER, filename)
             with self.assertRaises(AssertionError):
                 create_users_from_csv(path)
+
+    def test_adapt_db_expected_list(self):
+        """Test for adapting dictionaries in initial_db and expected_result to unitary lists """
+        collection = Collection(name_md='Colección', position=8, description_md='Colección de pruebas', author=None)
+        collection.save()
+
+        # Problems with dictionaries or already with [dict]
+        problems = [
+            SelectProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
+                          author=None, expected_result=dict()),
+            DMLProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
+                       author=None, expected_result=dict()),
+            FunctionProblem(title_html="titulo", text_html="enunciado", initial_db=dict(),
+                            collection=collection, author=None, expected_result=dict()),
+            ProcProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
+                        author=None, expected_result=dict()),
+            TriggerProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
+                           author=None, expected_result=dict()),
+            SelectProblem(title_html="titulo", text_html="enunciado", initial_db=[dict()], collection=collection,
+                          author=None, expected_result=[dict()]),  # already has the right representation
+        ]
+
+        for prob in problems:
+            prob.save()
+
+        adapt_db_result_to_list()
+        for prob in (list(SelectProblem.objects.all()) + list(DMLProblem.objects.all()) +
+                     list(FunctionProblem.objects.all()) + list(ProcProblem.objects.all()) +
+                     list(TriggerProblem.objects.all())):
+            self.assertIs(type(prob.initial_db), list)
+            self.assertIs(type(prob.initial_db[0]), dict)
+            self.assertIs(type(prob.expected_result), list)
+            self.assertIs(type(prob.expected_result[0]), dict)
+
+        for prob in Problem.objects.all():
+            prob.delete()
+
+        # Problems with wrong types in initial_db or expected_result
+        wrong_problems = [
+            SelectProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
+                          author=None, expected_result=3),
+            DMLProblem(title_html="titulo", text_html="enunciado", initial_db=6, collection=collection,
+                       author=None, expected_result=dict()),
+            FunctionProblem(title_html="titulo", text_html="enunciado", initial_db=[],
+                            collection=collection, author=None, expected_result=dict()),
+            ProcProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
+                        author=None, expected_result=[3]),
+            TriggerProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
+                           author=None, expected_result=[]),
+            TriggerProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
+                           author=None, expected_result=[dict(), dict(), False]),
+        ]
+
+        # Tries every wrong program individually (removing it after checking the exception)
+        for prob in wrong_problems:
+            prob.save()
+            print(type(prob))
+            with self.assertRaises(TypeError):
+                adapt_db_result_to_list()
+            prob.delete()

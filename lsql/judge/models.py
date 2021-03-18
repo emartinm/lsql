@@ -117,7 +117,7 @@ class Collection(models.Model):
 
     def num_solved_by_user(self, user):
         """Number of problems solved by user in this collection"""
-        return Submission.objects.filter(veredict_code='AC', problem__collection=self, user=user)\
+        return Submission.objects.filter(veredict_code='AC', problem__collection=self, user=user) \
             .distinct('problem').count()
 
 
@@ -175,9 +175,9 @@ class Problem(models.Model):
 
     def solved_n_position(self, position):
         """User who solved the problem in 'position' position"""
-        pks = Submission.objects.filter(problem=self, veredict_code="AC")\
-        .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
-        subs = Submission.objects.filter(pk__in=pks).order_by('pk')[position-1:position]
+        pks = Submission.objects.filter(problem=self, veredict_code=VeredictCode.AC) \
+            .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
+        subs = Submission.objects.filter(pk__in=pks).order_by('pk')[position - 1:position]
         if len(subs) > 0 and subs[0] is not None:
             return subs[0].user
         return None
@@ -193,6 +193,7 @@ class Problem(models.Model):
     def solved_third(self):
         """User who solved third"""
         return self.solved_n_position(3)
+
 
 class SelectProblem(Problem):
     """Problem that requires a SELECT statement as solution"""

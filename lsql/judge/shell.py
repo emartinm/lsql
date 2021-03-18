@@ -9,6 +9,8 @@ For example: create a group of users from a CSV list of students
 import csv
 from django.contrib.auth import get_user_model
 
+from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem
+
 
 def create_users_from_csv(csv_filename):
     """
@@ -49,3 +51,28 @@ def create_users_from_list(dict_list):
         user.last_name = last_name
         user.save()
         print(f'Saved User("{username}", "{email}", "{password}", "{first_name}", "{last_name}")')
+
+
+def is_list_of_dict(value):
+    """ Check if value is a non-empty list of dictionaries """
+    return isinstance(value, list) and len(value) > 0 and all(isinstance(elem, dict) for elem in value)
+
+
+def adapt_db_result_to_list():
+    """ Adapts the fields 'initial_db' and 'expected_result' in the problems from dictionaries to
+        unitary lists containing that dictionary """
+    for prob in (list(SelectProblem.objects.all()) + list(DMLProblem.objects.all()) +
+                 list(FunctionProblem.objects.all()) + list(ProcProblem.objects.all()) +
+                 list(TriggerProblem.objects.all())):
+        # We need to traverse the different types of problems because expected_result is defined in the
+        # child classes, not in Problem.
+        if isinstance(prob.initial_db, dict):
+            prob.initial_db = [prob.initial_db]
+        elif not is_list_of_dict(prob.initial_db):
+            raise TypeError(f"Unexpected initial_db type: {prob.initial_db}")
+
+        if isinstance(prob.expected_result, dict):
+            prob.expected_result = [prob.expected_result]
+        elif not is_list_of_dict(prob.expected_result):
+            raise TypeError(f"Unexpected expected_result type: {prob.expected_result}")
+        prob.save()
