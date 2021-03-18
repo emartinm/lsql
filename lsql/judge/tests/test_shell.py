@@ -9,6 +9,7 @@ import os
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 
 from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Collection, Problem
 from judge.shell import create_users_from_csv, adapt_db_result_to_list
@@ -23,38 +24,52 @@ class ShellTest(TestCase):
 
     def test_valid_csv(self):
         """Valid CSV file with 3 users"""
-        for username in ['juan', 'eva', 'froilan']:
-            with self.assertRaises(get_user_model().DoesNotExist):
-                get_user_model().objects.get(username=username)
+        # Delete existing users and groups
+        Group.objects.all().delete()
+        get_user_model().objects.all().delete()
 
+        group_name = 'Clase ABC curso X/Y'
         curr_path = os.path.dirname(__file__)
         path = os.path.join(curr_path, self.FILE_FOLDER, self.CSV_OK_TEST)
-        create_users_from_csv(path)
+        create_users_from_csv(path, group_name)
+
+        # The new group has 3 memebers
+        new_group = Group.objects.filter(name=group_name)[0]
+        self.assertEqual(len(new_group.user_set.all()), 3)
 
         juan = get_user_model().objects.get(username='juan')
         self.assertTrue(juan.check_password('11111111X'))
         self.assertFalse(juan.check_password('11113111X'))
-        self.assertTrue(juan.first_name == 'Juan')
+        self.assertEqual(juan.first_name, 'Juan')
+        self.assertEqual(len(juan.groups.all()), 1)
+        self.assertEqual(juan.groups.all()[0], new_group)
 
         eva = get_user_model().objects.get(username='eva')
         self.assertTrue(eva.check_password('22222222X'))
         self.assertFalse(eva.check_password('11113111X'))
-        self.assertTrue(eva.first_name == 'EVA MARIA')
-        self.assertTrue(eva.last_name == 'MARTIN KEPLER')
+        self.assertEqual(eva.first_name, 'EVA MARIA')
+        self.assertEqual(eva.last_name, 'MARTIN KEPLER')
+        self.assertEqual(len(eva.groups.all()), 1)
+        self.assertEqual(eva.groups.all()[0], new_group)
 
         froilan = get_user_model().objects.get(username='froilan')
         self.assertTrue(froilan.check_password('33333333X'))
         self.assertFalse(froilan.check_password('11113111X'))
-        self.assertTrue(froilan.first_name == 'JUAN FROILAN DE TODOS LOS SANTOS DE JESÚS')
-        self.assertTrue(froilan.last_name == 'KUPU KUPI')
+        self.assertEqual(froilan.first_name, 'JUAN FROILAN DE TODOS LOS SANTOS DE JESÚS')
+        self.assertEqual(froilan.last_name, 'KUPU KUPI')
+        self.assertEqual(len(froilan.groups.all()), 1)
+        self.assertEqual(froilan.groups.all()[0], new_group)
 
     def test_empty_fields(self):
         """CSV files where some fields are empty"""
         curr_path = os.path.dirname(__file__)
         for filename in self.CSV_EMPTY_FIELDS:
+            # Delete existing users and groups
+            get_user_model().objects.all().delete()
+            Group.objects.all().delete()
             path = os.path.join(curr_path, self.FILE_FOLDER, filename)
             with self.assertRaises(AssertionError):
-                create_users_from_csv(path)
+                create_users_from_csv(path, f"Test-{filename}")
 
     def test_adapt_db_expected_list(self):
         """Test for adapting dictionaries in initial_db and expected_result to unitary lists """
@@ -111,7 +126,6 @@ class ShellTest(TestCase):
         # Tries every wrong program individually (removing it after checking the exception)
         for prob in wrong_problems:
             prob.save()
-            print(type(prob))
             with self.assertRaises(TypeError):
                 adapt_db_result_to_list()
             prob.delete()
