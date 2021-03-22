@@ -13,8 +13,8 @@ from judge.types import VeredictCode
 from judge.tests.test_views import create_user, create_superuser, create_group, create_collection, create_select_problem
 from judge.views import first_day_of_course
 
-class ViewsTest(TestCase):
-    """Tests for the module views"""
+class RankingTest(TestCase):
+    """Tests for the module of rankings"""
     def test_download_ranking(self):
         """ Test to download excel of results """
         client = Client()
