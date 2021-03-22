@@ -12,7 +12,7 @@
 {% else %}
     <h2 class="text-center mb-3">Colección: {{collection.name_html|safe}}</h2>
 {% endif %}
-<div class="d-flex mb-1">
+<div id="g" class="d-flex mb-1">
     <form class="d-flex" method="get" action="{% url 'judge:result' collection.id %}">
         <p class="h4">Grupo:</p>
         <select class="ml-1" name="group" id="clase" onchange="this.parentNode.submit()">
@@ -35,6 +35,13 @@
         {% endif %}
     </form>
 
+    {% if login.is_staff %}
+        <div class="col md-3">
+            <a href="{% url 'judge:download_ranking' collection.id %}?group={{group0.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}">
+            <button type="button" class="btn btn-primary" title="csv con el ranking">Ranking</button>
+            </a>
+        </div>
+    {% endif %}
     <div class="col">
         <button class="bg-white border-0 float-right"title="Leyenda" data-target="#exampleModal" data-toggle="modal"
                 type="button"><i class="far fa-question-circle fa-2x"></i></button>
@@ -51,7 +58,7 @@
       <div class="modal-body">
           <div class="d-flex p-2">
                <div class="bg-info h-40 w-25 text-center mb-1 border border-dark">1</div>
-               <div class="text-center w-75">Posición del usuario</div>
+               <div class="text-center w-75">Posición del usuario</div>url
           </div>
           <div class="d-flex p-2">
                <div class="bg-success h-40 w-25 text-center mb-1 border border-dark">3/8 (5)</div>
@@ -83,7 +90,7 @@
     </div>
   </div>
 </div>
-<table class="table text-center border border-dark">
+<table id="my_table" class="table text-center border border-dark">
     <thead class="thead-dark">
       <tr>
           <th class=" border border-light" scope="col">Pos.</th>

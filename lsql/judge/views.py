@@ -5,6 +5,10 @@ Functions that process HTTP connections
 """
 from datetime import timedelta, datetime
 
+from os import remove
+import tempfile
+from bs4 import BeautifulSoup
+import openpyxl
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
@@ -396,3 +400,59 @@ def filter_expected_db(expected_db, initial_db):
         if veredict != VeredictCode.AC:
             ret_modified[table] = expected_db[table]
     return ret_added, ret_modified, ret_removed
+
+
+@login_required
+def download_ranking(request, collection_id):
+    """Download excel with the results of submissions"""
+    html = show_result(request, collection_id).content.decode('utf-8')
+    result_form = ResultForm(request.GET)
+    if request.user.is_staff and result_form.is_valid():
+        soup = BeautifulSoup(html, 'html.parser')
+        file = tempfile
+        file.mkstemp()
+        col = 1
+        row = 1
+        work = openpyxl.Workbook()
+        book = work.active
+        data = soup.find_all("h2")
+        for i in data:
+            book.cell(row=row, column=col, value=i.string)
+            row += 1
+        option = soup.find("option")
+        book.cell(row=row, column=col, value=option.string)
+        row += 1
+        ths = soup.find_all("th")
+        for i in ths:
+            if i.string is not None:
+                book.cell(row=row, column=col, value=i.string)
+                col += 1
+            exercises = i.find_all("a")
+            for j in exercises:
+                if j.string is not None:
+                    book.cell(row=row, column=col, value=j.string)
+                    col += 1
+        col = 1
+        trs = soup.find_all("tr")
+        for i in trs:
+            tds = i.find_all("td")
+            for j in tds:
+                if j.string is not None:
+                    book.cell(row=row, column=col, value=j.string)
+                    col += 1
+                num_submissions = j.find_all("a")
+                for k in num_submissions:
+                    if k.string is not None:
+                        book.cell(row=row, column=col, value=k.string)
+                        col += 1
+            col = 1
+            row += 1
+        work.save(file.gettempprefix())
+        response = HttpResponse(open(file.gettempprefix(), 'rb').read())
+        response['Content-Type'] = 'application/xlsx'
+        response['Content-Disposition'] = "attachment; filename=ranking.xlsx"
+        remove(file.gettempprefix())
+        return response
+    if request.user.is_staff and not result_form.is_valid():
+        return HttpResponseNotFound(str(result_form.errors))
+    return HttpResponseForbidden("Forbidden")
