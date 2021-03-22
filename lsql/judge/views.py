@@ -17,7 +17,8 @@ from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table, compare_select_results
 from .forms import SubmitForm, ResultForm
 from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
-    Submission
+    Submission, NumSolvedAchievementDefinition, PodiumAchievementDefinition, NumSolvedCollectionAchievementDefinition,\
+    ObtainedAchievement, AchievementDefinition
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
 
@@ -143,6 +144,7 @@ def show_result(request, collection_id):
             user.collection = []
             user.resolved = 0
             user.score = 0
+            user.n_achievements = ObtainedAchievement.objects.filter(user=user.pk).count()
             update_user_with_scores(request.user, user, collection, start, end)
         users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
         length = len(users)
@@ -159,7 +161,6 @@ def show_result(request, collection_id):
                     position = position + 1
                 else:
                     users[i].pos = position
-
         return render(request, 'results.html', {'collection': collection, 'groups': groups_user,
                                                 'users': users, 'login': request.user,
                                                 'group0': group0,
@@ -280,6 +281,24 @@ def show_submissions(request):
 
 
 @login_required
+def show_achievements(request, user_id):
+    """View for show the achievements"""
+    this_user = get_user_model().objects.get(pk=user_id)
+    achievements_locked = []
+    achievements_unlocked = ObtainedAchievement.objects.filter(user=this_user)
+    all_achievements = AchievementDefinition.objects.all()
+    for ach in all_achievements:
+        is_unlocked = False
+        for unlock in achievements_unlocked:
+            if ach == unlock.achievement_definition:
+                is_unlocked = True
+        if not is_unlocked:
+            achievements_locked.append(ach)
+    return render(request, 'achievements.html', {'locked': achievements_locked,
+                                                 'unlocked': achievements_unlocked})
+
+
+@login_required
 def show_submission(request, submission_id):
     """Shows a submission of the current user"""
     submission = get_object_or_404(Submission, pk=submission_id)
@@ -362,6 +381,9 @@ def submit(request, problem_id):
     submission = Submission(code=code, veredict_code=data['veredict'], veredict_message=data['message'],
                             user=request.user, problem=general_problem)
     submission.save()
+    # If veredict is correct look for an achievement to complete if it's possible
+    if data['veredict'] == 'AC':
+        check_if_get_achievement(request.user)
     logger.debug('Stored submission %s', submission)
     return JsonResponse(data)
 
@@ -396,3 +418,19 @@ def filter_expected_db(expected_db, initial_db):
         if veredict != VeredictCode.AC:
             ret_modified[table] = expected_db[table]
     return ret_added, ret_modified, ret_removed
+
+
+def check_if_get_achievement(user):
+    """Check if the user get some achievement"""
+    num_solved_achievement = NumSolvedAchievementDefinition.objects.all()
+    num_solved_collection = NumSolvedCollectionAchievementDefinition.objects.all()
+    podium_achievement = PodiumAchievementDefinition.objects.all()
+    for num_ach in num_solved_achievement:
+        if not num_ach.check_user(user):
+            num_ach.check_and_save(user)
+    for coll_ach in num_solved_collection:
+        if not coll_ach.check_user(user):
+            coll_ach.check_and_save(user)
+    for pod_ach in podium_achievement:
+        if not pod_ach.check_user(user):
+            pod_ach.check_and_save(user)

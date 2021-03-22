@@ -6,6 +6,7 @@ Models to store objects in the DB
 """
 
 from zipfile import ZipFile
+from datetime import date
 import markdown
 from lxml import html
 from logzero import logger
@@ -193,6 +194,7 @@ class Problem(models.Model):
     def solved_third(self):
         """User who solved third"""
         return self.solved_n_position(3)
+
 
 class SelectProblem(Problem):
     """Problem that requires a SELECT statement as solution"""
@@ -383,3 +385,89 @@ class Submission(models.Model):
 
     def __str__(self):
         return f"{self.pk} - {self.user.email} - {self.veredict_code}"
+
+
+class AchievementDefinition(models.Model):
+    """Abstract class for Achievements"""
+    name = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
+    description = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
+
+    def check_and_save(self, user):
+        """Raise a NotImplementedError, declared function for its children"""
+        raise NotImplementedError
+
+    def check_user(self, usr):
+        """Check if an user have the achievement"""
+        achievements_of_user = ObtainedAchievement.objects.filter(user=usr, achievement_definition=self).count()
+        if achievements_of_user > 0:
+            return True
+        return False
+
+    def __str__(self):
+        """String for show the achievement name"""
+        return f"{self.name}"
+
+
+class ObtainedAchievement(models.Model):
+    """Store info about an obtained achievement"""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    obtained_date = models.DateTimeField(auto_now_add=True)
+    achievement_definition = models.ForeignKey(AchievementDefinition, on_delete=models.CASCADE)
+
+
+class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
+    """Achievement by solving a number of problems"""
+    num_problems = models.PositiveIntegerField(default=1, null=False)
+
+    def check_and_save(self, user):
+        """Check if a submission is deserving for get an achievement, if it is, save that"""
+        total_solved = 0
+        problems = Problem.objects.all()
+        for problem in problems:
+            if Submission.objects.filter(veredict_code=VeredictCode.AC, problem=problem, user=user).count() > 0:
+                total_solved = total_solved + 1
+        if total_solved >= self.num_problems:
+            new_achievement = ObtainedAchievement(user=user, obtained_date=date.today(), achievement_definition=self)
+            new_achievement.save()
+
+
+class PodiumAchievementDefinition(AchievementDefinition, models.Model):
+    """Achievement by solving X problems among the first N"""
+    num_problems = models.PositiveIntegerField(default=1, null=False)
+    position = models.PositiveIntegerField(default=3, null=False)
+
+    def check_and_save(self, user):
+        """Check if a submission is deserving for get an achievement, if it is, save that"""
+        problems = Problem.objects.all()
+        total = 0
+        exit_for = False
+        for prob in problems:
+            for position_to_check in range(1, self.position+1):
+                if user == prob.solved_n_position(position_to_check):
+                    total = total + 1
+                    if total >= self.num_problems:
+                        new_achievement = ObtainedAchievement(user=user, obtained_date=date.today(),
+                                                              achievement_definition=self)
+                        new_achievement.save()
+                        exit_for = True
+                if exit_for:
+                    break
+            if exit_for:
+                break
+
+
+class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Model):
+    """Achievement by solving X problems of a Collection"""
+    num_problems = models.PositiveIntegerField(default=1, null=False)
+    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+
+    def check_and_save(self, user):
+        """Check if a submission is deserving for get an achievement, if it is, save that"""
+        total_solved = 0
+        problems_of_collection = Problem.objects.filter(collection=self.collection)
+        for problem in problems_of_collection:
+            if Submission.objects.filter(veredict_code=VeredictCode.AC, problem=problem, user=user).count() > 0:
+                total_solved = total_solved + 1
+        if total_solved >= self.num_problems:
+            new_achievement = ObtainedAchievement(user=user, obtained_date=date.today(), achievement_definition=self)
+            new_achievement.save()

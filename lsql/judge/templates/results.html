@@ -102,21 +102,26 @@
     <tr class="text-dark">
         {% if p == login %}
          <td class="bg-info border border-dark">{{p.pos}}</td>
-         <td class="border border-dark">
-          {{p.username}}
+         <td class="border border-dark">{{p.username}}
+             {% if p.n_achievements > 0 %}
+             <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
+             {% endif %}
          </td>
         {% elif p.is_staff %}
          <td class="bg-secondary border border-dark">{{p.pos}}</td>
-         <td class="border border-dark">
-          {{p.username}}
+         <td class="border border-dark">{{p.username}}
+              {% if p.n_achievements > 0 %}
+              <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
+              {% endif %}
          </td>
         {%else%}
           <td class="border border-dark">{{p.pos}}</td>
-          <td class="border border-dark">
-          {{p.username}}
+          <td class="border border-dark">{{p.username}}
+              {% if p.n_achievements > 0 %}
+              <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
+              {% endif %}
          </td>
         {% endif %}
-
         {% for pp in p.collection %}
                 {% if pp.solved and pp.num_submissions != '0/0 (0)'%}
                     {% if p == login or login.is_staff%}
