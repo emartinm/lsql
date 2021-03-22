@@ -35,7 +35,6 @@ class ViewsTest(TestCase):
         client.login(username=teacher.username, password='1111')
         url = reverse('judge:download_ranking', args=[collection.pk])
         response = client.get(url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
-        print("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
         # Teacher download ranking
         self.assertEqual(
             response.get('Content-Disposition'),
