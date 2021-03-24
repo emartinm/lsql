@@ -10,6 +10,7 @@ import markdown
 from lxml import html
 from logzero import logger
 
+from django.template.loader import render_to_string
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -123,6 +124,7 @@ class Collection(models.Model):
 
 class Problem(models.Model):
     """Base class for problems, with common attributes and methods"""
+    __insert_separation = "-- @new data base@"
     title_md = models.CharField(max_length=100, blank=True)
     title_html = models.CharField(max_length=200)
     text_md = models.TextField(max_length=5000, blank=True)
@@ -194,6 +196,19 @@ class Problem(models.Model):
         """User who solved third"""
         return self.solved_n_position(3)
 
+    def insert_sql_list(self):
+        """List containing all sql inserts"""
+        return self.insert_sql.split(self.__insert_separation)
+
+    def first_insert_sql(self):
+        """String containing first sql insert"""
+        return self.insert_sql_list()[0]
+
+    def extra_insert_sql_list(self):
+        """List containing all sql inserts except the first"""
+        extra_insert_sql_list = self.insert_sql_list()
+        del extra_insert_sql_list[0]
+        return extra_insert_sql_list
 
 class SelectProblem(Problem):
     """Problem that requires a SELECT statement as solution"""
@@ -210,9 +225,14 @@ class SelectProblem(Problem):
 
             super().clean()
             executor = OracleExecutor.get()
-            res = executor.execute_select_test(self.create_sql, self.insert_sql, self.solution, output_db=True)
-            self.expected_result = res['result']
-            self.initial_db = res['db']
+            res = executor.execute_select_test(self.create_sql, self.first_insert_sql(), self.solution, output_db=True)
+            self.expected_result = [res['result']]
+            self.initial_db = [res['db']]
+            insert_sql_list = self.extra_insert_sql_list()
+            for insert_sql_extra in insert_sql_list:
+                res_extra = executor.execute_select_test(self.create_sql, insert_sql_extra, self.solution, output_db=True)
+                self.expected_result.append(res_extra['result'])
+                self.initial_db.append(res_extra['db'])
         except Exception as excp:
             raise ValidationError(excp) from excp
 
@@ -220,8 +240,26 @@ class SelectProblem(Problem):
         return 'problem_select.html'
 
     def judge(self, code, executor):
-        oracle_result = executor.execute_select_test(self.create_sql, self.insert_sql, code, output_db=False)
-        return compare_select_results(self.expected_result, oracle_result['result'], self.check_order)
+        first_insert_sql = self.first_insert_sql()
+        oracle_result = executor.execute_select_test(self.create_sql, first_insert_sql, code, output_db=False)
+        
+        # Comprobamos el primero
+        veredict, feedback = compare_select_results(self.expected_result[0], oracle_result['result'], self.check_order)
+        if (veredict != VeredictCode.AC): return veredict, feedback
+
+        # obtenemos resultados de los extra
+        insert_sql_extra_list = self.extra_insert_sql_list()
+        initial_db_count = 0
+        for insert_sql_extra in insert_sql_extra_list:
+            oracle_result_extra = executor.execute_select_test(self.create_sql, insert_sql_extra, code, output_db=False)
+            # Comprobamos los extras
+            veredict_extra, feedback_extra = compare_select_results(self.expected_result[initial_db_count], oracle_result_extra['result'], self.check_order, self.initial_db[initial_db_count])
+            if (veredict_extra != VeredictCode.AC):
+                return veredict_extra, feedback_extra
+            initial_db_count+=1
+        
+        # Si todos son correctos enviamos el primero
+        return veredict, feedback 
 
     def problem_type(self):
         return ProblemType.SELECT
@@ -243,8 +281,8 @@ class DMLProblem(Problem):
             super().clean()
             executor = OracleExecutor.get()
             res = executor.execute_dml_test(self.create_sql, self.insert_sql, self.solution, pre_db=True)
-            self.expected_result = res['post']
-            self.initial_db = res['pre']
+            self.expected_result = [res['post']]
+            self.initial_db = [res['pre']]
         except Exception as excp:
             raise ValidationError(excp) from excp
 
@@ -254,7 +292,7 @@ class DMLProblem(Problem):
     def judge(self, code, executor):
         oracle_result = executor.execute_dml_test(self.create_sql, self.insert_sql, code, pre_db=False,
                                                   min_stmt=self.min_stmt, max_stmt=self.max_stmt)
-        return compare_db_results(self.expected_result, oracle_result['post'])
+        return compare_db_results(self.expected_result[0], oracle_result['post'])
 
     def problem_type(self):
         return ProblemType.DML
@@ -277,8 +315,8 @@ class FunctionProblem(Problem):
             super().clean()
             executor = OracleExecutor.get()
             res = executor.execute_function_test(self.create_sql, self.insert_sql, self.solution, self.calls)
-            self.expected_result = res['results']
-            self.initial_db = res['db']
+            self.expected_result = [res['results']]
+            self.initial_db = [res['db']]
         except Exception as excp:
             raise ValidationError(excp) from excp
 
@@ -288,12 +326,12 @@ class FunctionProblem(Problem):
     def result_as_table(self):
         """Transforms the dict with the expected result in a dict representing a table that can be shown
         in the templates (i.e., we add a suitable header and create rows)"""
-        rows = [[call, result] for call, result in self.expected_result.items()]
+        rows = [[call, result] for call, result in self.expected_result[0].items()]
         return {'rows': rows, 'header': [('Llamada', None), ('Resultado', None)]}
 
     def judge(self, code, executor):
         oracle_result = executor.execute_function_test(self.create_sql, self.insert_sql, code, self.calls)
-        return compare_function_results(self.expected_result, oracle_result['results'])
+        return compare_function_results(self.expected_result[0], oracle_result['results'])
 
     def problem_type(self):
         return ProblemType.FUNCTION
@@ -321,14 +359,14 @@ class ProcProblem(Problem):
             executor = OracleExecutor.get()
             res = executor.execute_proc_test(self.create_sql, self.insert_sql, self.solution, self.proc_call,
                                              pre_db=True)
-            self.expected_result = res['post']
-            self.initial_db = res['pre']
+            self.expected_result = [res['post']]
+            self.initial_db = [res['pre']]
         except Exception as excp:
             raise ValidationError(excp) from excp
 
     def judge(self, code, executor):
         oracle_result = executor.execute_proc_test(self.create_sql, self.insert_sql, code, self.proc_call, pre_db=False)
-        return compare_db_results(self.expected_result, oracle_result['post'])
+        return compare_db_results(self.expected_result[0], oracle_result['post'])
 
     def problem_type(self):
         return ProblemType.PROC
@@ -355,15 +393,15 @@ class TriggerProblem(Problem):
             executor = OracleExecutor.get()
             res = executor.execute_trigger_test(self.create_sql, self.insert_sql,
                                                 self.solution, self.tests, pre_db=True)
-            self.expected_result = res['post']
-            self.initial_db = res['pre']
+            self.expected_result = [res['post']]
+            self.initial_db = [res['pre']]
         except Exception as excp:
             raise ValidationError(excp) from excp
 
     def judge(self, code, executor):
         oracle_result = executor.execute_trigger_test(self.create_sql, self.insert_sql, code, self.tests,
                                                       pre_db=False)
-        return compare_db_results(self.expected_result, oracle_result['post'])
+        return compare_db_results(self.expected_result[0], oracle_result['post'])
 
     def problem_type(self):
         return ProblemType.TRIGGER

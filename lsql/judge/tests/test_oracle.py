@@ -57,12 +57,35 @@ class OracleTest(TestCase):
                     INSERT INTO "Nombre Club" VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
                     INSERT INTO "Nombre Club" VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);'''
         solution = 'SELECT * FROM "Nombre Club";'
+        create2 = '''CREATE TABLE "Nombre Club" (
+                        CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
+                        Nombre VARCHAR2(40) NOT,
+                        Sede VARCHAR2(30) NOT NULL,
+                        Num_Socios NUMBER(10,0) NOT NULL,
+                        CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
+                    );'''
+        insert2 = '''INSERT INTO Club VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
+                    INSERT INTO Club VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
+                    INSERT INTO Club VALUES ('11111113X', 'Paris Saint-Germain Football Club', 'Rue du Commandant Guilbaud', 1000);
+
+                    -- @new data base@
+
+                    INSERT INTO Club VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
+                    INSERT INTO Club VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
+                    INSERT INTO Club VALUES ('11111113X', 'Paris Saint-Germain Football Club', 'Rue du Commandant Guilbaud', 1000);
+                    INSERT INTO Club VALUES ('11111115X', 'Real Madrid CF', 'Concha Espina', 80000);'''
+        solution2 = 'SELECT Sede, Nombre FROM Club WHERE Sede = "Concha Espina";'
         oracle = OracleExecutor.get()
         problem = SelectProblem(title_md='Test Select', text_md='bla bla bla',
                                 create_sql=create, insert_sql=insert, collection=collection,
                                 author=None, check_order=False, solution=solution)
         problem.clean()  # Needed to compute extra HTML fields and solutions
         problem.save()
+        problem2 = SelectProblem(title_md='Test Select2', text_md='bla bla bla',
+                                create_sql=create2, insert_sql=insert2, collection=collection,
+                                author=None, check_order=False, solution=solution2)
+        problem2.clean()  # Needed to compute extra HTML fields and solutions
+        problem2.save()
 
         # Time-limit
         tle = SELECT_TLE
@@ -96,6 +119,7 @@ class OracleTest(TestCase):
         self.assertEqual(problem.judge('SELECT CIF FROM "Nombre Club"', oracle)[0], VeredictCode.WA)
         self.assertEqual(problem.judge('SELECT * FROM "Nombre Club" WHERE Num_Socios < 50000', oracle)[0],
                          VeredictCode.WA)
+        self.assertEqual(problem2.judge('SELECT Sede, Nombre FROM Club WHERE Sede = "Concha Espina";', oracle)[0], VeredictCode.WA)
 
     def test_dml(self):
         """Tests for DMLProblem.judge()"""

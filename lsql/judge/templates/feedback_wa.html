@@ -1,0 +1,14 @@
+{% block feedback %}
+Feedback
+{% endblock feedback %}
+
+{% block initial_db %}
+{% if initial_db %}
+    <p>
+        <strong>Base de datos utilizada para la ejecución de tu código SQL:</strong>
+    </p>
+    {% for table in initial_db %}
+        {% include 'show_table.html' with table=table name=None mark_rows=None %}
+    {% endfor %}
+{% endif %}
+{% endblock initial_db %}
