@@ -406,6 +406,7 @@ def filter_expected_db(expected_db, initial_db):
 def download_ranking(request, collection_id):
     """Download excel with the results of submissions"""
     result_form = ResultForm(request.GET)
+
     if request.user.is_staff and result_form.is_valid():
         html = show_result(request, collection_id).content.decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
@@ -437,7 +438,6 @@ def download_ranking(request, collection_id):
                     book.cell(row=row, column=col, value=j['title'])
                     col += 1
         col = 1
-
         # Takes the information for each student
         trs = soup.find_all("tr")
         for i in trs:
@@ -458,14 +458,17 @@ def download_ranking(request, collection_id):
         # create a temporary file to save the workbook with the results
         temp = tempfile.NamedTemporaryFile(mode='w+b', buffering=-1, suffix='.xlsx')
         path = temp.name.split("\\")
+
         file = path[6]
         work.save(file)
+
         response = HttpResponse(open(file, 'rb').read())
         response['Content-Type'] = 'application/xlsx'
         response['Content-Disposition'] = "attachment; filename=ranking.xlsx"
         temp.close()
         os.remove(file)
         return response
+
     if request.user.is_staff and not result_form.is_valid():
         return HttpResponseNotFound(str(result_form.errors))
     return HttpResponseForbidden("Forbidden")

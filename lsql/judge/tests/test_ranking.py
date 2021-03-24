@@ -15,6 +15,7 @@ from judge.views import first_day_of_course
 
 class RankingTest(TestCase):
     """Tests for the module of rankings"""
+
     def test_download_ranking(self):
         """ Test to download excel of results """
         client = Client()
