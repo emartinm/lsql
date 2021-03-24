@@ -5,7 +5,7 @@ Functions that process HTTP connections
 """
 from datetime import timedelta, datetime
 
-from os import remove
+import os
 import tempfile
 from bs4 import BeautifulSoup
 import openpyxl
@@ -405,23 +405,27 @@ def filter_expected_db(expected_db, initial_db):
 @login_required
 def download_ranking(request, collection_id):
     """Download excel with the results of submissions"""
-    html = show_result(request, collection_id).content.decode('utf-8')
     result_form = ResultForm(request.GET)
     if request.user.is_staff and result_form.is_valid():
+        html = show_result(request, collection_id).content.decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
-        file = tempfile
-        file.mkstemp()
         col = 1
         row = 1
         work = openpyxl.Workbook()
         book = work.active
+
+        # Takes collection and date
         data = soup.find_all("h2")
         for i in data:
             book.cell(row=row, column=col, value=i.string)
             row += 1
+
+        # Takes group
         option = soup.find("option")
         book.cell(row=row, column=col, value=option.string)
         row += 1
+
+        # Takes the first column of table (Pos, User, Exercises, Score, Solved)
         ths = soup.find_all("th")
         for i in ths:
             if i.string is not None:
@@ -430,12 +434,15 @@ def download_ranking(request, collection_id):
             exercises = i.find_all("a")
             for j in exercises:
                 if j.string is not None:
-                    book.cell(row=row, column=col, value=j.string)
+                    book.cell(row=row, column=col, value=j['title'])
                     col += 1
         col = 1
+
+        # Takes the information for each student
         trs = soup.find_all("tr")
         for i in trs:
             tds = i.find_all("td")
+            # Information of a student (Pos, User, Exercises, Score, Solved)
             for j in tds:
                 if j.string is not None:
                     book.cell(row=row, column=col, value=j.string)
@@ -447,11 +454,17 @@ def download_ranking(request, collection_id):
                         col += 1
             col = 1
             row += 1
-        work.save(file.gettempprefix())
-        response = HttpResponse(open(file.gettempprefix(), 'rb').read())
+
+        # create a temporary file to save the workbook with the results
+        temp = tempfile.NamedTemporaryFile(mode='w+b', buffering=-1, suffix='.xlsx')
+        path = temp.name.split("\\")
+        file = path[6]
+        work.save(file)
+        response = HttpResponse(open(file, 'rb').read())
         response['Content-Type'] = 'application/xlsx'
         response['Content-Disposition'] = "attachment; filename=ranking.xlsx"
-        remove(file.gettempprefix())
+        temp.close()
+        os.remove(file)
         return response
     if request.user.is_staff and not result_form.is_valid():
         return HttpResponseNotFound(str(result_form.errors))

@@ -25,16 +25,15 @@ class RankingTest(TestCase):
         start = first_day_of_course(datetime(2020, 9, 1))
         end = datetime(2021, 3, 7).strftime('%Y-%m-%d')
         collection = create_collection('Coleccion 1')
-        client.login(username=user.username, password='2222')
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         sub = Submission.objects.create(code='SELECT * FROM test where n = 1000',
                                         user=user, veredict_code=VeredictCode.WA, problem=select_problem)
         sub.save()
         Submission.objects.filter(id=sub.id).update(creation_date=datetime(2021, 3, 5))
-        client.logout()
         client.login(username=teacher.username, password='1111')
         url = reverse('judge:download_ranking', args=[collection.pk])
         response = client.get(url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
+
         # Teacher download ranking
         self.assertEqual(
             response.get('Content-Disposition'),
@@ -44,6 +43,7 @@ class RankingTest(TestCase):
             response.get('Content-Type'),
             "application/xlsx"
         )
+
         file = tempfile.NamedTemporaryFile(mode='w+b', buffering=-1, suffix='.xlsx')
         cont = response.content
         file.write(cont)
@@ -57,6 +57,7 @@ class RankingTest(TestCase):
         self.assertIn("0", book.cell(row=5, column=4).value)
         self.assertIn("0", book.cell(row=5, column=5).value)
         file.close()
+
         # Date or group invalid
         response = client.get(url, {
             'group': group_a.id, 'start': start, 'end': ''}, follow=True)

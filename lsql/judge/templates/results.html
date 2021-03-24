@@ -38,7 +38,7 @@
     {% if login.is_staff %}
         <div class="col md-3">
             <a href="{% url 'judge:download_ranking' collection.id %}?group={{group0.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}">
-            <button type="button" class="btn btn-primary" title="csv con el ranking">Ranking</button>
+            <button type="button" class="btn btn-primary" title="csv con el ranking">Descargar ranking</button>
             </a>
         </div>
     {% endif %}
