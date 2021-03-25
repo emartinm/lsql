@@ -6,11 +6,11 @@ Models to store objects in the DB
 """
 
 from zipfile import ZipFile
-from datetime import date
 import markdown
 from lxml import html
 from logzero import logger
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -194,6 +194,17 @@ class Problem(models.Model):
     def solved_third(self):
         """User who solved third"""
         return self.solved_n_position(3)
+
+    def solved_position(self, user):
+        """Position that user solved the problem. If not solved return None"""
+        iterator = 1
+        users_ac = Submission.objects.filter(problem=self, veredict_code=VeredictCode.AC).order_by('pk', 'user').\
+            distinct('pk', 'user').values_list('user', flat=True)
+        for users in users_ac:
+            if users == user.pk:
+                break
+            iterator = iterator + 1
+        return iterator
 
 
 class SelectProblem(Problem):
@@ -399,9 +410,14 @@ class AchievementDefinition(models.Model):
     def check_user(self, usr):
         """Check if an user have the achievement"""
         achievements_of_user = ObtainedAchievement.objects.filter(user=usr, achievement_definition=self).count()
-        if achievements_of_user > 0:
-            return True
-        return False
+        return achievements_of_user > 0
+
+    def refresh(self):
+        """Delete the achievement and check if any user have it"""
+        ObtainedAchievement.objects.filter(achievement_definition=self).delete()
+        all_users = get_user_model().objects.all()
+        for usr in all_users:
+            self.check_and_save(usr)
 
     def __str__(self):
         """String for show the achievement name"""
@@ -411,7 +427,7 @@ class AchievementDefinition(models.Model):
 class ObtainedAchievement(models.Model):
     """Store info about an obtained achievement"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    obtained_date = models.DateTimeField(auto_now_add=True)
+    obtained_date = models.DateTimeField()
     achievement_definition = models.ForeignKey(AchievementDefinition, on_delete=models.CASCADE)
 
 
@@ -420,15 +436,15 @@ class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
     num_problems = models.PositiveIntegerField(default=1, null=False)
 
     def check_and_save(self, user):
-        """Check if a submission is deserving for get an achievement, if it is, save that"""
-        total_solved = 0
-        problems = Problem.objects.all()
-        for problem in problems:
-            if Submission.objects.filter(veredict_code=VeredictCode.AC, problem=problem, user=user).count() > 0:
-                total_solved = total_solved + 1
-        if total_solved >= self.num_problems:
-            new_achievement = ObtainedAchievement(user=user, obtained_date=date.today(), achievement_definition=self)
-            new_achievement.save()
+        """Check if an user is deserving for get an achievement, if it is, save that"""
+        if not self.check_user(user):
+            corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).distinct("problem").count()
+            if corrects >= self.num_problems:
+                date_obt = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).\
+                    order_by('-problem', 'pk').distinct('problem').values_list('creation_date', flat=True)
+                new_achievement = ObtainedAchievement(user=user, obtained_date=date_obt[self.num_problems-1],
+                                                      achievement_definition=self)
+                new_achievement.save()
 
 
 class PodiumAchievementDefinition(AchievementDefinition, models.Model):
@@ -437,23 +453,24 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
     position = models.PositiveIntegerField(default=3, null=False)
 
     def check_and_save(self, user):
-        """Check if a submission is deserving for get an achievement, if it is, save that"""
-        problems = Problem.objects.all()
-        total = 0
-        exit_for = False
-        for prob in problems:
-            for position_to_check in range(1, self.position+1):
-                if user == prob.solved_n_position(position_to_check):
-                    total = total + 1
-                    if total >= self.num_problems:
-                        new_achievement = ObtainedAchievement(user=user, obtained_date=date.today(),
-                                                              achievement_definition=self)
-                        new_achievement.save()
-                        exit_for = True
-                if exit_for:
-                    break
-            if exit_for:
-                break
+        """Check if an user is deserving for get an achievement, if it is, save that"""
+        if not self.check_user(user):
+            submissions_correct = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).\
+                order_by('problem', 'pk').distinct('problem')
+            total = 0
+            for sub in submissions_correct:
+                prob = Problem.objects.filter(pk=sub.problem.pk)
+                for problem in prob:
+                    if problem.solved_position(user) <= self.position:
+                        total = total + 1
+                        if total >= self.num_problems:
+                            date_obt = Submission.objects.\
+                                filter(veredict_code=VeredictCode.AC, user=user, problem=problem).\
+                                order_by('pk').values_list('creation_date', flat=True)
+                            new_achievement = ObtainedAchievement(user=user, obtained_date=date_obt[0],
+                                                                  achievement_definition=self)
+                            new_achievement.save()
+                            return
 
 
 class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Model):
@@ -462,12 +479,20 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
 
     def check_and_save(self, user):
-        """Check if a submission is deserving for get an achievement, if it is, save that"""
-        total_solved = 0
-        problems_of_collection = Problem.objects.filter(collection=self.collection)
-        for problem in problems_of_collection:
-            if Submission.objects.filter(veredict_code=VeredictCode.AC, problem=problem, user=user).count() > 0:
-                total_solved = total_solved + 1
-        if total_solved >= self.num_problems:
-            new_achievement = ObtainedAchievement(user=user, obtained_date=date.today(), achievement_definition=self)
-            new_achievement.save()
+        """Check if an user is deserving for get an achievement, if it is, save that"""
+        if not self.check_user(user):
+            total_solved = 0
+            corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).order_by('-problem', 'pk').\
+                distinct("problem")
+            for sub in corrects:
+                problems_coll = Problem.objects.filter(pk=sub.problem.pk, collection=self.collection)
+                for problem in problems_coll:
+                    total_solved = total_solved + 1
+                    if total_solved >= self.num_problems:
+                        date_obt = Submission.objects.\
+                            filter(veredict_code=VeredictCode.AC, user=user, problem=problem).\
+                            order_by('pk').values_list('creation_date', flat=True)
+                        new_achievement = ObtainedAchievement(user=user, obtained_date=date_obt[0],
+                                                              achievement_definition=self)
+                        new_achievement.save()
+                        return

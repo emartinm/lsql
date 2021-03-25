@@ -286,14 +286,13 @@ def show_achievements(request, user_id):
     this_user = get_user_model().objects.get(pk=user_id)
     achievements_locked = []
     achievements_unlocked = ObtainedAchievement.objects.filter(user=this_user)
-    all_achievements = AchievementDefinition.objects.all()
-    for ach in all_achievements:
-        is_unlocked = False
-        for unlock in achievements_unlocked:
-            if ach == unlock.achievement_definition:
-                is_unlocked = True
-        if not is_unlocked:
-            achievements_locked.append(ach)
+    achievements_definitions_unlocked = ObtainedAchievement.objects.filter(user=this_user).\
+        values_list('achievement_definition', flat=True)
+    all_achievements_definitions = AchievementDefinition.objects.values_list('pk', flat=True)
+    achievements_locked_pk = all_achievements_definitions.difference(achievements_definitions_unlocked)
+    for identifier in achievements_locked_pk:
+        ach = AchievementDefinition.objects.filter(pk=identifier)[0]
+        achievements_locked.append(ach)
     return render(request, 'achievements.html', {'locked': achievements_locked,
                                                  'unlocked': achievements_unlocked})
 
@@ -382,7 +381,7 @@ def submit(request, problem_id):
                             user=request.user, problem=general_problem)
     submission.save()
     # If veredict is correct look for an achievement to complete if it's possible
-    if data['veredict'] == 'AC':
+    if data['veredict'] == VeredictCode.AC:
         check_if_get_achievement(request.user)
     logger.debug('Stored submission %s', submission)
     return JsonResponse(data)
@@ -422,15 +421,8 @@ def filter_expected_db(expected_db, initial_db):
 
 def check_if_get_achievement(user):
     """Check if the user get some achievement"""
-    num_solved_achievement = NumSolvedAchievementDefinition.objects.all()
-    num_solved_collection = NumSolvedCollectionAchievementDefinition.objects.all()
-    podium_achievement = PodiumAchievementDefinition.objects.all()
-    for num_ach in num_solved_achievement:
-        if not num_ach.check_user(user):
-            num_ach.check_and_save(user)
-    for coll_ach in num_solved_collection:
-        if not coll_ach.check_user(user):
-            coll_ach.check_and_save(user)
-    for pod_ach in podium_achievement:
-        if not pod_ach.check_user(user):
-            pod_ach.check_and_save(user)
+    ach_definitions = list(NumSolvedAchievementDefinition.objects.all()) + list(
+                        NumSolvedCollectionAchievementDefinition.objects.all()) + list(
+                        PodiumAchievementDefinition.objects.all())
+    for ach in ach_definitions:
+        ach.check_and_save(user)

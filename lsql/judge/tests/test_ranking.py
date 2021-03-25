@@ -5,7 +5,7 @@ Tests for rankings
 from django.test import TestCase, Client
 from django.urls import reverse
 from judge.models import NumSolvedCollectionAchievementDefinition, PodiumAchievementDefinition, \
-    NumSolvedAchievementDefinition, AchievementDefinition
+    NumSolvedAchievementDefinition, AchievementDefinition, ObtainedAchievement
 from judge.tests.test_views import create_collection, create_user, create_select_problem, create_group
 
 
@@ -93,13 +93,59 @@ class RankingTest(TestCase):
         response = client.get(ranking_url, follow=True)
         self.assertIn('x3', response.content.decode('utf-8'))
 
+    def test_signal_new_achievement(self):
+        """Test for check signals"""
+        client = Client()
+        create_user('passwordmichu', 'michu')
+        client.login(username='michu', password='passwordmichu')
+        coll = create_collection('Coleccion de cartas')
+        problem = create_select_problem(coll, 'Problema')
+        submit_select_url = reverse('judge:submit', args=[problem.pk])
+        client.post(submit_select_url, {'code': problem.solution}, follow=True)
+        create_an_achievement_of_each(coll)
+        self.assertEqual(ObtainedAchievement.objects.all().count(), 3)
+
+    def test_signal_update_achievement(self):
+        """Test for check signals"""
+        client = Client()
+        user_michu = create_user('passwordmichu', 'michu')
+        create_user('passwordimmobile', 'immobile')
+        client.login(username='immobile', password='passwordimmobile')
+        coll = create_collection('Coleccion de cartas')
+        ach_podium = PodiumAchievementDefinition(name='Presidente del podio', description='Consigue ser el primero',
+                                                 num_problems=1, position=1)
+        ach_collection = NumSolvedCollectionAchievementDefinition(name='Coleccionista', description='Resuelve 50\
+                                                                  problemas de esta coleccion', num_problems=50,
+                                                                  collection=coll)
+        ach_solved = NumSolvedAchievementDefinition(name='Resolvista', description='Resuelve 50 problemas',
+                                                    num_problems=50)
+        ach_podium.save()
+        ach_solved.save()
+        ach_collection.save()
+        problem = create_select_problem(coll, 'Problema')
+        submit_select_url = reverse('judge:submit', args=[problem.pk])
+        client.post(submit_select_url, {'code': problem.solution}, follow=True)
+        client.logout()
+        client.login(username='michu', password='passwordmichu')
+        submit_select_url = reverse('judge:submit', args=[problem.pk])
+        client.post(submit_select_url, {'code': problem.solution}, follow=True)
+        self.assertEqual(ObtainedAchievement.objects.filter(user=user_michu).count(), 0)
+        ach_podium.position = 3
+        ach_collection.num_problems = 1
+        ach_solved.num_problems = 1
+        ach_podium.save()
+        ach_solved.save()
+        ach_collection.save()
+        self.assertEqual(ObtainedAchievement.objects.filter(user=user_michu).count(), 3)
+
     def test_not_implemented_raise_achievements(self):
         """Test if check_and_save of AchievementDefinition raise a NotImplementedError"""
         client = Client()
         user = create_user('passwordmichu', 'michu')
         client.login(username='michu', password='passwordmichu')
         achievement_definition = AchievementDefinition(name='nombre', description='descripcion')
-        self.assertRaises(NotImplementedError, lambda: achievement_definition.check_and_save(user))
+        with self.assertRaises(NotImplementedError):
+            achievement_definition.check_and_save(user)
 
     def test_str_method_obtained_achievement(self):
         """Test for check if __str__ return the name of the achievement"""
