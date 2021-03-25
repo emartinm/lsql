@@ -10,6 +10,8 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 import django.contrib.auth
 
+from bs4 import BeautifulSoup
+from judge.oracle_driver import OracleExecutor
 from judge.models import SelectProblem, Collection, Submission, Problem
 from judge.types import VeredictCode
 
@@ -20,6 +22,7 @@ class ModelsTest(TestCase):
     CORRUPT_ZIP = 'broken_problems.zip'
     CORRUPT_SELECT_ZIP = 'broken_select.zip'
     CORRUPT_ZIP_INSIDE = 'broken_problems_inside.zip'
+    SELECT_MULTIPLE_DB_OK = 'select_multiple_db_ok.zip'
 
     def test_problem_collection_stats(self):
         """Methods that compute statistics in collections and problems"""
@@ -84,6 +87,99 @@ class ModelsTest(TestCase):
         # Numbers of problems solved by a user
         self.assertEqual(collection.num_solved_by_user(user1), 1)
         self.assertEqual(collection.num_solved_by_user(user2), 0)
+
+    def test_judge_multiple_db(self):
+        """Test multiple db select problems"""
+        curr_path = os.path.dirname(__file__)
+        zip_select_multiple_db_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_MULTIPLE_DB_OK)
+        select_multiple_db_problem = SelectProblem(zipfile=zip_select_multiple_db_path)
+
+        select_multiple_db_problem.clean()
+
+        self.assertEqual(len(select_multiple_db_problem.insert_sql_list()), 3)
+        self.assertEqual(select_multiple_db_problem.first_insert_sql(), select_multiple_db_problem.insert_sql_list()[0])
+        self.assertEqual(len(select_multiple_db_problem.extra_insert_sql_list()),2)
+        self.assertNotIn(select_multiple_db_problem.insert_sql_list()[0],
+                         select_multiple_db_problem.extra_insert_sql_list())
+
+        collection = Collection(name_md='ABC', description_md='blablabla')
+        collection.clean()
+        collection.save()
+        self.assertTrue('ABC' in str(collection))
+
+        create = '''CREATE TABLE Club(
+                    CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
+                    Nombre VARCHAR2(40) NOT NULL,
+                    Sede VARCHAR2(30) NOT NULL,
+                    Num_Socios NUMBER(10,0) NOT NULL,
+                    CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
+                    );
+                    CREATE TABLE Persona(
+                    NIF CHAR(9) PRIMARY KEY,
+                    Nombre VARCHAR2(20) NOT NULL
+                    );'''
+        insert = '''INSERT INTO Club VALUES ('11111111X', 'Madrid', 'A', 70000);
+
+                    -- @new data base@
+
+                    INSERT INTO Club VALUES ('11111111X', 'Madrid', 'A', 70000);
+                    INSERT INTO Club VALUES ('11111112X', 'Futbol Club Barcelona', 'A', 80000);
+                    INSERT INTO Club VALUES ('11111113X', 'Paris Saint-Germain Football Club', 'C', 1000);
+                    INSERT INTO Persona VALUES ('00000001X', 'Peter Johnoson');
+                    
+                    -- @new data base@
+
+                    INSERT INTO Club VALUES ('11111111X', 'Madrid', 'A', 70000);
+                    INSERT INTO Club VALUES ('11111112X', 'Madrid', 'B', 80000);
+                    INSERT INTO Club VALUES ('11111114X', 'Futbol Club Barcelona', 'B', 80000);
+                    INSERT INTO Club VALUES ('11111115X', 'Paris Saint-Germain Football Club', 'C', 1000);
+                    INSERT INTO Persona VALUES ('00000001X', 'Peter Johnoson');'''
+        solution = "SELECT Sede, Nombre FROM Club WHERE CIF = '11111111X' and Nombre ='Madrid';"
+        oracle = OracleExecutor.get()
+        problem = SelectProblem(title_md='Test Multiple db Select', text_md='bla',
+                            create_sql=create, insert_sql=insert, collection=collection,
+                            author=None, check_order=False, solution=solution)
+        problem.clean()
+        problem.save()
+        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
+        self.assertEqual(problem.judge("SELECT Sede, Nombre FROM Club WHERE Nombre ='Madrid';", oracle)[0],
+                                       VeredictCode.WA)
+        self.assertEqual(problem.judge("SELECT Sede, Nombre FROM Club;", oracle)[0], VeredictCode.WA)
+
+        html = problem.judge("SELECT Sede, Nombre FROM Club WHERE CIF = '11111111X' and Nombre ='Madrid';", oracle)[1]
+        soup = BeautifulSoup(html, 'html.parser')
+        # Dont show db if code is correct
+        self.assertIsNone(soup.find(id="bd"))
+
+        html = problem.judge("SELECT Sede, Nombre FROM Club WHERE CIF = '11111117X';", oracle)[1]
+        soup = BeautifulSoup(html, 'html.parser')
+        # Dont show db if code is wrong in the first db
+        self.assertIsNone(soup.find(id="bd"))
+
+        html = problem.judge("SELECT Sede, Nombre FROM Club;", oracle)[1]
+        soup = BeautifulSoup(html, 'html.parser')
+        # Show second db if code is correct in the first db but not in the second db
+        self.assertEqual(soup.find(id="bd").find('p').find('strong').string,
+                        "Base de datos utilizada para la ejecución de tu código SQL:")
+        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[0].string,"CIF")
+        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[1].string,"NOMBRE")
+        self.assertEqual(len(soup.find(id="bd").find_all('thead')),2)
+        self.assertEqual(soup.find(id="bd").find_all('thead')[1].find_all('th')[0].string,"NIF")
+        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[0].string,"11111112X")
+        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[2].string,"A")
+        self.assertEqual(len(soup.find(id="bd").find_all('tbody')[0].find_all('tr')),3)
+
+        html = problem.judge("SELECT Sede, Nombre FROM Club WHERE Nombre ='Madrid';", oracle)[1]
+        soup = BeautifulSoup(html, 'html.parser')
+        # Show third db if code is correct in the first and second dbs but not in the third db
+        self.assertEqual(soup.find(id="bd").find('p').find('strong').string,
+                        "Base de datos utilizada para la ejecución de tu código SQL:")
+        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[0].string,"CIF")
+        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[1].string,"NOMBRE")
+        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[0].string,"11111112X")
+        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[2].string,"B")
+        self.assertEqual(len(soup.find(id="bd").find_all('tbody')[0].find_all('tr')),4)
+
 
     def test_podium(self):
         """Test the correct performance of the podium"""

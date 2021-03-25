@@ -10,7 +10,6 @@ import markdown
 from lxml import html
 from logzero import logger
 
-from django.template.loader import render_to_string
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -230,7 +229,8 @@ class SelectProblem(Problem):
             self.initial_db = [res['db']]
             insert_sql_list = self.extra_insert_sql_list()
             for insert_sql_extra in insert_sql_list:
-                res_extra = executor.execute_select_test(self.create_sql, insert_sql_extra, self.solution, output_db=True)
+                res_extra = executor.execute_select_test(self.create_sql, insert_sql_extra,
+                                                         self.solution, output_db=True)
                 self.expected_result.append(res_extra['result'])
                 self.initial_db.append(res_extra['db'])
         except Exception as excp:
@@ -242,24 +242,25 @@ class SelectProblem(Problem):
     def judge(self, code, executor):
         first_insert_sql = self.first_insert_sql()
         oracle_result = executor.execute_select_test(self.create_sql, first_insert_sql, code, output_db=False)
-        
-        # Comprobamos el primero
+        # Check first code with first db
         veredict, feedback = compare_select_results(self.expected_result[0], oracle_result['result'], self.check_order)
-        if (veredict != VeredictCode.AC): return veredict, feedback
-
-        # obtenemos resultados de los extra
+        if veredict != VeredictCode.AC:
+            return veredict, feedback
+        # Get results using secondary dbs
         insert_sql_extra_list = self.extra_insert_sql_list()
-        initial_db_count = 0
+        initial_db_count = 1
         for insert_sql_extra in insert_sql_extra_list:
             oracle_result_extra = executor.execute_select_test(self.create_sql, insert_sql_extra, code, output_db=False)
-            # Comprobamos los extras
-            veredict_extra, feedback_extra = compare_select_results(self.expected_result[initial_db_count], oracle_result_extra['result'], self.check_order, self.initial_db[initial_db_count])
-            if (veredict_extra != VeredictCode.AC):
+            # Check secondary results
+            veredict_extra, feedback_extra = compare_select_results(self.expected_result[initial_db_count],
+                                                                    oracle_result_extra['result'],
+                                                                    self.check_order,
+                                                                    self.initial_db[initial_db_count])
+            if veredict_extra != VeredictCode.AC:
                 return veredict_extra, feedback_extra
             initial_db_count+=1
-        
-        # Si todos son correctos enviamos el primero
-        return veredict, feedback 
+        # If all results are correct then return first one
+        return veredict, feedback
 
     def problem_type(self):
         return ProblemType.SELECT
