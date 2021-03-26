@@ -127,7 +127,6 @@ class RankingTest(TestCase):
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
         client.logout()
         client.login(username='michu', password='passwordmichu')
-        submit_select_url = reverse('judge:submit', args=[problem.pk])
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
         self.assertEqual(ObtainedAchievement.objects.filter(user=user_michu).count(), 0)
         ach_podium.position = 3
