@@ -123,7 +123,7 @@ class Collection(models.Model):
 
 class Problem(models.Model):
     """Base class for problems, with common attributes and methods"""
-    __insert_separation = "-- @new data base@"
+    __INSERT_SEPARATION = "-- @new data base@"
     title_md = models.CharField(max_length=100, blank=True)
     title_html = models.CharField(max_length=200)
     text_md = models.TextField(max_length=5000, blank=True)
@@ -197,17 +197,7 @@ class Problem(models.Model):
 
     def insert_sql_list(self):
         """List containing all sql inserts"""
-        return self.insert_sql.split(self.__insert_separation)
-
-    def first_insert_sql(self):
-        """String containing first sql insert"""
-        return self.insert_sql_list()[0]
-
-    def extra_insert_sql_list(self):
-        """List containing all sql inserts except the first"""
-        extra_insert_sql_list = self.insert_sql_list()
-        del extra_insert_sql_list[0]
-        return extra_insert_sql_list
+        return self.insert_sql.split(self.__INSERT_SEPARATION)
 
 class SelectProblem(Problem):
     """Problem that requires a SELECT statement as solution"""
@@ -221,18 +211,15 @@ class SelectProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_select_problem(self, self.zipfile)
-
             super().clean()
             executor = OracleExecutor.get()
-            res = executor.execute_select_test(self.create_sql, self.first_insert_sql(), self.solution, output_db=True)
-            self.expected_result = [res['result']]
-            self.initial_db = [res['db']]
-            insert_sql_list = self.extra_insert_sql_list()
-            for insert_sql_extra in insert_sql_list:
-                res_extra = executor.execute_select_test(self.create_sql, insert_sql_extra,
+            self.expected_result = []
+            self.initial_db = []
+            for insert_sql in self.insert_sql_list():
+                res = executor.execute_select_test(self.create_sql, insert_sql,
                                                          self.solution, output_db=True)
-                self.expected_result.append(res_extra['result'])
-                self.initial_db.append(res_extra['db'])
+                self.expected_result.append(res['result'])
+                self.initial_db.append(res['db'])
         except Exception as excp:
             raise ValidationError(excp) from excp
 
@@ -240,14 +227,14 @@ class SelectProblem(Problem):
         return 'problem_select.html'
 
     def judge(self, code, executor):
-        first_insert_sql = self.first_insert_sql()
+        first_insert_sql = self.insert_sql_list()[0]
         oracle_result = executor.execute_select_test(self.create_sql, first_insert_sql, code, output_db=False)
         # Check first code with first db
         veredict, feedback = compare_select_results(self.expected_result[0], oracle_result['result'], self.check_order)
         if veredict != VeredictCode.AC:
             return veredict, feedback
         # Get results using secondary dbs
-        insert_sql_extra_list = self.extra_insert_sql_list()
+        insert_sql_extra_list = self.insert_sql_list()[1:]
         initial_db_count = 1
         for insert_sql_extra in insert_sql_extra_list:
             oracle_result_extra = executor.execute_select_test(self.create_sql, insert_sql_extra, code, output_db=False)
@@ -268,6 +255,7 @@ class SelectProblem(Problem):
 
 class DMLProblem(Problem):
     """Problem that requires one or more DML statements (INSERT, UPDATE, CREATE...) as solution"""
+    # IMPORTANT: This problem does not support multiple initial db. It only uses the first db
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, blank=True)
@@ -301,6 +289,7 @@ class DMLProblem(Problem):
 
 class FunctionProblem(Problem):
     """Problem that requires a function definition as solution"""
+    # IMPORTANT: This problem does not support multiple initial db. It only uses the first db
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     calls = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], default='', blank=True)
@@ -340,6 +329,7 @@ class FunctionProblem(Problem):
 
 class ProcProblem(Problem):
     """Problem that requires a procedure definition as solution"""
+    # IMPORTANT: This problem does not support multiple initial db. It only uses the first db
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     proc_call = models.TextField(max_length=1000, validators=[MinLengthValidator(1)], blank=True)
@@ -375,6 +365,7 @@ class ProcProblem(Problem):
 
 class TriggerProblem(Problem):
     """Problem that requires a trigger definition as solution"""
+    # IMPORTANT: This problem does not support multiple initial db. It only uses the first db
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     tests = models.TextField(max_length=1000, validators=[MinLengthValidator(1)], blank=True)

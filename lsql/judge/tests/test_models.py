@@ -97,10 +97,6 @@ class ModelsTest(TestCase):
         select_multiple_db_problem.clean()
 
         self.assertEqual(len(select_multiple_db_problem.insert_sql_list()), 3)
-        self.assertEqual(select_multiple_db_problem.first_insert_sql(), select_multiple_db_problem.insert_sql_list()[0])
-        self.assertEqual(len(select_multiple_db_problem.extra_insert_sql_list()),2)
-        self.assertNotIn(select_multiple_db_problem.insert_sql_list()[0],
-                         select_multiple_db_problem.extra_insert_sql_list())
 
         collection = Collection(name_md='ABC', description_md='blablabla')
         collection.clean()
