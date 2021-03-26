@@ -206,7 +206,6 @@ class Problem(models.Model):
             iterator = iterator + 1
         return iterator
 
-
 class SelectProblem(Problem):
     """Problem that requires a SELECT statement as solution"""
     check_order = models.BooleanField(default=False)
