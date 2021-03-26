@@ -197,14 +197,15 @@ class Problem(models.Model):
 
     def solved_position(self, user):
         """Position that user solved the problem. If not solved return None"""
-        iterator = 1
-        users_ac = Submission.objects.filter(problem=self, veredict_code=VeredictCode.AC).order_by('pk', 'user').\
-            distinct('pk', 'user').values_list('user', flat=True)
-        for users in users_ac:
-            if users == user.pk:
-                break
-            iterator = iterator + 1
-        return iterator
+        if self.solved_by_user(user):
+            iterator = 1
+            users_ac = Submission.objects.filter(problem=self, veredict_code=VeredictCode.AC).order_by('pk', 'user').\
+                distinct('pk', 'user').values_list('user', flat=True)
+            for users in users_ac:
+                if users == user.pk:
+                    return iterator
+                iterator = iterator + 1
+        return None
 
 
 class SelectProblem(Problem):

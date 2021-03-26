@@ -147,6 +147,13 @@ class RankingTest(TestCase):
         with self.assertRaises(NotImplementedError):
             achievement_definition.check_and_save(user)
 
+    def test_return_none(self):
+        """Test if an user don't solve a problem, function solved_position return None"""
+        user = create_user('passwordmichu', 'michu')
+        coll = create_collection('Coleccion de cartas')
+        problem = create_select_problem(coll, 'Problema')
+        self.assertEqual(problem.solved_position(user), None)
+
     def test_str_method_obtained_achievement(self):
         """Test for check if __str__ return the name of the achievement"""
         achievement_definition = AchievementDefinition(name='nombre', description='descripcion')
