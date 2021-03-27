@@ -473,6 +473,7 @@ class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
             corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).distinct("problem").count()
             if corrects >= self.num_problems:
                 # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
+                # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
                 order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
                     Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
                     order_by('problem', 'creation_date').distinct('problem').values('creation_date'))).\
@@ -492,6 +493,7 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
         """Check if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
+            # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
             order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
                 Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
                 order_by('problem', 'creation_date').distinct('problem').values('creation_date'))). \
@@ -520,6 +522,8 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
             corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user,
                                                  problem__collection=self.collection).distinct("problem").count()
             if corrects >= self.num_problems:
+                # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
+                # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
                 order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
                     Submission.objects.filter(veredict_code=VeredictCode.AC, user=user,
                                               problem__collection=self.collection).
