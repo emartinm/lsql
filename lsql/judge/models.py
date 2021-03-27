@@ -501,7 +501,7 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
             total = 0
             if order_problem_creation_date.count() >= self.num_problems:
                 for sub in order_problem_creation_date:
-                    prob = Problem.objects.filter(pk=sub.problem.pk).get()
+                    prob = Problem.objects.get(pk=sub.problem.pk)
                     if prob.solved_position(user) <= self.position:
                         total = total + 1
                         if total >= self.num_problems:
