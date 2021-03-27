@@ -29,7 +29,7 @@ General template for a problem. Provides the following blocks:
 {% endblock %}
 
 {% block initial_db %}
-{% if problem.initial_db %}
+{% if problem.initial_db.0 %}
 <h2>
   Base de datos
 
@@ -39,7 +39,7 @@ General template for a problem. Provides the following blocks:
 
 
 </h2>
-{% for name, table in problem.initial_db.items %}
+{% for name, table in problem.initial_db.0.items %}
   {% include 'show_table.html' with table=table name=name mark_rows=None %}
 {% endfor %}
 {% endif %}
@@ -47,7 +47,7 @@ General template for a problem. Provides the following blocks:
 
 {% block expected_result %}
 <h2>Resultado esperado</h2>
-{% include 'show_table.html' with table=problem.expected_result name=None %}
+{% include 'show_table.html' with table=problem.expected_result.0 name=None %}
 {% endblock %}
 
 {% block solution %}
