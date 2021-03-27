@@ -10,11 +10,12 @@ import markdown
 from lxml import html
 from logzero import logger
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinLengthValidator
-from django.db.models import JSONField
+from django.db.models import JSONField, Subquery
 from django.core.serializers.json import DjangoJSONEncoder
 
 from .feedback import compare_select_results, compare_db_results, compare_function_results
@@ -195,9 +196,22 @@ class Problem(models.Model):
         """User who solved third"""
         return self.solved_n_position(3)
 
+    def solved_position(self, user):
+        """Position that user solved the problem. If not solved return None"""
+        if self.solved_by_user(user):
+            iterator = 1
+            users_ac = Submission.objects.filter(problem=self, veredict_code=VeredictCode.AC).order_by('pk', 'user').\
+                distinct('pk', 'user').values_list('user', flat=True)
+            for users in users_ac:
+                if users == user.pk:
+                    return iterator
+                iterator = iterator + 1
+        return None
+
     def insert_sql_list(self):
         """List containing all sql inserts"""
         return self.insert_sql.split(self.__INSERT_SEPARATION)
+
 
 class SelectProblem(Problem):
     """Problem that requires a SELECT statement as solution"""
@@ -414,3 +428,108 @@ class Submission(models.Model):
 
     def __str__(self):
         return f"{self.pk} - {self.user.email} - {self.veredict_code}"
+
+
+class AchievementDefinition(models.Model):
+    """Abstract class for Achievements"""
+    name = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
+    description = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
+
+    def check_and_save(self, user):
+        """Raise a NotImplementedError, declared function for its children"""
+        raise NotImplementedError
+
+    def check_user(self, usr):
+        """Check if an user have the achievement"""
+        achievements_of_user = ObtainedAchievement.objects.filter(user=usr, achievement_definition=self).count()
+        return achievements_of_user > 0
+
+    def refresh(self):
+        """Delete the achievement and check if any user have it"""
+        ObtainedAchievement.objects.filter(achievement_definition=self).delete()
+        all_users = get_user_model().objects.all()
+        for usr in all_users:
+            self.check_and_save(usr)
+
+    def __str__(self):
+        """String for show the achievement name"""
+        return f"{self.name}"
+
+
+class ObtainedAchievement(models.Model):
+    """Store info about an obtained achievement"""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    obtained_date = models.DateTimeField()
+    achievement_definition = models.ForeignKey(AchievementDefinition, on_delete=models.CASCADE)
+
+
+class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
+    """Achievement by solving a number of problems"""
+    num_problems = models.PositiveIntegerField(default=1, null=False)
+
+    def check_and_save(self, user):
+        """Check if an user is deserving for get an achievement, if it is, save that"""
+        if not self.check_user(user):
+            corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).distinct("problem").count()
+            if corrects >= self.num_problems:
+                # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
+                # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
+                order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
+                    Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
+                    order_by('problem', 'creation_date').distinct('problem').values('creation_date'))).\
+                    order_by('creation_date').values_list('creation_date', flat=True)
+                new_achievement = ObtainedAchievement(user=user,
+                                                      obtained_date=order_problem_creation_date[self.num_problems-1],
+                                                      achievement_definition=self)
+                new_achievement.save()
+
+
+class PodiumAchievementDefinition(AchievementDefinition, models.Model):
+    """Achievement by solving X problems among the first N"""
+    num_problems = models.PositiveIntegerField(default=1, null=False)
+    position = models.PositiveIntegerField(default=3, null=False)
+
+    def check_and_save(self, user):
+        """Check if an user is deserving for get an achievement, if it is, save that"""
+        if not self.check_user(user):
+            # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
+            # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
+            order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
+                Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
+                order_by('problem', 'creation_date').distinct('problem').values('creation_date'))). \
+                order_by('creation_date')
+            total = 0
+            if order_problem_creation_date.count() >= self.num_problems:
+                for sub in order_problem_creation_date:
+                    prob = Problem.objects.get(pk=sub.problem.pk)
+                    if prob.solved_position(user) <= self.position:
+                        total = total + 1
+                        if total >= self.num_problems:
+                            new_achievement = ObtainedAchievement(user=user, obtained_date=sub.creation_date,
+                                                                  achievement_definition=self)
+                            new_achievement.save()
+                            return
+
+
+class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Model):
+    """Achievement by solving X problems of a Collection"""
+    num_problems = models.PositiveIntegerField(default=1, null=False)
+    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+
+    def check_and_save(self, user):
+        """Check if an user is deserving for get an achievement, if it is, save that"""
+        if not self.check_user(user):
+            corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user,
+                                                 problem__collection=self.collection).distinct("problem").count()
+            if corrects >= self.num_problems:
+                # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
+                # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
+                order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
+                    Submission.objects.filter(veredict_code=VeredictCode.AC, user=user,
+                                              problem__collection=self.collection).
+                    order_by('problem', 'creation_date').distinct('problem').values('creation_date')
+                )).order_by('creation_date').values_list('creation_date', flat=True)
+                new_achievement = ObtainedAchievement(user=user,
+                                                      obtained_date=order_problem_creation_date[self.num_problems - 1],
+                                                      achievement_definition=self)
+                new_achievement.save()

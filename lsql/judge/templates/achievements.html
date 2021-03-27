@@ -1,0 +1,46 @@
+{% extends "base_menu.html" %}
+{% load static %}
+{% block contenido %}
+<h1>LOGROS</h1>
+{% if unlocked %}
+<h3>Logros conseguidos</h3>
+<table class="table table-striped">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col">Nombre</th>
+            <th scope="col">Descripcion</th>
+            <th scope="col">Fecha</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for obj in unlocked %}
+        <tr>
+            <td>{{ obj.achievement_definition.name }}</td>
+            <td>{{ obj.achievement_definition.description }}</td>
+            <td>{{ obj.obtained_date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% if locked %}
+<h3>Logros pendientes</h3>
+<table class="table table-striped">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col">Nombre</th>
+            <th scope="col">Descripcion</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for obj in locked %}
+        <tr>
+            <td>{{ obj.name }}</td>
+            <td>{{ obj.description }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+{% endif %}
+</table>
+
+{% endblock %}

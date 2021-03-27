@@ -23,6 +23,8 @@
           {{ request.user.email }}
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+		  <a class="dropdown-item" href="{% url 'judge:achievements' request.user.pk %}">Mis logros</a>
+		  <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="{% url 'judge:password_change' %}">Cambiar contraseña</a>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="{% url 'judge:logout' %}">Cerrar sesión</a>

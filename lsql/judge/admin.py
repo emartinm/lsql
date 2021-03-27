@@ -9,7 +9,8 @@ from django.contrib import admin
 
 from . import forms
 from .models import Collection, SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Problem, \
-    Submission
+    Submission, AchievementDefinition, NumSolvedCollectionAchievementDefinition, PodiumAchievementDefinition, \
+    NumSolvedAchievementDefinition, ObtainedAchievement
 
 
 class SelectProblemAdmin(admin.ModelAdmin):
@@ -99,6 +100,36 @@ class ProblemAdmin(admin.ModelAdmin):
     list_filter = ['creation_date']
 
 
+class AchievementsAdmin(admin.ModelAdmin):
+    """Model for Achievements"""
+    list_display = ('name', 'description')
+    list_filter = ['name']
+
+
+class NumSolvedCollectionAchievementDefinitionAdmin(admin.ModelAdmin):
+    """Model for Achievements"""
+    list_display = ('name', 'description', 'num_problems', 'collection')
+    list_filter = ['name']
+
+
+class PodiumAchievementDefinitionAdmin(admin.ModelAdmin):
+    """Model for Achievements"""
+    list_display = ('name', 'description', 'num_problems', 'position')
+    list_filter = ['name']
+
+
+class NumSolvedAchievementDefinitionAdmin(admin.ModelAdmin):
+    """Model for Achievements"""
+    list_display = ('name', 'description', 'num_problems')
+    list_filter = ['name']
+
+
+class ObtainedAchievementAdmin(admin.ModelAdmin):
+    """Model for Achievements"""
+    list_display = ('user', 'achievement_definition', 'obtained_date')
+    list_filter = ['user']
+
+
 admin.site.register(Collection, CollectionAdmin)
 admin.site.register(Problem, ProblemAdmin)
 admin.site.register(SelectProblem, SelectProblemAdmin)
@@ -107,3 +138,8 @@ admin.site.register(FunctionProblem, FunctionProblemAdmin)
 admin.site.register(ProcProblem, ProcProblemAdmin)
 admin.site.register(TriggerProblem, TriggerProblemAdmin)
 admin.site.register(Submission, SubmissionAdmin)
+admin.site.register(AchievementDefinition, AchievementsAdmin)
+admin.site.register(NumSolvedCollectionAchievementDefinition, NumSolvedCollectionAchievementDefinitionAdmin)
+admin.site.register(PodiumAchievementDefinition, PodiumAchievementDefinitionAdmin)
+admin.site.register(NumSolvedAchievementDefinition, NumSolvedAchievementDefinitionAdmin)
+admin.site.register(ObtainedAchievement, ObtainedAchievementAdmin)
