@@ -207,7 +207,7 @@ class Problem(models.Model):
                     return iterator
                 iterator = iterator + 1
         return None
-   
+
     def insert_sql_list(self):
         """List containing all sql inserts"""
         return self.insert_sql.split(self.__INSERT_SEPARATION)

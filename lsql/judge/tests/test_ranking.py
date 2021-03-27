@@ -218,7 +218,7 @@ class RankingTest(TestCase):
         """Test for check if __str__ return the name of the achievement"""
         achievement_definition = AchievementDefinition(name='nombre', description='descripcion')
         self.assertEqual(str(achievement_definition), achievement_definition.name)
-        
+
     def test_download_ranking(self):
         """ Test to download excel of results """
         client = Client()
