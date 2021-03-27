@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinLengthValidator
-from django.db.models import JSONField
+from django.db.models import JSONField, Subquery
 from django.core.serializers.json import DjangoJSONEncoder
 
 from .feedback import compare_select_results, compare_db_results, compare_function_results
@@ -440,9 +440,12 @@ class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
         if not self.check_user(user):
             corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).distinct("problem").count()
             if corrects >= self.num_problems:
-                date_obt = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).\
-                    order_by('-problem', 'pk').distinct('problem').values_list('creation_date', flat=True)
-                new_achievement = ObtainedAchievement(user=user, obtained_date=date_obt[self.num_problems-1],
+                order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
+                    Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
+                    order_by('problem', 'creation_date').distinct('problem').values('creation_date'))).\
+                    order_by('creation_date').values_list('creation_date', flat=True)
+                new_achievement = ObtainedAchievement(user=user,
+                                                      obtained_date=order_problem_creation_date[self.num_problems-1],
                                                       achievement_definition=self)
                 new_achievement.save()
 
@@ -455,19 +458,18 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
     def check_and_save(self, user):
         """Check if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
-            submissions_correct = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).\
-                order_by('problem', 'pk').distinct('problem')
+            order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
+                Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
+                order_by('problem', 'creation_date').distinct('problem').values('creation_date'))). \
+                order_by('creation_date')
             total = 0
-            for sub in submissions_correct:
-                prob = Problem.objects.filter(pk=sub.problem.pk)
-                for problem in prob:
-                    if problem.solved_position(user) <= self.position:
+            if order_problem_creation_date.count() >= self.num_problems:
+                for sub in order_problem_creation_date:
+                    prob = Problem.objects.filter(pk=sub.problem.pk).get()
+                    if prob.solved_position(user) <= self.position:
                         total = total + 1
                         if total >= self.num_problems:
-                            date_obt = Submission.objects.\
-                                filter(veredict_code=VeredictCode.AC, user=user, problem=problem).\
-                                order_by('pk').values_list('creation_date', flat=True)
-                            new_achievement = ObtainedAchievement(user=user, obtained_date=date_obt[0],
+                            new_achievement = ObtainedAchievement(user=user, obtained_date=sub.creation_date,
                                                                   achievement_definition=self)
                             new_achievement.save()
                             return
@@ -481,18 +483,15 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
     def check_and_save(self, user):
         """Check if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
-            total_solved = 0
-            corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).order_by('-problem', 'pk').\
-                distinct("problem")
-            for sub in corrects:
-                problems_coll = Problem.objects.filter(pk=sub.problem.pk, collection=self.collection)
-                for problem in problems_coll:
-                    total_solved = total_solved + 1
-                    if total_solved >= self.num_problems:
-                        date_obt = Submission.objects.\
-                            filter(veredict_code=VeredictCode.AC, user=user, problem=problem).\
-                            order_by('pk').values_list('creation_date', flat=True)
-                        new_achievement = ObtainedAchievement(user=user, obtained_date=date_obt[0],
-                                                              achievement_definition=self)
-                        new_achievement.save()
-                        return
+            corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user,
+                                                 problem__collection=self.collection).distinct("problem").count()
+            if corrects >= self.num_problems:
+                order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
+                    Submission.objects.filter(veredict_code=VeredictCode.AC, user=user,
+                                              problem__collection=self.collection).
+                    order_by('problem', 'creation_date').distinct('problem').values('creation_date')
+                )).order_by('creation_date').values_list('creation_date', flat=True)
+                new_achievement = ObtainedAchievement(user=user,
+                                                      obtained_date=order_problem_creation_date[self.num_problems - 1],
+                                                      achievement_definition=self)
+                new_achievement.save()
