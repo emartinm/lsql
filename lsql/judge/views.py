@@ -5,8 +5,9 @@ Functions that process HTTP connections
 """
 from datetime import timedelta, datetime
 
-import os
 import tempfile
+import os
+import pathlib
 from bs4 import BeautifulSoup
 import openpyxl
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
@@ -457,16 +458,14 @@ def download_ranking(request, collection_id):
 
         # create a temporary file to save the workbook with the results
         temp = tempfile.NamedTemporaryFile(mode='w+b', buffering=-1, suffix='.xlsx')
-        path = temp.name.split("\\")
-
-        file = path[6]
-        work.save(file)
-
-        response = HttpResponse(open(file, 'rb').read())
+        file = pathlib.Path(temp.name)
+        name = file.name
+        work.save(name)
+        response = HttpResponse(open(name, 'rb').read())
         response['Content-Type'] = 'application/xlsx'
         response['Content-Disposition'] = "attachment; filename=ranking.xlsx"
         temp.close()
-        os.remove(file)
+        os.remove(name)
         return response
 
     if request.user.is_staff and not result_form.is_valid():
