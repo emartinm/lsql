@@ -291,7 +291,7 @@ def show_achievements(request, user_id):
     all_achievements_definitions = AchievementDefinition.objects.values_list('pk', flat=True)
     achievements_locked_pk = all_achievements_definitions.difference(achievements_definitions_unlocked)
     for identifier in achievements_locked_pk:
-        ach = AchievementDefinition.objects.filter(pk=identifier).get()
+        ach = AchievementDefinition.objects.get(pk=identifier)
         achievements_locked.append(ach)
     return render(request, 'achievements.html', {'locked': achievements_locked,
                                                  'unlocked': achievements_unlocked})

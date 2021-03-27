@@ -440,6 +440,7 @@ class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
         if not self.check_user(user):
             corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).distinct("problem").count()
             if corrects >= self.num_problems:
+                # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
                 order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
                     Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
                     order_by('problem', 'creation_date').distinct('problem').values('creation_date'))).\
@@ -458,6 +459,7 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
     def check_and_save(self, user):
         """Check if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
+            # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
             order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
                 Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
                 order_by('problem', 'creation_date').distinct('problem').values('creation_date'))). \

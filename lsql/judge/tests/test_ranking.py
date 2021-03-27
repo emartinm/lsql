@@ -161,9 +161,9 @@ class RankingTest(TestCase):
         sub_1.save()
         sub_2.save()
         Submission.objects.filter(id=sub_1.id).update(creation_date=datetime(2006, 3, 5))
-        sub_1_u = Submission.objects.filter(id=sub_1.id).get()
+        sub_1_u = Submission.objects.get(id=sub_1.id)
         Submission.objects.filter(id=sub_2.id).update(creation_date=datetime(2020, 3, 5))
-        sub_2_u = Submission.objects.filter(id=sub_2.id).get()
+        sub_2_u = Submission.objects.get(id=sub_2.id)
 
         # Test NumSolvedAchievementDefinition
         ach_solved = NumSolvedAchievementDefinition(name='Resolvista', description='Resuelve 2 problemas',
