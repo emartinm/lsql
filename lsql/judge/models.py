@@ -4,12 +4,12 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Models to store objects in the DB
 """
-
 from zipfile import ZipFile
 import markdown
 from lxml import html
 from logzero import logger
 
+import django.utils.timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -459,7 +459,7 @@ class AchievementDefinition(models.Model):
 class ObtainedAchievement(models.Model):
     """Store info about an obtained achievement"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    obtained_date = models.DateTimeField()
+    obtained_date = models.DateTimeField(default=django.utils.timezone.now)
     achievement_definition = models.ForeignKey(AchievementDefinition, on_delete=models.CASCADE)
 
 
