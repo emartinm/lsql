@@ -1,0 +1,18 @@
+<div id="result">
+{% block feedback %}
+Feedback
+{% endblock feedback %}
+</div>
+
+{% block initial_db %}
+{% if initial_db %}
+<div id="bd">
+    <p>
+        <strong>Base de datos utilizada para la ejecución de tu código SQL:</strong>
+    </p>
+    {% for table in initial_db %}
+        {% include 'show_table.html' with table=table name=None mark_rows=None %}
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock initial_db %}

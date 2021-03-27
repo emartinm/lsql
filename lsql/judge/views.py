@@ -5,6 +5,11 @@ Functions that process HTTP connections
 """
 from datetime import timedelta, datetime
 
+import tempfile
+import os
+import pathlib
+from bs4 import BeautifulSoup
+import openpyxl
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
@@ -239,8 +244,8 @@ def show_problem(request, problem_id):
     # Stores the flag in an attribute so that the template can use it
     problem.solved = problem.solved_by_user(request.user)
     # Filter the expected result to display it
-    problem.show_added, problem.show_modified, problem.show_removed = filter_expected_db(problem.expected_result,
-                                                                                         problem.initial_db)
+    problem.show_added, problem.show_modified, problem.show_removed = filter_expected_db(problem.expected_result[0],
+                                                                                         problem.initial_db[0])
     return render(request, problem.template(), {'problem': problem})
 
 
@@ -426,3 +431,73 @@ def check_if_get_achievement(user):
                         PodiumAchievementDefinition.objects.all())
     for ach in ach_definitions:
         ach.check_and_save(user)
+
+
+@login_required
+def download_ranking(request, collection_id):
+    """Download excel with the results of submissions"""
+    result_form = ResultForm(request.GET)
+
+    if request.user.is_staff and result_form.is_valid():
+        html = show_result(request, collection_id).content.decode('utf-8')
+        soup = BeautifulSoup(html, 'html.parser')
+        col = 1
+        row = 1
+        work = openpyxl.Workbook()
+        book = work.active
+
+        # Takes collection and date
+        data = soup.find_all("h2")
+        for i in data:
+            book.cell(row=row, column=col, value=i.string)
+            row += 1
+
+        # Takes group
+        option = soup.find("option")
+        book.cell(row=row, column=col, value=option.string)
+        row += 1
+
+        # Takes the first column of table (Pos, User, Exercises, Score, Solved)
+        ths = soup.find_all("th")
+        for i in ths:
+            if i.string is not None:
+                book.cell(row=row, column=col, value=i.string)
+                col += 1
+            exercises = i.find_all("a")
+            for j in exercises:
+                if j.string is not None:
+                    book.cell(row=row, column=col, value=j['title'])
+                    col += 1
+        col = 1
+        # Takes the information for each student
+        trs = soup.find_all("tr")
+        for i in trs:
+            tds = i.find_all("td")
+            # Information of a student (Pos, User, Exercises, Score, Solved)
+            for j in tds:
+                if j.string is not None:
+                    book.cell(row=row, column=col, value=j.string)
+                    col += 1
+                num_submissions = j.find_all("a")
+                for k in num_submissions:
+                    if k.string is not None:
+                        book.cell(row=row, column=col, value=k.string)
+                        col += 1
+            col = 1
+            row += 1
+
+        # create a temporary file to save the workbook with the results
+        temp = tempfile.NamedTemporaryFile(mode='w+b', buffering=-1, suffix='.xlsx')
+        file = pathlib.Path(temp.name)
+        name = file.name
+        work.save(name)
+        response = HttpResponse(open(name, 'rb').read())
+        response['Content-Type'] = 'application/xlsx'
+        response['Content-Disposition'] = "attachment; filename=ranking.xlsx"
+        temp.close()
+        os.remove(name)
+        return response
+
+    if request.user.is_staff and not result_form.is_valid():
+        return HttpResponseNotFound(str(result_form.errors))
+    return HttpResponseForbidden("Forbidden")

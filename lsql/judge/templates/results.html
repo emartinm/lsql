@@ -35,6 +35,13 @@
         {% endif %}
     </form>
 
+    {% if login.is_staff %}
+        <div class="col md-3">
+            <a href="{% url 'judge:download_ranking' collection.id %}?group={{group0.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}">
+            <button type="button" class="btn btn-primary" title="csv con el ranking">Descargar ranking</button>
+            </a>
+        </div>
+    {% endif %}
     <div class="col">
         <button class="bg-white border-0 float-right"title="Leyenda" data-target="#exampleModal" data-toggle="modal"
                 type="button"><i class="far fa-question-circle fa-2x"></i></button>

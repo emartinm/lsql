@@ -18,12 +18,17 @@ urlpatterns = [
     path('problem/<int:problem_id>', views.show_problem, name='problem'),
     path('submit/<int:problem_id>', views.submit, name='submit'),
     path('problem/<int:problem_id>/create_insert', views.download, name='create_insert'),
+    
     path('submission/', views.show_submissions, name='submissions'),
     path('submission/<int:submission_id>', views.show_submission, name='submission'),
     path('submission/<int:submission_id>/download_submission', views.download_submission, name='download_submission'),
+    
     path('results/', views.show_results, name='results'),
     path('results/<int:collection_id>', views.show_result, name='result'),
+    path('results/<int:collection_id>/download_ranking', views.download_ranking, name='download_ranking'),
+    
     path('achievements/<int:user_id>', views.show_achievements, name='achievements'),
+
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(template_name='logout.html'), name='logout'),
     path('password_change/',

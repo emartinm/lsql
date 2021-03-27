@@ -1,3 +1,5 @@
+{% extends "feedback_wa.html" %}
+{% block feedback %}
 <p>
 Existen algunas filas incorrectas.
 A continuación se muestran todas las filas, remarcando aquellas que contienen valores incorrectos en alguna columna o
@@ -5,3 +7,4 @@ que no deberían aparecer.
 
 {% include 'show_table.html' with table=table name=None mark_rows=mark_rows %}
 </p>
+{% endblock feedback %}
