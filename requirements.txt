@@ -24,3 +24,5 @@ sqlparse==0.4.1
 text-unidecode==1.3
 toml==0.10.2
 wrapt==1.12.1
+beautifulsoup4==4.9.3
+soupsieve==2.2.1

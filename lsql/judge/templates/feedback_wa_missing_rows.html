@@ -1,3 +1,5 @@
+{% extends "feedback_wa.html" %}
+{% block feedback %}
 <p>
     Faltan algunas filas que deberían aparecer.
 </p>
@@ -9,3 +11,4 @@
     <strong>Filas que faltan:</strong>
     {% include 'show_table.html' with table=missing name=None mark_rows=mark_missing %}
 </p>
+{% endblock feedback %}

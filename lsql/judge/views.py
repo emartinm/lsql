@@ -238,8 +238,8 @@ def show_problem(request, problem_id):
     # Stores the flag in an attribute so that the template can use it
     problem.solved = problem.solved_by_user(request.user)
     # Filter the expected result to display it
-    problem.show_added, problem.show_modified, problem.show_removed = filter_expected_db(problem.expected_result,
-                                                                                         problem.initial_db)
+    problem.show_added, problem.show_modified, problem.show_removed = filter_expected_db(problem.expected_result[0],
+                                                                                         problem.initial_db[0])
     return render(request, problem.template(), {'problem': problem})
 
 
