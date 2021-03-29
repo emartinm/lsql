@@ -109,23 +109,32 @@
     <tr class="text-dark">
         {% if p == login %}
          <td class="bg-info border border-dark">{{p.pos}}</td>
-         <td class="border border-dark">{{p.username}}
+         <td class="border border-dark">
+             <span class="ranking-username">{{p.username}}</span>
              {% if p.n_achievements > 0 %}
-             <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
+                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>
+                    <span class="ranking-achievement">x{{p.n_achievements}}</span>
+                </a>
              {% endif %}
          </td>
         {% elif p.is_staff %}
          <td class="bg-secondary border border-dark">{{p.pos}}</td>
-         <td class="border border-dark">{{p.username}}
-              {% if p.n_achievements > 0 %}
-              <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
-              {% endif %}
+         <td class="border border-dark">
+             <span class="ranking-username">{{p.username}}</span>
+             {% if p.n_achievements > 0 %}
+                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>
+                    <span class="ranking-achievement">x{{p.n_achievements}}</span>
+                </a>
+             {% endif %}
          </td>
         {%else%}
           <td class="border border-dark">{{p.pos}}</td>
-          <td class="border border-dark">{{p.username}}
+          <td class="border border-dark">
+              <span class="ranking-username">{{p.username}}</span>
               {% if p.n_achievements > 0 %}
-              <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
+                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>
+                    <span class="ranking-achievement">x{{p.n_achievements}}</span>
+                </a>
               {% endif %}
          </td>
         {% endif %}
