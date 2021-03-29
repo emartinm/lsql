@@ -476,12 +476,8 @@ def download_ranking(request, collection_id):
             # Information of a student (Pos, User, Exercises, Score, Solved)
             for j in tds:
                 name = j.find('span', class_='ranking-username')
-                points = j.find('span', class_='ranking-achievement')
-                if name is not None and points is None:
+                if name is not None :
                     book.cell(row=row, column=col, value=name.string)
-                    col += 1
-                if name is not None and points is not None:
-                    book.cell(row=row, column=col, value=name.string + ' ' + points.string)
                     col += 1
                 if j.string is not None:
                     book.cell(row=row, column=col, value=j.string)

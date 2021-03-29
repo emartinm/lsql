@@ -112,9 +112,7 @@
          <td class="border border-dark">
              <span class="ranking-username">{{p.username}}</span>
              {% if p.n_achievements > 0 %}
-                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>
-                    <span class="ranking-achievement">x{{p.n_achievements}}</span>
-                </a>
+                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
              {% endif %}
          </td>
         {% elif p.is_staff %}
@@ -122,9 +120,7 @@
          <td class="border border-dark">
              <span class="ranking-username">{{p.username}}</span>
              {% if p.n_achievements > 0 %}
-                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>
-                    <span class="ranking-achievement">x{{p.n_achievements}}</span>
-                </a>
+                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
              {% endif %}
          </td>
         {%else%}
@@ -132,9 +128,7 @@
           <td class="border border-dark">
               <span class="ranking-username">{{p.username}}</span>
               {% if p.n_achievements > 0 %}
-                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>
-                    <span class="ranking-achievement">x{{p.n_achievements}}</span>
-                </a>
+                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
               {% endif %}
          </td>
         {% endif %}
