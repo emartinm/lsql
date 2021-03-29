@@ -299,7 +299,8 @@ def show_achievements(request, user_id):
         ach = AchievementDefinition.objects.get(pk=identifier)
         achievements_locked.append(ach)
     return render(request, 'achievements.html', {'locked': achievements_locked,
-                                                 'unlocked': achievements_unlocked})
+                                                 'unlocked': achievements_unlocked,
+                                                 'name': this_user.username})
 
 
 @login_required

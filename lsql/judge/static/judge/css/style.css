@@ -35,6 +35,11 @@ div#feedback_line {
     background-color: #f7f7f7;
 }
 
+.headAchievement{
+    font-weight: bold;
+    font-style: oblique;
+}
+
 .gold{
     color: #C9B037;
 }
