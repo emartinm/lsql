@@ -466,7 +466,7 @@ def download_ranking(request, collection_id):
             exercises = i.find_all("a")
             for j in exercises:
                 if j.string is not None:
-                    book.cell(row=row, column=col, value=j['title'])
+                    book.cell(row=row, column=col, value=j['title'].strip())
                     col += 1
         col = 1
         # Takes the information for each student
@@ -476,12 +476,12 @@ def download_ranking(request, collection_id):
             # Information of a student (Pos, User, Exercises, Score, Solved)
             for j in tds:
                 if j.string is not None:
-                    book.cell(row=row, column=col, value=j.string)
+                    book.cell(row=row, column=col, value=j.string.strip())
                     col += 1
                 num_submissions = j.find_all("a")
                 for k in num_submissions:
                     if k.string is not None:
-                        book.cell(row=row, column=col, value=k.string)
+                        book.cell(row=row, column=col, value=k.string.strip())
                         col += 1
             col = 1
             row += 1

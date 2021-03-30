@@ -29,7 +29,7 @@ def create_users_from_csv(csv_filename: str, group_name: str):
         create_users_from_list(reader, group)
 
 
-def create_users_from_list(dict_list: dict, group: Group):
+def create_users_from_list(dict_list, group: Group):
     """
     Batch creation of users from a list of dictionaries, each dictionary representing a new user. The username is the
     first part of the email (before @) and the password is the document number.
