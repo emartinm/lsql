@@ -449,19 +449,19 @@ def download_ranking(request, collection_id):
         # Takes collection and date
         data = soup.find_all("h2")
         for i in data:
-            book.cell(row=row, column=col, value=i.string)
+            book.cell(row=row, column=col, value=i.string.strip())
             row += 1
 
         # Takes group
         option = soup.find("option")
-        book.cell(row=row, column=col, value=option.string)
+        book.cell(row=row, column=col, value=option.string.strip())
         row += 1
 
         # Takes the first column of table (Pos, User, Exercises, Score, Solved)
         ths = soup.find_all("th")
         for i in ths:
             if i.string is not None:
-                book.cell(row=row, column=col, value=i.string)
+                book.cell(row=row, column=col, value=i.string.strip())
                 col += 1
             exercises = i.find_all("a")
             for j in exercises:
@@ -477,7 +477,7 @@ def download_ranking(request, collection_id):
             for j in tds:
                 name = j.find('span', class_='ranking-username')
                 if name is not None :
-                    book.cell(row=row, column=col, value=name.string)
+                    book.cell(row=row, column=col, value=name.string.strip())
                     col += 1
                 if j.string is not None:
                     book.cell(row=row, column=col, value=j.string.strip())
