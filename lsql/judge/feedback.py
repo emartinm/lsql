@@ -218,3 +218,21 @@ def compile_error_to_html_table(tab):
     """
     feedback = render_to_string('feedback_ce.html', {'table': tab})
     return feedback
+
+
+def filter_expected_db(expected_db, initial_db):
+    """Compare expected_db and initial_db and return all the modified, removed or added tables"""
+    expected_tables = sorted(list(expected_db.keys()))
+    initial_tables = sorted(list(initial_db.keys()))
+    ret_added = {}
+    ret_modified = {}
+    ret_removed = {}
+    common_tables = initial_db.keys() & expected_db.keys()
+    if expected_tables != initial_tables:
+        ret_added = {x: expected_db[x] for x in expected_tables if x not in initial_tables}
+        ret_removed = {x: initial_db[x] for x in initial_tables if x not in expected_tables}
+    for table in common_tables:
+        veredict, _ = compare_select_results(expected_db[table], initial_db[table], order=False)
+        if veredict != VeredictCode.AC:
+            ret_modified[table] = expected_db[table]
+    return ret_added, ret_modified, ret_removed

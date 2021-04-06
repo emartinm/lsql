@@ -96,9 +96,7 @@ class ShellTest(TestCase):
             prob.save()
 
         adapt_db_result_to_list()
-        for prob in (list(SelectProblem.objects.all()) + list(DMLProblem.objects.all()) +
-                     list(FunctionProblem.objects.all()) + list(ProcProblem.objects.all()) +
-                     list(TriggerProblem.objects.all())):
+        for prob in Problem.objects.all().select_subclasses():
             self.assertIs(type(prob.initial_db), list)
             self.assertIs(type(prob.initial_db[0]), dict)
             self.assertIs(type(prob.expected_result), list)

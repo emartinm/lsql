@@ -10,6 +10,7 @@ import os
 import pathlib
 from bs4 import BeautifulSoup
 import openpyxl
+
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
@@ -18,39 +19,30 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import login_required
 from logzero import logger
+
 from .exceptions import ExecutorException
-from .feedback import compile_error_to_html_table, compare_select_results
+from .feedback import compile_error_to_html_table, filter_expected_db
 from .forms import SubmitForm, ResultForm
-from .models import Collection, Problem, SelectProblem, DMLProblem, ProcProblem, FunctionProblem, TriggerProblem, \
-    Submission, NumSolvedAchievementDefinition, PodiumAchievementDefinition, NumSolvedCollectionAchievementDefinition,\
-    ObtainedAchievement, AchievementDefinition
+from .models import Collection, Problem, Submission, ObtainedAchievement, AchievementDefinition
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
 
 
-def get_child_problem(problem_id):
+####################
+# Helper functions #
+####################
+
+def get_subclass_problem(problem_id):
     """Look for problem 'pk' in the different child classes of Problem"""
-    classes = [SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem]
-    i = 0
-    problem = None
-    while i < len(classes) and problem is None:
-        problems = classes[i].objects.filter(pk=problem_id)
-        i += 1
-        if problems:
-            problem = problems[0]
-    return problem
+    queryset = Problem.objects.filter(pk=problem_id).select_subclasses()
+    return None if len(queryset) == 0 else queryset[0]
 
 
 def pos(user_1, user_2):
-    """compare if user_1 has a better ranking than user_2"""
+    """ Compares if user_1 has a better ranking than user_2 """
     if user_1.resolved == user_2.resolved and user_1.score == user_2.score:
         return False
     return True
-
-
-def index(_):
-    """Redirect root access to collections"""
-    return HttpResponseRedirect(reverse('judge:collections'))
 
 
 def first_day_of_course(init_course):
@@ -102,6 +94,21 @@ def update_user_attempts_problem(attempts, user, problem, num_accepted, collecti
     if problem.solved and enter:
         user.resolved = user.resolved + 1
     user.collection.append(problem)
+
+
+def check_if_get_achievement(user):
+    """Check if the user get some achievement"""
+    for ach in AchievementDefinition.objects.all().select_subclasses():
+        ach.check_and_save(user)
+
+
+##############
+#   Views    #
+##############
+
+def index(_):
+    """Redirect root access to collections"""
+    return HttpResponseRedirect(reverse('judge:collections'))
 
 
 @login_required
@@ -240,7 +247,7 @@ def show_problem(request, problem_id):
     # Error 404 if there is no a Problem pk
     get_object_or_404(Problem, pk=problem_id)
     # Look for problem pk in all the Problem classes
-    problem = get_child_problem(problem_id)
+    problem = get_subclass_problem(problem_id)
     # Stores the flag in an attribute so that the template can use it
     problem.solved = problem.solved_by_user(request.user)
     # Filter the expected result to display it
@@ -331,7 +338,7 @@ def download(_, problem_id):
     """Returns a script with the creation and insertion of the problem"""
     get_object_or_404(Problem, pk=problem_id)
     # Look for problem pk in all the Problem classes
-    problem = get_child_problem(problem_id)
+    problem = get_subclass_problem(problem_id)
     response = HttpResponse()
     response['Content-Type'] = 'application/sql'
     response['Content-Disposition'] = "attachment; filename=create_insert.sql"
@@ -347,7 +354,7 @@ def submit(request, problem_id):
     """Process a user submission"""
     # Error 404 if there is no Problem 'pk'
     general_problem = get_object_or_404(Problem, pk=problem_id)
-    problem = get_child_problem(problem_id)
+    problem = get_subclass_problem(problem_id)
     submit_form = SubmitForm(request.POST)
     data = {'veredict': VeredictCode.IE, 'title': VeredictCode.IE.label,
             'message': VeredictCode.IE.message(), 'feedback': ''}
@@ -405,33 +412,6 @@ def test_error_500(request):
         elems = list()
         return HttpResponse(elems[55])  # list index out of range, error 500
     return HttpResponseNotFound()
-
-
-def filter_expected_db(expected_db, initial_db):
-    """Compare expected_db and initial_db and return all the modified, removed or added tables"""
-    expected_tables = sorted(list(expected_db.keys()))
-    initial_tables = sorted(list(initial_db.keys()))
-    ret_added = {}
-    ret_modified = {}
-    ret_removed = {}
-    common_tables = initial_db.keys() & expected_db.keys()
-    if expected_tables != initial_tables:
-        ret_added = {x: expected_db[x] for x in expected_tables if x not in initial_tables}
-        ret_removed = {x: initial_db[x] for x in initial_tables if x not in expected_tables}
-    for table in common_tables:
-        veredict, _ = compare_select_results(expected_db[table], initial_db[table], order=False)
-        if veredict != VeredictCode.AC:
-            ret_modified[table] = expected_db[table]
-    return ret_added, ret_modified, ret_removed
-
-
-def check_if_get_achievement(user):
-    """Check if the user get some achievement"""
-    ach_definitions = list(NumSolvedAchievementDefinition.objects.all()) + list(
-                        NumSolvedCollectionAchievementDefinition.objects.all()) + list(
-                        PodiumAchievementDefinition.objects.all())
-    for ach in ach_definitions:
-        ach.check_and_save(user)
 
 
 @login_required

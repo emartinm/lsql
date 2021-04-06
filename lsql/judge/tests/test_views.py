@@ -16,7 +16,8 @@ from judge.models import Collection, SelectProblem, Submission, FunctionProblem,
 from judge.types import VeredictCode
 import judge.tests.test_oracle
 from judge.tests.test_parse import ParseTest
-from judge.views import first_day_of_course, filter_expected_db
+from judge.views import first_day_of_course
+from judge.feedback import filter_expected_db
 
 
 def create_select_problem(collection, name='Ejemplo'):

@@ -11,7 +11,7 @@ import csv
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
-from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem
+from .models import Problem
 
 
 def create_users_from_csv(csv_filename: str, group_name: str):
@@ -67,9 +67,7 @@ def is_list_of_dict(value):
 def adapt_db_result_to_list():
     """ Adapts the fields 'initial_db' and 'expected_result' in the problems from dictionaries to
         unitary lists containing that dictionary """
-    for prob in (list(SelectProblem.objects.all()) + list(DMLProblem.objects.all()) +
-                 list(FunctionProblem.objects.all()) + list(ProcProblem.objects.all()) +
-                 list(TriggerProblem.objects.all())):
+    for prob in Problem.objects.all().select_subclasses():
         # We need to traverse the different types of problems because expected_result is defined in the
         # child classes, not in Problem.
         if isinstance(prob.initial_db, dict):

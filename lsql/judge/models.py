@@ -8,6 +8,7 @@ from zipfile import ZipFile
 import markdown
 from lxml import html
 from logzero import logger
+from model_utils.managers import InheritanceManager
 
 import django.utils.timezone
 from django.contrib.auth import get_user_model
@@ -140,6 +141,9 @@ class Problem(models.Model):
     position = models.PositiveIntegerField(default=1, null=False)
     # (Dirty) trick to upload ZIP files using the standard admin interface of Django
     zipfile = models.FileField(upload_to='problem_zips/', default=None, blank=True, null=True)
+
+    # To query Problem to obtain subclass objects with '.select_subclasses()'
+    objects = InheritanceManager()
 
     def clean(self):
         """Check the number of statements and creates HTML versions from MarkDown"""
@@ -434,6 +438,9 @@ class AchievementDefinition(models.Model):
     """Abstract class for Achievements"""
     name = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     description = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
+
+    # To query Problem to obtain subclass objects with '.select_subclasses()'
+    objects = InheritanceManager()
 
     def check_and_save(self, user):
         """Raise a NotImplementedError, declared function for its children"""
