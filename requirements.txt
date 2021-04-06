@@ -1,13 +1,13 @@
-asgiref==3.3.1
-astroid==2.5.1
+asgiref==3.3.4
+astroid==2.5.2
 beautifulsoup4==4.9.3
 coverage==5.5
 cx-Oracle==8.1.0
-Django==3.1.7
+Django==3.2
 django-dbbackup==3.3.0
 django-model-utils==4.1.1
 et-xmlfile==1.0.1
-Faker==6.6.3
+Faker==8.0.0
 gunicorn==20.1.0
 isort==5.8.0
 lazy-object-proxy==1.6.0
@@ -18,7 +18,7 @@ mccabe==0.6.1
 multiset==2.1.1
 openpyxl==3.0.7
 psycopg2-binary==2.8.6
-pylint==2.7.2
+pylint==2.7.4
 pylint-django==2.4.2
 pylint-plugin-utils==0.6
 python-dateutil==2.8.1
