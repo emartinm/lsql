@@ -4,7 +4,10 @@
    * https://freesvg.org/red-cross-not-ok-vector-icon (dominio público)
    * https://icons.getbootstrap.com/ (MIT)
    
-# Mejoras completadas:   
+# Tareas completadas:
+
+## Iker
+
 * (Jesús) [**Dificultad baja**] [IMPRESCINDIBLE] [**Tarea para Iker 28/10-15/11 PR #15**]
  Botón para descargarse el *script* de creación de las tablas y carga de datos en cada problema.
  
@@ -13,6 +16,9 @@ Mejorar el mensaje de error cuando la consulta enviada no respeta el
 esquema esperado, para especificar cuál es el primer atributo que es
 diferente. Realizar la comparación de nombres de columna sin tener 
 en cuenta mayúsculas-minúsculas.
+
+* [**Dificultad baja**] [**INTERESANTE**]  [**Tarea para Iker 21/12-25/02 PR#26**]
+Al hacer clic en la celda de la tabla de clasificación llevará al listado de todos los envíos de ese usuario para ese problema.
 
 * [**Dificultad media**] [**IMPRESCINDIBLE**]  [**Tarea para Iker 21/12-08/02**] [**No hay PR, se usa Django, comentar memoria**]
 Agrupar usuarios en clases. Se podría utilizar los grupos de Django, lo que facilita bastante la cosa.
@@ -24,30 +30,68 @@ Permitir que los administradores vean las clasificaciones todas las clases y tod
 Incorporar orden al mostrar los resultados: número de problemas resueltos, número de envíos.
 Un usuario puede estar en varios cursos. Staff lo ve todo.
 
-* [**Dificultad baja**] [**INTERESANTE**]  [**Tarea para Iker 21/12-25/02 PR#26**]
-Al hacer clic en la celda de la tabla de clasificación llevará al listado de todos los envíos de ese usuario para ese problema.
+* (Enrique y Jesús) [**Dificultad media**] [INTERESANTE] [**Tarea para Iker 26/02-09/03 PR #42**]
+  En la pestaña 'Resultados' añadir un selector de fechas inicio(inicio curso) y fin (tope día de hoy) que ajuste los resultados a las fechas restringidas
+
+
+## Iván
 
 * (Enrique) [**Dificultad baja**] [**INTERESANTE**] [**Tarea para Iván 11/11-26/02/2021 PR #27**]
  Mostrar al menos las tablas de manera más compacta, p.ej. mostrando 
  solo la cabecera y que se pueda ampliar para ver el contenido pulsando 
  en el típico "+".
  
+* (Daniel) [**Dificultad baja**] [**INTERESANTE**] [**Tarea para Iván PR #43**]
+Añadir tanto primer alumno en resolver ejercicio, como el segundo y tercero, como si fuera un podio.   
+
+* (Enrique) [**Dificultad media**] [**Tarea para Iván PR #52**]
+Permitir varias BD iniciales como casos de prueba en los ejercicios (actualmente solo se considera una BD inicial). 
+
+
+ 
+## Daniel
+
  * (Daniel) [**Dificultad baja**] [**Tarea para Daniel 11/11/2020-28/02/2021 PR #33**]
 Subir solución como fichero SQL arrastrando o con botón.
 
-* (Enrique y Jesús) [**Dificultad media**] [INTERESANTE] [**Tarea para Iker 26/02-09/03 PR #42**]
-  En la pestaña 'Resultados' añadir un selector de fechas inicio(inicio curso) y fin (tope día de hoy) que ajuste los resultados a las fechas restringidas
+* (Enrique) [**Dificultad baja**] [**INTERESANTE**] [**Tarea para Daniel PR #47**]
+Mejorar la salida esperada en los ejercicios de procedimientos.
+Ahora mismo muestra todas las tablas que existen en la base de 
+datos después de invocar al procedimiento, pero sería mejor que
+mostrase únicamente las que han cambiado: tabla eliminada, tabla 
+nueva, tabla que tiene filas diferentes (añadidas, borradas o 
+modificadas).
 
-# Mejoras asignadas:
-* (Tamara) [**Dificultad baja**] [**IMPRESCINDIBLE**] [**Tarea para Tamara 28/10**]
+* (Daniel) [**Dificultad media**] [**INTERESANTE**] [**Tarea para Daniel PR #49**]
+Sistema de logros para aumentar la competitividad, p-ej. `Realiza 3 ejercicios de inserción`
+
+
+
+
+## Tamara 
+ 
+* (Tamara) [**Dificultad baja**] [**IMPRESCINDIBLE**] [**Tarea para Tamara 28/10 PR #28**]
 En el apartado "Mis envíos" añadir un botón para descargar el código enviado de un ejercicio.
 
-# Mejoras propuestas:
-* (Enrique y Jesús) [**Dificultad baja**] [INTERESANTE]
+* (Enrique y Jesús) [**Dificultad baja**] [INTERESANTE] [**Tarea para Tamara PR #48**]
   Descargar el listado de envíos de la pestaña 'Resultados'
-  
-* (Jesús) [**Dificultad alta**] [IMPRESCINDIBLE]
+
+
+
+# Tareas asignadas:
+
+* (Jesús) [**Dificultad alta**] [IMPRESCINDIBLE] [**Tarea para Iván**]
  Soporte multi-idioma para mostrar el sistema en inglés y (Daniel) otros idiomas incluidos los demás de España como el valenciano. (https://docs.djangoproject.com/en/3.1/topics/i18n/)
+ 
+* (Jesús) [**Dificultad alta**] [**Tarea para Daniel**]
+Diseñar los conjuntos de datos necesarios para probar una consulta que puede ser errónea. Otra enfoque (Enrique) sería dar dos consultas SQL y pedir al estudiante qué datos tendrían que tener las tablas para que los resultados fueran diferentes. 
+
+* (Tamara e Iker) [**Dificultad media**] [**INTERESANTE**] [**Tarea para Tamara**]
+    * Opción de pista en cada ejercicio para los alumnos que no sepan empezar un ejercicio. En el caso de tener un sistema de puntos se les restaría un porcentaje por cada ejercicio en el que han necesitado ayuda.
+    * Cada alumno tiene una serie de "saldo" el cual recibe tras un aceptado, logros (subir tres seguidos bien, alguno por dificultad tener más premio), que los comentarios de ayuda aparezca un botoncito con un máximo de 3 ayudas y cada vez más caros (3 , 5 , 10 por ejemplo) y sean ayudas genéricas para cada ejercicio.
+
+
+# Tareas propuestas:
 
 * (Jesús) [**Dificultad alta**] [INTERESANTE]
  Triggers: mejorar la comparación de resultados y diseño de casos de prueba.
@@ -75,20 +119,8 @@ Gestión de excepciones en PL/SQL: ver que se lanzan las que deberían
 * (Jesús) [**Dificultad media**]
 Permitir varios casos de prueba en PL/SQL con distintos valores para los parámetros (actualmente suportado en funciones pero no en procedimientos).
 
-* (Enrique) [**Dificultad media**]
-Permitir varias BD iniciales como casos de prueba en los ejercicios (actualmente solo se considera una BD inicial).
-
-* (Jesús) [**Dificultad alta**] 
-Diseñar los conjuntos de datos necesarios para probar una consulta que puede ser errónea. Otra enfoque (Enrique) sería dar dos consultas SQL y pedir al estudiante qué datos tendrían que tener las tablas para que los resultados fueran diferentes.
-
-* (Daniel) [**Dificultad media**] [**INTERESANTE**]
-Sistema de logros para aumentar la competitividad, p-ej. `Realiza 3 ejercicios de inserción`
-
 * (Daniel) [**Dificultad alta**] [**INTERESANTE**]
 Corrección diciendo si está algo 'medio bien', como refuerzo a las pistas.
-
-* (Daniel) [**Dificultad baja**] [**INTERESANTE**]
-Añadir tanto primer alumno en resolver ejercicio, como el segundo y tercero, como si fuera un podio.
 
 * (Daniel) [**Dificultad alta**] [**INTERESANTE**]
 Sistema de comunicación con el profesor para resolver dudas de ejercicios específicos.
@@ -96,10 +128,6 @@ Sistema de comunicación con el profesor para resolver dudas de ejercicios espec
 * (Daniel) [**Dificultad media**] [**INTERESANTE**]
 Función para que el alumno pueda agregar algún caso de prueba específico => solo relativo a `INSERT VALUE`.
 Enrique: ojo a posibles problemas de injección.
-
-* (Tamara e Iker) [**Dificultad media**] [**INTERESANTE**]
-    * Opción de pista en cada ejercicio para los alumnos que no sepan empezar un ejercicio. En el caso de tener un sistema de puntos se les restaría un porcentaje por cada ejercicio en el que han necesitado ayuda.
-    * Cada alumno tiene una serie de "saldo" el cual recibe tras un aceptado, logros (subir tres seguidos bien, alguno por dificultad tener más premio), que los comentarios de ayuda aparezca un botoncito con un máximo de 3 ayudas y cada vez más caros (3 , 5 , 10 por ejemplo) y sean ayudas genéricas para cada ejercicio.
 
 * (Jesús) [**Dificultad media**] [**INTERESANTE**]
 Añadir una opción que permita introducir en formato "libre" (como
@@ -109,12 +137,6 @@ permitir un nivel de persistencia asociado al usuario, por ejemplo
 hasta las 00:00 del día siguiente. O mejor aún, que se pueda
 configurar para cada usuario.
 
-* (Enrique) [**Dificultad baja**] [**INTERESANTE**]
-Mejorar la salida esperada en los ejercicios de procedimientos.
-Ahora mismo muestra todas las tablas que existen en la base de 
-datos después de invocar al procedimiento, pero sería mejor que
-mostrase únicamente las que han cambiado: tabla eliminada, tabla 
-nueva, tabla que tiene filas diferentes (añadidas, borradas o 
-modificadas).
+
 
 
