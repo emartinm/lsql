@@ -176,26 +176,21 @@ def compare_discriminant_db(correct, incorrect, order):
     return veredict, feedback
 
 
-def feedback_rows_discriminant(expected, obtained, order):
+def feedback_rows_discriminant(correct, incorrect, order):
     """
-    :param expected: expected result ({'header': list, 'rows': list})
-    :param obtained: obtained result ({'header': list, 'rows': list})
+    :param correct: expected result ({'header': list, 'rows': list})
+    :param incorrect: obtained result ({'header': list, 'rows': list})
     :param order: consider order when comparing rows
-    :param initial_db: List containing all tables
     :return: (str) HTML code with the feedback, or '' if the table rows are equal (considering order)
     """
-    tupled_expected = [tuple(r) for r in expected['rows']]
-    tupled_obtained = [tuple(r) for r in obtained['rows']]
-    mset_expected = Multiset(tupled_expected)
-    mset_obtained = Multiset(tupled_obtained)
-    obtained_not_expected = mset_expected - mset_obtained
-    if order and expected == obtained:
-        return render_to_string('feedback_table_result.html', {'order': True, 'obtained': obtained})
-    if order and expected != obtained:
+    tupled_correct = [tuple(r) for r in correct['rows']]
+    tupled_incorrect = [tuple(r) for r in incorrect['rows']]
+    mset_correct = Multiset(tupled_correct)
+    mset_incorrect = Multiset(tupled_incorrect)
+    obtained_not_expected = mset_correct - mset_incorrect
+    if (order and correct != incorrect) or obtained_not_expected:
         return ''
-    if obtained_not_expected:
-        return ''  # if there are rows that are not in the incorrect_query, is a correct answer
-    return render_to_string('feedback_table_result.html', {'obtained': obtained})
+    return render_to_string('feedback_table_result.html', {'obtained': incorrect})
 
 
 def compare_db_results(expected_db, obtained_db):

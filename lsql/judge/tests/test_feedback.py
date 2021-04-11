@@ -210,8 +210,8 @@ class FeedbackTest(TestCase):
         # Correct answer with order
         self.assertEqual(compare_discriminant_db(order_1, order_2, True)[0], VeredictCode.AC)
         # Incorrect answer with order
-        self.assertIn('El resultado no se muestra en el orden correcto.',
+        self.assertIn('La inserción que has propuesto no permite detectar el comportamiento erróneo de la sentencia.',
                       compare_discriminant_db(order_2, order_2_bis, True)[1])
         # Incorrect answer without order
-        self.assertIn('El resultado sigue sin estar bien depurado.',
+        self.assertIn('La inserción que has propuesto no permite detectar el comportamiento erróneo de la sentencia.',
                       compare_discriminant_db(ac_o, ac_e, False)[1])
