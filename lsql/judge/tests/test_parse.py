@@ -32,7 +32,7 @@ class ParseTest(TestCase):
 
     SELECT_MISSING_FILES = 'select_missing_files.zip'
     SELECT_EMPTY_TITLE = 'select_empty_title.zip'
-    SELEC_TEXT_DECODE = 'select_text_decode.zip'
+    SELECT_TEXT_DECODE = 'select_text_decode.zip'
 
     DML_MISSING_FILES = 'dml_missing_files.zip'
     DML_BAD_NUM_STMT = 'dml_bad_num_stmt.zip'
@@ -141,7 +141,7 @@ class ParseTest(TestCase):
         curr_path = os.path.dirname(__file__)
 
         # Select problems
-        for filename in [self.SELECT_MISSING_FILES, self.SELECT_EMPTY_TITLE, self.SELEC_TEXT_DECODE]:
+        for filename in [self.SELECT_MISSING_FILES, self.SELECT_EMPTY_TITLE, self.SELECT_TEXT_DECODE]:
             zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
             problem = SelectProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)

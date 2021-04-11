@@ -1,0 +1,16 @@
+{% extends "feedback_wa.html" %}
+{% block feedback %}
+{% if order %}
+<p>
+    El resultado no se muestra en el orden correcto.
+</p>
+{% else %}
+<p>
+    El resultado sigue sin estar bien depurado.
+</p>
+{% endif %}
+<p>
+    <strong>Resultado generado por tu código:</strong>
+    {% include 'show_table.html' with table=obtained name=None mark_rows=None %}
+</p>
+{% endblock feedback %}

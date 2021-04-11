@@ -63,6 +63,7 @@ class ProblemType(IntEnum):
     FUNCTION = 2
     PROC = 3
     TRIGGER = 4
+    DISC = 5
 
 
 @unique

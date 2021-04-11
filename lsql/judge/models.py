@@ -19,7 +19,7 @@ from django.core.validators import MinLengthValidator
 from django.db.models import JSONField, Subquery
 from django.core.serializers.json import DjangoJSONEncoder
 
-from .feedback import compare_select_results, compare_db_results, compare_function_results
+from .feedback import compare_select_results, compare_db_results, compare_function_results, compare_discriminant_db
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, ProblemType
 from .parse import load_select_problem, load_dml_problem, load_function_problem, load_proc_problem, \
@@ -235,7 +235,7 @@ class SelectProblem(Problem):
             self.initial_db = []
             for insert_sql in self.insert_sql_list():
                 res = executor.execute_select_test(self.create_sql, insert_sql,
-                                                         self.solution, output_db=True)
+                                                   self.solution, output_db=True)
                 self.expected_result.append(res['result'])
                 self.initial_db.append(res['db'])
         except Exception as excp:
@@ -263,7 +263,7 @@ class SelectProblem(Problem):
                                                                     self.initial_db[initial_db_count])
             if veredict_extra != VeredictCode.AC:
                 return veredict_extra, feedback_extra
-            initial_db_count+=1
+            initial_db_count += 1
         # If all results are correct then return first one
         return veredict, feedback
 
@@ -415,6 +415,42 @@ class TriggerProblem(Problem):
 
     def problem_type(self):
         return ProblemType.TRIGGER
+
+
+class DiscriminantProblem(Problem):
+    """Problem that requires an INSERT as solution"""
+    check_order = models.BooleanField(default=False)
+    correct_query = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
+    incorrect_query = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
+    expected_result = JSONField(encoder=DjangoJSONEncoder, default=None, blank=True, null=True)
+
+    def template(self):
+        return 'problem_disc.html'
+
+    def clean(self):
+        """Executes the problem and stores the expected result"""
+        super().clean()
+        executor = OracleExecutor.get()
+        self.expected_result = []
+        self.initial_db = []
+        for insert_sql in self.insert_sql_list():
+            res = executor.execute_select_test(self.create_sql, insert_sql,
+                                               self.incorrect_query, output_db=True)
+            self.expected_result.append(res['result'])
+            self.initial_db.append(res['db'])
+
+    def judge(self, code, executor):
+        i_query = executor.execute_select_test(self.create_sql, self.insert_sql + code,
+                                               self.incorrect_query, output_db=False)
+        c_query = executor.execute_select_test(self.create_sql, self.insert_sql + code,
+                                               self.correct_query, output_db=False)
+        veredict, feedback = compare_discriminant_db(i_query['result'], c_query['result'], self.check_order)
+        if veredict != VeredictCode.AC:
+            return veredict, feedback
+        return VeredictCode.AC, ''
+
+    def problem_type(self):
+        return ProblemType.DISC
 
 
 class Submission(models.Model):
