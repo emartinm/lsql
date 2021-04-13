@@ -8,7 +8,7 @@ Unit tests for the feedback module
 from django.test import TestCase
 
 from judge.feedback import pretty_type, header_to_str, compare_select_results, compare_db_results, \
-    compare_function_results
+    compare_function_results, compare_discriminant_db
 from judge.types import VeredictCode
 
 
@@ -97,7 +97,7 @@ class FeedbackTest(TestCase):
                      'rows': [[1, 'a'], [2, 'b']]}
         obtained7 = {'header': [['Id', "<class 'cx_Oracle.NUMBER'>"], ['NoMbre', "<class 'cx_Oracle.STRING'>"]],
                      'rows': [[1, 'a'], [2, 'b']]}
-        # Comrpobacion correcta
+        # Comprobacion correcta
         self.assertEqual(compare_select_results(expected, expected, True)[0], VeredictCode.AC)
         self.assertEqual(compare_select_results(expected, expected, False)[0], VeredictCode.AC)
 
@@ -187,3 +187,31 @@ class FeedbackTest(TestCase):
         self.assertEqual(compare_function_results(expected, obtained2)[0], VeredictCode.WA)
         # Wrong result in second call
         self.assertEqual(compare_function_results(expected, obtained1)[0], VeredictCode.WA)
+
+    def test_discriminant_feedback(self):
+        """Test for compare discriminant type problems feedback"""
+        header_e = {'header': [['id', "<class 'cx_Oracle.NUMBER'>"], ['nombre', "<class 'cx_Oracle.STRING'>"]],
+                    'rows': [[1, 'a'], [2, 'b']]}
+        header_o = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"]], 'rows': [[1], [2]]}
+        ac_e = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
+                  'rows': [[1, 'a'], [2, 'b']]}
+        ac_o = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
+                  'rows': [[1, 'a']]}
+        order_1 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['PK', "<class 'cx_Oracle.NUMBER'>"]],
+                  'rows': [[1, 1], [2, 2]]}
+        order_2 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['PK', "<class 'cx_Oracle.NUMBER'>"]],
+                  'rows': [[2, 2], [1, 1]]}
+        order_2_bis = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['PK', "<class 'cx_Oracle.NUMBER'>"]],
+                   'rows': [[2, 2], [1, 1]]}
+        # Incorrect headers
+        self.assertEqual(compare_discriminant_db(header_e, header_o, False)[0], VeredictCode.WA)
+        # Correct answer
+        self.assertEqual(compare_discriminant_db(ac_e, ac_o, False)[0], VeredictCode.AC)
+        # Correct answer with order
+        self.assertEqual(compare_discriminant_db(order_1, order_2, True)[0], VeredictCode.AC)
+        # Incorrect answer with order
+        self.assertIn('La inserción que has propuesto no permite detectar el comportamiento erróneo de la sentencia.',
+                      compare_discriminant_db(order_2, order_2_bis, True)[1])
+        # Incorrect answer without order
+        self.assertIn('La inserción que has propuesto no permite detectar el comportamiento erróneo de la sentencia.',
+                      compare_discriminant_db(ac_o, ac_e, False)[1])

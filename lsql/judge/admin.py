@@ -10,7 +10,7 @@ from django.contrib import admin
 from . import forms
 from .models import Collection, SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Problem, \
     Submission, AchievementDefinition, NumSolvedCollectionAchievementDefinition, PodiumAchievementDefinition, \
-    NumSolvedAchievementDefinition, ObtainedAchievement
+    NumSolvedAchievementDefinition, ObtainedAchievement, DiscriminantProblem
 
 
 class SelectProblemAdmin(admin.ModelAdmin):
@@ -74,6 +74,17 @@ class TriggerProblemAdmin(admin.ModelAdmin):
     list_display = ('title_md', 'creation_date', 'collection')
     list_filter = ['creation_date']
     form = forms.TriggerProblemAdminForm
+
+
+class DiscriminantProblemAdmin(admin.ModelAdmin):
+    """Model for FunctionProblem"""
+    fieldsets = [
+        ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
+                                          'position', 'check_order']}),
+        ('SQL', {'fields': ['create_sql', 'insert_sql', 'correct_query', 'incorrect_query']}),
+    ]
+    list_display = ('title_md', 'creation_date', 'collection')
+    list_filter = ['creation_date']
 
 
 class CollectionAdmin(admin.ModelAdmin):
@@ -143,3 +154,4 @@ admin.site.register(NumSolvedCollectionAchievementDefinition, NumSolvedCollectio
 admin.site.register(PodiumAchievementDefinition, PodiumAchievementDefinitionAdmin)
 admin.site.register(NumSolvedAchievementDefinition, NumSolvedAchievementDefinitionAdmin)
 admin.site.register(ObtainedAchievement, ObtainedAchievementAdmin)
+admin.site.register(DiscriminantProblem, DiscriminantProblemAdmin)

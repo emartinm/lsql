@@ -11,8 +11,9 @@ from django.test import TestCase, Client
 import django.contrib.auth
 from django.urls import reverse
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from judge.models import Collection, SelectProblem, Submission, FunctionProblem, DMLProblem, ProcProblem, \
-    TriggerProblem
+    TriggerProblem, DiscriminantProblem
 from judge.types import VeredictCode
 import judge.tests.test_oracle
 from judge.tests.test_parse import ParseTest
@@ -693,172 +694,6 @@ class ViewsTest(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn(msg, response.content.decode('utf-8'))
 
-    def test_compile_error(self):
-        """Submitting code for a function/procedure/trigger with a compile error does resturn a
-        OracleStatusCode.COMPILATION_ERROR"""
-        curr_path = os.path.dirname(__file__)
-        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTION_OK)
-        zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
-        zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
-
-        client = Client()
-        collection = create_collection('Colleccion de prueba AAA')
-        user = create_user('54522', 'antonio')
-        client.login(username='antonio', password='54522')
-
-        function_problem = FunctionProblem(zipfile=zip_function_path, collection=collection, author=user)
-        proc_problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
-        trigger_problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
-
-        funct_compile_error = """
-                            CREATE OR REPLACE FUNCTION golesLocal(resultado VARCHAR2) RETURN NUMBER IS
-                              posGuion NUMBER;
-                              golesStr VARCHAR2(3);
-                            BEGIN
-                              posGuion := INSTR(resultado, '-') -- Missing ';'
-                              golesStr := SUBSTR(resultado, 0, posGuion - 1);
-                              RETURN TO_NUMBER(golesStr); 
-                            END;"""
-        proc_compile_error = """
-            CREATE OR REPLACE PROCEDURE actualiza_socios(club_cif CHAR) IS
-                CURSOR cr_partidos IS SELECT CL.Nombre AS ClubL, CV.Nombre AS ClubV, COUNT(*) AS NAsistentes
-                                      FROM Enfrenta JOIN Asiste USING(CIF_local, CIF_visitante)
-                                           JOIN Club CL ON CL.CIF = CIF_Local
-                                           JOIN Club CV ON CV.CIF = CIF_visitante
-                                      WHERE CIF_local = club_cif OR CIF_visitante = club_cif
-                                      GROUP BY CIF_local, CIF_visitante, CL.Nombre, CV.Nombre;
-                incrPartido NUMBER;
-                incrTotal NUMBER := 0;
-                nPartido NUMBER := 1;
-                nombreClub VARCHAR2(200);
-            BEGIN
-                SELECT Nombre 
-                INTO nombreClub
-                FROM Club
-                WHERE CIF = club_cif;
-                    
-                FOR partido IN cr_partidos LOOP
-                  IF partido.NAsistentes > 3 THEN
-                    incrPartido := 100;
-                  ELSIF partido.NAsistentes > 1 -- Missing 'THEN'
-                    incrPartido := 10;
-                  ELSE 
-                    incrPartido := 0;
-                  END IF;
-                  incrTotal := incrTotal + incrPartido;
-                  nPartido := nPartido + 1;
-                END LOOP;
-                
-                UPDATE Club
-                SET Num_Socios = Num_Socios + incrTotal
-                WHERE CIF = club_cif;
-            END;"""
-
-        trigger_compile_error = """
-                                CREATE OR REPLACE TRIGGER DispCantidadFinanciacion
-                                BEFORE INSERT OR UPDATE
-                                ON Financia FOR EACH ROW
-                                DECLARE
-                                  numJug NUMBER;
-                                BEGIN
-                                  SELECT COUNT(*) INTO numJug
-                                  FROM Jugador
-                                  WHERE CIF = :NEW.CIF_C;
-                                
-                                  IF numJug >= 2 THEN
-                                    :NEW.Cantidad := :NEW.Cantidad  1.25; -- Missing operator
-                                  END IF;
-                                END;"""
-
-        for (problem, code) in [(function_problem, funct_compile_error),
-                                (proc_problem, proc_compile_error),
-                                (trigger_problem, trigger_compile_error)]:
-            problem.clean()
-            problem.save()
-            submit_url = reverse('judge:submit', args=[problem.pk])
-            response = client.post(submit_url, {'code': code}, follow=True)
-            self.assertEqual(response.json()['veredict'], VeredictCode.WA)
-            self.assertIn('error', response.json()['feedback'])
-            self.assertIn('compil', response.json()['feedback'])
-
-    def test_plsql_correct(self):
-        """Accepted submissions to function/procedure/trigger problem"""
-
-        curr_path = os.path.dirname(__file__)
-        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTION_OK)
-        zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
-        zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
-
-        client = Client()
-        collection = create_collection('Colleccion de prueba AAA')
-        user = create_user('54522', 'antonio')
-        client.login(username='antonio', password='54522')
-
-        function_problem = FunctionProblem(zipfile=zip_function_path, collection=collection, author=user)
-        proc_problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
-        trigger_problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
-
-        for problem in [function_problem, proc_problem, trigger_problem]:
-            problem.clean()
-            problem.save()
-            submit_url = reverse('judge:submit', args=[problem.pk])
-            response = client.post(submit_url, {'code': problem.solution}, follow=True)
-            self.assertEqual(response.json()['veredict'], VeredictCode.AC)
-
-    def test_validation_error(self):
-        """Test messages obtained in submission that do not containt the correct number of statements"""
-        client = Client()
-        collection = create_collection('Colleccion de prueba XYZ')
-        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        dml_problem = create_dml_problem(collection, 'DML Problem')
-        create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
-
-        submit_url_select = reverse('judge:submit', args=[select_problem.pk])
-        submit_url_dml = reverse('judge:submit', args=[dml_problem.pk])
-
-        # JSON with VE and correct message for one SQL
-        response = client.post(submit_url_select, {'code': f'{select_problem.solution}; {select_problem.solution}'},
-                               follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
-        self.assertIn('exactamente 1 sentencia SQL', response.json()['message'])
-
-        # JSON with VE and correct message for 1--3 SQL
-        stmt = 'INSERT INTO test VALUES (25);'
-        response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
-        self.assertIn('entre 2 y 3 sentencias SQL', response.json()['message'])
-
-        stmt = 'INSERT INTO test VALUES (25); INSERT INTO test VALUES (50); INSERT INTO test VALUES (75);' \
-               'INSERT INTO test VALUES (100);'
-        response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
-        self.assertIn('entre 2 y 3 sentencias SQL', response.json()['message'])
-
-        # JSON with VE and correct message for less than 10 characters
-        stmt = 'holis'
-        response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
-        self.assertIn('tu solución no está vacía', response.json()['message'])
-
-    def test_select_no_output(self):
-        """Test that SQL statements that produce no results generate WA in a SELECT problem because
-        the schema is different"""
-        client = Client()
-        collection = create_collection('Colleccion de prueba XYZ')
-        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
-        stmts = ["CREATE VIEW my_test(n) AS SELECT n FROM test;",
-                 "INSERT INTO test VALUES (89547);",
-                 ]
-        submit_url_select = reverse('judge:submit', args=[select_problem.pk])
-
-        for stmt in stmts:
-            response = client.post(submit_url_select, {'code': stmt}, follow=True)
-            self.assertEqual(response.json()['veredict'], VeredictCode.WA)
-            self.assertIn('Generado por tu código SQL: 0 columnas', response.json()['feedback'])
-
     def test_download_submission(self):
         """ Test to download code of submission """
         client = Client()
@@ -936,7 +771,7 @@ class ViewsTest(TestCase):
         client.logout()
 
     def test_filter_expected_db(self):
-        """"Test for filter an expected db and transform for another to show"""
+        """Test for filter an expected db and transform for another to show"""
         initial = { 'ESTA SE BORRA': {'rows': [['11111X', 'Real', 'Concha', 70000]],
                                  'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
                                         ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
@@ -983,7 +818,7 @@ class ViewsTest(TestCase):
         self.assertEqual(ret_3, result_removed)
 
     def test_expected_results_view(self):
-        '''Test for the view when show an expected result with tables'''
+        """Test for the view when show an expected result with tables"""
         client = Client()
         collection = create_collection('Colleccion de prueba XYZ')
         dml_problem = create_dml_complete_problem(collection, 'random')
@@ -998,3 +833,17 @@ class ViewsTest(TestCase):
         self.assertIn('TEST_TABLE_2 (Tabla eliminada)', response.content.decode('utf-8'))
         self.assertIn('TEST_TABLE_3 (Tabla modificada)', response.content.decode('utf-8'))
         self.assertIn('NEW (Tabla añadida)', response.content.decode('utf-8'))
+
+    def test_failure_insert_discriminant(self):
+        """Test for check if discriminant clean raise ValidationError"""
+        create = 'CREATE TABLE test_table_1 (x NUMBER, n NUMBER);'
+        insert = "INSERT INTO test_table_1 VALUES (1997, 1997);\
+                  INSERT INTO test_table_2  VALUES (1994, 1994);"
+        correct = 'SELECT * FROM test_table_1 ORDER BY n ASC'
+        incorrect = 'SELECT * FROM test_table_1 ORDER BY x ASC'
+        collection = create_collection('Colleccion de prueba XYZ')
+        problem = DiscriminantProblem(title_md='name', text_md='texto largo', create_sql=create, insert_sql=insert,
+                                      correct_query=correct, incorrect_query=incorrect, check_order=False,
+                                      collection=collection)
+        with self.assertRaises(ValidationError):
+            problem.clean()

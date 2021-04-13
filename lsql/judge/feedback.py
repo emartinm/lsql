@@ -49,6 +49,7 @@ def feedback_headers(expected, obtained, initial_db=None):
     :param initial_db: List containing all tables
     :return: (str) HTML code with the feedback, or '' if the headers are equal
     """
+
     if expected['header'] == obtained['header']:
         return ''
 
@@ -158,12 +159,38 @@ def compare_select_results(expected, obtained, order, initial_db=None):
         parsed_initial_db = []
         for table_name in initial_db:
             tupled_obtained = [tuple(r) for r in initial_db[table_name]['rows']]
-            parsed_initial_db.append({ 'header': initial_db[table_name]['header'], 'rows': tupled_obtained})
+            parsed_initial_db.append({'header': initial_db[table_name]['header'], 'rows': tupled_obtained})
     feedback = feedback_headers(expected, obtained, parsed_initial_db)
     if not feedback:
         feedback = feedback_rows(expected, obtained, order, parsed_initial_db)
     veredict = VeredictCode.WA if feedback else VeredictCode.AC
     return veredict, feedback
+
+
+def compare_discriminant_db(correct, incorrect, order):
+    """Compare the two db from discriminant type problem"""
+    feedback = feedback_headers(correct, incorrect, None)
+    if not feedback:
+        feedback = feedback_rows_discriminant(correct, incorrect, order)
+    veredict = VeredictCode.WA if feedback else VeredictCode.AC
+    return veredict, feedback
+
+
+def feedback_rows_discriminant(correct, incorrect, order):
+    """
+    :param correct: expected result ({'header': list, 'rows': list})
+    :param incorrect: obtained result ({'header': list, 'rows': list})
+    :param order: consider order when comparing rows
+    :return: (str) HTML code with the feedback, or '' if the table rows are not equal (considering order)
+    """
+    tupled_correct = [tuple(r) for r in correct['rows']]
+    tupled_incorrect = [tuple(r) for r in incorrect['rows']]
+    mset_correct = Multiset(tupled_correct)
+    mset_incorrect = Multiset(tupled_incorrect)
+    obtained_not_expected = mset_correct - mset_incorrect
+    if (order and correct != incorrect) or obtained_not_expected:
+        return ''
+    return render_to_string('feedback_table_result.html', {'obtained': incorrect})
 
 
 def compare_db_results(expected_db, obtained_db):

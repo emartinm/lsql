@@ -1,0 +1,10 @@
+{% extends "feedback_wa.html" %}
+{% block feedback %}
+<p>
+    La inserción que has propuesto no permite detectar el comportamiento erróneo de la sentencia.
+</p>
+<p>
+    <strong>Resultado generado por tu código:</strong>
+    {% include 'show_table.html' with table=obtained name=None mark_rows=None %}
+</p>
+{% endblock feedback %}
