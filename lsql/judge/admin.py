@@ -79,6 +79,7 @@ class TriggerProblemAdmin(admin.ModelAdmin):
 class DiscriminantProblemAdmin(admin.ModelAdmin):
     """Model for FunctionProblem"""
     fieldsets = [
+        ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
         ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
                                           'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'correct_query', 'incorrect_query']}),
