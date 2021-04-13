@@ -71,21 +71,21 @@ def load_select_problem(problem, file) -> None:
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode()
+                problem.text_md = text_file.read().decode(encoding='utf-8')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode()
+                create_str = create_file.read().decode(encoding='utf-8')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode()
+                insert_str = insert_file.read().decode(encoding='utf-8')
                 problem.insert_sql = insert_str
 
             state = 'Reading solution.sql file'
             with zfile.open('solution.sql', 'r') as solution_file:
-                problem.solution = solution_file.read().decode()
+                problem.solution = solution_file.read().decode(encoding='utf-8')
     except ZipFileParsingException:
         raise
     except Exception as excp:
@@ -118,21 +118,21 @@ def load_dml_problem(problem, file):
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode()
+                problem.text_md = text_file.read().decode(encoding='utf-8')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode()
+                create_str = create_file.read().decode(encoding='utf-8')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode()
+                insert_str = insert_file.read().decode(encoding='utf-8')
                 problem.insert_sql = insert_str
 
             state = 'Reading solution.sql file'
             with zfile.open('solution.sql', 'r') as solution_file:
-                problem.solution = solution_file.read().decode()
+                problem.solution = solution_file.read().decode(encoding='utf-8')
     except ZipFileParsingException:
         raise
     except Exception as excp:
@@ -162,25 +162,25 @@ def load_function_problem(problem, file):
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode()
+                problem.text_md = text_file.read().decode(encoding='utf-8')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode()
+                create_str = create_file.read().decode(encoding='utf-8')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode()
+                insert_str = insert_file.read().decode(encoding='utf-8')
                 problem.insert_sql = insert_str
 
             state = 'Reading solution.sql file'
             with zfile.open('solution.sql', 'r') as solution_file:
-                problem.solution = solution_file.read().decode()
+                problem.solution = solution_file.read().decode(encoding='utf-8')
 
             state = 'Leyendo fichero tests.sql'
             with zfile.open('tests.sql', 'r') as tests_file:
-                problem.calls = tests_file.read().decode()
+                problem.calls = tests_file.read().decode(encoding='utf-8')
     except ZipFileParsingException:
         raise
     except Exception as excp:
@@ -210,25 +210,25 @@ def load_proc_problem(problem, file):
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode()
+                problem.text_md = text_file.read().decode(encoding='utf-8')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode()
+                create_str = create_file.read().decode(encoding='utf-8')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode()
+                insert_str = insert_file.read().decode(encoding='utf-8')
                 problem.insert_sql = insert_str
 
             state = 'Reading solution.sql file'
             with zfile.open('solution.sql', 'r') as solution_file:
-                problem.solution = solution_file.read().decode()
+                problem.solution = solution_file.read().decode(encoding='utf-8')
 
             state = 'Leyendo fichero tests.sql'
             with zfile.open('tests.sql', 'r') as tests_file:
-                problem.proc_call = tests_file.read().decode().strip()
+                problem.proc_call = tests_file.read().decode(encoding='utf-8').strip()
     except ZipFileParsingException:
         raise
     except Exception as excp:
@@ -258,25 +258,25 @@ def load_trigger_problem(problem, file):
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode()
+                problem.text_md = text_file.read().decode(encoding='utf-8')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode()
+                create_str = create_file.read().decode(encoding='utf-8')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode()
+                insert_str = insert_file.read().decode(encoding='utf-8')
                 problem.insert_sql = insert_str
 
             state = 'Reading solution.sql file'
             with zfile.open('solution.sql', 'r') as solution_file:
-                problem.solution = solution_file.read().decode()
+                problem.solution = solution_file.read().decode(encoding='utf-8')
 
             state = 'Leyendo fichero tests.sql'
             with zfile.open('tests.sql', 'r') as tests_file:
-                problem.tests = tests_file.read().decode().strip()
+                problem.tests = tests_file.read().decode(encoding='utf-8').strip()
     except ZipFileParsingException:
         raise
     except Exception as excp:
@@ -310,25 +310,25 @@ def load_discriminant_problem(problem, file):
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode()
+                problem.text_md = text_file.read().decode(encoding='utf-8')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode()
+                create_str = create_file.read().decode(encoding='utf-8')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode()
+                insert_str = insert_file.read().decode(encoding='utf-8')
                 problem.insert_sql = insert_str
 
             state = 'Reading incorrect_query.sql file'
             with zfile.open('incorrect_query.sql', 'r') as incorrect_file:
-                problem.incorrect_query = incorrect_file.read().decode()
+                problem.incorrect_query = incorrect_file.read().decode(encoding='utf-8')
 
             state = 'Reading correct_query.sql file'
             with zfile.open('correct_query.sql', 'r') as correct_file:
-                problem.correct_query = correct_file.read().decode()
+                problem.correct_query = correct_file.read().decode(encoding='utf-8')
     except ZipFileParsingException:
         raise
     except Exception as excp:
