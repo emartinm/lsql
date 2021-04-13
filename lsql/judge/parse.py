@@ -46,7 +46,7 @@ def extract_json(file, problem_type):
 
 def load_select_problem(problem, file) -> None:
     """
-    Load the problem information form a ZIP file and updates the attributes of 'problem'
+    Load the problem information from a ZIP file and updates the attributes of 'problem'
     :param problem: SelectProblem to update
     :param file: ZipFile previoulsy opened and with a JSON File
     :return: None or raise ZipFileParsingException if there is any problem
@@ -94,7 +94,7 @@ def load_select_problem(problem, file) -> None:
 
 def load_dml_problem(problem, file):
     """
-    Load the problem information form a ZIP file and updates the attributes of 'problem'
+    Load the problem information from a ZIP file and updates the attributes of 'problem'
     :param problem: DMLProblem to update
     :param file: ZipFile previoulsy opened and with a JSON File
     :return: None or raise ZipFileParsingException if there is any problem
@@ -141,7 +141,7 @@ def load_dml_problem(problem, file):
 
 def load_function_problem(problem, file):
     """
-    Load the problem information form a ZIP file and updates the attributes of 'problem'
+    Load the problem information from a ZIP file and updates the attributes of 'problem'
     :param problem: DMLProblem to update
     :param file: ZipFile previoulsy opened and with a JSON File
     :return: None or raise ZipFileParsingException if there is any problem
@@ -189,7 +189,7 @@ def load_function_problem(problem, file):
 
 def load_proc_problem(problem, file):
     """
-    Load the problem information form a ZIP file and updates the attributes of 'problem'
+    Load the problem information from a ZIP file and updates the attributes of 'problem'
     :param problem: DMLProblem to update
     :param file: ZipFile previoulsy opened and with a JSON File
     :return: None or raise ZipFileParsingException if there is any problem
@@ -237,7 +237,7 @@ def load_proc_problem(problem, file):
 
 def load_trigger_problem(problem, file):
     """
-        Load the problem information form a ZIP file and updates the attributes of 'problem'
+        Load the problem information from a ZIP file and updates the attributes of 'problem'
         :param problem: DMLProblem to update
         :param file: ZipFile previoulsy opened and with a JSON File
         :return: None or raise ZipFileParsingException if there is any problem
@@ -285,8 +285,8 @@ def load_trigger_problem(problem, file):
 
 def load_discriminant_problem(problem, file):
     """
-        Load the problem information form a ZIP file and updates the attributes of 'problem'
-        :param problem: DiscriminantDBProblem to update
+        Load the problem information from a ZIP file and updates the attributes of 'problem'
+        :param problem: DiscriminantProblem to update
         :param file: ZipFile previoulsy opened and with a JSON File
         :return: None or raise ZipFileParsingException if there is any problem
         """
