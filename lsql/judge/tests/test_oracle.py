@@ -9,7 +9,8 @@ import time
 from django.test import TestCase
 
 from judge.oracle_driver import OracleExecutor, clean_sql, line_col_from_offset
-from judge.models import SelectProblem, Collection, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem
+from judge.models import SelectProblem, Collection, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, \
+    DiscriminantProblem
 from judge.types import VeredictCode, OracleStatusCode
 from judge.exceptions import ExecutorException
 
@@ -25,11 +26,10 @@ class OracleTest(TestCase):
     """"Tests for oracle_driver"""
 
     def assert_executor_exception(self, function, status_code):
-        """Checks if executing the nullary function raises an ExecutorException with the statuus_code"""
-        try:
+        """Checks if executing the nullary function raises an ExecutorException with the expected status_code"""
+        with self.assertRaises(ExecutorException) as ctx:
             function()
-        except ExecutorException as excp:
-            self.assertEqual(excp.error_code, status_code)
+        self.assertEqual(ctx.exception.error_code, status_code)
 
     def test_version(self):
         """Test for get_version()"""
@@ -537,6 +537,63 @@ class OracleTest(TestCase):
 
         # Correct solution
         self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
+
+        # Incorrect solution
+        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VeredictCode.WA)
+
+    def test_discriminant(self):
+        """Tests for DiscriminantProblem.judge(): clubs with more than 1000 followers"""
+        collection = Collection()
+        collection.save()
+        create = '''CREATE TABLE Club(
+                      CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
+                      Nombre VARCHAR2(40) NOT NULL UNIQUE,
+                      Sede VARCHAR2(30) NOT NULL,
+                      Num_Socios NUMBER(10,0) NOT NULL,
+                      CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
+                    );'''
+        insert = """INSERT INTO Club VALUES ('11111111X', 'RMCF', 'Concha Espina', 70000);
+                    INSERT INTO Club VALUES ('11111112X', 'FCB', 'Aristides Maillol', 80000);
+                    INSERT INTO Club VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);"""
+        correct_query = "SELECT * FROM Club WHERE Num_Socios >= 1000;"
+        incorrect_query = "SELECT * FROM Club;"
+
+        # User solutions
+        accepted = "INSERT INTO Club VALUES ('11111114X', 'XXX', 'YYY', 300)"
+        wrong_answer = "INSERT INTO Club VALUES ('11111114X', 'XXX', 'YYY', 3000)"
+        runtime_error = ["INSERT INTO Club VALUES ('11111114X', 'XXX', 'YYY', 'AAA')",
+                         "INSERT INTO Club VALUES ('11111114X', 'XXX', 'YYY')",
+                         "INSERT INTO Club VALUES ()",
+                         "INSERT INT Club VALUES ('11111114X', 'XXX', 'YYY', 3000)",
+                         "INSER INTO Club VALUES ('11111114X', 'XXX', 'YYY', 3000)"
+                         ]
+
+        tle = '''
+            INSERT INTO Club
+                SELECT CIF, MIN(Nombre) AS nombre, MAX(Sede) as sede, AVG(Num_socios) as Num_socios
+                FROM (select '00000000X' AS CIF, 'a' as Nombre from dual connect by level <= 5000)
+                     CROSS JOIN
+                     (select 'b' as Sede, 56789 AS Num_Socios from dual connect by level <= 5000)
+                GROUP BY CIF;'''
+
+        oracle = OracleExecutor.get()
+        problem = DiscriminantProblem(title_md='Test Discriminant', text_md='bla bla bla', create_sql=create,
+                                      insert_sql=insert, collection=collection, author=None,
+                                      incorrect_query=incorrect_query, correct_query=correct_query)
+        problem.clean()  # Needed to compute extra HTML fields and solutions
+        problem.save()
+
+        # Time-limit
+        self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+
+        # Error when inserting syntactically invalid user rows
+        for code in runtime_error:
+            with self.assertRaises(ExecutorException) as ctx:
+                problem.judge(code, oracle)
+            self.assertEqual(ctx.exception.error_code, OracleStatusCode.EXECUTE_USER_CODE)
+
+        # Correct solution
+        self.assertEqual(problem.judge(accepted, oracle)[0], VeredictCode.AC)
 
         # Incorrect solution
         self.assertEqual(problem.judge(wrong_answer, oracle)[0], VeredictCode.WA)

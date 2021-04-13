@@ -882,24 +882,21 @@ class OracleExecutor:
             if gestor:
                 self.connection_pool.release(gestor)
 
-    def execute_discriminant_test(self, creation, insertion_base, insertion_user, select_correct, select_incorrect,
-                                  output_db=False):
+    def execute_discriminant_test(self, creation, insertion_base, insertion_user, select_correct, select_incorrect):
         """
         Using a new fresh user, creates a set of tables (creation) and inserts some data: the base INSERT sentences
         and also the INSERT sentences from the user. Then, executes a correct and wrong SELECT statements, returning
         both results in a dictionary
-        :param output_db:
         :param creation: (str) Statements to create the tables and other structures
         :param insertion_base: (str) Statements to insert data into tables from the program definition
         :param insertion_user: (str) Statements to insert data into tables from the user submission
         :param select_correct: (str) One SELECT statement to execute that returns correct results
         :param select_incorrect: (str) One SELECT statement to execute that returns incorreect results
-        :return: {"result_correct": result, "result_wrong": result, "db": db}.
-                 'result' is a dictionary representing the statement result of a query (in this case, select_correct
-                 and select_incorrect), and 'db' is a dictionary representing all the tables.
+        :return: {"result_correct": result, "result_wrong": result}. 'result' is a dictionary representing the
+                 statement result of a query (in this case, select_correct and select_incorrect)
                  In case of error, throws a ExecutorException
         """
-        conn, gestor, result_correct, result_incorrect, user, db = None, None, None, None, None, None
+        conn, gestor, result_correct, result_incorrect, user = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
             gestor = self.connection_pool.acquire()
@@ -920,10 +917,6 @@ class OracleExecutor:
             state = OracleStatusCode.EXECUTE_USER_CODE
             execute_sql_script(conn, insertion_user)
 
-            state = OracleStatusCode.GET_ALL_TABLES
-            if output_db:
-                db = get_all_tables(conn)
-
             state = OracleStatusCode.EXECUTE_DISCRIMINANT_SELECT
             result_correct = execute_select_statement(conn, select_correct)
 
@@ -941,18 +934,17 @@ class OracleExecutor:
             state = OracleStatusCode.RELEASE_ADMIN_CONNECTION
             self.connection_pool.release(gestor)
             gestor = None
-            return {"result_correct": result_correct, "result_incorrect": result_incorrect, "db": db}
+            return {"result_correct": result_correct, "result_incorrect": result_incorrect}
         except cx_Oracle.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing DISCRIMINANT problem: %s - %s - %s - %s - %s', state, excp, insertion_user,
                         select_correct, select_incorrect)
-            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+            if 'ORA-3156' in error_msg or 'ORA-24300' in error_msg:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg,
                                         (insertion_user, select_correct, select_incorrect)) from excp
             # Errors can only happen in user code, i.e., insertion_user
             pos = line_col_from_offset(insertion_user, offset_from_oracle_exception(excp))
-            print(pos)
             raise ExecutorException(state, error_msg, insertion_user, pos) from excp
         finally:
             if conn:
