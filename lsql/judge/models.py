@@ -23,7 +23,7 @@ from .feedback import compare_select_results, compare_db_results, compare_functi
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, ProblemType
 from .parse import load_select_problem, load_dml_problem, load_function_problem, load_proc_problem, \
-    load_trigger_problem
+    load_trigger_problem, load_discriminant_problem
 from .exceptions import ZipFileParsingException
 
 
@@ -62,7 +62,8 @@ def load_problem_from_file(file):
                      (DMLProblem, load_dml_problem),
                      (FunctionProblem, load_function_problem),
                      (ProcProblem, load_proc_problem),
-                     (TriggerProblem, load_trigger_problem)
+                     (TriggerProblem, load_trigger_problem),
+                     (DiscriminantProblem, load_discriminant_problem)
                      ]
 
     for pclass, load_fun in problem_types:
@@ -430,6 +431,9 @@ class DiscriminantProblem(Problem):
     def clean(self):
         """Executes the problem and stores the expected result"""
         try:
+            if self.zipfile:
+                # Replaces the fields with the information from the file
+                load_discriminant_problem(self, self.zipfile)
             super().clean()
             executor = OracleExecutor.get()
             self.expected_result = []

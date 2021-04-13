@@ -12,7 +12,7 @@ from django.test import TestCase
 from django.core.exceptions import ValidationError
 
 from judge.models import Collection, Problem, SelectProblem, DMLProblem, FunctionProblem, \
-    ProcProblem, TriggerProblem
+    ProcProblem, TriggerProblem, DiscriminantProblem
 
 
 class ParseTest(TestCase):
@@ -29,6 +29,7 @@ class ParseTest(TestCase):
     FUNCTION_OK = 'function_ok.zip'
     PROC_OK = 'proc_ok.zip'
     TRIGGER_OK = 'trigger_ok.zip'
+    DISCRIMINANT_OK = 'discriminant_ok.zip'
 
     SELECT_MISSING_FILES = 'select_missing_files.zip'
     SELECT_EMPTY_TITLE = 'select_empty_title.zip'
@@ -51,6 +52,10 @@ class ParseTest(TestCase):
     TRIGGER_TEXT_DECODE = 'trigger_text_decode.zip'
     TRIGGER_BAD_INSERT = 'trigger_bad_insert.zip'
 
+    DISCRIMINANT_MISSING_FILES = 'discriminant_missing_files.zip'
+    DISCRIMINANT_BAD_STMT = 'discriminant_bad_stmt.zip'
+    DISCRIMINANT_TEXT_DECODE = 'discriminant_text_decode.zip'
+
     def test_no_json(self):
         """Loading problem details form a ZIP without JSON file"""
         curr_path = os.path.dirname(__file__)
@@ -61,8 +66,10 @@ class ParseTest(TestCase):
         function_problem = FunctionProblem(zipfile=zip_path)
         proc_problem = ProcProblem(zipfile=zip_path)
         trigger_problem = TriggerProblem(zipfile=zip_path)
+        discriminant_problem = DiscriminantProblem(zipfile=zip_path)
 
-        for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
+        for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem,
+                        discriminant_problem]:
             self.assertRaises(ValidationError, problem.clean)
 
     def test_no_type(self):
@@ -75,8 +82,10 @@ class ParseTest(TestCase):
         function_problem = FunctionProblem(zipfile=zip_path)
         proc_problem = ProcProblem(zipfile=zip_path)
         trigger_problem = TriggerProblem(zipfile=zip_path)
+        discriminant_problem = DiscriminantProblem(zipfile=zip_path)
 
-        for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
+        for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem,
+                        discriminant_problem]:
             self.assertRaises(ValidationError, problem.clean)
 
     def test_zip_other_type(self):
@@ -93,8 +102,10 @@ class ParseTest(TestCase):
         function_problem = FunctionProblem(zipfile=zip_proc_path)
         proc_problem = ProcProblem(zipfile=zip_trigger_path)
         trigger_problem = TriggerProblem(zipfile=zip_select_path)
+        discriminant_problem = TriggerProblem(zipfile=zip_select_path)
 
-        for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
+        for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem,
+                        discriminant_problem]:
             self.assertRaises(ValidationError, problem.clean)
 
     def test_individual_zip(self):
@@ -105,14 +116,17 @@ class ParseTest(TestCase):
         zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTION_OK)
         zip_proc_path = os.path.join(curr_path, self.ZIP_FOLDER, self.PROC_OK)
         zip_trigger_path = os.path.join(curr_path, self.ZIP_FOLDER, self.TRIGGER_OK)
+        zip_discriminant_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DISCRIMINANT_OK)
 
         select_problem = SelectProblem(zipfile=zip_select_path)
         dml_problem = DMLProblem(zipfile=zip_dml_path)
         function_problem = FunctionProblem(zipfile=zip_function_path)
         proc_problem = ProcProblem(zipfile=zip_proc_path)
         trigger_problem = TriggerProblem(zipfile=zip_trigger_path)
+        discriminant_problem = DiscriminantProblem(zipfile=zip_discriminant_path)
 
-        for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
+        for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem,
+                        discriminant_problem]:
             self.assertFalse(problem.text_md)
             problem.clean()
             self.assertTrue(problem.text_md)
@@ -169,4 +183,11 @@ class ParseTest(TestCase):
                          self.TRIGGER_BAD_INSERT]:
             zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
             problem = TriggerProblem(zipfile=zip_path)
+            self.assertRaises(ValidationError, problem.clean)
+
+        # Discriminant problems
+        for filename in [self.DISCRIMINANT_MISSING_FILES, self.DISCRIMINANT_BAD_STMT,
+                         self.DISCRIMINANT_TEXT_DECODE]:
+            zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
+            problem = DiscriminantProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)
