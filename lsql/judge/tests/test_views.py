@@ -11,6 +11,7 @@ from django.test import TestCase, Client
 import django.contrib.auth
 from django.urls import reverse
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from judge.models import Collection, SelectProblem, Submission, FunctionProblem, DMLProblem, ProcProblem, \
     TriggerProblem, DiscriminantProblem
 from judge.types import VeredictCode
@@ -62,27 +63,6 @@ def create_dml_complete_problem(collection, name='Ejemplo'):
     problem = DMLProblem(title_md=name, text_md='texto largo',
                          create_sql=create, insert_sql=insert, collection=collection,
                          solution=solution, min_stmt=2, max_stmt=10)
-    problem.clean()
-    problem.save()
-    return problem
-
-
-def create_discriminant_problem(important_order, collection, name='Ejemplo'):
-    """Creates and stores a Discriminant DB Problem"""
-    if not important_order:
-        create = 'CREATE TABLE test_table_1 (n NUMBER);'
-        insert = "INSERT INTO test_table_1 VALUES (1997);"
-        correct = 'SELECT * FROM test_table_1;'
-        incorrect = 'SELECT * FROM test_table_1 WHERE n > 1000;'
-    else:
-        create = 'CREATE TABLE test_table_1 (x NUMBER, n NUMBER);'
-        insert = "INSERT INTO test_table_1 VALUES (1997, 1997);\
-                  INSERT INTO test_table_1  VALUES (1994, 1994);"
-        correct = 'SELECT * FROM test_table_1 ORDER BY n ASC'
-        incorrect = 'SELECT * FROM test_table_1 ORDER BY x ASC'
-    problem = DiscriminantProblem(title_md=name, text_md='texto largo', create_sql=create, insert_sql=insert,
-                                  correct_query=correct, incorrect_query=incorrect, check_order=important_order,
-                                  collection=collection)
     problem.clean()
     problem.save()
     return problem
@@ -865,5 +845,5 @@ class ViewsTest(TestCase):
         problem = DiscriminantProblem(title_md='name', text_md='texto largo', create_sql=create, insert_sql=insert,
                                       correct_query=correct, incorrect_query=incorrect, check_order=False,
                                       collection=collection)
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             problem.clean()

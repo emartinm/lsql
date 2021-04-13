@@ -181,7 +181,7 @@ def feedback_rows_discriminant(correct, incorrect, order):
     :param correct: expected result ({'header': list, 'rows': list})
     :param incorrect: obtained result ({'header': list, 'rows': list})
     :param order: consider order when comparing rows
-    :return: (str) HTML code with the feedback, or '' if the table rows are equal (considering order)
+    :return: (str) HTML code with the feedback, or '' if the table rows are not equal (considering order)
     """
     tupled_correct = [tuple(r) for r in correct['rows']]
     tupled_incorrect = [tuple(r) for r in incorrect['rows']]

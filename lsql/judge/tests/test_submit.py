@@ -8,10 +8,30 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from judge.tests.test_parse import ParseTest
-from judge.models import FunctionProblem, ProcProblem, TriggerProblem
-from judge.tests.test_views import create_collection, create_user, create_select_problem, create_dml_problem, \
-    create_discriminant_problem
+from judge.models import FunctionProblem, ProcProblem, TriggerProblem, DiscriminantProblem
+from judge.tests.test_views import create_collection, create_user, create_select_problem, create_dml_problem
 from judge.types import VeredictCode, ProblemType
+
+
+def create_discriminant_problem(important_order, collection, name='Ejemplo'):
+    """Creates and stores a Discriminant DB Problem"""
+    if not important_order:
+        create = 'CREATE TABLE test_table_1 (n NUMBER);'
+        insert = "INSERT INTO test_table_1 VALUES (1997);"
+        incorrect = 'SELECT * FROM test_table_1;'
+        correct = 'SELECT * FROM test_table_1 WHERE n > 1000;'
+    else:
+        create = 'CREATE TABLE test_table_1 (x NUMBER, n NUMBER);'
+        insert = "INSERT INTO test_table_1 VALUES (1997, 1997);\
+                  INSERT INTO test_table_1  VALUES (1994, 1994);"
+        correct = 'SELECT * FROM test_table_1 ORDER BY n ASC'
+        incorrect = 'SELECT * FROM test_table_1 ORDER BY x ASC'
+    problem = DiscriminantProblem(title_md=name, text_md='texto largo', create_sql=create, insert_sql=insert,
+                                  correct_query=correct, incorrect_query=incorrect, check_order=important_order,
+                                  collection=collection)
+    problem.clean()
+    problem.save()
+    return problem
 
 
 class SubmitTest(TestCase):
@@ -190,6 +210,16 @@ class SubmitTest(TestCase):
         create_user('contra', 'moragues')
         client.login(username='moragues', password='contra')
         disc_problem = create_discriminant_problem(False, collection)
+        submit_discriminant_url = reverse('judge:submit', args=[disc_problem.pk])
+        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (500)'},
+                               follow=True)
+        self.assertEqual(response.json()['veredict'], VeredictCode.AC)
+        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (2021)'},
+                               follow=True)
+        self.assertEqual(response.json()['veredict'], VeredictCode.WA)
+        response = client.post(submit_discriminant_url, {'code': 'INSERT merienda;'},
+                               follow=True)
+        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
         problem_url = reverse('judge:problem', args=[disc_problem.pk])
         response = client.get(problem_url, follow=True)
         self.assertIn('Consulta SQL errónea a depurar', response.content.decode('utf-8'))
@@ -201,4 +231,7 @@ class SubmitTest(TestCase):
         response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (2000, 2000)'},
                                follow=True)
         self.assertEqual(response.json()['veredict'], VeredictCode.WA)
+        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table VALUES (2000, 2000)'},
+                               follow=True)
+        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
         self.assertEqual(disc_problem.problem_type(), ProblemType.DISC)
