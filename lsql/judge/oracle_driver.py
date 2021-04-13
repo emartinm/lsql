@@ -881,3 +881,89 @@ class OracleExecutor:
                     logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
+
+    def execute_discriminant_test(self, creation, insertion_base, insertion_user, select_correct, select_incorrect,
+                                  output_db=False):
+        """
+        Using a new fresh user, creates a set of tables (creation) and inserts some data: the base INSERT sentences
+        and also the INSERT sentences from the user. Then, executes a correct and wrong SELECT statements, returning
+        both results in a dictionary
+        :param output_db:
+        :param creation: (str) Statements to create the tables and other structures
+        :param insertion_base: (str) Statements to insert data into tables from the program definition
+        :param insertion_user: (str) Statements to insert data into tables from the user submission
+        :param select_correct: (str) One SELECT statement to execute that returns correct results
+        :param select_incorrect: (str) One SELECT statement to execute that returns incorreect results
+        :return: {"result_correct": result, "result_wrong": result, "db": db}.
+                 'result' is a dictionary representing the statement result of a query (in this case, select_correct
+                 and select_incorrect), and 'db' is a dictionary representing all the tables.
+                 In case of error, throws a ExecutorException
+        """
+        conn, gestor, result_correct, result_incorrect, user, db = None, None, None, None, None, None
+        state = OracleStatusCode.GET_ADMIN_CONNECTION
+        try:
+            gestor = self.connection_pool.acquire()
+
+            state = OracleStatusCode.CREATE_USER
+            user, passwd = self.create_user(gestor)
+
+            state = OracleStatusCode.GET_USER_CONNECTION
+            conn = self.create_connection(user, passwd)
+
+            conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            state = OracleStatusCode.EXECUTE_CREATE
+            execute_sql_script(conn, creation)
+
+            state = OracleStatusCode.EXECUTE_INSERT
+            execute_sql_script(conn, insertion_base)
+
+            state = OracleStatusCode.EXECUTE_USER_CODE
+            execute_sql_script(conn, insertion_user)
+
+            state = OracleStatusCode.GET_ALL_TABLES
+            if output_db:
+                db = get_all_tables(conn)
+
+            state = OracleStatusCode.EXECUTE_DISCRIMINANT_SELECT
+            result_correct = execute_select_statement(conn, select_correct)
+
+            state = OracleStatusCode.EXECUTE_DISCRIMINANT_SELECT
+            result_incorrect = execute_select_statement(conn, select_incorrect)
+
+            state = OracleStatusCode.CLOSE_USER_CONNECTION
+            conn.close()
+            conn = None
+
+            state = OracleStatusCode.DROP_USER
+            self.drop_user(user, gestor)
+            user = None
+
+            state = OracleStatusCode.RELEASE_ADMIN_CONNECTION
+            self.connection_pool.release(gestor)
+            gestor = None
+            return {"result_correct": result_correct, "result_incorrect": result_incorrect, "db": db}
+        except cx_Oracle.DatabaseError as excp:
+            error_msg = str(excp)
+            logger.info('Error when testing DISCRIMINANT problem: %s - %s - %s - %s - %s', state, excp, insertion_user,
+                        select_correct, select_incorrect)
+            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+                # Time limit exceeded
+                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg,
+                                        (insertion_user, select_correct, select_incorrect)) from excp
+            # Errors can only happen in user code, i.e., insertion_user
+            pos = line_col_from_offset(insertion_user, offset_from_oracle_exception(excp))
+            print(pos)
+            raise ExecutorException(state, error_msg, insertion_user, pos) from excp
+        finally:
+            if conn:
+                conn.close()
+            if user:
+                try:
+                    # Sometimes when TLE, the connections can be closed but the user cannot be dropped because
+                    # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
+                    # These users must be removed manually later
+                    self.drop_user(user, gestor)
+                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
+            if gestor:
+                self.connection_pool.release(gestor)

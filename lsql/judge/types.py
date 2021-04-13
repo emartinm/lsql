@@ -84,3 +84,4 @@ class OracleStatusCode(IntEnum):
     GET_ALL_TABLES = 12
     COMPILATION_ERROR = 13
     TLE_USER_CODE = 14
+    EXECUTE_DISCRIMINANT_SELECT = 15
