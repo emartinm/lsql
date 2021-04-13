@@ -446,13 +446,13 @@ class DiscriminantProblem(Problem):
     def judge(self, code, executor):
         try:
             insert_sql = self.insert_sql_list()[0]  # In this type of problem there is only one database
-            result = executor.execute_discriminant_test(self.create_sql, insert_sql,
-                code, self.correct_query, self.incorrect_query, output_db=False)
+            result = executor.execute_discriminant_test(self.create_sql, insert_sql, code, self.correct_query,
+                                                        self.incorrect_query, output_db=False)
             incorrect_result = result["result_incorrect"]
             correct_result = result["result_correct"]
             return compare_discriminant_db(incorrect_result, correct_result, self.check_order)
         except ExecutorException as excp:
-            raise ExecutorException(OracleStatusCode.EXECUTE_USER_CODE) from excp
+            raise ExecutorException(OracleStatusCode.EXECUTE_USER_CODE, str(excp)) from excp
 
     def problem_type(self):
         return ProblemType.DISC

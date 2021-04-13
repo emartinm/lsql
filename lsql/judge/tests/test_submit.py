@@ -213,21 +213,17 @@ class SubmitTest(TestCase):
         submit_discriminant_url = reverse('judge:submit', args=[disc_problem.pk])
 
         # Checks that invalid INSERTs are mappet to RE
-        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (a);'},
-                               follow=True)
+        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (a);'}, follow=True)
         self.assertEqual(response.json()['veredict'], VeredictCode.RE)
-        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO\ntest_table_1\nVALUES ()'},
-                               follow=True)
+        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES ()'}, follow=True)
         self.assertEqual(response.json()['veredict'], VeredictCode.RE)
-        response = client.post(submit_discriminant_url, {'code': 'INSERT merienda;'},
-                               follow=True)
+        response = client.post(submit_discriminant_url, {'code': 'INSERT merienda;'}, follow=True)
         self.assertEqual(response.json()['veredict'], VeredictCode.RE)
 
-        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (500)'},
-                               follow=True)
+        # Check a correct answer and an incorrect
+        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (500)'}, follow=True)
         self.assertEqual(response.json()['veredict'], VeredictCode.AC)
-        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (2021)'},
-                               follow=True)
+        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (2021)'}, follow=True)
         self.assertEqual(response.json()['veredict'], VeredictCode.WA)
 
         problem_url = reverse('judge:problem', args=[disc_problem.pk])

@@ -369,6 +369,7 @@ def submit(request, problem_id):
         except ExecutorException as excp:
             # Exceptions when judging: RE, TLE, VE or IE
             if excp.error_code == OracleStatusCode.EXECUTE_USER_CODE:
+                print('AQUIIIIIIIIIIIIIIIIIIIII -> ', excp)
                 data = {
                     'veredict': VeredictCode.RE,
                     'title': VeredictCode.RE.label,
