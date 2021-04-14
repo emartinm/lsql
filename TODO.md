@@ -85,9 +85,12 @@ En el apartado "Mis envíos" añadir un botón para descargar el código enviado
 * (Jesús) [**Dificultad alta**] [IMPRESCINDIBLE] [**Tarea para Iván**]
  Soporte multi-idioma para mostrar el sistema en inglés y (Daniel) otros idiomas incluidos los demás de España como el valenciano. (https://docs.djangoproject.com/en/3.1/topics/i18n/)
  
-* (Tamara e Iker) [**Dificultad media**] [**INTERESANTE**] [**Tarea para Tamara**]
+* (Tamara e Iker) [**Dificultad alta**] [**INTERESANTE**] [**Tarea para Tamara**]
     * Opción de pista en cada ejercicio para los alumnos que no sepan empezar un ejercicio. En el caso de tener un sistema de puntos se les restaría un porcentaje por cada ejercicio en el que han necesitado ayuda.
     * Cada alumno tiene una serie de "saldo" el cual recibe tras un aceptado, logros (subir tres seguidos bien, alguno por dificultad tener más premio), que los comentarios de ayuda aparezca un botoncito con un máximo de 3 ayudas y cada vez más caros (3 , 5 , 10 por ejemplo) y sean ayudas genéricas para cada ejercicio.
+
+* [**Dificultad media**] [**Tarea para Tamara**]
+Indicar al usuario en el momento que ha obtenido un logro, en cuanto realiza un envío.
 
 
 # Tareas propuestas:
