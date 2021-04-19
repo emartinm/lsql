@@ -1,0 +1,319 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-04-19 19:35+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\judge\templates\achievements.html:5
+msgid "achievementsPageOf"
+msgstr "Achievements page of "
+
+#: .\judge\templates\achievements.html:7
+msgid "obtainedAchievements"
+msgstr "Obtained achievements"
+
+#: .\judge\templates\achievements.html:11
+#: .\judge\templates\achievements.html:32 .\judge\templates\collection.html:13
+#: .\judge\templates\collections.html:10
+msgid "name"
+msgstr "Name"
+
+#: .\judge\templates\achievements.html:12
+#: .\judge\templates\achievements.html:33
+msgid "description"
+msgstr "Description"
+
+#: .\judge\templates\achievements.html:13 .\judge\templates\submission.html:11
+#: .\judge\templates\submissions.html:8
+msgid "date"
+msgstr "Date"
+
+#: .\judge\templates\achievements.html:28
+msgid "pendingAchievements"
+msgstr "Pending achievements"
+
+#: .\judge\templates\base.html:24
+msgid "optionMenu"
+msgstr "Option menu"
+
+#: .\judge\templates\base_menu.html:11
+msgid "exercises"
+msgstr "Exercises"
+
+#: .\judge\templates\base_menu.html:14 .\judge\templates\submissions.html:4
+msgid "mySubmissions"
+msgstr "My submissions"
+
+#: .\judge\templates\base_menu.html:17
+msgid "ranking"
+msgstr "Ranking"
+
+#: .\judge\templates\base_menu.html:20
+msgid "help"
+msgstr "Help"
+
+#: .\judge\templates\base_menu.html:27
+msgid "myAchievements"
+msgstr "My achievements"
+
+#: .\judge\templates\base_menu.html:29
+#: .\judge\templates\password_change.html:42
+msgid "changePass"
+msgstr "Change password"
+
+#: .\judge\templates\base_menu.html:31
+msgid "logout"
+msgstr "Logout"
+
+#: .\judge\templates\collection.html:9
+msgid "problemList"
+msgstr "Problem list"
+
+#: .\judge\templates\collection.html:14
+msgid "numberOfSubmissions"
+msgstr "Number of submissions"
+
+#: .\judge\templates\collections.html:5
+msgid "problemCollections"
+msgstr "Problem collections"
+
+#: .\judge\templates\collections.html:11
+msgid "solved"
+msgstr "Solved"
+
+#: .\judge\templates\collections.html:12
+msgid "totalProblems"
+msgstr "Total problems"
+
+#: .\judge\templates\collections.html:20
+msgid "collectionFinished"
+msgstr "Collection finished"
+
+#: .\judge\templates\collections.html:22
+msgid "collectionNotFinished"
+msgstr "Collection not finished"
+
+#: .\judge\templates\login.html:11
+msgid "invalidCredentials"
+msgstr "Invalid username or password"
+
+#: .\judge\templates\login.html:15 .\judge\templates\password_change.html:12
+msgid "login"
+msgstr "Login"
+
+#: .\judge\templates\login.html:24
+msgid "usernameInfo"
+msgstr "Part of your email that comes before "
+
+#: .\judge\templates\login.html:31
+msgid "contactAdminPass"
+msgstr "Contact your teacher if you have forgotten your password."
+
+#: .\judge\templates\login.html:33
+msgid "enter"
+msgstr "Enter"
+
+#: .\judge\templates\logout.html:7
+msgid "sessionClosed"
+msgstr "Session successfully closed"
+
+#: .\judge\templates\logout.html:8
+msgid "accesAgain"
+msgstr "To acces again, head to LSQL main page"
+
+#: .\judge\templates\password_change.html:18
+msgid "actualPass"
+msgstr "Current password"
+
+#: .\judge\templates\password_change.html:24
+msgid "newPass"
+msgstr "New password"
+
+#: .\judge\templates\password_change.html:30
+msgid "newPassConfirmation"
+msgstr "New password (confirmation)"
+
+#: .\judge\templates\password_change.html:36
+msgid "passNotSimilarToPersonalInfo"
+msgstr "Your password can not be similar to your personal information."
+
+#: .\judge\templates\password_change.html:37
+msgid "atLeast8CharPass"
+msgstr "Your password must contain at least 8 characters."
+
+#: .\judge\templates\password_change.html:38
+msgid "cannotUseCommonPass"
+msgstr "You can not usea a common password."
+
+#: .\judge\templates\password_change.html:39
+msgid "passCannotBeOnlyNumeric"
+msgstr "Your password can not be numeric only."
+
+#: .\judge\templates\password_change_done.html:5
+msgid "passChanged"
+msgstr "Your password has been successfully modified"
+
+#: .\judge\templates\problem_disc.html:4
+msgid "depurateSQL"
+msgstr "Wrong SQL query to debug"
+
+#: .\judge\templates\problem_dml.html:4
+#: .\judge\templates\problem_function.html:4
+#: .\judge\templates\problem_proc.html:7
+#: .\judge\templates\problem_trigger.html:7
+msgid "expectedResult"
+msgstr "Expected result"
+
+#: .\judge\templates\problem_proc.html:4
+msgid "procedureCall"
+msgstr "Procedure call"
+
+#: .\judge\templates\problem_trigger.html:4
+msgid "executedSentences"
+msgstr "Executed sentences"
+
+#: .\judge\templates\result.html:8
+msgid "collections"
+msgstr "Collections"
+
+#: .\judge\templates\show_expected_tables.html:7
+msgid "addedTable"
+msgstr " (Added table)"
+
+#: .\judge\templates\show_expected_tables.html:13
+msgid "modifiedTable"
+msgstr " (Modified table)"
+
+#: .\judge\templates\show_expected_tables.html:19
+msgid "deletedTable"
+msgstr " (Deleted table)"
+
+#: .\judge\templates\submission.html:7
+msgid "submission"
+msgstr "Submission"
+
+#: .\judge\templates\submission.html:15 .\judge\templates\submissions.html:9
+msgid "problem"
+msgstr "Problem"
+
+#: .\judge\templates\submission.html:19
+msgid "result"
+msgstr "Result"
+
+#: .\judge\templates\submission.html:24
+msgid "message"
+msgstr "Message"
+
+#: .\judge\templates\submission.html:29
+msgid "code"
+msgstr "Code"
+
+#: .\judge\templates\submission.html:35
+msgid "download"
+msgstr "Download"
+
+#: .\judge\templates\submissions.html:10
+msgid "veredict"
+msgstr "Veredict"
+
+#: .\judge\templates\submissions.html:20
+msgid "showSubmissionDetails"
+msgstr "Show submission details"
+
+#: .\judge\templates\submissions.html:20
+msgid "show"
+msgstr "Show"
+
+#: .\judge\types.py:15
+msgid "Aceptado"
+msgstr ""
+
+#: .\judge\types.py:16
+msgid "Tiempo limite excedido"
+msgstr ""
+
+#: .\judge\types.py:17
+msgid "Error en ejecución"
+msgstr ""
+
+#: .\judge\types.py:18
+msgid "Resultados incorrectos"
+msgstr ""
+
+#: .\judge\types.py:19
+msgid "Error interno"
+msgstr ""
+
+#: .\judge\types.py:20
+msgid "Error de validación"
+msgstr ""
+
+#: .\judge\types.py:30
+msgid "Error inesperado al ejecutar tu código. Por favor, inténtalo de nuevo."
+msgstr ""
+
+#: .\judge\types.py:32
+msgid "¡Enhorabuena! Tu código SQL ha generado los resultados esperados."
+msgstr ""
+
+#: .\judge\types.py:34
+msgid ""
+"Puede deberse a una sobrecarga puntual del servidor, pero seguramente sea "
+"debido a que tu código SQL no es suficientemente eficiente. Vuelve a "
+"enviarlo en unos minutos y si sigues obteniendo el mismo veredicto trata de "
+"reescribir tu código para ser más eficiente."
+msgstr ""
+
+#: .\judge\types.py:38
+msgid ""
+"Tu código SQL ha producido un error durante la ejecución. Consulta el cuadro "
+"rojo de retroalimentación en la parte inferior de la página para ver los "
+"detalles e inspecciona el código resaltado en el editor."
+msgstr ""
+
+#: .\judge\types.py:42
+msgid ""
+"Tu código SQL ha generado resultados erróneos. Consulta el cuadro rojo en la "
+"parte inferior de la página para ver los detalles."
+msgstr ""
+
+#: .\judge\types.py:45
+msgid ""
+"Comprueba que tu solución no está vacía, que la cantidad de sentencias SQL "
+"enviadas es la adecuada y que estás enviando texto plano con letras del "
+"alfabeto inglés (sin tildes)."
+msgstr ""
+
+#: .\judge\types.py:50
+#, python-brace-format
+msgid "Se esperaba exactamente {problem.min_stmt} {ending}."
+msgstr ""
+
+#: .\judge\types.py:53
+#, python-brace-format
+msgid ""
+"Tu envío debe estar formado por entre {problem.min_stmt} y {problem."
+"max_stmt} {ending}."
+msgstr ""
+
+#: .\lsql\settings_shared.py:151
+msgid "English"
+msgstr "English"
+
+#: .\lsql\settings_shared.py:152
+msgid "Español"
+msgstr "Spanish"

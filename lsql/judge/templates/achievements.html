@@ -1,15 +1,16 @@
 {% extends "base_menu.html" %}
+{% load i18n %}
 {% load static %}
 {% block contenido %}
-<h1>Página de logros de <span class="headAchievement">{{ username }}</span></h1>
+<h1>{% translate "achievementsPageOf" %}<span class="headAchievement">{{ username }}</span></h1>
 {% if unlocked %}
-<h3>Logros conseguidos</h3>
+<h3>{% translate "obtainedAchievements" %}</h3>
 <table class="table table-striped">
     <thead class="thead-dark">
         <tr>
-            <th scope="col">Nombre</th>
-            <th scope="col">Descripcion</th>
-            <th scope="col">Fecha</th>
+            <th scope="col">{% translate "name" %}</th>
+            <th scope="col">{% translate "description" %}</th>
+            <th scope="col">{% translate "date" %}</th>
         </tr>
     </thead>
     <tbody>
@@ -24,12 +25,12 @@
 </table>
 {% endif %}
 {% if locked %}
-<h3>Logros pendientes</h3>
+<h3>{% translate "pendingAchievements" %}</h3>
 <table class="table table-striped">
     <thead class="thead-dark">
         <tr>
-            <th scope="col">Nombre</th>
-            <th scope="col">Descripcion</th>
+            <th scope="col">{% translate "name" %}</th>
+            <th scope="col">{% translate "description" %}</th>
         </tr>
     </thead>
     <tbody>

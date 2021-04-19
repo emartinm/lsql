@@ -1,12 +1,13 @@
 {% extends "base_menu.html" %}
+{% load i18n %}
 {% block contenido %}
-<h2>Mis envíos</h2>
+<h2>{% translate "mySubmissions" %}</h2>
 <table class="table">
     <thead class="thead-dark">
       <tr>
-          <th scope="col">Fecha</th>
-          <th scope="col">Problema</th>
-          <th scope="col">Veredicto</th>
+          <th scope="col">{% translate "date" %}</th>
+          <th scope="col">{% translate "problem" %}</th>
+          <th scope="col">{% translate "veredict" %}</th>
           <th scope="col"></th>
       </tr>
     </thead>
@@ -16,7 +17,7 @@
             <td>{{ s.creation_date }}</td>
             <td>{{ s.problem }}</td>
             <td>{{ s.veredict_pretty|safe }}</td>
-            <td><a href="{% url 'judge:submission' s.pk %}" title="Ver detalles del envío">Ver</a></td>
+            <td><a href="{% url 'judge:submission' s.pk %}" title='{% translate "showSubmissionDetails" %}'>{% translate "show" %}</a></td>
         </tr>
     {% endfor %}
     </tbody>

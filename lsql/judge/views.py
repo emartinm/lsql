@@ -441,7 +441,7 @@ def download_ranking(request, collection_id):
             row += 1
 
         # Takes group
-        option = soup.find("option")
+        option = soup.find(id='clase').find("option")
         book.cell(row=row, column=col, value=option.string.strip())
         row += 1
 

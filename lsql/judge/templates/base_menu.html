@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block menu %}
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
@@ -7,27 +8,27 @@
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">
       <li>
-        <a class="nav-link" href="{% url 'judge:collections' %}">Ejercicios</a>
+        <a class="nav-link" href="{% url 'judge:collections' %}">{% translate "exercises" %}</a>
       </li>
       <li>
-        <a class="nav-link" href="{% url 'judge:submissions' %}">Mis Envíos</a>
+        <a class="nav-link" href="{% url 'judge:submissions' %}">{% translate "mySubmissions" %}</a>
       </li>
       <li>
-        <a class="nav-link" href="{% url 'judge:results' %}">Clasificación</a>
+        <a class="nav-link" href="{% url 'judge:results' %}">{% translate "ranking" %}</a>
       </li>
       <li>
-        <a class="nav-link" href="{% url 'judge:help' %}">Ayuda</a>
+        <a class="nav-link" href="{% url 'judge:help' %}">{% translate "help" %}</a>
       </li>
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           {{ request.user.email }}
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-		  <a class="dropdown-item" href="{% url 'judge:achievements' request.user.pk %}">Mis logros</a>
+		  <a class="dropdown-item" href="{% url 'judge:achievements' request.user.pk %}">{% translate "myAchievements" %}</a>
 		  <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="{% url 'judge:password_change' %}">Cambiar contraseña</a>
+          <a class="dropdown-item" href="{% url 'judge:password_change' %}">{% translate "changePass" %}</a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="{% url 'judge:logout' %}">Cerrar sesión</a>
+          <a class="dropdown-item" href="{% url 'judge:logout' %}">{% translate "logout" %}</a>
         </div>
       </li>
     </ul>

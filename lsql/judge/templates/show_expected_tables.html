@@ -1,19 +1,23 @@
+{% load i18n %}
 {% comment %}
   Receives a 'problem'
 {% endcomment %}
 {% if problem.show_added %}
 {% for name, table in problem.show_added.items %}
-    {% include 'show_table.html' with table=table name=name|add:" (Tabla añadida)"%}
+{% trans "addedTable" as addedTable %}
+    {% include 'show_table.html' with table=table name=name|add:addedTable%}
 {% endfor %}
 {% endif %}
 {% if problem.show_modified %}
 {% for name, table in problem.show_modified.items %}
-    {% include 'show_table.html' with table=table name=name|add:" (Tabla modificada)" %}
+{% trans "modifiedTable" as modifiedTable %}
+    {% include 'show_table.html' with table=table name=name|add:modifiedTable%}
 {% endfor %}
 {% endif %}
 {% if problem.show_removed %}
 {% for name, table in problem.show_removed.items %}
-    {% include 'show_table.html' with name=name|add:" (Tabla eliminada)" %}
+{% trans "deletedTable" as deletedTable %}
+    {% include 'show_table.html' with name=name|add:deletedTable%}
 {% endfor %}
 {% endif %}
 

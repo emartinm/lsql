@@ -117,7 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 
 TIME_ZONE = 'Europe/Madrid'
 
@@ -127,6 +127,9 @@ USE_L10N = True
 
 USE_TZ = True
 
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale')
+]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
@@ -142,3 +145,9 @@ DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 DBBACKUP_STORAGE_OPTIONS = {'location': f"{os.environ.get('HOME')}/lsql_backups/"}
 DBBACKUP_CLEANUP_KEEP = 16  # 2 months with 2 backups per week
 DBBACKUP_CLEANUP_KEEP_MEDIA = 16
+
+_ = lambda s: s
+LANGUAGES = (
+    ('en', _(u'English')),
+    ('es', _(u'Español')),
+)

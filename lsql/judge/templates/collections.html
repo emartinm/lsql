@@ -1,14 +1,15 @@
 {% extends "base_menu.html" %}
+{% load i18n %}
 {% load static %}
 {% block contenido %}
-  <h2>Colecciones de problemas</h2>
+  <h2>{% translate "problemCollections" %}</h2>
 
   <table class="table">
     <thead class="thead-dark">
       <tr>
-        <th scope="col">Nombre</th>
-        <th scope="col">Resueltos</th>
-        <th scope="col">Total problemas</th>
+        <th scope="col">{% translate "name" %}</th>
+        <th scope="col">{% translate "solved" %}</th>
+        <th scope="col">{% translate "totalProblems" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -16,9 +17,9 @@
     <tr>
       <td>
         {% if c.num_problems == c.num_solved %}
-        <img src="{% static "judge/img/tick.svg" %}" alt="Coleccion terminada" height="20">
+        <img src="{% static "judge/img/tick.svg" %}" alt='{% translate "collectionFinished" %}' height="20">
         {% else %}
-        <img src="{% static "judge/img/tick.svg" %}" alt="Colección no terminada" style="visibility: hidden" height="20">
+        <img src="{% static "judge/img/tick.svg" %}" alt='{% translate "collectionNotFinished" %}' style="visibility: hidden" height="20">
         {% endif %}
         <a href="{% url 'judge:collection' c.id %}">{{ c.name_html|safe }}</a>
       </td>

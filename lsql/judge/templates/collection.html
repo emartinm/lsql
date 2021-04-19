@@ -1,16 +1,17 @@
 {% extends "base_menu.html" %}
+{% load i18n %}
 {% load static %}
 {% block contenido %}
 <h2>{{collection.name_html|safe}}</h2>
 {{collection.description_html|safe}}
 
 
-  <h4>Listado de problemas</h4>
+  <h4>{% translate "problemList" %}</h4>
   <table class="table">
     <thead class="thead-dark">
       <tr>
-        <th scope="col">Nombre</th>
-        <th scope="col">Número de envíos</th>
+        <th scope="col">{% translate "name" %}</th>
+        <th scope="col">{% translate "numberOfSubmissions" %}</th>
         <th scope="col" class="text-center">
           
           <i class="fas fa-award gold"></i>
