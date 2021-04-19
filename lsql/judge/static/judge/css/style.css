@@ -51,3 +51,20 @@ div#feedback_line {
 .bronze{
     color: #AD8A56;
 }
+
+.remark{
+    font-style: italic;
+    font-weight: bold;
+}
+
+h1.help {
+    padding-top: 50px;
+}
+
+h2.help {
+    padding-top: 25px;
+}
+
+img.screenshot {
+    border-style: solid;
+}

@@ -11,9 +11,8 @@ from django.test import TestCase, Client
 import django.contrib.auth
 from django.urls import reverse
 from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
 from judge.models import Collection, SelectProblem, Submission, FunctionProblem, DMLProblem, ProcProblem, \
-    TriggerProblem, DiscriminantProblem
+    TriggerProblem
 from judge.types import VeredictCode
 import judge.tests.test_oracle
 from judge.tests.test_parse import ParseTest
@@ -829,21 +828,17 @@ class ViewsTest(TestCase):
         problem_url = reverse('judge:problem', args=[dml_problem.pk])
         response = client.get(problem_url, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('TEST_TABLE_1 (Tabla modificada)', response.content.decode('utf-8'))
-        self.assertIn('TEST_TABLE_2 (Tabla eliminada)', response.content.decode('utf-8'))
-        self.assertIn('TEST_TABLE_3 (Tabla modificada)', response.content.decode('utf-8'))
-        self.assertIn('NEW (Tabla añadida)', response.content.decode('utf-8'))
+        content = response.content.decode('utf-8')
+        self.assertIn('TEST_TABLE_1 (Tabla modificada)', content)
+        self.assertIn('TEST_TABLE_2 (Tabla eliminada)', content)
+        self.assertIn('TEST_TABLE_3 (Tabla modificada)', content)
+        self.assertIn('NEW (Tabla añadida)', content)
 
-    def test_failure_insert_discriminant(self):
-        """Test for check if discriminant clean raise ValidationError"""
-        create = 'CREATE TABLE test_table_1 (x NUMBER, n NUMBER);'
-        insert = "INSERT INTO test_table_1 VALUES (1997, 1997);\
-                  INSERT INTO test_table_2  VALUES (1994, 1994);"
-        correct = 'SELECT * FROM test_table_1 ORDER BY n ASC'
-        incorrect = 'SELECT * FROM test_table_1 ORDER BY x ASC'
-        collection = create_collection('Colleccion de prueba XYZ')
-        problem = DiscriminantProblem(title_md='name', text_md='texto largo', create_sql=create, insert_sql=insert,
-                                      correct_query=correct, incorrect_query=incorrect, check_order=False,
-                                      collection=collection)
-        with self.assertRaises(ValidationError):
-            problem.clean()
+    def test_help(self):
+        """ Help returns a help page in Spanish """
+        client = Client()
+        help_url = reverse('judge:help')
+        create_user('5555', 'pepe')
+        client.login(username='pepe', password='5555')
+        content = client.get(help_url, follow=True).content.decode('utf-8')
+        self.assertIn("Presentación", content)

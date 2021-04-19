@@ -1,0 +1,257 @@
+{% extends "base_menu.html" %}
+{% load static %}
+{% block contenido %}
+<link
+  rel="stylesheet"
+  href="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css"
+/>
+<script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script>
+
+<nav id="toc" data-spy="affix" data-toggle="toc"></nav>
+
+<h1 class="help" id="intro">Presentación</h1>
+<p>
+    <span class="remark">LearnSQL</span> es un juez automático para el aprendizaje del lenguaje SQL. Aquí podrás
+    enfrentarte a diferentes ejercios, enviar una solución en código SQL y recibir automáticamente un veredicto
+    incluyendo información de retroalimentación en caso de que la solución enviada no sea correcta. El juez permite
+    practicar con distintos tipos de problemas, por ejemplo, realizar consultas SQL, insertar/actualizar/modificar filas
+    en las tablas o definir funciones y procedimientos. Internamente utiliza <span class="remark">Oracle 11g</span>
+    para corregir los envíos recibidos.
+</p>
+
+
+<h1 class="help" id="team">Equipo de diseño y desarrollo</h1>
+<p>
+    El juez ha sido desarrollado como proyecto de código abierto bajo liencia
+    <a href="https://github.com/emartinm/lsql/blob/master/LICENSE">MIT</a> y está disponible en
+    <a href="https://github.com/emartinm/lsql">https://github.com/emartinm/lsql</a>. El juez ha sido desarrollado dentro
+    del la convocatoria 2020-21 de Proyectos de Innovación Innova-Docencia de la Universidad Complutense de Madrid,
+    concretamente en el proyecto número 18 titulado <span class="remark">"Juez automático para el aprendizaje de bases de
+    datos"</span>. En el desarrollo del juez también han participado estudiantes de la Fac. de Informática de la
+    Universidad Complutense de Madrid, que han realizado mejoras dentro de su Trabajo Fin de Grado. El equipo completo de diseño y
+    desarrollo es el siguiente:
+    <ul>
+        <li>IKER BURGOA</li>
+        <li>PABLO CERRO</li>
+        <li>J. C.</li>
+        <li>TAMARA HUERTAS</li>
+        <li>DANIEL IBAÑEZ</li>
+        <li>ENRIQUE MARTIN</li>
+        <li>MANUEL MONTENEGRO</li>
+        <li>ADRIAN RIESCO</li>
+        <li>RUBEN RUBIO</li>
+        <li>IVAN RUIZ</li>
+    </ul>
+</p>
+
+<h1 class="help" id="usage">Uso del juez</h1>
+
+<p>
+    Para acceder al juez es necesario autenticarse con el usuario y contraseña que os habrá proporcionado vuestro
+    profesor. Las principales funciones del juez aparecen en el menú situado en la parte superior de la ventana:
+
+    <figure>
+        <img class="screenshot" src="{% static "judge/img/menu.png" %}" alt="Menú principal del juez" width="800">
+        <figcaption>Figura: Menú principal del juez</figcaption>
+    </figure>
+
+    <ul>
+        <li><span class="remark">Ejercicios</span>: muestra todas las colecciones de problemas disponibles</li>
+        <li><span class="remark">Mis envíos</span>: muestra todos los envíos que has realizado al juez, pudiendo
+            consultar su código concreto y el veredicto recibido. </li>
+        <li><span class="remark">Clasificación</span>: permite visualizar la clasificación de tu clase en cada una de
+            las colecciones. Puedes encontrar más información en la sección <a href="#ranking">Clasificación</a>.</li>
+        <li><span class="remark">Ayuda</span>: muestra esta página de ayuda.</li>
+        <li>El <span class="remark">menú desplegable</span> situado en la parte derecha contiene opciones para cambiar tu
+            contraseña, visualizar qué logros has obtenido (ver sección <a href="#achievements">Logros</a>) y cerrar la
+            sesión.</li>
+    </ul>
+</p>
+<p>
+    El juez muestra los problemas organizados por colecciones de problemas similares. Tal y como se ve en la siguiente
+    figura, por cada colección se muestra el número de problemas que ya has resuelto y el número total de problemas que
+    contiene esa colección:
+    <figure>
+        <img class="screenshot" src="{% static "judge/img/collection.png" %}" alt="Listado de colecciones" width="800">
+        <figcaption>Figura: Listado de colecciones</figcaption>
+    </figure>
+</p>
+
+<p>
+    Una vez elegida una colección, se mostrará el listado de problemas. Cada problema viene acompañado con el número de
+    envíos que has realizado y también un podio indicando qué usuarios han sido los 3 primeros en resolverlo:
+    <figure>
+        <img class="screenshot" src="{% static "judge/img/collection_details.png" %}" alt="Detalle de una colección"
+        width="800">
+        <figcaption>Figura: Detalle de una colección</figcaption>
+    </figure>
+</p>
+
+<p>
+    Una vez se accede a un problema concreto se muestra su enunciado, tal y como se ve en la siguiente figura:
+    <figure>
+        <img class="screenshot" src="{% static "judge/img/problem.png" %}" alt="Ejemplo de problema" width="800">
+        <figcaption>Figura: Ejemplo de enunciado de problema</figcaption>
+    </figure>
+</p>
+
+<p>
+    El enunciado consta de una explicación textual del problema a resolver, seguido de una descripción del esquema de la
+    base de datos inicial sobre la que se debe resolver el problema (apartado <span class="remark">Base de datos</span>).
+    Además del esquema, este apartado incluye datos iniciales para entender mejor el contenido de la base de datos y qué
+    es lo que se espera en dicho problema. Mediante el botón <span class="remark">"Descargar Script"</span> es posible
+    descargarse todas las sentencias SQL necesarias para construir esa base de datos inicial en otro sistema y realizar
+    pruebas (tanto la creación de tablas como la inserción de filas).
+</p>
+
+<p>
+    El apartado <span class="remark">Resultado esperado</span> contiene los resultados que debería generar
+    una solución para considerarse correcta sobre la base de datos con los valores iniciales mostrados en el enunciado. A
+    continuación aparece un cuadro donde se puede introducir el código SQL de la solución. También es posible subir una
+    solución escrita en un fichero SQL arrastrando o seleccionando dicho fichero en la zona de ficheros.
+</p>
+
+<p>
+    Cuando se pulsa el botón <span class="remark">Enviar solución</span> se envía al juez la solución que hay en el cuadro
+    de código y se corrige. El juez puede contestar con distintos <span class="remark">veredictos</span> posibles:
+</p>
+
+<h2 class="help">Aceptado</h2>
+<p>
+    Tu código ha producido los resultados esperados en todos los tests probados. Se muestra una ventana flotante tal y
+    como se ve en la siguiente figura:
+    <figure>
+        <img class="screenshot" src="{% static "judge/img/AC.png" %}" alt="Solución aceptada" width="800">
+        <figcaption>Figura: Solución aceptada</figcaption>
+    </figure>
+</p>
+
+<h2 class="help">Error en ejecución</h2>
+<p>
+    El juez ha intentado ejecutar el código SQL pero no ha podido porque ha lanzado algún error. Por ejemplo, este error
+    aparece cuando hay <span class="remark">errores sintácticos</span> en alguna sentencia SQL, se accede a tablas o
+    columnas que no existen, o cuando se insertan valores duplicados en una clave primaria. En estos casos el juez
+    detecta en qué fila y columna se ha producido este error, lo remarca en el cuadro de código y además muestra un
+     mensaje con los detalles del error. La siguiente figura muestra un error en ejecución debido a un error sintático:
+</p>
+<figure>
+    <img class="screenshot" src="{% static "judge/img/RE.png" %}" alt="Error en ejecución" width="800">
+    <figcaption>Figura: Error en ejecución</figcaption>
+</figure>
+
+
+<h2 class="help">Resultados incorrectos</h2>
+<p>
+    Este veredicto aparece cuando el código SQL se ha podido ejecutar sin problema pero el resultado no es el esperado. En
+    este caso la retroalimentación que aparece bajo el cuadro de código contiene información detallada sobre qué resultado
+    ha generado tu código SQL
+    y qué resultado se esperaba, tratando de indicar qué elementos faltan y cuáles sobran. Se puede ver un ejemplo de este
+    tipo de retroalimentnación en la siguiente figura:
+</p>
+
+<figure>
+    <img class="screenshot" src="{% static "judge/img/WA.png" %}" alt="Resultados incorrectos" width="800">
+    <figcaption>Figura: Resultados incorrectos</figcaption>
+</figure>
+
+<h2 class="help">Error de validación</h2>
+<p>
+    Si recibes un mensaje de este tipo significa que el código enviado no cumple con los requisitos necesarios y
+    <span class="remark">ni siquiera se ha llegado a ejecutar</span>. Cada problema puede tener requisitos diferentes, por
+    ejemplo, los problemas que solicitan consultas <code>SELECT</code> esperan que se envíe exactamente una sentencia SQL,
+    mientras que otros problemas centrados en manupulación de tablas pueden requerir un número concreto de sentencias. En la
+    siguiente figura se puede ver cómo se obtiene en error de validación al enviar dos sentencias SQL en lugar de una:
+</p>
+<figure>
+    <img class="screenshot" src="{% static "judge/img/VE.png" %}" alt="Error de validación" width="800">
+    <figcaption>Figura: Error de validación</figcaption>
+</figure>
+
+<h2 class="help">Tiempo límite excedido</h2>
+<p>
+    Si el código que envías tarda demasiado tiempo en ejecutarse, el juez abortará su ejecución y te informará de ello.
+    Este tipo de mensaje aparece cuando se envía código SQL extremadamente ineficiente. En estos casos deberás revisar tu
+    solución y modificarla para ser más eficiente.
+</p>
+
+<h2 class="help">Error interno</h2>
+<p>
+    Este tipo de error indica que ha ocurrido un error inesperado durante la corrección de tu envío. Es un error achacable
+    al propio juez y no al código que has enviado. En ocasiones este error se debe una sobrecarga puntual del servidor y
+    se corrige con el tiempo, pero si persiste debes informar a tu profesor.
+</p>
+
+<h1 class="help" id="ranking">Clasificación</h1>
+
+<p>
+    Por cada colección de problemas se puede visualizar la clasificación de los participantes dentro de tu mismo grupo de
+    clase. La clasificación muestra el listado ordenado de usuarios junto con información de cada ejercicio:
+</p>
+<figure>
+    <img class="screenshot" src="{% static "judge/img/ranking.png" %}" alt="Ejemplo de clasificación" width="800">
+    <figcaption>Figura: Ejemplo de clasificación</figcaption>
+</figure>
+
+
+<p>
+    La primera columna muestra la posición del usuario, donde varios usuarios pueden compartir la misma posición si
+    empatan en todos los aspectos. A continuación aparece el nombre de usuario junto con un icono indicando el número de logros
+    que ha obtenido hasta el momento actual (ver sección <a href="#achievements">Logros</a>). A continuación aparece una
+    columna por cada ejercicio de la colección. En cada celda aparece una descripción <code>X/Y (Z)</code> de los envíos
+    realizados:
+    <ul>
+        <li><code>X</code>: número de envíos correctos.</li>
+        <li><code>Y</code>: número de envíos totales.</li>
+        <li><code>Z</code>: posición del primer envío correcto.</li>
+    </ul>
+</p>
+
+<p>
+    Además, cada celda tiene un código de colores: verde si el usuario ha conseguido resolver ese ejercicio, rojo si el
+    usuario ha realizado algún envío pero no ha conseguido resolver ese ejercicio, y blanco si el usuario todavía no ha
+    realizado nigún envío a ese ejercicio.
+</p>
+
+<p>
+    Para ordenar a los usuarios en la clasificación primero se tiene en cuenta el número de ejercicios resueltos en esa
+    colección, es decir, aparecerán antes aquellos usuarios con más ejercicios resueltos. En caso de empate, se
+    desempatará penalizando el número de envios necesarios para resolver los ejercicios (valor <code>Z</code> de las
+    celdas). Para ello, la columna <span class="remark">Puntuación</span> suma el número de envíos que ha necesitado el
+    usuario para resolver los ejercicios. Hay que tener en cuenta que el número de envíos realizados en los ejercicios
+    no superados no se tiene en cuenta hasta que se resuelve el ejercicio, y por eso <span class="remark">Soledad</span>
+    en la figura anterior suma una puntuación de 14, es decir, no se contabilizan sus 6 envíos fallidos al ejercicio 2.
+    En resumen, el criterio para ordenar participantes es el siguiente:
+    <ol>
+        <li>De mayor a menor número de <span class="remark">problemas resueltos.</span></li>
+        <li>En caso de empate, de menor a mayor <span class="remark">puntuación</span> (una menor puntuación indica
+            menos envíos fallidos hasta resolver los problemas).</li>
+        <li>En caso de empate, ocupan la <span class="remark">misma posición numérica</span>.</li>
+    </ol>
+</p>
+
+<p>
+    El icono <i class="far fa-question-circle"></i> que aparece en la parte superior derecha de la clasificación muestra
+    una ventana emergente con ayuda para entender la clasificación:
+</p>
+<figure>
+    <img class="screenshot" src="{% static "judge/img/ranking_help.png" %}" alt="Ayuda de la clasificación" width="800">
+    <figcaption>Figura: Ayuda de la clasificación</figcaption>
+</figure>
+
+<h1 class="help" id="achievements">Logros</h1>
+<p>
+    El juez dispone de un sistema de logros que se pueden conseguir al realizar envíos. Es posible visualizar el listado
+    de logros obtenidos y pendientes en el menú superior del juez, en el apartado <span class="remark">Mis logros</span>.
+    De cada logro se indica su nombre y su descripción, y de los logros conseguidos se indica también el momento
+    en el que se obtuvieron:
+</p>
+<figure>
+    <img class="screenshot" src="{% static "judge/img/achievements.png" %}" alt="Pantalla de logros" width="800">
+    <figcaption>Figura: Pantalla de logros</figcaption>
+</figure>
+
+<h1 class="help" id="hints">Pistas</h1>
+<p>
+    Próximamente.
+</p>
+{% endblock %}

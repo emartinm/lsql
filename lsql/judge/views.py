@@ -112,6 +112,13 @@ def index(_):
 
 
 @login_required
+def help_page(request):
+    """ Shows help page """
+    # FIX: handle languages
+    return render(request, 'help.es.html')
+
+
+@login_required
 def show_result(request, collection_id):
     """show the ranking of a group (GET param) for collection_id"""
     if not Group.objects.all():

@@ -12,7 +12,7 @@ import django.contrib.auth
 
 from bs4 import BeautifulSoup
 from judge.oracle_driver import OracleExecutor
-from judge.models import SelectProblem, Collection, Submission, Problem
+from judge.models import SelectProblem, Collection, Submission, Problem, DiscriminantProblem
 from judge.types import VeredictCode
 
 
@@ -308,3 +308,21 @@ class ModelsTest(TestCase):
                                 min_stmt=5, max_stmt=2,  # Impossible
                                 solution=solution)
         self.assertRaises(ValidationError, problem.clean)
+
+    def test_failure_insert_discriminant(self):
+        """ Test for check if discriminant clean raise ValidationError because the table test_table_1 does
+            not exist
+        """
+        create = 'CREATE TABLE test_table_1 (x NUMBER, n NUMBER);'
+        insert = "INSERT INTO test_table_1 VALUES (1997, 1997);\
+                  INSERT INTO test_table_2  VALUES (1994, 1994);"
+        correct = 'SELECT * FROM test_table_1 ORDER BY n ASC'
+        incorrect = 'SELECT * FROM test_table_1 ORDER BY x ASC'
+        collection = Collection(name_md="nombre", description_md='texto explicativo')
+        collection.clean()
+        collection.save()
+        problem = DiscriminantProblem(title_md='name', text_md='texto largo', create_sql=create, insert_sql=insert,
+                                      correct_query=correct, incorrect_query=incorrect, check_order=False,
+                                      collection=collection)
+        with self.assertRaises(ValidationError):
+            problem.clean()

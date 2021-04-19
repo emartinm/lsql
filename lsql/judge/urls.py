@@ -13,6 +13,7 @@ from . import views
 app_name = 'judge'
 urlpatterns = [
     path('', views.index, name='index'),
+    path('help/', views.help_page, name='help'),
     path('collection/', views.show_collections, name='collections'),
     path('collection/<int:collection_id>', views.show_collection, name='collection'),
     path('problem/<int:problem_id>', views.show_problem, name='problem'),
