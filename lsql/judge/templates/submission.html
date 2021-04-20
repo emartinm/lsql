@@ -4,35 +4,35 @@
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/styles/default.min.css">
 <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/highlight.min.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>
-<h2>{% translate "submission" %} {{submission.pk}}</h2>
+<h2>{% translate "Envío" %} {{submission.pk}}</h2>
 <table class="table">
     <tbody>
         <tr>
-            <td><strong>{% translate "date" %}:</strong></td>
+            <td><strong>{% translate "Fecha" %}:</strong></td>
             <td>{{submission.creation_date}}</td>
         </tr>
         <tr>
-            <td><strong>{% translate "problem" %}:</strong></td>
+            <td><strong>{% translate "Problema" %}:</strong></td>
             <td><a href="{% url 'judge:problem' submission.problem.pk %}">{{ submission.problem.title_html|safe }}</a></td>
         </tr>
         <tr>
-            <td><strong>{% translate "result" %}:</strong></td>
+            <td><strong>{% translate "Resultado" %}:</strong></td>
             <td>{{ submission.veredict_pretty|safe }}</a></td>
         </tr>
         {% if submission.veredict_msg %}
         <tr>
-            <td><strong>{% translate "message" %}:</strong></td>
+            <td><strong>{% translate "Mensaje" %}:</strong></td>
             <td>{{submission.veredict_msg}}</td>
         </tr>
         {% endif %}
         <tr>
-            <td><strong>{% translate "code" %}:</strong></td>
+            <td><strong>{% translate "Código" %}:</strong></td>
             <td>
                 <pre><code>
 {{submission.code}}
                 </code></pre>
                 <a href="{% url 'judge:download_submission' submission.id %}">
-                <button type="button" class="btn btn-primary" title="Script con el código">{% translate "download" %}</button>
+                <button type="button" class="btn btn-primary" title="Script con el código">{% translate "Descargar" %}</button>
                 </a>
             </td>
         </tr>

@@ -8,11 +8,11 @@
 {% block contenido %}
 {% if form.errors %}
 <div class="alert alert-danger" role="alert">
-  {% translate "invalidCredentials" %}
+  {% translate "Usuario o contraseña no válidos" %}
 </div>
 {% endif %}
 
-  <h2>{% translate "login" %}</h2>
+  <h2>{% translate "Inicio de sesión" %}</h2>
 <form action="{% url 'judge:login' %}" method="post">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ next }}">
@@ -21,15 +21,15 @@
         {{ form.username.label_tag }}
         {{ form.username }}
         <small id="emailHelp" class="form-text text-muted">
-          {% translate "usernameInfo" %}<code>@ucm.es</code>.
+          {% translate "Es la parte de tu e-mail que precede a " %}<code>@ucm.es</code>.
         </small>
     </div>
 
     <div class="form-group">
         {{ form.password.label_tag }}
         {{ form.password }}
-      <small id="passwordHelp" class="form-text text-muted">{% translate "contactAdminPass" %}</small>
+      <small id="passwordHelp" class="form-text text-muted">{% translate "Ponte en contacto con tu profesor si has olvidado tu contraseña." %}</small>
     </div>
-  <button type="submit" class="btn btn-primary">{% translate "enter" %}</button>
+  <button type="submit" class="btn btn-primary">{% translate "Entrar" %}</button>
 </form>
 {% endblock %}

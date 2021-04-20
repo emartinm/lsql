@@ -8,27 +8,27 @@
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">
       <li>
-        <a class="nav-link" href="{% url 'judge:collections' %}">{% translate "exercises" %}</a>
+        <a class="nav-link" href="{% url 'judge:collections' %}">{% translate "Ejercicios" %}</a>
       </li>
       <li>
-        <a class="nav-link" href="{% url 'judge:submissions' %}">{% translate "mySubmissions" %}</a>
+        <a class="nav-link" href="{% url 'judge:submissions' %}">{% translate "Mis envíos" %}</a>
       </li>
       <li>
-        <a class="nav-link" href="{% url 'judge:results' %}">{% translate "ranking" %}</a>
+        <a class="nav-link" href="{% url 'judge:results' %}">{% translate "Clasificación" %}</a>
       </li>
       <li>
-        <a class="nav-link" href="{% url 'judge:help' %}">{% translate "help" %}</a>
+        <a class="nav-link" href="{% url 'judge:help' %}">{% translate "Ayuda" %}</a>
       </li>
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           {{ request.user.email }}
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-		  <a class="dropdown-item" href="{% url 'judge:achievements' request.user.pk %}">{% translate "myAchievements" %}</a>
+		  <a class="dropdown-item" href="{% url 'judge:achievements' request.user.pk %}">{% translate "Mis logros" %}</a>
 		  <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="{% url 'judge:password_change' %}">{% translate "changePass" %}</a>
+          <a class="dropdown-item" href="{% url 'judge:password_change' %}">{% translate "Cambiar contraseña" %}</a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="{% url 'judge:logout' %}">{% translate "logout" %}</a>
+          <a class="dropdown-item" href="{% url 'judge:logout' %}">{% translate "Cerrar sesión" %}</a>
         </div>
       </li>
     </ul>
