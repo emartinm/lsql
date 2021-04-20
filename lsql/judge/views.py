@@ -27,16 +27,15 @@ from .models import Collection, Problem, Submission, ObtainedAchievement, Achiev
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
 
-"""
-To translate the code to another language you need to create the translation file using
-the "django-admin makemessages -l x" command, where "x" is the language code.
-Use this command everytime you add a new translation outside the translation file.
-It won't remove existing translations.
-Complete the msgstr in lsql/locale/x/LC_MESSAGES/django.po with the new translations.
-Execute the "django-admin compilemessages" command.
-If the msgstr is empty, it will use the msgid instead.
-https://mlocati.github.io/articles/gettext-iconv-windows.html is necessary to execute the commands.
-"""
+# TRANSLATIONS #
+# To translate the code to another language you need to create the translation file using
+# the "django-admin makemessages -l x" command, where "x" is the language code.
+# Use this command everytime you add a new translation outside the translation file.
+# It won't remove existing translations.
+# Complete the msgstr in lsql/locale/x/LC_MESSAGES/django.po with the new translations.
+# Execute the "django-admin compilemessages" command.
+# If the msgstr is empty, it will use the msgid instead.
+# https://mlocati.github.io/articles/gettext-iconv-windows.html is necessary to execute the commands.
 
 ####################
 # Helper functions #
