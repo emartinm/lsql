@@ -27,7 +27,7 @@ def create_an_achievement_of_each(coll):
     ach_solved = NumSolvedAchievementDefinition(name='Resolvista', description='Resuelve 1 problema',
                                                 num_problems=1)
     ach_type = NumSolvedTypeAchievementDefinition(name='Tipos', description='Resuelve un problema SELECT',
-                                                  num_problems=1, type_problem=ProblemType.SELECT.name)
+                                                  num_problems=1, problem_type=ProblemType.SELECT.name)
     ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(name='Primer envio',
                                                                 description='Realiza un envio a cualquier problema',
                                                                 num_submissions=1, num_problems=1)
@@ -144,7 +144,7 @@ class RankingTest(TestCase):
         ach_solved.save()
         # Create NumSolvedTypeAchievementDefinition
         ach_type = NumSolvedTypeAchievementDefinition(name='Procedista', description='Resuelve un problema PROC',
-                                                      num_problems=1, type_problem=ProblemType.PROC.name)
+                                                      num_problems=1, problem_type=ProblemType.PROC.name)
         ach_type.save()
         # Create NumSubmissionsProblemsAchievementDefinition
         ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(name='Muchos envios',
@@ -175,7 +175,7 @@ class RankingTest(TestCase):
         ach_solved.save()
         # NumSolvedTypeAchievementDefinition change to type SELECT
         # In this test our user only resolved a SELECT type problem, not PROC.
-        ach_type.type_problem = ProblemType.SELECT.name
+        ach_type.problem_type = ProblemType.SELECT.name
         ach_type.save()
         # NumSubmissionsProblemsAchievementDefinition only needs one submission now
         ach_submi_pro.num_submissions = 1
@@ -247,7 +247,7 @@ class RankingTest(TestCase):
 
         # Test NumSolvedTypeAchievementDefinition
         ach_type = NumSolvedTypeAchievementDefinition(name='Tipos', description='Resuelve un problema SELECT',
-                                                      num_problems=2, type_problem=ProblemType.SELECT.name)
+                                                      num_problems=2, problem_type=ProblemType.SELECT.name)
         ach_type.save()
         date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
         self.assertEqual(date[0], sub_2_u.creation_date)

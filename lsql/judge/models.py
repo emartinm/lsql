@@ -587,7 +587,7 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
 class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
     """Achievement by solving X problems of a Type"""
     num_problems = models.PositiveIntegerField(default=1, null=False)
-    type_problem = models.CharField(
+    problem_type = models.CharField(
         max_length=5000,
         choices=list(ProblemType.__members__.items()),
         validators=[MinLengthValidator(1)],
@@ -606,7 +606,7 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
             )).order_by('creation_date')
             for sub in order_problem_creation_date:
                 problem = Problem.objects.filter(title_md=sub.problem).select_subclasses()
-                if problem[0].problem_type().name == self.type_problem:
+                if problem[0].problem_type().name == self.problem_type:
                     count += 1
                     if count >= self.num_problems:
                         new_achievement = ObtainedAchievement(user=user,

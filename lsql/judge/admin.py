@@ -145,7 +145,7 @@ class ObtainedAchievementAdmin(admin.ModelAdmin):
 
 class NumSolvedTypeAchievementDefinitionAdmin(admin.ModelAdmin):
     """Model for Achievements"""
-    list_display = ('name', 'description', 'num_problems', 'type_problem')
+    list_display = ('name', 'description', 'num_problems', 'problem_type')
     list_filter = ['name']
 
 

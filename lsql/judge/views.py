@@ -102,6 +102,7 @@ def check_if_get_achievement(user, veredict):
     if veredict == VeredictCode.AC:
         for ach in AchievementDefinition.objects.all().select_subclasses():
             ach.check_and_save(user)
+    # If the veredict != AC (correct) only can get a NumSubmissionsProblemsAchievementDefinition
     else:
         for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():
             ach.check_and_save(user)
