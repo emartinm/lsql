@@ -1,5 +1,6 @@
 {% extends "problem.html" %}
+{% load i18n %}
 {% block expected_result %}
-<h2>Consulta SQL errónea a depurar</h2>
+<h2>{% translate "Consulta SQL errónea a depurar" %}</h2>
 <pre><code>{{ problem.incorrect_query }}</code></pre>
 {% endblock %}

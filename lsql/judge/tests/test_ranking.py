@@ -344,17 +344,17 @@ class RankingTest(TestCase):
         # Date or group invalid
         response = client.get(url, {
             'group': group_a.id, 'start': start, 'end': ''}, follow=True)
-        self.assertIn("field is required", response.content.decode('utf-8'))
+        self.assertIn("Este campo es obligatorio", response.content.decode('utf-8'))
         response = client.get(url, {
             'group': group_a.id, 'start': 'eee', 'end': end}, follow=True)
-        self.assertIn("Enter a valid date", response.content.decode('utf-8'))
+        self.assertIn("Introduzca una fecha válida", response.content.decode('utf-8'))
         response = client.get(url, {
             'group': group_a.id, 'end': end}, follow=True)
-        self.assertIn("field is required",
+        self.assertIn("Este campo es obligatorio",
                       response.content.decode('utf-8'))
         response = client.get(url,
                               {'group': '1A', 'start': start, 'end': end}, follow=True)
-        self.assertIn('Enter a whole number', response.content.decode('utf-8'))
+        self.assertIn('Introduzca un número entero', response.content.decode('utf-8'))
 
         # User can't download ranking
         client.logout()
