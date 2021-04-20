@@ -340,8 +340,8 @@ class ModelsTest(TestCase):
         collection.save()
 
         create = 'CREATE TABLE tabla (xx NUMBER);'
-        solution = 'SELECT * FROM mytable'
-        problem = SelectProblem(title_md='Example', text_md='',
+        solution = 'SELECT * FROM tabla'
+        problem = SelectProblem(title_md='Example', text_md='Enunciado',
                                 create_sql=create, insert_sql="", collection=collection, solution=solution)
         problem.clean()
         problem.save()
