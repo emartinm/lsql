@@ -587,3 +587,58 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
                                                       obtained_date=order_problem_creation_date[self.num_problems - 1],
                                                       achievement_definition=self)
                 new_achievement.save()
+
+
+class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
+    """Achievement by solving X problems of a Type"""
+    num_problems = models.PositiveIntegerField(default=1, null=False)
+    problem_type = models.CharField(
+        max_length=5000,
+        choices=list(ProblemType.__members__.items()),
+        validators=[MinLengthValidator(1)],
+        blank=True
+    )
+
+    def check_and_save(self, user):
+        """Check if an user is deserving for get an achievement, if it is, save that"""
+        if not self.check_user(user):
+            count = 0
+            # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
+            # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
+            order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
+                Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
+                order_by('problem', 'creation_date').distinct('problem').values('creation_date')
+            )).order_by('creation_date')
+            for sub in order_problem_creation_date:
+                problem = Problem.objects.filter(title_md=sub.problem).select_subclasses()
+                if problem[0].problem_type().name == self.problem_type:
+                    count += 1
+                    if count >= self.num_problems:
+                        new_achievement = ObtainedAchievement(user=user,
+                                                              obtained_date=sub.creation_date,
+                                                              achievement_definition=self)
+                        new_achievement.save()
+                        return
+
+
+class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.Model):
+    """Achievement by submiting X submissions of Y problems"""
+    num_submissions = models.PositiveIntegerField(default=1, null=False)
+    num_problems = models.PositiveIntegerField(default=1, null=False)
+
+    def check_and_save(self, user):
+        """Check if an user is deserving for get an achievement, if it is, save that"""
+        if not self.check_user(user):
+            total_submissions = Submission.objects.filter(user=user).count()
+            if total_submissions >= self.num_submissions:
+                total_prob = Submission.objects.filter(user=user).distinct("problem").count()
+                if total_prob >= self.num_problems:
+                    # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
+                    # Subquery return a list of creation_date of the problems that user submitted a solution
+                    order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
+                        Submission.objects.filter(user=user).order_by('problem', 'creation_date').distinct('problem').
+                        values('creation_date'))).order_by('creation_date').values_list('creation_date', flat=True)
+                    new_achi = ObtainedAchievement(user=user,
+                                                   obtained_date=order_problem_creation_date[self.num_problems-1],
+                                                   achievement_definition=self)
+                    new_achi.save()

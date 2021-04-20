@@ -23,7 +23,8 @@ from logzero import logger
 from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table, filter_expected_db
 from .forms import SubmitForm, ResultForm
-from .models import Collection, Problem, Submission, ObtainedAchievement, AchievementDefinition
+from .models import Collection, Problem, Submission, ObtainedAchievement, AchievementDefinition, \
+    NumSubmissionsProblemsAchievementDefinition
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
 
@@ -96,10 +97,15 @@ def update_user_attempts_problem(attempts, user, problem, num_accepted, collecti
     user.collection.append(problem)
 
 
-def check_if_get_achievement(user):
+def check_if_get_achievement(user, veredict):
     """Check if the user get some achievement"""
-    for ach in AchievementDefinition.objects.all().select_subclasses():
-        ach.check_and_save(user)
+    if veredict == VeredictCode.AC:
+        for ach in AchievementDefinition.objects.all().select_subclasses():
+            ach.check_and_save(user)
+    # If the veredict != AC (correct) only can get a NumSubmissionsProblemsAchievementDefinition
+    else:
+        for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():
+            ach.check_and_save(user)
 
 
 ##############
@@ -401,8 +407,7 @@ def submit(request, problem_id):
                             user=request.user, problem=general_problem)
     submission.save()
     # If veredict is correct look for an achievement to complete if it's possible
-    if data['veredict'] == VeredictCode.AC:
-        check_if_get_achievement(request.user)
+    check_if_get_achievement(request.user, data['veredict'])
     logger.debug('Stored submission %s', submission)
     return JsonResponse(data)
 
