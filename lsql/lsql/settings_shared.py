@@ -146,8 +146,8 @@ DBBACKUP_STORAGE_OPTIONS = {'location': f"{os.environ.get('HOME')}/lsql_backups/
 DBBACKUP_CLEANUP_KEEP = 16  # 2 months with 2 backups per week
 DBBACKUP_CLEANUP_KEEP_MEDIA = 16
 
-_ = lambda s: s
+
 LANGUAGES = (
-    ('en', _(u'English')),
-    ('es', _(u'Español')),
+    ('en','English'),
+    ('es', 'Español'),
 )

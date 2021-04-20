@@ -1,7 +1,7 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Django lsql translation.
+# Copyright (C) 2020
+# This file is distributed under the same license as the Django lsql package.
+# Iván Ruiz Quintana <ivarui01@ucm.es>, 2020/21.
 #
 #, fuzzy
 msgid ""
