@@ -5,12 +5,13 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 Unit tests for models
 """
 import os
+from bs4 import BeautifulSoup
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 import django.contrib.auth
+from django.contrib.auth import get_user_model
 
-from bs4 import BeautifulSoup
 from judge.oracle_driver import OracleExecutor
 from judge.models import SelectProblem, Collection, Submission, Problem, DiscriminantProblem
 from judge.types import VeredictCode
@@ -326,3 +327,38 @@ class ModelsTest(TestCase):
                                       collection=collection)
         with self.assertRaises(ValidationError):
             problem.clean()
+
+    def test_solved_n_position(self):
+        """ Test that solved_n_position does not count staff or inactive users """
+        staff_user = get_user_model().objects.create_user('teacher', password='1234', is_staff=True, is_active=True)
+        inactive_user = get_user_model().objects.create_user('inactive', password='1234', is_staff=False,
+                                                             is_active=False)
+        user = get_user_model().objects.create_user('normal', password='1234', is_staff=False, is_active=True)
+
+        collection = Collection(name_md='ABC', description_md='blablabla')
+        collection.clean()
+        collection.save()
+
+        create = 'CREATE TABLE tabla (xx NUMBER);'
+        solution = 'SELECT * FROM mytable'
+        problem = SelectProblem(title_md='Example', text_md='',
+                                create_sql=create, insert_sql="", collection=collection, solution=solution)
+        problem.clean()
+        problem.save()
+
+        sub1 = Submission(code='nada', veredict_code=VeredictCode.AC, user=staff_user, problem=problem)
+        sub2 = Submission(code='nada', veredict_code=VeredictCode.AC, user=inactive_user, problem=problem)
+        sub3 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user, problem=problem)
+        for sub in (sub1, sub2, sub3):
+            sub.clean()
+            sub.save()
+
+        # First non-staff active user to solve the problem is 'user'
+        self.assertEqual(problem.solved_first(), user)
+        self.assertIsNone(problem.solved_second())
+        self.assertIsNone(problem.solved_third())
+
+        # Non-active or staff users are not counted in solved_position
+        self.assertIsNone(problem.solved_position(staff_user))
+        self.assertIsNone(problem.solved_position(inactive_user))
+        self.assertEqual(problem.solved_position(user), 1)

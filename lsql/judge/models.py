@@ -181,8 +181,9 @@ class Problem(models.Model):
         return Submission.objects.filter(problem=self, user=user).count()
 
     def solved_n_position(self, position):
-        """User who solved the problem in 'position' position"""
-        pks = Submission.objects.filter(problem=self, veredict_code=VeredictCode.AC) \
+        """User (non-staff and active) who solved the problem in 'position' position"""
+        active_students = get_user_model().objects.filter(is_staff=False, is_active=True)
+        pks = Submission.objects.filter(problem=self, veredict_code=VeredictCode.AC, user__in=active_students) \
             .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
         subs = Submission.objects.filter(pk__in=pks).order_by('pk')[position - 1:position]
         if len(subs) > 0 and subs[0] is not None:
@@ -190,23 +191,27 @@ class Problem(models.Model):
         return None
 
     def solved_first(self):
-        """User who solved first"""
+        """User (non-staff and active) who solved first"""
         return self.solved_n_position(1)
 
     def solved_second(self):
-        """User who solved second"""
+        """User (non-staff and active) who solved second"""
         return self.solved_n_position(2)
 
     def solved_third(self):
-        """User who solved third"""
+        """User (non-staff and active) who solved third"""
         return self.solved_n_position(3)
 
     def solved_position(self, user):
-        """Position that user solved the problem. If not solved return None"""
+        """Position that user solved the problem (ignoring staff and inactive users). If not solved return None"""
         if self.solved_by_user(user):
+            active_students = get_user_model().objects.filter(is_staff=False, is_active=True)
             iterator = 1
-            users_ac = Submission.objects.filter(problem=self, veredict_code=VeredictCode.AC).order_by('pk', 'user').\
-                distinct('pk', 'user').values_list('user', flat=True)
+            users_ac = (Submission.objects.
+                        filter(problem=self, user__in=active_students, veredict_code=VeredictCode.AC).
+                        order_by('pk', 'user').
+                        distinct('pk', 'user').
+                        values_list('user', flat=True))
             for users in users_ac:
                 if users == user.pk:
                     return iterator
