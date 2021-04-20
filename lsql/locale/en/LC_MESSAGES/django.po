@@ -48,7 +48,7 @@ msgstr "Pending achievements"
 
 #: .\judge\templates\base.html:23
 msgid "Opción del menú"
-msgstr "Option menu"
+msgstr "Menu option"
 
 #: .\judge\templates\base_menu.html:11
 msgid "Ejercicios"
@@ -157,7 +157,7 @@ msgstr "Your password must contain at least 8 characters."
 
 #: .\judge\templates\password_change.html:38
 msgid "No puedes usar una contraseña común."
-msgstr "You can not usea a common password."
+msgstr "You can not use a common password."
 
 #: .\judge\templates\password_change.html:39
 msgid "Tu contraseña no puede ser completamente numérica."
