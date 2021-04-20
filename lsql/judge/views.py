@@ -97,10 +97,14 @@ def update_user_attempts_problem(attempts, user, problem, num_accepted, collecti
     user.collection.append(problem)
 
 
-def check_if_get_achievement(user):
+def check_if_get_achievement(user, veredict):
     """Check if the user get some achievement"""
-    for ach in AchievementDefinition.objects.all().select_subclasses():
-        ach.check_and_save(user)
+    if veredict == VeredictCode.AC:
+        for ach in AchievementDefinition.objects.all().select_subclasses():
+            ach.check_and_save(user)
+    else:
+        for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():
+            ach.check_and_save(user)
 
 
 ##############
@@ -395,11 +399,7 @@ def submit(request, problem_id):
                             user=request.user, problem=general_problem)
     submission.save()
     # If veredict is correct look for an achievement to complete if it's possible
-    if data['veredict'] == VeredictCode.AC:
-        check_if_get_achievement(request.user)
-    else:
-        for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():
-            ach.check_and_save(request.user)
+    check_if_get_achievement(request.user, data['veredict'])
     logger.debug('Stored submission %s', submission)
     return JsonResponse(data)
 

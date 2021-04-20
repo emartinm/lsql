@@ -12,7 +12,7 @@ from django.urls import reverse
 from judge.models import NumSolvedCollectionAchievementDefinition, PodiumAchievementDefinition, \
     NumSolvedAchievementDefinition, AchievementDefinition, ObtainedAchievement, Submission, \
     NumSolvedTypeAchievementDefinition, NumSubmissionsProblemsAchievementDefinition
-from judge.types import VeredictCode
+from judge.types import VeredictCode, ProblemType
 from judge.tests.test_views import create_user, create_superuser, create_group, create_collection, create_select_problem
 from judge.views import first_day_of_course
 
@@ -26,9 +26,10 @@ def create_an_achievement_of_each(coll):
                                                             de esta coleccion', num_problems=1, collection=coll)
     ach_solved = NumSolvedAchievementDefinition(name='Resolvista', description='Resuelve 1 problema',
                                                 num_problems=1)
-    ach_type = NumSolvedTypeAchievementDefinition(name='Tipos', description='Resuelve uno de un tipo',
-                                                  num_problems=1, type_problem='SELECT')
-    ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(name='Muchos envios', description='Envia envia',
+    ach_type = NumSolvedTypeAchievementDefinition(name='Tipos', description='Resuelve un problema SELECT',
+                                                  num_problems=1, type_problem=ProblemType.SELECT.name)
+    ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(name='Primer envio',
+                                                                description='Realiza un envio a cualquier problema',
                                                                 num_submissions=1, num_problems=1)
     ach_type.save()
     ach_submi_pro.save()
@@ -121,44 +122,65 @@ class RankingTest(TestCase):
 
     def test_signal_update_achievement(self):
         """Test for check signals"""
+        # Create two users for test all the achievements. Two for the podium
         client = Client()
         user_michu = create_user('passwordmichu', 'michu')
         create_user('passwordimmobile', 'immobile')
         client.login(username='immobile', password='passwordimmobile')
+        # Create the Collection for the achievement NumSolvedCollectionAchievementDefinition and Problem
         coll = create_collection('Coleccion de cartas')
+        # Create PodiumAchievementDefinition
         ach_podium = PodiumAchievementDefinition(name='Presidente del podio', description='Consigue ser el primero',
                                                  num_problems=1, position=1)
+        ach_podium.save()
+        # Create NumSolvedCollectionAchievementDefinition
         ach_collection = NumSolvedCollectionAchievementDefinition(name='Coleccionista', description='Resuelve 50\
                                                                   problemas de esta coleccion', num_problems=50,
                                                                   collection=coll)
+        ach_collection.save()
+        # Create NumSolvedAchievementDefinition
         ach_solved = NumSolvedAchievementDefinition(name='Resolvista', description='Resuelve 50 problemas',
                                                     num_problems=50)
-        ach_type = NumSolvedTypeAchievementDefinition(name='Tipos', description='Resuelve uno de un tipo',
-                                                      num_problems=1, type_problem='PROC')
-        ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(name='Muchos envios', description='Envia envia',
+        ach_solved.save()
+        # Create NumSolvedTypeAchievementDefinition
+        ach_type = NumSolvedTypeAchievementDefinition(name='Procedista', description='Resuelve un problema PROC',
+                                                      num_problems=1, type_problem=ProblemType.PROC.name)
+        ach_type.save()
+        # Create NumSubmissionsProblemsAchievementDefinition
+        ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(name='Muchos envios',
+                                                                    description='Envia muchas soluciones',
                                                                     num_submissions=80, num_problems=1)
         ach_submi_pro.save()
-        ach_podium.save()
-        ach_solved.save()
-        ach_collection.save()
-        ach_type.save()
+        # Create problem and submit correct answer with "immobile" user, for make this the first to solve the problem
         problem = create_select_problem(coll, 'Problema')
         submit_select_url = reverse('judge:submit', args=[problem.pk])
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
         client.logout()
+        # Login with "michu" and submit correct answer. All the checks will be with this user
         client.login(username='michu', password='passwordmichu')
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
+        # Whit this definitions our user "michu" don't have any achievement
         self.assertEqual(ObtainedAchievement.objects.filter(user=user_michu).count(), 0)
+        # PodiumAchievementDefinition now only need to stay in podium
+        # In this test our user "michu" stay at second position, that is why before he didn't have the achievement
         ach_podium.position = 3
-        ach_collection.num_problems = 1
-        ach_solved.num_problems = 1
-        ach_type.type_problem = 'SELECT'
-        ach_submi_pro.num_submissions = 1
         ach_podium.save()
-        ach_solved.save()
+        # NumSolvedCollectionAchievementDefinition only needs one correct submission
+        # In this test our user only have one correct submission, that is why before he didn't have the achievement
+        ach_collection.num_problems = 1
         ach_collection.save()
-        ach_submi_pro.save()
+        # NumSolvedAchievementDefinition only needs one correct submission
+        # In this test our user only have one correct submission, that is why before he didn't have the achievement
+        ach_solved.num_problems = 1
+        ach_solved.save()
+        # NumSolvedTypeAchievementDefinition change to type SELECT
+        # In this test our user only resolved a SELECT type problem, not PROC.
+        ach_type.type_problem = ProblemType.SELECT.name
         ach_type.save()
+        # NumSubmissionsProblemsAchievementDefinition only needs one submission now
+        ach_submi_pro.num_submissions = 1
+        ach_submi_pro.save()
+        # Now our user "michu" have 5 achievements
         self.assertEqual(ObtainedAchievement.objects.filter(user=user_michu).count(), 5)
 
     def test_not_implemented_raise_achievements(self):
@@ -176,13 +198,12 @@ class RankingTest(TestCase):
         coll = create_collection('Coleccion de cartas')
         problem_1 = create_select_problem(coll, 'Problema 1')
         problem_2 = create_select_problem(coll, 'Problema 2')
-        sub_1 = Submission(code='nada', veredict_code=VeredictCode.AC,
-                           user=user, problem=problem_1)
-        sub_2 = Submission(code='nada', veredict_code=VeredictCode.AC,
-                           user=user, problem=problem_2)
+        sub_1 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user, problem=problem_1)
+        sub_2 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user, problem=problem_2)
         sub_1.save()
         sub_2.save()
         Submission.objects.filter(id=sub_1.id).update(creation_date=datetime(2006, 3, 5))
+        # sub_1_u = submission 1 updated
         sub_1_u = Submission.objects.get(id=sub_1.id)
         Submission.objects.filter(id=sub_2.id).update(creation_date=datetime(2020, 3, 5))
         sub_2_u = Submission.objects.get(id=sub_2.id)
@@ -225,8 +246,8 @@ class RankingTest(TestCase):
         ObtainedAchievement.objects.all().delete()
 
         # Test NumSolvedTypeAchievementDefinition
-        ach_type = NumSolvedTypeAchievementDefinition(name='Tipos', description='Resuelve uno de un tipo',
-                                                      num_problems=2, type_problem='SELECT')
+        ach_type = NumSolvedTypeAchievementDefinition(name='Tipos', description='Resuelve un problema SELECT',
+                                                      num_problems=2, type_problem=ProblemType.SELECT.name)
         ach_type.save()
         date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
         self.assertEqual(date[0], sub_2_u.creation_date)
@@ -237,7 +258,8 @@ class RankingTest(TestCase):
         ObtainedAchievement.objects.all().delete()
 
         # Test NumSubmissionsProblemsAchievementDefinition
-        ach_submissions = NumSubmissionsProblemsAchievementDefinition(name='Tipos', description='Resuelve uno',
+        ach_submissions = NumSubmissionsProblemsAchievementDefinition(name='Ya van dos problemas',
+                                                                      description='Realiza un envio en dos problemas',
                                                                       num_problems=2, num_submissions=2)
         ach_submissions.save()
         date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
@@ -252,15 +274,16 @@ class RankingTest(TestCase):
     def test_incorrect_submit_get_achievement(self):
         """Test if an incorrect submission get an achievement"""
         client = Client()
-        user = create_user('passwordhigh', 'mazepin')
+        user = create_user('passwordmazepin', 'mazepin')
         coll = create_collection('Coleccion de cartas')
-        problem = create_select_problem(coll, 'Problema 1')
-        ach_submissions = NumSubmissionsProblemsAchievementDefinition(name='Tipos', description='Resuelve uno',
+        problem = create_select_problem(coll, 'Problema')
+        ach_submissions = NumSubmissionsProblemsAchievementDefinition(name='Un envio',
+                                                                      description='Envia una solucion para un problema',
                                                                       num_problems=1, num_submissions=1)
         ach_submissions.save()
-        client.login(username='mazepin', password='passwordhigh')
+        client.login(username='mazepin', password='passwordmazepin')
         submit_select_url = reverse('judge:submit', args=[problem.pk])
-        client.post(submit_select_url, {'code': 'problem.solution'}, follow=True)
+        client.post(submit_select_url, {'code': 'CODIGO INCORRECTO'}, follow=True)
         self.assertEqual(ObtainedAchievement.objects.filter(user=user).count(), 1)
 
     def test_return_none(self):
