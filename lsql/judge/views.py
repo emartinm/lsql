@@ -23,7 +23,8 @@ from logzero import logger
 from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table, filter_expected_db
 from .forms import SubmitForm, ResultForm
-from .models import Collection, Problem, Submission, ObtainedAchievement, AchievementDefinition
+from .models import Collection, Problem, Submission, ObtainedAchievement, AchievementDefinition, \
+    NumSubmissionsProblemsAchievementDefinition
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
 
@@ -396,6 +397,9 @@ def submit(request, problem_id):
     # If veredict is correct look for an achievement to complete if it's possible
     if data['veredict'] == VeredictCode.AC:
         check_if_get_achievement(request.user)
+    else:
+        for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():
+            ach.check_and_save(request.user)
     logger.debug('Stored submission %s', submission)
     return JsonResponse(data)
 
