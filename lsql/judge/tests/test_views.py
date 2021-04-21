@@ -495,13 +495,13 @@ class ViewsTest(TestCase):
 
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': ''}, follow=True)
-        self.assertIn("field is required", response.content.decode('utf-8'))
+        self.assertIn("Este campo es obligatorio", response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': 'eee', 'end': end}, follow=True)
-        self.assertIn("Enter a valid date", response.content.decode('utf-8'))
+        self.assertIn("Introduzca una fecha válida", response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'end': end}, follow=True)
-        self.assertIn("field is required",
+        self.assertIn("Este campo es obligatorio",
                       response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': start}, follow=True)
@@ -580,7 +580,7 @@ class ViewsTest(TestCase):
         # I connect to a non-numeric group
         response = client.get(classification_url,
                               {'group': '1A', 'start': start, 'end': end}, follow=True)
-        msg = 'Enter a whole number'
+        msg = 'Introduzca un número entero'
         self.assertEqual(response.status_code, 404)
         self.assertIn(msg, response.content.decode('utf-8'))
         client.logout()

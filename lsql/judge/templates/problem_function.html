@@ -1,5 +1,6 @@
 {% extends "problem.html" %}
+{% load i18n %}
 {% block expected_result %}
-<h2>Resultado esperado</h2>
+<h2>{% translate "Resultado esperado" %}</h2>
 {% include 'show_table.html' with table=problem.result_as_table name=None %}
 {% endblock %}

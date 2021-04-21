@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block menu %}
 {% endblock %}
 {% block contenido %}
 <div class="alert alert-primary" role="alert">
-    <h2>La sesión se ha cerrado correctamente</h2>
-    Para volver a acceder, dirígiete a la página principal de LSQL.
+    <h2>{% translate "La sesión se ha cerrado correctamente" %}</h2>
+    {% translate "Para volver a acceder, dirígiete a la página principal de LSQL." %}
 </div>
 {% endblock %}
