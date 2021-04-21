@@ -11,9 +11,6 @@
         <a class="nav-link" href="{% url 'judge:collections' %}">{% translate "Ejercicios" %}</a>
       </li>
       <li>
-        <a class="nav-link" href="{% url 'judge:submissions' %}">{% translate "Mis envíos" %}</a>
-      </li>
-      <li>
         <a class="nav-link" href="{% url 'judge:results' %}">{% translate "Clasificación" %}</a>
       </li>
       <li>
@@ -24,6 +21,8 @@
           {{ request.user.email }}
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="{% url 'judge:submissions' %}">{% translate "Mis envíos" %}</a>
+          <div class="dropdown-divider"></div>
 		  <a class="dropdown-item" href="{% url 'judge:achievements' request.user.pk %}">{% translate "Mis logros" %}</a>
 		  <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="{% url 'judge:password_change' %}">{% translate "Cambiar contraseña" %}</a>
