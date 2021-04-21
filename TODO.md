@@ -1,9 +1,3 @@
-# TODO:
- * Hacer un robots.txt para evitar que indexen imágenes ni nada
- * Indicar ilustraciones obtenidas de:
-   * https://freesvg.org/red-cross-not-ok-vector-icon (dominio público)
-   * https://icons.getbootstrap.com/ (MIT)
-   
 # Tareas completadas:
 
 ## Iker
@@ -66,7 +60,10 @@ modificadas).
 Sistema de logros para aumentar la competitividad, p-ej. `Realiza 3 ejercicios de inserción`
 
 * (Jesús) [**Dificultad alta**] [**Tarea para Daniel PR #63 y PR #64**]
-Diseñar los conjuntos de datos necesarios para probar una consulta que es errónea. Otro enfoque (Enrique) sería dar dos consultas SQL y pedir al estudiante qué datos tendrían que tener las tablas para que los resultados fueran diferentes. 
+Diseñar los conjuntos de datos necesarios para probar una consulta que es errónea. Otro enfoque (Enrique) sería dar dos consultas SQL y pedir al estudiante qué datos tendrían que tener las tablas para que los resultados fueran diferentes.
+  
+* (Daniel) [**Dificultad baja**] [**Tarea para Daniel PR #70**]
+Añadir dos nuevas definiciones de logros.
 
 
 
@@ -138,7 +135,3 @@ en un esquema limpio de BD. Los esquemas generados de esta forma deben
 permitir un nivel de persistencia asociado al usuario, por ejemplo
 hasta las 00:00 del día siguiente. O mejor aún, que se pueda
 configurar para cada usuario.
-
-
-
-
