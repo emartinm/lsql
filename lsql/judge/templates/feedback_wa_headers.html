@@ -1,6 +1,7 @@
 {% extends "feedback_wa.html" %}
+{% load i18n %}
 {% block feedback %}
-<p>Hay diferencias en el <strong><code class="code">{{comment}}</code> </strong>
+<p>{% translate "Hay diferencias en el " %}<strong><code class="code">{{comment}}</code> </strong>
     <ul>
         <li>
             <strong><code class="code">{{expected}}</code></strong>  <br/>
@@ -10,7 +11,7 @@
             <strong><code class="code">{{obtained}}</code></strong><br/>
             <code>{{obtained_rows}}</code></li>
         </ul>
-    Recuerda que tanto el nombre de cada columna como su tipo y el orden en el que aparecen debe coincidir <strong>exactamente</strong>.
+        {% translate "Recuerda que tanto el nombre de cada columna como su tipo y el orden en el que aparecen debe coincidir" %} <strong>{% translate "exactamente" %}</strong>.
 </p>
 <style>
     .code{ color:black;}

@@ -1,5 +1,6 @@
+{% load i18n %}
 <p>
-Ha habido errores al compilar tu código SQL:
+    {% translate "Ha habido errores al compilar tu código SQL:" %}
 
 {% include 'show_table.html' with table=table name=None mark_rows=mark_rows %}
 </p>

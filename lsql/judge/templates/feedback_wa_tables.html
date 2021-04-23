@@ -1,15 +1,16 @@
 {% extends "feedback_wa.html" %}
+{% load i18n %}
 {% block feedback %}
-<p>Hay diferencias en las tablas presentes en la base de datos:
+<p>{% translate "Hay diferencias en las tablas presentes en la base de datos:" %}
     <ul>
         <li>
-            <strong>Se esperaban las siguientes tablas:</strong><br/>
+            <strong>{% translate "Se esperaban las siguientes tablas:" %}</strong><br/>
             <code>{{expected}}</code>
         </li>
         <li>
-            <strong>Tu código SQL ha generado las siguientes tablas:</strong><br/>
+            <strong>{% translate "Tu código SQL ha generado las siguientes tablas:" %}</strong><br/>
             <code>{{obtained}}</code></li>
         </ul>
-    Recuerda que el nombre de cada tabla debe coincidir <strong>exactamente</strong>.
+        {% translate "Recuerda que el nombre de cada tabla debe coincidir" %} <strong>{% translate "exactamente" %}</strong>.
 </p>
 {% endblock feedback %}

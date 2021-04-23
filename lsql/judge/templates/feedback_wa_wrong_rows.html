@@ -1,9 +1,12 @@
 {% extends "feedback_wa.html" %}
+{% load i18n %}
 {% block feedback %}
 <p>
-Existen algunas filas incorrectas.
-A continuación se muestran todas las filas, remarcando aquellas que contienen valores incorrectos en alguna columna o
-que no deberían aparecer.
+    {% translate "Existen algunas filas incorrectas." %}
+    {% blocktranslate %}
+    A continuación se muestran todas las filas, remarcando aquellas que contienen
+    valores incorrectos en alguna columna o que no deberían aparecer.
+    {% endblocktranslate %}
 
 {% include 'show_table.html' with table=table name=None mark_rows=mark_rows %}
 </p>
