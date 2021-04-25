@@ -515,5 +515,6 @@ def download_ranking(request, collection_id):
 
 @staff_member_required
 def statistics_submissions(request):
+    """ Shows statistics page containing charts and other summarized information """
     all_submissions_count = submissions_by_day()
     return render(request, 'statistics_submissions.html', {'all_submissions_count': all_submissions_count})
