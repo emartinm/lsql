@@ -10,6 +10,7 @@ import os
 import pathlib
 from bs4 import BeautifulSoup
 import openpyxl
+from logzero import logger
 
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.http.response import HttpResponse, HttpResponseNotFound
@@ -19,7 +20,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext_lazy as _
-from logzero import logger
+from django.contrib.admin.views.decorators import staff_member_required
 
 from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table, filter_expected_db
@@ -28,6 +29,7 @@ from .models import Collection, Problem, Submission, ObtainedAchievement, Achiev
     NumSubmissionsProblemsAchievementDefinition
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
+from .statistics import submissions_by_day
 
 # TRANSLATIONS #
 # To translate the code to another language you need to create the translation file using
@@ -38,6 +40,7 @@ from .types import VeredictCode, OracleStatusCode, ProblemType
 # Execute the "django-admin compilemessages" command.
 # If the msgstr is empty, it will use the msgid instead.
 # https://mlocati.github.io/articles/gettext-iconv-windows.html is necessary to execute the commands.
+
 
 ####################
 # Helper functions #
@@ -479,7 +482,7 @@ def download_ranking(request, collection_id):
             # Information of a student (Pos, User, Exercises, Score, Solved)
             for j in tds:
                 name = j.find('span', class_='ranking-username')
-                if name is not None :
+                if name is not None:
                     book.cell(row=row, column=col, value=name.string.strip())
                     col += 1
                 if j.string is not None:
@@ -508,3 +511,9 @@ def download_ranking(request, collection_id):
     if request.user.is_staff and not result_form.is_valid():
         return HttpResponseNotFound(str(result_form.errors))
     return HttpResponseForbidden("Forbidden")
+
+
+@staff_member_required
+def statistics_submissions(request):
+    all_submissions_count = submissions_by_day()
+    return render(request, 'statistics_submissions.html', {'all_submissions_count': all_submissions_count})

@@ -18,10 +18,9 @@ __ALPHABET = string.ascii_lowercase + string.ascii_uppercase + string.digits
 
 @register.simple_tag
 def random_id(size):
-    """Generates a random ID of 'size' for future get_random_id calls. Returns the empty string.
-    """
+    """ Generates a random ID of 'size' letters and digits """
     size = max(1, size)  # non-positive sizes are considered as 1
-    gen_id  = ""
+    gen_id = ""
     for _ in range(size):
         gen_id += random.choice(__ALPHABET)
     return gen_id

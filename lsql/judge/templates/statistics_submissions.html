@@ -1,0 +1,44 @@
+{% extends "base_menu.html" %}
+{% load static %}
+{% block contenido %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.26.1/dist/apexcharts.min.js"
+        integrity="sha256-L/wKrFoAMCGZhJntzxj0jCUITCWMdFzBtTGCUIvsilA=" crossorigin="anonymous"></script>
+<div id="chartSubmissions"></div>
+<script>
+var options = {
+  series: [{
+    name: 'Num. envíos',
+    data: {{ all_submissions_count }}
+  }],
+  chart: {
+    id: 'area-datetime',
+    type: 'area',
+    height: 350,
+    zoom: { autoScaleYaxis: true }
+  },
+  title: {
+    text: 'Número total de envíos',
+    align: 'left'
+  },
+  dataLabels: {
+    enabled: false
+  },
+  markers: {
+    size: 0,
+    style: 'hollow',
+  },
+  xaxis: {
+    type: 'datetime',
+    tickAmount: 6,
+  },
+  tooltip: {
+     x: {
+       format: 'dd MMM yyyy'
+     }
+  },
+};
+
+var chart = new ApexCharts(document.querySelector("#chartSubmissions"), options);
+chart.render();
+</script>
+{% endblock %}
