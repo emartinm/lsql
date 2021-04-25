@@ -1,44 +1,86 @@
 {% extends "base_menu.html" %}
+{% load i18n %}
 {% load static %}
 {% block contenido %}
+<h1>{% translate 'Número de envíos' %}</h1>
+<table class="table">
+    <thead class="thead-dark">
+    <tr>
+          <th scope="col">{% translate 'Total' %}</th>
+          <th scope="col">{% translate 'AC' %}</th>
+          <th scope="col">{% translate 'WA' %}</th>
+          <th scope="col">{% translate 'RE' %}</th>
+          <th scope="col">{% translate 'TLE' %}</th>
+          <th scope="col">{% translate 'VE' %}</th>
+          <th scope="col">{% translate 'IE' %}</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>{{ submission_count.all }}</td>
+        <td>{{ submission_count.AC }}</td>
+        <td>{{ submission_count.WA }}</td>
+        <td>{{ submission_count.RE }}</td>
+        <td>{{ submission_count.TLE }}</td>
+        <td>{{ submission_count.VE }}</td>
+        <td>{{ submission_count.IE }}</td>
+    </tr>
+    </tbody>
+  </table>
+
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.26.1/dist/apexcharts.min.js"
         integrity="sha256-L/wKrFoAMCGZhJntzxj0jCUITCWMdFzBtTGCUIvsilA=" crossorigin="anonymous"></script>
-<div id="chartSubmissions"></div>
+<div id="chartAllSubmissions"></div>
 <script>
 var options = {
-  series: [{
-    name: 'Num. envíos',
-    data: {{ all_submissions_count }}
-  }],
-  chart: {
-    id: 'area-datetime',
-    type: 'area',
-    height: 350,
-    zoom: { autoScaleYaxis: true }
-  },
-  title: {
-    text: 'Número total de envíos',
-    align: 'left'
-  },
-  dataLabels: {
-    enabled: false
-  },
-  markers: {
-    size: 0,
-    style: 'hollow',
-  },
-  xaxis: {
-    type: 'datetime',
-    tickAmount: 6,
-  },
-  tooltip: {
-     x: {
-       format: 'dd MMM yyyy'
-     }
-  },
+    series: [
+        {
+            name: '{% translate 'WA' %}',
+            data: {{ wa_submissions_count }}
+        },
+        {
+            name: '{% translate 'RE' %}',
+            data: {{ re_submissions_count }}
+        },
+        {
+            name: '{% translate 'AC' %}',
+            data: {{ ac_submissions_count }}
+        },
+        {
+            name: '{% translate 'Total' %}',
+            data: {{ all_submissions_count }}
+        },
+    ],
+    colors: ['#FF0000', '#FF8000', '#00E396', '#008FFB',],
+    chart: {
+        id: 'all_subs',
+        type: 'area',
+        height: 350,
+        zoom: { autoScaleYaxis: true }
+    },
+    title: {
+        text: '{% translate 'Total de envíos por día' %}',
+        align: 'left'
+    },
+    dataLabels: {
+        enabled: false
+    },
+    markers: {
+        size: 0,
+        style: 'hollow',
+    },
+    xaxis: {
+        type: 'datetime',
+        tickAmount: 6,
+    },
+    tooltip: {
+        x: {
+            format: 'dd MMM yyyy'
+        }
+    },
 };
 
-var chart = new ApexCharts(document.querySelector("#chartSubmissions"), options);
+var chart = new ApexCharts(document.querySelector("#chartAllSubmissions"), options);
 chart.render();
 </script>
 {% endblock %}

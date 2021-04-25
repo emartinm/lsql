@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-25 13:26+0200\n"
+"POT-Creation-Date: 2021-04-25 21:40+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Iván Ruiz <ivarui01@ucm.es@ADDRESS>\n"
 "Language-Team: Español\n"
@@ -118,7 +118,7 @@ msgid "Ayuda"
 msgstr "Help"
 
 #: judge/templates/base_menu.html:24 judge/templates/submissions.html:4
-msgid "Mis os"
+msgid "Mis envíos"
 msgstr "My submissions"
 
 #: judge/templates/base_menu.html:26
@@ -142,6 +142,7 @@ msgid "Listado de problemas"
 msgstr "Problem list"
 
 #: judge/templates/collection.html:14
+#: judge/templates/statistics_submissions.html:5
 msgid "Número de envíos"
 msgstr "Number of submissions"
 
@@ -562,6 +563,42 @@ msgstr " (Modified table)"
 #: judge/templates/show_expected_tables.html:19
 msgid " (Tabla eliminada)"
 msgstr " (Deleted table)"
+
+#: judge/templates/statistics_submissions.html:9
+#: judge/templates/statistics_submissions.html:50
+msgid "Total"
+msgstr "Total"
+
+#: judge/templates/statistics_submissions.html:10
+#: judge/templates/statistics_submissions.html:46
+msgid "AC"
+msgstr "AC"
+
+#: judge/templates/statistics_submissions.html:11
+#: judge/templates/statistics_submissions.html:38
+msgid "WA"
+msgstr "WA"
+
+#: judge/templates/statistics_submissions.html:12
+#: judge/templates/statistics_submissions.html:42
+msgid "RE"
+msgstr "RE"
+
+#: judge/templates/statistics_submissions.html:13
+msgid "TLE"
+msgstr "TLE"
+
+#: judge/templates/statistics_submissions.html:14
+msgid "VE"
+msgstr "VE"
+
+#: judge/templates/statistics_submissions.html:15
+msgid "IE"
+msgstr "IE"
+
+#: judge/templates/statistics_submissions.html:62
+msgid "Total de envíos por día"
+msgstr "Total submissions per day"
 
 #: judge/templates/submission.html:7
 msgid "Envío"

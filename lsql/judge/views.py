@@ -29,7 +29,7 @@ from .models import Collection, Problem, Submission, ObtainedAchievement, Achiev
     NumSubmissionsProblemsAchievementDefinition
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
-from .statistics import submissions_by_day
+from .statistics import submissions_by_day, submission_count
 
 # TRANSLATIONS #
 # To translate the code to another language you need to create the translation file using
@@ -517,4 +517,15 @@ def download_ranking(request, collection_id):
 def statistics_submissions(request):
     """ Shows statistics page containing charts and other summarized information """
     all_submissions_count = submissions_by_day()
-    return render(request, 'statistics_submissions.html', {'all_submissions_count': all_submissions_count})
+    start = all_submissions_count[0][0]
+    end = all_submissions_count[-1][0]
+    ac_submissions = submissions_by_day(start, end, verdict_code=VeredictCode.AC)
+    wa_submissions = submissions_by_day(start, end, verdict_code=VeredictCode.WA)
+    re_submissions = submissions_by_day(start, end, verdict_code=VeredictCode.RE)
+    sub_count = submission_count()
+    return render(request, 'statistics_submissions.html',
+                  {'all_submissions_count': all_submissions_count,
+                   'ac_submissions_count': ac_submissions,
+                   'wa_submissions_count': wa_submissions,
+                   're_submissions_count': re_submissions,
+                   'submission_count': sub_count})

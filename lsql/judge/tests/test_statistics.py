@@ -10,14 +10,15 @@ from django.test import TestCase
 from judge.tests.test_views import create_select_problem, create_collection, create_user
 from judge.types import VeredictCode
 from judge.models import Submission
-from judge.statistics import submissions_by_day
+from judge.statistics import submissions_by_day, submission_count
 
 
 class StatisticsTest(TestCase):
     """ Tests for judge.statistics """
 
     def test_all_submissions(self):
-        """ Test the list [epoch, count] for different types of verdicts and days """
+        """ Test the list [epoch, count] for different types of verdicts and days, and also the counter of submissions
+        """
         collection = create_collection('Test for statistics')
         problem = create_select_problem(collection, 'Dummy for statistics')
         user1 = create_user('0000', 'ana')
@@ -75,3 +76,13 @@ class StatisticsTest(TestCase):
         self.assertEqual(count_re[0], [dates_epoch_ms[0], 0])  # 0 RE submissions on 1st day (2020-2-12)
         self.assertEqual(count_re[3], [dates_epoch_ms[2], 1])  # 1 submissions on 4th day
         self.assertEqual(count_re[8], [dates_epoch_ms[5], 0])  # 0 RE submission on 9th day (2020-2-20)
+
+        # Test the counter of submissions
+        sub_count = submission_count()
+        self.assertEqual(sub_count['all'], 6)
+        self.assertEqual(sub_count[VeredictCode.AC], 2)
+        self.assertEqual(sub_count[VeredictCode.WA], 1)
+        self.assertEqual(sub_count[VeredictCode.RE], 1)
+        self.assertEqual(sub_count[VeredictCode.TLE], 1)
+        self.assertEqual(sub_count[VeredictCode.VE], 1)
+        self.assertEqual(sub_count[VeredictCode.IE], 0)
