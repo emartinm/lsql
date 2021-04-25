@@ -842,3 +842,31 @@ class ViewsTest(TestCase):
         client.login(username='pepe', password='5555')
         content = client.get(help_url, follow=True).content.decode('utf-8')
         self.assertIn("Presentación", content)
+
+    def test_statistics(self):
+        """ Statistics contains some text for staff and redirects standard and not logged users """
+        client = Client()
+        stats_url = reverse('judge:statistics_submissions')
+        login_redirect_url = reverse('admin:login')
+        login_redirect_stats_url = f'{login_redirect_url}?next={stats_url}'
+
+        # Staff user
+        create_superuser('0000', username='staff')
+        client.login(username='staff', password='0000')
+        content = client.get(stats_url, follow=True).content.decode('utf-8')
+        self.assertIn("Número de envíos", content)
+        self.assertIn("TLE", content)
+        client.logout()
+
+        # Standard user -> redirects to admin login
+        create_user('5555', 'pepe')
+        client.login(username='pepe', password='5555')
+        response = client.get(stats_url, follow=True)
+        self.assertEqual(response.redirect_chain,
+                         [(login_redirect_stats_url, 302)])
+        client.logout()
+
+        # Not logged user -> redirects to admin login
+        response = client.get(stats_url, follow=True)
+        self.assertEqual(response.redirect_chain,
+                         [(login_redirect_stats_url, 302)])

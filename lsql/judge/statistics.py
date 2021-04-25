@@ -28,6 +28,10 @@ def submissions_by_day(start=None, end=None, verdict_code=None):
     # List of epochs at 00:00 (in milliseconds) of each day for every submission
     days = list(map(lambda d: int(d.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()) * 1000,
                     subs.values_list('creation_date', flat=True)))
+    if not days:
+        # No submissions
+        return list()
+
     first = days[0] if start is None else start
     last = days[-1] if end is None else end
     counter = Counter(days)

@@ -517,8 +517,8 @@ def download_ranking(request, collection_id):
 def statistics_submissions(request):
     """ Shows statistics page containing charts and other summarized information """
     all_submissions_count = submissions_by_day()
-    start = all_submissions_count[0][0]
-    end = all_submissions_count[-1][0]
+    start = all_submissions_count[0][0] if all_submissions_count else None
+    end = all_submissions_count[-1][0] if all_submissions_count else None
     ac_submissions = submissions_by_day(start, end, verdict_code=VeredictCode.AC)
     wa_submissions = submissions_by_day(start, end, verdict_code=VeredictCode.WA)
     re_submissions = submissions_by_day(start, end, verdict_code=VeredictCode.RE)
