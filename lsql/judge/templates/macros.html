@@ -1,3 +1,4 @@
+{% load i18n %}
 {% macro show_list_of_dicts(dlist) -%}
 {% if dlist %}
 {% set headers = dlist[0].keys() %}
@@ -26,11 +27,11 @@
     <table class="table">
         <thead class="thead-dark">
         <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Usuario</th>
-            <th scope="col">Fecha</th>
-            <th scope="col">Problema</th>
-            <th scope="col">Veredicto</th>
+            <th scope="col">{% translate "ID</th>
+            <th scope="col">{% translate "Usuario" %}</th>
+            <th scope="col">{% translate "Fecha" %}</th>
+            <th scope="col">{% translate "Problema" %}</th>
+            <th scope="col">{% translate "Veredicto" %}</th>
             <th></th>
         </tr>
         </thead>
@@ -42,7 +43,7 @@
             <td>{{s.creation_date_str}}</td>
             <td><strong>{{s.title}}</strong></td>
             <td>{% autoescape false %}{{s.veredict_code_html}}{% endautoescape %}</td>
-            <td><a href="/sql/submission/{{s.sid}}" title="Ver detalles del envío">Ver</a></td>
+            <td><a href="/sql/submission/{{s.sid}}" title='{% translate "Ver detalles del envío" %}'>{% translate "Ver" %}</a></td>
         </tr>
         {% endfor %}
         </tbody>

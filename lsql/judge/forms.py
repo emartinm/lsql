@@ -7,6 +7,7 @@ Forms used in LSQL
 from datetime import date
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 
 class FunctionProblemAdminForm(forms.ModelForm):
@@ -48,9 +49,9 @@ class ResultForm(forms.Form):
         end = cleaned_data.get("end")
         if end is not None and start is not None:
             if end < start:
-                raise ValidationError("¡Error! La fecha inicial no puede ser mayor que la fecha final.")
+                raise ValidationError(_("¡Error! La fecha inicial no puede ser mayor que la fecha final."))
             if end > date.today():
-                raise ValidationError("¡Error! La fecha final no puede ser mayor que la fecha de hoy.")
+                raise ValidationError(_("¡Error! La fecha final no puede ser mayor que la fecha de hoy."))
 
 
 class SubmitForm(forms.Form):

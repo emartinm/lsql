@@ -1,20 +1,21 @@
 {% extends "base_menu.html" %}
+{% load i18n %}
 {% load static %}
 {% block contenido %}
 
 {% if login.is_staff %}
 <div class="d-flex mb-3">
-    <h2 class="float-left">Colección: {{collection.name_html|safe}}</h2>
+    <h2 class="float-left">{% translate "Colección:" %} {{collection.name_html|safe}}</h2>
 <div class="col md-3">
-    <h2 class="float-right">Desde {{from_date|date:"d/m/Y"}} hasta {{to_date|date:"d/m/Y"}}</h2>
+    <h2 class="float-right">{% translate "Desde" %} {{from_date|date:"d/m/Y"}} {% translate "hasta" %} {{to_date|date:"d/m/Y"}}</h2>
 </div>
 </div>
 {% else %}
-    <h2 class="text-center mb-3">Colección: {{collection.name_html|safe}}</h2>
+    <h2 class="text-center mb-3">{% translate "Colección:" %} {{collection.name_html|safe}}</h2>
 {% endif %}
 <div class="d-flex mb-1">
     <form class="d-flex" method="get" action="{% url 'judge:result' collection.id %}">
-        <p class="h4">Grupo:</p>
+        <p class="h4">{% translate "Grupo:" %}</p>
         <select class="ml-1" name="group" id="clase" onchange="this.parentNode.submit()">
         <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
             {% for group in groups %}
@@ -22,15 +23,15 @@
             {% endfor %}
         </select>
         {% if login.is_staff %}
-            <p class="h4 ml-3 mr-1">Desde: </p>
+            <p class="h4 ml-3 mr-1">{% translate "Desde:" %} </p>
             <input name="start" id="desde_date" type="date" data-date="{{start_date}}" data-date-format="DD MMMM YYYY"
             value="{{start_date|date:'Y-m-d'}}"  max="{{to_fixed}}">
-            <p class="h4 ml-3 mr-1">Hasta: </p>
+            <p class="h4 ml-3 mr-1">{% translate "Hasta:" %} </p>
             <input name="end" id= "hasta_date" type="date" data-date="{{end_date}}" data-date-format="DD MMMM YYYY"
             value="{{end_date|date:'Y-m-d'}}" max="{{to_fixed}}">
             <button id="filterButton" type="submit"  class="btn btn-primary ml-3"
-                title="Filtro de ejercicios entre dos periodos">
-                <i class="fas fa-filter"></i> Filtrar
+                title='{% translate "Filtro de ejercicios entre dos periodos" %}'>
+                <i class="fas fa-filter"></i> {% translate "Filtrar" %}
             </button>
         {% endif %}
     </form>
@@ -38,12 +39,12 @@
     {% if login.is_staff %}
         <div class="col md-3">
             <a href="{% url 'judge:download_ranking' collection.id %}?group={{group0.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}">
-            <button type="button" class="btn btn-primary" title="csv con el ranking">Descargar ranking</button>
+            <button type="button" class="btn btn-primary" title='{% translate "csv con el ranking" %}'>{% translate "Descargar ranking" %}</button>
             </a>
         </div>
     {% endif %}
     <div class="col">
-        <button class="bg-white border-0 float-right"title="Leyenda" data-target="#exampleModal" data-toggle="modal"
+        <button class="bg-white border-0 float-right"title='{% translate "Leyenda" %}' data-target="#exampleModal" data-toggle="modal"
                 type="button"><i class="far fa-question-circle fa-2x"></i></button>
     </div>
 </div>
@@ -53,39 +54,40 @@
   <div class="modal-dialog  modal-lg">
     <div class="modal-content">
       <div class="modal-header d-block">
-        <h5 class="modal-title text-center" id="exampleModalLabel">LEYENDA</h5>
+        <h5 class="modal-title text-center" id="exampleModalLabel">{% translate "LEYENDA" %}</h5>
       </div>
       <div class="modal-body">
           <div class="d-flex p-2">
                <div class="bg-info h-40 w-25 text-center mb-1 border border-dark">1</div>
-               <div class="text-center w-75">Posición del usuario</div>
+               <div class="text-center w-75">{% translate "Posición del usuario" %}</div>
           </div>
           <div class="d-flex p-2">
                <div class="bg-success h-40 w-25 text-center mb-1 border border-dark">3/8 (5)</div>
-               <div class="text-left ml-1 w-75">Ejercicio resuelto 3 veces de 8 intentos (1er envío aceptado en el 5º intento)</div>
+               <div class="text-left ml-1 w-75">{% translate "Ejercicio resuelto 3 veces de 8 intentos (1er envío aceptado en el 5º intento)" %}</div>
           </div>
           <div class="d-flex p-2">
                <div class="bg-danger h-40 w-25 text-center mb-1 border border-dark">0/9 (9)</div>
-              <div class="text-center w-75">Ejercicio resuelto 0 veces de 9 intentos (9 intentos sin envío aceptado)</div>
+              <div class="text-center w-75">{% translate "Ejercicio resuelto 0 veces de 9 intentos (9 intentos sin envío aceptado)" %}</div>
           </div>
           <div class="d-flex p-2">
                <div class="bg-white h-40 w-25 text-center mb-1 border border-dark">0/0 (0)</div>
-              <div class="text-center w-75">Ejercicio no intentado (0 intentos sin envío aceptado)</div>
+              <div class="text-center w-75">{% translate "Ejercicio no intentado (0 intentos sin envío aceptado)" %}</div>
           </div>
           <div class="d-flex p-2">
-               <div class="bg-dark h-40 w-25 text-center mb-1 border border-dark text-white">Puntuación</div>
-              <div class="text-center w-75">Suma del primer envío aceptado de cada ejercicio</div>
+               <div class="bg-dark h-40 w-25 text-center mb-1 border border-dark text-white">{% translate "Puntuación" %}</div>
+              <div class="text-center w-75">{% translate "Suma del primer envío aceptado de cada ejercicio" %}</div>
           </div>
           <div class="d-flex p-2">
                <div class="bg-dark h-40 w-25 text-center mb-1 border border-dark text-white
-               justify-content-center align-self-center ">Ranking</div>
-              <div class="text-center w-75">1º Alumno con más Resueltos<br>2º En caso de empate
-              alumno con menos Puntuación<br>3º En caso de empate , se comparte posición</div>
+               justify-content-center align-self-center ">{% translate "Ranking" %}</div>
+              <div class="text-center w-75">{% translate "1º Alumno con más Resueltos" %}<br>
+                {% translate "2º En caso de empate alumno con menos Puntuación" %}<br>
+                {% translate "3º En caso de empate, se comparte posición" %}</div>
           </div>
 
       </div>
       <div class="modal-footer d-flex justify-content-center">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{% translate "Cerrar" %}</button>
       </div>
     </div>
   </div>
@@ -93,15 +95,15 @@
 <table class="table text-center border border-dark">
     <thead class="thead-dark">
       <tr>
-          <th class=" border border-light" scope="col">Pos.</th>
-          <th  class=" border border-light" scope="col">Usuario</th>
+          <th class=" border border-light" scope="col">{% translate "Pos." %}</th>
+          <th  class=" border border-light" scope="col">{% translate "Usuario" %}</th>
           {% for p in collection.problem_list %}
              <th  class=" border border-light" scope="col" >
-                 <a class="text-white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">EJ{{forloop.counter}}</a>
+                 <a class="text-white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">{% translate "EJ" %}{{forloop.counter}}</a>
              </th>
           {% endfor %}
-          <th  class=" border border-light" scope="col" >Puntuación</th>
-          <th  class=" border border-light" scope="col ">Resueltos</th>
+          <th  class=" border border-light" scope="col" >{% translate "Puntuación" %}</th>
+          <th  class=" border border-light" scope="col ">{% translate "Resueltos" %}</th>
       </tr>
     </thead>
     <tbody>

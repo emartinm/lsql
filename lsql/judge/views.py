@@ -18,6 +18,7 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import login_required
+from django.utils.translation import gettext_lazy as _
 from logzero import logger
 
 from .exceptions import ExecutorException
@@ -139,7 +140,7 @@ def show_result(request, collection_id):
     if not Group.objects.all():
         # Show an informative message if there are not groups in the system
         return render(request, 'generic_error_message.html',
-                      {'error': ['¡Lo sentimos! No existe ningún grupo para ver resultados']})
+                      {'error': [_('¡Lo sentimos! No existe ningún grupo para ver resultados')]})
     position = 1
     result_form = ResultForm(request.GET)
     start = None
@@ -212,14 +213,14 @@ def show_results(request):
     if not Group.objects.all():
         # Show an informative message if there are not groups in the system
         return render(request, 'generic_error_message.html',
-                      {'error': ['¡Lo sentimos! No existe ningún grupo para ver resultados']})
+                      {'error': [_('¡Lo sentimos! No existe ningún grupo para ver resultados')]})
 
     cols = Collection.objects.all().order_by('position', '-creation_date')
     groups_user = request.user.groups.all().order_by('name')
     if groups_user.count() == 0 and not request.user.is_staff:
         return render(request, 'generic_error_message.html',
-                      {'error': ['¡Lo sentimos! No tienes asignado un grupo de la asignatura.',
-                                 'Por favor, contacta con tu profesor para te asignen un grupo de clase.']
+                      {'error': [_('¡Lo sentimos! No tienes asignado un grupo de la asignatura.'),
+                                 _('Por favor, contacta con tu profesor para te asignen un grupo de clase.')]
                        })
     if groups_user.count() == 0 and request.user.is_staff:
         groups_user = Group.objects.all().order_by('name')
@@ -311,7 +312,7 @@ def show_submissions(request):
             submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
         return render(request, 'submissions.html', {'submissions': subs})
     except ValueError:
-        return HttpResponseNotFound("El identificador no tiene el formato correcto")
+        return HttpResponseNotFound(_("El identificador no tiene el formato correcto"))
 
 
 @login_required

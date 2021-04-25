@@ -46,11 +46,12 @@ class VeredictCode(models.TextChoices):
                     'es la adecuada y que estás enviando texto plano con letras del alfabeto inglés '
                     '(sin tildes).')
             if problem is not None and problem.min_stmt == problem.max_stmt:
-                ending = "sentencias SQL" if problem.max_stmt > 1 else "sentencia SQL"
-                msg = _(f'Se esperaba exactamente {problem.min_stmt} {ending}.')
+                ending = _("sentencias SQL") if problem.max_stmt > 1 else _("sentencia SQL")
+                msg = _('Se esperaba exactamente {min_stmt} {ending}.').format(min_stmt=problem.min_stmt, ending=ending)
             elif problem is not None:
-                ending = "sentencias SQL" if problem.max_stmt > 1 else "sentencia SQL"
-                msg = _(f'Tu envío debe estar formado por entre {problem.min_stmt} y {problem.max_stmt} {ending}.')
+                ending = _("sentencias SQL") if problem.max_stmt > 1 else _("sentencia SQL")
+                msg = _('Tu envío debe estar formado por entre {min_stmt} y {max_stmt} '
+                        '{ending}.').format(min_stmt=problem.min_stmt, max_stmt=problem.max_stmt, ending=ending)
 
         return msg
 

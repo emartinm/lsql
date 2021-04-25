@@ -7,6 +7,7 @@ Generation of feedback messages
 import re
 
 from django.template.loader import render_to_string
+from django.utils.translation import gettext_lazy as _
 from multiset import Multiset
 
 from .types import VeredictCode
@@ -54,9 +55,9 @@ def feedback_headers(expected, obtained, initial_db=None):
         return ''
 
     if len(expected['header']) != len(obtained['header']):
-        _expected = f"Esperado: {len(expected['header'])} columnas"
-        _obtained = f"Generado por tu código SQL: {len(obtained['header'])} columnas"
-        comment = "Número de columnas obtenidas:"
+        _expected = _('Esperado: {number} columnas').format(number=len(expected['header']))
+        _obtained = _('Generado por tu código SQL: {number} columnas').format(number=len(obtained['header']))
+        comment = _("Número de columnas obtenidas:")
         return render_to_string('feedback_wa_headers.html',
                                 {'expected': _expected,
                                  'comment': comment,
@@ -74,9 +75,9 @@ def feedback_headers(expected, obtained, initial_db=None):
         name_obtained = obtained['header'][i][0]
         oracle_type_obtained = pretty_type(obtained['header'][i][1])
         if name_expected.upper() != name_obtained.upper():
-            expected_r = f"Nombre esperado: {name_expected}"
-            obtained_r = f"Nombre generado por tu código SQL: {name_obtained}"
-            comment = f"nombre de la {i+1}ª columna"
+            expected_r = _('Nombre esperado: {name}').format(name=name_expected)
+            obtained_r = _('Nombre generado por tu código SQL: {name}').format(name=name_obtained)
+            comment = _('nombre de la {number}ª columna').format(number=(i+1))
             return render_to_string('feedback_wa_headers.html',
                                     {'expected': expected_r,
                                      'comment': comment,
@@ -85,9 +86,9 @@ def feedback_headers(expected, obtained, initial_db=None):
                                     )
         if name_expected.upper() == name_obtained.upper() and \
                 oracle_type_expected.upper() != oracle_type_obtained.upper():
-            expected_r2 = f"Tipo esperado: {oracle_type_expected}"
-            obtained_r2 = f"Tipo generado por tu código SQL: {oracle_type_obtained}"
-            comment2 = f"tipo de la columna {name_expected}:"
+            expected_r2 = _('Tipo esperado: {type}').format(type=oracle_type_expected)
+            obtained_r2 = _('Tipo generado por tu código SQL: {type}').format(type=oracle_type_obtained)
+            comment2 = _('tipo de la columna {name}:').format(name=name_expected)
             return render_to_string('feedback_wa_headers.html',
                                     {'expected': expected_r2,
                                      'comment': comment2,
@@ -214,7 +215,8 @@ def compare_db_results(expected_db, obtained_db):
     for table in expected_db:
         veredict, feedback = compare_select_results(expected_db[table], obtained_db[table], order=False)
         if veredict != VeredictCode.AC:
-            feedback = f"<h4>La tabla <code>{table}</code> es incorrecta:</h4>{feedback}"
+            feedback = _('<h4>La tabla <code>{table}</code> es '
+                        'incorrecta:</h4>{feedback}').format(table=table, feedback = feedback)
             break
     return veredict, feedback
 

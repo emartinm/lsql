@@ -1,4 +1,5 @@
 {% extends "base_menu.html" %}
+{% load i18n %}
 {% comment %}
 General template for a problem. Provides the following blocks:
    * name_text: Name and text of the problem, considering HTML as safe
@@ -15,9 +16,9 @@ General template for a problem. Provides the following blocks:
 {% block name_text %}
 <h2>{{ problem.title_html|safe}}
 {% if problem.solved %}
-  <img id="markSolved" src="{% static "judge/img/tick.svg" %}" alt="Ejercicio superado" height="30">
+  <img id="markSolved" src="{% static "judge/img/tick.svg" %}" alt='{% translate "Ejercicio superado" %}' height="30">
 {% else %}
-  <img id="markSolved" src="{% static "judge/img/tick.svg" %}" style="visibility: hidden" alt="Ejercicio superado" height="30">
+  <img id="markSolved" src="{% static "judge/img/tick.svg" %}" style="visibility: hidden" alt='{% translate "Ejercicio superado" %}' height="30">
 {% endif %}
 </h2>
 <p>
@@ -31,10 +32,12 @@ General template for a problem. Provides the following blocks:
 {% block initial_db %}
 {% if problem.initial_db.0 %}
 <h2>
-  Base de datos
+  {% translate "Base de datos" %}
 
   <a href="{% url 'judge:create_insert' problem.id %}" download="create_insert.sql" >
-       <button type="button" class="btn btn-primary" title="Script con la creacion de tablas e inserciones">Descargar Script</button>
+       <button type="button" class="btn btn-primary" title='{% translate "Script con la creacion de tablas e inserciones" %}'>
+         {% translate "Descargar Script" %}
+        </button>
   </a>
 
 
@@ -46,17 +49,17 @@ General template for a problem. Provides the following blocks:
 {% endblock %}
 
 {% block expected_result %}
-<h2>Resultado esperado</h2>
+<h2>{% translate "Resultado esperado" %}</h2>
 {% include 'show_table.html' with table=problem.expected_result.0 name=None %}
 {% endblock %}
 
 {% block solution %}
-<h2>Solución</h2>
+<h2>{% translate "Solución" %}</h2>
   <script src="{% static 'judge/js/submit.js' %}"></script>
   <form onchange="javascript:load_submission_code(event);" class="mb-3">
 	<div class="custom-file">
 		<input type="file" class="custom-file-input" id="customFile" lang="es">
-      <label class="custom-file-label" for="customFile"><i>Selecciona o arrastra el archivo con la solución</i></label>
+      <label class="custom-file-label" for="customFile"><i>{% translate "Selecciona o arrastra el archivo con la solución" %}</i></label>
     </div>
     <script>
 		// The name of the file appear on select
@@ -72,7 +75,7 @@ General template for a problem. Provides the following blocks:
     <div id="user_code"></div>
     <button id="submit_button" type="submit" class="btn btn-primary">
       <span id="spinner_submit" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" hidden></span>
-      <span id="submit_button_text">Enviar solución</span>
+      <span id="submit_button_text">{% translate "Enviar solución" %}</span>
     </button>
   </form>
 
@@ -80,13 +83,13 @@ General template for a problem. Provides the following blocks:
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
         <div class="modal-header">
-        <h5 id="modal_title" class="modal-title">Titulo</h5>
+        <h5 id="modal_title" class="modal-title">{% translate "Titulo" %}</h5>
       </div>
       <div id="modal_message" class="modal-body">
         Modal body text goes here.
       </div>
       <div class="modal-footer">
-        <button id="close_result_window_button" type="button" class="btn btn-info" data-dismiss="modal">Cerrar</button>
+        <button id="close_result_window_button" type="button" class="btn btn-info" data-dismiss="modal">{% translate "Cerrar" %}</button>
       </div>
     </div>
   </div>
@@ -97,17 +100,19 @@ General template for a problem. Provides the following blocks:
     <div class="modal-content">
         <div class="modal-header">
         <h5 id="error_title" class="modal-title">
-          Error de conexión
+          {% translate "Error de conexión" %}
         </h5>
       </div>
       <div id="error_message" class="modal-body">
-        Ha sido imposible conectar con el corrector de ejercicios.
-        Este problema puede ser debido a una saturación del servidor.
-        Por favor, vuelve a cargar la página del problema e intenta enviarlo de nuevo dentro de unos instantes.
-        Ponte en contacto con tu profesor si el problema persiste.
+        {% blocktranslate %} 
+          Ha sido imposible conectar con el corrector de ejercicios.
+          Este problema puede ser debido a una saturación del servidor.
+          Por favor, vuelve a cargar la página del problema e intenta enviarlo de nuevo dentro de unos instantes.
+          Ponte en contacto con tu profesor si el problema persiste.
+        {% endblocktranslate %}
       </div>
       <div class="modal-footer">
-        <button id="close_error_window_button" type="button" class="btn btn-info" data-dismiss="modal">Cerrar</button>
+        <button id="close_error_window_button" type="button" class="btn btn-info" data-dismiss="modal">{% translate "Cerrar" %}</button>
       </div>
     </div>
   </div>
@@ -132,7 +137,7 @@ General template for a problem. Provides the following blocks:
 
 <br/>
 <div id="results_box" hidden>
-  <h3>Retroalimentación</h3>
+  <h3>{% translate "Retroalimentación" %}</h3>
   <div id="feedback_line" hidden></div>
   <div id="feedback_content"></div>
 </div>

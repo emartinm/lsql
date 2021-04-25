@@ -1,13 +1,14 @@
 {% extends "feedback_wa.html" %}
+{% load i18n %}
 {% block feedback %}
-<p>El resultado de la llamada <code>{{call}}</code> es incorrecto:
+<p>{% translate "El resultado de la llamada" %} <code>{{call}}</code> {% translate "es incorrecto:" %}
     <ul>
         <li>
-           <strong>Valor esperado:</strong>
+           <strong>{% translate "Valor esperado:" %}</strong>
             <code>{{expected}}</code>
         </li>
             <li>
-           <strong>Valor obtenido por tu código:</strong>
+           <strong>{% translate "Valor obtenido por tu código:" %}</strong>
             <code>{{obtained}}</code>
         </li>
     </ul>
