@@ -148,6 +148,6 @@ DBBACKUP_CLEANUP_KEEP_MEDIA = 16
 
 
 LANGUAGES = (
-    ('en','English'),
+    ('en', 'English'),
     ('es', 'Español'),
 )
