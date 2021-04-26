@@ -32,14 +32,15 @@ from .types import VeredictCode, OracleStatusCode, ProblemType
 from .statistics import submissions_by_day, submission_count
 
 # TRANSLATIONS #
-# To translate the code to another language you need to create the translation file using
-# the "django-admin makemessages -l x" command, where "x" is the language code.
-# Use this command everytime you add a new translation outside the translation file.
-# It won't remove existing translations.
-# Complete the msgstr in lsql/locale/x/LC_MESSAGES/django.po with the new translations.
-# Execute the "django-admin compilemessages" command.
-# If the msgstr is empty, it will use the msgid instead.
-# https://mlocati.github.io/articles/gettext-iconv-windows.html is necessary to execute the commands.
+# To translate the code to another language you need to create the translation file:
+# 1) $ django-admin makemessages -l en
+#    where "en" is the English language code.
+# 2) Complete the msgstr in lsql/locale/en/LC_MESSAGES/django.po with the new translations.
+# 3) $ django-admin compilemessages
+#
+# If the msgstr is empty, it will use the msgid instead. 2) Use these commands everytime you add a new translation
+# outside the translation file. It won't remove existing translations.
+# FOR WINDOWS: https://mlocati.github.io/articles/gettext-iconv-windows.html is necessary to execute the commands.
 
 
 ####################

@@ -9,16 +9,18 @@ General template for a problem. Provides the following blocks:
 {% endcomment %}
 {% load static %}
 {% block contenido %}
-<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/styles/default.min.css">
-<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/highlight.min.js"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js" 
+    integrity="sha512-s+tOYYcC3Jybgr9mVsdAxsRYlGNq4mlAurOrfNuGMQ/SCofNPu92tjE7YRZCsdEtWL1yGkqk15fU/ark206YTg==" crossorigin="anonymous"></script>
+<script>hljs.highlightAll();</script>
 
 {% block name_text %}
 <h2>{{ problem.title_html|safe}}
 {% if problem.solved %}
-  <img id="markSolved" src="{% static "judge/img/tick.svg" %}" alt='{% translate "Ejercicio superado" %}' height="30">
+  <i class="bi bi-check-circle-fill green-success" aria-hidden="true"></i>
+  <span class="off-screen">{% translate "Problema resuelto" %}</span>
 {% else %}
-  <img id="markSolved" src="{% static "judge/img/tick.svg" %}" style="visibility: hidden" alt='{% translate "Ejercicio superado" %}' height="30">
+  <i id="check-icon" class="bi bi-check-circle-fill green-success icon-hidden" aria-hidden="true"></i>
 {% endif %}
 </h2>
 <p>
@@ -79,32 +81,38 @@ General template for a problem. Provides the following blocks:
     </button>
   </form>
 
-<div id="result_window" class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+{# comment Modal window for submission results #}
+<div id="result_window" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+     aria-labelledby="staticBackdropLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-        <div class="modal-header">
-        <h5 id="modal_title" class="modal-title">{% translate "Titulo" %}</h5>
+      <div class="modal-header">
+        <h5 id="modal_title" class="modal-title">
+          {% translate "Título" %}
+        </h5>
       </div>
-      <div id="modal_message" class="modal-body">
-        Modal body text goes here.
+      <div class="modal-body" id="modal_message">
       </div>
       <div class="modal-footer">
-        <button id="close_result_window_button" type="button" class="btn btn-info" data-dismiss="modal">{% translate "Cerrar" %}</button>
+        <button id="close_result_window_button" type="button" class="btn btn-primary"
+                data-bs-dismiss="modal">{% translate "Cerrar" %}</button>
       </div>
     </div>
   </div>
 </div>
 
-<div id="error_window" class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+{# comment Modal window for connection errors #}
+<div id="error_window" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+     aria-labelledby="staticBackdropLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-        <div class="modal-header">
-        <h5 id="error_title" class="modal-title">
+      <div class="modal-header">
+        <h5 class="modal-title">
           {% translate "Error de conexión" %}
         </h5>
       </div>
-      <div id="error_message" class="modal-body">
-        {% blocktranslate %} 
+      <div class="modal-body">
+        {% blocktranslate %}
           Ha sido imposible conectar con el corrector de ejercicios.
           Este problema puede ser debido a una saturación del servidor.
           Por favor, vuelve a cargar la página del problema e intenta enviarlo de nuevo dentro de unos instantes.
@@ -112,13 +120,15 @@ General template for a problem. Provides the following blocks:
         {% endblocktranslate %}
       </div>
       <div class="modal-footer">
-        <button id="close_error_window_button" type="button" class="btn btn-info" data-dismiss="modal">{% translate "Cerrar" %}</button>
+        <button id="close_error_window_button" type="button" class="btn btn-primary"
+                data-bs-dismiss="modal">{% translate "Cerrar" %}</button>
       </div>
     </div>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.11/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"
+        integrity="sha512-GZ1RIgZaSc8rnco/8CXfRdCpDxRCphenIiZ2ztLy3XQfCbQUSCuk8IudvNHxkRA3oUg6q0qejgN/qqyG1duv5Q==" crossorigin="anonymous"></script>
 <script>
   // Same font size in the editor as the modal window
   var el = document.getElementById('modal_message');

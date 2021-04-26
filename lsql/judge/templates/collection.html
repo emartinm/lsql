@@ -8,26 +8,26 @@
 
   <h4>{% translate "Listado de problemas" %}</h4>
   <table class="table">
-    <thead class="thead-dark">
+    <thead class="table-dark">
       <tr>
         <th scope="col">{% translate "Nombre" %}</th>
         <th scope="col">{% translate "Número de envíos" %}</th>
         <th scope="col" class="text-center">
           
-          <i class="fas fa-award gold"></i>
+          <i class="bi bi-award-fill gold"></i>
           <span>{% translate "1º" %}</span>
-          <i class="fas fa-award gold"></i>
+          <i class="bi bi-award-fill gold"></i>
         </th>
         <th scope="col" class="text-center">
-          <i class="fas fa-award silver"></i>
+          <i class="bi bi-award-fill silver"></i>
           <span>{% translate "2º" %}</span>
-          <i class="fas fa-award silver"></i>
+          <i class="bi bi-award-fill silver"></i>
         </th>
         <th scope="col" class="text-center">
 
-          <i class="fas fa-award bronze"></i>
+          <i class="bi bi-award-fill bronze"></i>
           <span>{% translate "3º" %}</span>
-          <i class="fas fa-award bronze"></i>
+          <i class="bi bi-award-fill bronze"></i>
         </th>
       </tr>
     </thead>
@@ -36,9 +36,10 @@
     <tr>
       <td>
         {% if p.solved %}
-        <img src="{% static 'judge/img/tick.svg' %}" alt="Problema resuelto" height="20">
+        <i class="bi bi-check-circle-fill green-success" aria-hidden="true"></i>
+        <span class="off-screen">{% translate "Problema resuelto" %}</span>
         {% else %}
-        <img src="{% static 'judge/img/tick.svg' %}" alt="Problema resuelto" style="visibility: hidden" height="20">
+        <i class="bi bi-check-circle-fill icon-hidden" aria-hidden="true"></i>
         {% endif %}
         <a href="{% url 'judge:problem' p.pk %}">{{ p.title_html|safe }}</a>
       </td>

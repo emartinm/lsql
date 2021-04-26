@@ -14,8 +14,8 @@
     <span class="remark">LearnSQL</span> es un juez automático para el aprendizaje del lenguaje SQL. Aquí podrás
     enfrentarte a diferentes ejercicios, enviar una solución en código SQL y recibir automáticamente un veredicto
     incluyendo información del motivo del fallo en caso de que la solución enviada no sea correcta. El juez permite
-    practicar con distintos tipos de problemas, por ejemplo, realizar consultas SQL, insertar/actualizar/modificar filas
-    en las tablas o definir funciones y procedimientos. Internamente utiliza <span class="remark">Oracle 11g</span>
+    practicar con distintos tipos de problemas, como por ejemplo realizar consultas SQL, insertar/actualizar/modificar
+    filas en las tablas o definir funciones y procedimientos. Internamente utiliza <span class="remark">Oracle 11g</span>
     para corregir los envíos recibidos.
 </p>
 
@@ -72,11 +72,11 @@
     El juez muestra los problemas organizados por colecciones de problemas similares. Tal y como se ve en la siguiente
     figura, por cada colección se muestra el número de problemas que ya has resuelto y el número total de problemas que
     contiene esa colección:
-    <figure>
-        <img class="screenshot" src="{% static 'judge/img/collection.png' %}" alt="Listado de colecciones" width="800">
-        <figcaption>Figura: Listado de colecciones</figcaption>
-    </figure>
 </p>
+<figure>
+    <img class="screenshot" src="{% static 'judge/img/collection.png' %}" alt="Listado de colecciones" width="800">
+    <figcaption>Figura: Listado de colecciones</figcaption>
+</figure>
 
 <p>
     Una vez elegida una colección, se mostrará el listado de problemas. Cada problema viene acompañado con el número de
@@ -97,19 +97,20 @@
 </p>
 
 <p>
-    El enunciado consta de una explicación textual del problema a resolver, seguido de una descripción del esquema de la
+    El enunciado consta de una explicación textual del problema a resolver, seguida de una descripción del esquema de la
     base de datos inicial sobre la que se debe resolver el problema (apartado <span class="remark">Base de datos</span>).
     Además del esquema, este apartado incluye datos iniciales para entender mejor el contenido de la base de datos y qué
     es lo que se espera en dicho problema. Mediante el botón <span class="remark">"Descargar Script"</span> es posible
     descargarse todas las sentencias SQL necesarias para construir esa base de datos inicial en otro sistema y realizar
-    pruebas.
+    consultas de prueba en tu propia instalación local de Oracle.
 </p>
 
 <p>
     El apartado <span class="remark">Resultado esperado</span> contiene los resultados que debería generar
     una solución para considerarse correcta sobre la base de datos con los valores iniciales mostrados en el enunciado. A
     continuación aparece un cuadro donde se puede introducir el código SQL de la solución. También es posible subir una
-    solución escrita en un fichero SQL arrastrando o seleccionando dicho fichero en la zona de ficheros.
+    solución escrita previamente en un fichero SQL arrastrando o seleccionando dicho fichero en la zona de ficheros que
+    se encuentra sobre el cuadro de código.
 </p>
 
 <p>
@@ -117,8 +118,10 @@
     de código y se corrige. El juez puede contestar con distintos <span class="remark">veredictos</span> posibles:
 </p>
 
-<h2 class="help">Aceptado</h2>
-<p>
+<ul>
+    <li>
+    <p class="help_big">Aceptado</p>
+    <p>
     Tu código ha producido los resultados esperados en todos los tests probados. Se muestra una ventana flotante tal y
     como se ve en la siguiente figura:
     <figure>
@@ -126,22 +129,26 @@
         <figcaption>Figura: Solución aceptada</figcaption>
     </figure>
 </p>
+</li>
 
-<h2 class="help">Error en ejecución</h2>
+<li>
+<p class="help_big">Error en ejecución</p>
 <p>
     El juez ha intentado ejecutar el código SQL pero no ha podido porque ha lanzado algún error. Por ejemplo, este error
     aparece cuando hay <span class="remark">errores sintácticos</span> en alguna sentencia SQL, se accede a tablas o
     columnas que no existen, o cuando se insertan valores duplicados en una clave primaria. En estos casos el juez
-    detecta en qué fila y columna se ha producido este error, lo remarca en el cuadro de código y además muestra un
-     mensaje con los detalles del error. La siguiente figura muestra un error en ejecución debido a un error sintáctico:
+    detecta en qué fila y columna de la consulta SQL se ha producido este error, lo remarca en el cuadro de código y
+    además muestra un mensaje con los detalles del error.
+    La siguiente figura muestra un error en ejecución debido a un error sintáctico:
 </p>
 <figure>
     <img class="screenshot" src="{% static 'judge/img/RE.png' %}" alt="Error en ejecución" width="800">
     <figcaption>Figura: Error en ejecución</figcaption>
 </figure>
+</li>
 
-
-<h2 class="help">Resultados incorrectos</h2>
+<li>
+<p class="help_big">Resultados incorrectos</p>
 <p>
     Este veredicto aparece cuando el código SQL se ha podido ejecutar sin problema pero el resultado no es el esperado. En
     este caso la retroalimentación que aparece bajo el cuadro de código contiene información detallada sobre qué resultado
@@ -154,33 +161,42 @@
     <img class="screenshot" src="{% static 'judge/img/WA.png' %}" alt="Resultados incorrectos" width="800">
     <figcaption>Figura: Resultados incorrectos</figcaption>
 </figure>
+</li>
 
-<h2 class="help">Error de validación</h2>
+<li>
+<p class="help_big">Error de validación</p>
 <p>
     Si recibes un mensaje de este tipo significa que el código enviado no cumple con los requisitos necesarios y
     <span class="remark">ni siquiera se ha llegado a ejecutar</span>. Cada problema puede tener requisitos diferentes, por
     ejemplo, los problemas que solicitan consultas <code>SELECT</code> esperan que se envíe exactamente una sentencia SQL,
     mientras que otros problemas centrados en manipulación de tablas pueden requerir un número concreto de sentencias. En la
-    siguiente figura se puede ver cómo se obtiene en error de validación al enviar dos sentencias SQL en lugar de una:
+    siguiente figura se puede ver cómo se obtiene el error de validación al enviar dos sentencias SQL en lugar de una:
 </p>
 <figure>
     <img class="screenshot" src="{% static 'judge/img/VE.png' %}" alt="Error de validación" width="800">
     <figcaption>Figura: Error de validación</figcaption>
 </figure>
+</li>
 
-<h2 class="help">Tiempo límite excedido</h2>
+<li>
+<p class="help_big">Tiempo límite excedido</p>
 <p>
     Si el código que envías tarda demasiado tiempo en ejecutarse, el juez abortará su ejecución y te informará de ello.
     Este tipo de mensaje aparece cuando se envía código SQL extremadamente ineficiente. En estos casos deberás revisar tu
-    solución y modificarla para ser más eficiente.
+    solución y modificarla para que sea más eficiente.
 </p>
+</li>
 
-<h2 class="help">Error interno</h2>
+<li>
+<p class="help_big">Error interno</p>
 <p>
     Este tipo de error indica que ha ocurrido un error inesperado durante la corrección de tu envío. Es un error achacable
     al propio juez y no al código que has enviado. En ocasiones este error se debe una sobrecarga puntual del servidor y
     se corrige con el tiempo, pero si persiste debes informar a tu profesor.
 </p>
+</li>
+
+</ul>
 
 <h1 class="help" id="ranking">Clasificación</h1>
 
@@ -233,7 +249,7 @@
 </p>
 
 <p>
-    El icono <i class="far fa-question-circle"></i> que aparece en la parte superior derecha de la clasificación muestra
+    El icono <i class="bi bi-question-circle"></i> que aparece en la parte superior derecha de la clasificación muestra
     una ventana emergente con ayuda para entender la clasificación:
 </p>
 <figure>
@@ -260,17 +276,22 @@
 
 <h1 class="help" id="acks">Reconocimientos</h1>
 <p>
-    La interfaz del juez online utiliza algunos iconos y elementos gráficos de disposición pública obtenidos de los
+    La interfaz del juez online utiliza estilos, iconos y elementos gráficos de disposición pública obtenidos de los
     siguientes repositorios:
     <ul>
-    <li><a href="https://freesvg.org/">FreeSVG</a> (licencia
-        <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>)</li>
+    <li><a href="https://getbootstrap.com/">Bootstrap</a> (licencia
+        <a href="https://github.com/twbs/bootstrap/blob/main/LICENSE">MIT</a>)</li>
     <li><a href="https://icons.getbootstrap.com/">Bootstrap Icons</a> (licencia
         <a href="https://github.com/twbs/icons/blob/main/LICENSE.md">MIT</a>)</li>
-    <li><a href="https://fontawesome.com/">Font Awesome Free</a> (licencia
-        <a href="https://fontawesome.com/license/free">CC BY 4.0</a>)</li>
     <li><a href="https://github.com/apexcharts/apexcharts.js">ApexCharts.js</a> (licencia
         <a href="https://github.com/apexcharts/apexcharts.js/blob/master/LICENSE">MIT</a>)</li>
-    </ul>
+    <li><a href="https://github.com/lipis/flag-icon-css">flag-icon-css</a> (licencia
+        <a href="https://github.com/lipis/flag-icon-css/blob/master/LICENSE">MIT</a>)</li>
+    <li><a href="https://freesvg.org/">FreeSVG</a> (licencia
+        <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>)</li>
+</ul>
+
+
+
 </p>
 {% endblock %}

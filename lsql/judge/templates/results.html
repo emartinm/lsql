@@ -31,7 +31,7 @@
             value="{{end_date|date:'Y-m-d'}}" max="{{to_fixed}}">
             <button id="filterButton" type="submit"  class="btn btn-primary ml-3"
                 title='{% translate "Filtro de ejercicios entre dos periodos" %}'>
-                <i class="fas fa-filter"></i> {% translate "Filtrar" %}
+                <i class="bi bi-funnel-fill"></i> {% translate "Filtrar" %}
             </button>
         {% endif %}
     </form>
@@ -39,13 +39,15 @@
     {% if login.is_staff %}
         <div class="col md-3">
             <a href="{% url 'judge:download_ranking' collection.id %}?group={{group0.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}">
-            <button type="button" class="btn btn-primary" title='{% translate "csv con el ranking" %}'>{% translate "Descargar ranking" %}</button>
+            <button type="button" class="btn btn-primary" title='{% translate "Descargar fichero CSV con la clasificación" %}'>{% translate "Descargar ranking" %}</button>
             </a>
         </div>
     {% endif %}
     <div class="col">
-        <button class="bg-white border-0 float-right" title='{% translate "Leyenda" %}' data-target="#exampleModal" data-toggle="modal"
-                type="button"><i class="far fa-question-circle fa-2x"></i></button>
+        <button class="bg-white border-0 float-right" title='{% translate "Mostrar ayuda" %}' data-target="#exampleModal" data-toggle="modal"
+                type="button">
+            <i class="bi bi-question-circle" aria-hidden="true" style="font-size: x-large"></i>
+        </button>
     </div>
 </div>
 
@@ -80,8 +82,8 @@
           <div class="d-flex p-2">
                <div class="bg-dark h-40 w-25 text-center mb-1 border border-dark text-white
                justify-content-center align-self-center ">{% translate "Ranking" %}</div>
-              <div class="text-center w-75">{% translate "1º Alumno con más Resueltos" %}<br>
-                {% translate "2º En caso de empate alumno con menos Puntuación" %}<br>
+              <div class="text-center w-75">{% translate "1º Usuario con más ejercicios resueltos" %}<br>
+                {% translate "2º En caso de empate, usuario con menor puntuación" %}<br>
                 {% translate "3º En caso de empate, se comparte posición" %}</div>
           </div>
 
@@ -93,7 +95,7 @@
   </div>
 </div>
 <table class="table text-center border border-dark">
-    <thead class="thead-dark">
+    <thead class="table-dark">
       <tr>
           <th class=" border border-light" scope="col">{% translate "Pos." %}</th>
           <th  class=" border border-light" scope="col">{% translate "Usuario" %}</th>
@@ -110,30 +112,23 @@
     {% for p in users %}
     <tr class="text-dark">
         {% if p == login %}
-         <td class="bg-info border border-dark">{{p.pos}}</td>
-         <td class="border border-dark">
-             <span class="ranking-username">{{p.username}}</span>
-             {% if p.n_achievements > 0 %}
-                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
-             {% endif %}
-         </td>
+        <td class="bg-info border border-dark">{{p.pos}}</td>
         {% elif p.is_staff %}
-         <td class="bg-secondary border border-dark">{{p.pos}}</td>
-         <td class="border border-dark">
+        <td class="bg-secondary border border-dark">{{p.pos}}</td>
+        {% else %}
+        <td class="border border-dark">{{p.pos}}</td>
+        {% endif %}
+
+        <td class="border border-dark">
              <span class="ranking-username">{{p.username}}</span>
              {% if p.n_achievements > 0 %}
-                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
+                <a href="{% url 'judge:achievements' p.pk %}" class="gold">
+                    <i class="bi bi-trophy-fill" aria-hidden="true"></i>
+                    <span class="off-screen">Logros</span>x{{p.n_achievements}}
+                </a>
              {% endif %}
          </td>
-        {%else%}
-          <td class="border border-dark">{{p.pos}}</td>
-          <td class="border border-dark">
-              <span class="ranking-username">{{p.username}}</span>
-              {% if p.n_achievements > 0 %}
-                <a href="{% url 'judge:achievements' p.pk %}" class="gold"><i class="fas fa-trophy gold"></i>x{{p.n_achievements}}</a>
-              {% endif %}
-         </td>
-        {% endif %}
+
         {% for pp in p.collection %}
                 {% if pp.solved and pp.num_submissions != '0/0 (0)'%}
                     {% if p == login or login.is_staff%}

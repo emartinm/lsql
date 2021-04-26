@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-25 21:40+0200\n"
+"POT-Creation-Date: 2021-04-26 19:32+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Iván Ruiz <ivarui01@ucm.es@ADDRESS>\n"
 "Language-Team: Español\n"
@@ -101,31 +101,31 @@ msgstr "Date"
 msgid "Logros pendientes"
 msgstr "Pending achievements"
 
-#: judge/templates/base.html:25
+#: judge/templates/base.html:30
 msgid "Opción del menú"
 msgstr "Menu option"
 
-#: judge/templates/base_menu.html:11
+#: judge/templates/base_menu.html:13
 msgid "Ejercicios"
 msgstr "Exercises"
 
-#: judge/templates/base_menu.html:14
+#: judge/templates/base_menu.html:16
 msgid "Clasificación"
 msgstr "Ranking"
 
-#: judge/templates/base_menu.html:17
+#: judge/templates/base_menu.html:19
 msgid "Ayuda"
 msgstr "Help"
 
-#: judge/templates/base_menu.html:24 judge/templates/submissions.html:4
+#: judge/templates/base_menu.html:27 judge/templates/submissions.html:4
 msgid "Mis envíos"
 msgstr "My submissions"
 
-#: judge/templates/base_menu.html:26
+#: judge/templates/base_menu.html:28
 msgid "Mis logros"
 msgstr "My achievements"
 
-#: judge/templates/base_menu.html:28 judge/templates/password_change.html:42
+#: judge/templates/base_menu.html:29 judge/templates/password_change.html:42
 msgid "Cambiar contraseña"
 msgstr "Change password"
 
@@ -158,11 +158,15 @@ msgstr "2nd"
 msgid "3º"
 msgstr "3rd"
 
+#: judge/templates/collection.html:40 judge/templates/problem.html:20
+msgid "Problema resuelto"
+msgstr "Solved problem"
+
 #: judge/templates/collections.html:5
 msgid "Colecciones de problemas"
 msgstr "Problem collections"
 
-#: judge/templates/collections.html:11 judge/templates/results.html:106
+#: judge/templates/collections.html:11 judge/templates/results.html:108
 msgid "Resueltos"
 msgstr "Solved"
 
@@ -170,13 +174,9 @@ msgstr "Solved"
 msgid "Total problemas"
 msgstr "Total problems"
 
-#: judge/templates/collections.html:20
+#: judge/templates/collections.html:21
 msgid "Colección terminada"
 msgstr "Collection finished"
-
-#: judge/templates/collections.html:22
-msgid "Colección no terminada"
-msgstr "Collection not finished"
 
 #: judge/templates/feedback_ce.html:3
 msgid "Ha habido errores al compilar tu código SQL:"
@@ -312,7 +312,7 @@ msgstr "Session successfully closed"
 msgid "Para volver a acceder, dirígiete a la página principal de LSQL."
 msgstr "To acces again, head to LSQL main page."
 
-#: judge/templates/macros.html:31 judge/templates/results.html:99
+#: judge/templates/macros.html:31 judge/templates/results.html:101
 msgid "Usuario"
 msgstr "User"
 
@@ -365,56 +365,43 @@ msgstr "Your password can not be numeric only."
 msgid "La contraseña se ha modificado con éxito"
 msgstr "Your password has been successfully modified"
 
-#: judge/templates/problem.html:19 judge/templates/problem.html:21
-msgid "Ejercicio superado"
-msgstr "Completed exercise"
-
-#: judge/templates/problem.html:35
+#: judge/templates/problem.html:36
 msgid "Base de datos"
 msgstr "Database"
 
-#: judge/templates/problem.html:38
+#: judge/templates/problem.html:39
 msgid "Script con la creacion de tablas e inserciones"
 msgstr "Database creation script"
 
-#: judge/templates/problem.html:39
+#: judge/templates/problem.html:40
 msgid "Descargar Script"
 msgstr "Download Script"
 
-#: judge/templates/problem.html:52 judge/templates/problem_dml.html:4
+#: judge/templates/problem.html:53 judge/templates/problem_dml.html:4
 #: judge/templates/problem_function.html:4 judge/templates/problem_proc.html:7
 #: judge/templates/problem_trigger.html:7
 msgid "Resultado esperado"
 msgstr "Expected result"
 
-#: judge/templates/problem.html:57
+#: judge/templates/problem.html:58
 msgid "Solución"
 msgstr "Solution"
 
-#: judge/templates/problem.html:62
+#: judge/templates/problem.html:63
 msgid "Selecciona o arrastra el archivo con la solución"
 msgstr "Select or drag the file with the solution"
 
-#: judge/templates/problem.html:78
+#: judge/templates/problem.html:79
 msgid "Enviar solución"
 msgstr "Send solution"
 
-#: judge/templates/problem.html:86
-msgid "Titulo"
-msgstr "Title"
-
-#: judge/templates/problem.html:92 judge/templates/problem.html:115
-#: judge/templates/results.html:90
-msgid "Cerrar"
-msgstr "Close"
-
-#: judge/templates/problem.html:103
+#: judge/templates/problem.html:90
 msgid "Error de conexión"
 msgstr "Connection error"
 
-#: judge/templates/problem.html:107
+#: judge/templates/problem.html:94
 msgid ""
-" \n"
+"\n"
 "          Ha sido imposible conectar con el corrector de ejercicios.\n"
 "          Este problema puede ser debido a una saturación del servidor.\n"
 "          Por favor, vuelve a cargar la página del problema e intenta "
@@ -422,6 +409,7 @@ msgid ""
 "          Ponte en contacto con tu profesor si el problema persiste.\n"
 "        "
 msgstr ""
+"\n"
 "          It has been impossible to connect with the exercise corrector.\n"
 "          This problem may be due to a server saturation.\n"
 "          Please reload the issue page and try to send it again in a "
@@ -429,7 +417,16 @@ msgstr ""
 "          Contact your teacher if the problem persists.\n"
 "        "
 
-#: judge/templates/problem.html:140
+#: judge/templates/problem.html:103 judge/templates/problem.html:123
+#: judge/templates/results.html:92
+msgid "Cerrar"
+msgstr "Close"
+
+#: judge/templates/problem.html:116
+msgid "Título"
+msgstr "Title"
+
+#: judge/templates/problem.html:150
 msgid "Retroalimentación"
 msgstr "Feedback"
 
@@ -482,26 +479,26 @@ msgid "Filtrar"
 msgstr "Filter"
 
 #: judge/templates/results.html:42
-msgid "csv con el ranking"
-msgstr "Ranking csv"
+msgid "Descargar fichero CSV con la clasificación"
+msgstr "Download CSV file with the ranking"
 
 #: judge/templates/results.html:42
 msgid "Descargar ranking"
 msgstr "Download ranking"
 
 #: judge/templates/results.html:47
-msgid "Leyenda"
-msgstr "Legend"
+msgid "Mostrar ayuda"
+msgstr "Show help"
 
-#: judge/templates/results.html:57
+#: judge/templates/results.html:59
 msgid "LEYENDA"
 msgstr "LEGEND"
 
-#: judge/templates/results.html:62
+#: judge/templates/results.html:64
 msgid "Posición del usuario"
 msgstr "User position"
 
-#: judge/templates/results.html:66
+#: judge/templates/results.html:68
 msgid ""
 "Ejercicio resuelto 3 veces de 8 intentos (1er envío aceptado en el 5º "
 "intento)"
@@ -509,46 +506,46 @@ msgstr ""
 "Exercise solved 3 times out of 8 attempts (1st submission accepted on 5th "
 "attempt)"
 
-#: judge/templates/results.html:70
+#: judge/templates/results.html:72
 msgid ""
 "Ejercicio resuelto 0 veces de 9 intentos (9 intentos sin envío aceptado)"
 msgstr ""
 "Exercise solved 0 times out of 9 attempts (9 attempts without accepted "
 "submission)"
 
-#: judge/templates/results.html:74
+#: judge/templates/results.html:76
 msgid "Ejercicio no intentado (0 intentos sin envío aceptado)"
 msgstr "Exercise not tried (0 attempts without accepted submission)"
 
-#: judge/templates/results.html:77 judge/templates/results.html:105
+#: judge/templates/results.html:79 judge/templates/results.html:107
 msgid "Puntuación"
 msgstr "Score"
 
-#: judge/templates/results.html:78
+#: judge/templates/results.html:80
 msgid "Suma del primer envío aceptado de cada ejercicio"
 msgstr "Sum of the first accepted submission of each exercise"
 
-#: judge/templates/results.html:82
+#: judge/templates/results.html:84
 msgid "Ranking"
 msgstr "Ranking"
 
-#: judge/templates/results.html:83
-msgid "1º Alumno con más Resueltos"
-msgstr "1st Student with more solved"
-
-#: judge/templates/results.html:84
-msgid "2º En caso de empate alumno con menos Puntuación"
-msgstr "2nd In case of a tie, student with less score"
-
 #: judge/templates/results.html:85
+msgid "1º Usuario con más ejercicios resueltos"
+msgstr "1st User with more solved exercises"
+
+#: judge/templates/results.html:86
+msgid "2º En caso de empate, usuario con menor puntuación"
+msgstr "2nd In case of a tie, user with less score"
+
+#: judge/templates/results.html:87
 msgid "3º En caso de empate, se comparte posición"
 msgstr "3rd In case of a tie, position is shared"
 
-#: judge/templates/results.html:98
+#: judge/templates/results.html:100
 msgid "Pos."
 msgstr "Pos."
 
-#: judge/templates/results.html:102
+#: judge/templates/results.html:104
 msgid "EJ"
 msgstr "EX"
 
@@ -712,24 +709,19 @@ msgstr ""
 "Your submission must be made up of between {min_stmt} and {max_stmt} "
 "{ending}."
 
-#: judge/views.py:146 judge/views.py:219
+#: judge/views.py:147 judge/views.py:220
 msgid "¡Lo sentimos! No existe ningún grupo para ver resultados"
 msgstr "We are sorry! There is no group to see results"
 
-#: judge/views.py:225
+#: judge/views.py:226
 msgid "¡Lo sentimos! No tienes asignado un grupo de la asignatura."
 msgstr "We are sorry! You do not have a subject group assigned."
 
-#: judge/views.py:226
+#: judge/views.py:227
 msgid "Por favor, contacta con tu profesor para te asignen un grupo de clase."
 msgstr "Please, contact your teacher to assign you a class group."
 
-#: judge/views.py:318
+#: judge/views.py:319
 msgid "El identificador no tiene el formato correcto"
 msgstr "The identifier has not the correct format"
 
-#~ msgid "Inglés"
-#~ msgstr "English"
-
-#~ msgid "Español"
-#~ msgstr "Spanish"

@@ -3,7 +3,7 @@
 {% if dlist %}
 {% set headers = dlist[0].keys() %}
 <table class="table table-striped">
-    <thead class="thead-dark">
+    <thead class="table-dark">
         <tr>
         {% for hname in headers %}
             <th scope="col">{{hname}}</th>
@@ -25,7 +25,7 @@
 
 {% macro show_submissions(submissions) %}
     <table class="table">
-        <thead class="thead-dark">
+        <thead class="table-dark">
         <tr>
             <th scope="col">{% translate "ID</th>
             <th scope="col">{% translate "Usuario" %}</th>

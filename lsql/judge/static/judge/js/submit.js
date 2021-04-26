@@ -7,7 +7,7 @@
 function show_modal(title, message) {
     $('#modal_title').text(title);
     $('#modal_message').text(message);
-    $('#result_window').modal();
+    $('#result_window').modal("show")
     // Reloads highlight.js to format new code in feedback
     hljs.initHighlighting.called = false;
     hljs.initHighlighting();
@@ -15,13 +15,13 @@ function show_modal(title, message) {
 
 // Shows a modal windows with a connection error message
 function show_error_modal() {
-     $('#error_window').modal();
+     $('#error_window').modal("show");
 }
 
 // Shows the 'solved' mark next to the problem title
 function mark_solved(myJson) {
     if (myJson.veredict == "AC")
-        $('#markSolved').css('visibility', 'visible');
+        $('#check-icon').removeClass("icon-hidden");
 }
 
 // Disables the form and shows the spinner
