@@ -27,8 +27,8 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-sm navbar-light bg-light" style="background-color: #ffffff;">
-    <h1 data-toc-skip><a href="/sql" class="main-link">Learn SQL</a></h1> <img src="{% static 'judge/img/database.svg' %}" height="50"/>
+<nav class="navbar navbar-expand-sm navbar-light bg-light">
+    <h1 data-toc-skip><a href="{% url 'judge:index' %}" class="main-link">Learn SQL</a></h1> <img src="{% static 'judge/img/database.svg' %}" height="50"/>
     {% block menu %}
     <a href="#" class="nav-link">{% translate "Opción del menú" %}</a>
     {% endblock %}
@@ -40,9 +40,7 @@
         <li class="nav-link">
           <a class="flag-icon {{ flag }}"></a>
         </li>
-  
-        
-    
+
         <li>
           {% get_language_info for LANGUAGE_CODE as lang %}
           <form action="{% url 'set_language' %}" method="post">{% csrf_token %}
@@ -65,22 +63,11 @@
 
 <div class="container-fluid">
   <div class="row">
-    <div class="col-sm-1" style="background-color:lavender;"></div>
-    <div class="col-sm-10">
+    <div class="col-12">
         {% block contenido %}
         Contenido
         {% endblock %}
     </div>
-
-    <div class="col-sm-1" style="background-color:lavender;"></div>
-  </div>
-
-  <div class="row">
-    <div class="col-sm-4" style="background-color:lavender;"></div>
-    <div class="col-sm-4" style="background-color:lavender;">
-      <!-- <p class="text-center">(C) 2020 Enrique Martín</p> -->
-    </div>
-    <div class="col-sm-4" style="background-color:lavender;"></div>
   </div>
 </div>
 

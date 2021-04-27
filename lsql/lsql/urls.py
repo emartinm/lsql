@@ -15,11 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from django.conf.urls.i18n import i18n_patterns
 
 urlpatterns = [
     path('sql/', include('django.conf.urls.i18n')),
     path('sql/', include('judge.urls')),
-    # path('polls/', include('polls.urls')),
     path('sql/admin/', admin.site.urls),
 ]

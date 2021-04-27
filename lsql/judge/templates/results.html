@@ -37,22 +37,26 @@
     </form>
 
     {% if login.is_staff %}
-        <div class="col md-3">
-            <a href="{% url 'judge:download_ranking' collection.id %}?group={{group0.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}">
-            <button type="button" class="btn btn-primary" title='{% translate "Descargar fichero CSV con la clasificación" %}'>{% translate "Descargar ranking" %}</button>
-            </a>
-        </div>
+    <div class="col md-3">
+        <a href="{% url 'judge:download_ranking' collection.id %}?group={{group0.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}">
+            <button type="button" class="btn btn-primary"
+                    title='{% translate "Descargar fichero CSV con la clasificación" %}'>
+                {% translate "Descargar ranking" %}
+            </button>
+        </a>
+    </div>
     {% endif %}
-    <div class="col">
-        <button class="bg-white border-0 float-right" title='{% translate "Mostrar ayuda" %}' data-target="#exampleModal" data-toggle="modal"
-                type="button">
-            <i class="bi bi-question-circle" aria-hidden="true" style="font-size: x-large"></i>
+    <div class="col-0">
+        <button class="bg-white border-0 float-right" title='{% translate "Mostrar ayuda" %}'
+                data-bs-target="#exampleModal" data-bs-toggle="modal" type="button">
+            <i class="bi bi-question-circle bigger-icon" aria-hidden="true"></i>
         </button>
     </div>
 </div>
 
 
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" data-bs-backdrop="static" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
   <div class="modal-dialog  modal-lg">
     <div class="modal-content">
       <div class="modal-header d-block">
@@ -89,7 +93,7 @@
 
       </div>
       <div class="modal-footer d-flex justify-content-center">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">{% translate "Cerrar" %}</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{% translate "Cerrar" %}</button>
       </div>
     </div>
   </div>

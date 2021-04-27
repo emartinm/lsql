@@ -37,8 +37,9 @@ General template for a problem. Provides the following blocks:
   {% translate "Base de datos" %}
 
   <a href="{% url 'judge:create_insert' problem.id %}" download="create_insert.sql" >
-       <button type="button" class="btn btn-primary" title='{% translate "Script con la creacion de tablas e inserciones" %}'>
-         {% translate "Descargar Script" %}
+       <button type="button" class="btn btn-primary"
+               title='{% translate "Descargar script con la creación de tablas e inserciones" %}'>
+         {% translate "Descargar script" %}
         </button>
   </a>
 
