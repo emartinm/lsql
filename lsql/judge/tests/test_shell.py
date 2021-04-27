@@ -4,15 +4,19 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Unit tests for the shell module
 """
-
+import datetime
 import os
+from tempfile import mkstemp
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
-from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Collection, Problem
-from judge.shell import create_users_from_csv, adapt_db_result_to_list
+from judge.types import VeredictCode
+from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Collection, Problem, \
+    Submission
+from judge.shell import create_users_from_csv, adapt_db_result_to_list, rejudge
+from judge.tests.test_views import create_select_problem, create_collection, create_user
 
 
 class ShellTest(TestCase):
@@ -127,3 +131,28 @@ class ShellTest(TestCase):
             with self.assertRaises(TypeError):
                 adapt_db_result_to_list()
             prob.delete()
+
+    def test_rejudge(self):
+        """ Test that rejudge correctly detects submission whose verdict changes """
+        collection = create_collection("test collection")
+        problem = create_select_problem(collection, "example")
+        user = create_user(passwd='1111', username='user_Test')
+        subs = [
+            Submission(code=problem.solution, veredict_code=VeredictCode.IE, user=user, problem=problem),  # IE->AC
+            Submission(code='SELECT * FROM dual', veredict_code=VeredictCode.IE, user=user, problem=problem),  # IE->WA
+            Submission(code='SELECT * FRO dual', veredict_code=VeredictCode.IE, user=user, problem=problem),  # IE->RE
+        ]
+        for sub in subs:
+            sub.save()
+            sub.creation_date = datetime.datetime(2020, 9, 15)  # Sets an older date
+            sub.save()
+
+        _, filename = mkstemp('_rejudge')
+        rejudge(VeredictCode.IE, filename, tests=True)
+        with open(filename, 'r') as summary_file:
+            summary = summary_file.read()
+            self.assertIn('IE --> AC', summary)
+            self.assertIn('IE --> WA', summary)
+            self.assertIn('IE --> RE', summary)
+            self.assertNotIn('IE --> IE', summary)
+        os.remove(filename)

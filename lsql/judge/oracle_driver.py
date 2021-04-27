@@ -90,6 +90,7 @@ def table_from_cursor(cursor):
     :return: a dictionary {'header':[[NAME:str, TYPE:str]], 'rows': [list]}
     """
     max_rows = int(os.environ['ORACLE_MAX_ROWS'])
+    max_cols = int(os.environ['ORACLE_MAX_COLS'])
     table = dict()
 
     if cursor.description is None:
@@ -98,14 +99,14 @@ def table_from_cursor(cursor):
         table['rows'] = list()
         return table  # return empty table (no columns, no rows)
 
-    if len(cursor.description) > int(os.environ['ORACLE_MAX_COLS']):
-        logger.debug('Too many columns in cursor')
+    if len(cursor.description) > max_cols:
+        logger.debug('TLE caused by too many columns in cursor')
         raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
     table['header'] = [[e[0], str(e[1])] for e in cursor.description]
 
     batch = cursor.fetchmany(numRows=max_rows)  # Takes MAX rows
     if cursor.fetchone():  # There are more rows
-        logger.debug('Too many rows in cursor')
+        logger.debug('TLE caused by too many rows in cursor')
         raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
     table['rows'] = [list(e) for e in batch]
 

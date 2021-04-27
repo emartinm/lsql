@@ -98,7 +98,7 @@ class Collection(models.Model):
                     problem.clean()
                     problem.save()
                     logger.debug('Added problem %s "%s" from ZIP (batch)', type(problem), problem)
-                self.zipfile = None  # Avoids storing the file in the filysystem
+                self.zipfile = None  # Avoids storing the file in the filesystem
 
             super().clean()
             self.name_html = markdown_to_html(self.name_md, remove_initial_p=True)
@@ -465,7 +465,7 @@ class DiscriminantProblem(Problem):
 
 
 class Submission(models.Model):
-    """A user submssion"""
+    """ A user submission """
     creation_date = models.DateTimeField(auto_now_add=True)
     code = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
     veredict_code = models.CharField(
@@ -622,7 +622,7 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
 
 
 class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.Model):
-    """Achievement by submiting X submissions of Y problems"""
+    """Achievement by submitting X submissions of Y problems"""
     num_submissions = models.PositiveIntegerField(default=1, null=False)
     num_problems = models.PositiveIntegerField(default=1, null=False)
 

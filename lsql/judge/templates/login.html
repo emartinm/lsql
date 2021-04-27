@@ -17,18 +17,20 @@
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ next }}">
 
-    <div class="form-group">
-        {{ form.username.label_tag }}
+    <div class="mb-3">
+        {{ form.username.label_tag }}<br/>
         {{ form.username }}
-        <small id="emailHelp" class="form-text text-muted">
+        <div id="emailHelp" class="form-text">
           {% translate "Es la parte de tu e-mail que precede a " %}<code>@ucm.es</code>.
-        </small>
+        </div>
     </div>
 
-    <div class="form-group">
-        {{ form.password.label_tag }}
+    <div class="mb-3">
+        {{ form.password.label_tag }}<br/>
         {{ form.password }}
-      <small id="passwordHelp" class="form-text text-muted">{% translate "Ponte en contacto con tu profesor si has olvidado tu contraseña." %}</small>
+      <div id="passwordHelp" class="form-text">
+          {% translate "Ponte en contacto con tu profesor si has olvidado tu contraseña." %}
+      </div>
     </div>
   <button type="submit" class="btn btn-primary">{% translate "Entrar" %}</button>
 </form>
