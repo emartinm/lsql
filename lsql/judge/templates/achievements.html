@@ -4,7 +4,7 @@
 {% block contenido %}
 <h1>{% translate "Página de logros de " %}<span class="headAchievement">{{ username }}</span></h1>
 {% if unlocked %}
-<h3>{% translate "Logros conseguidos" %}</h3>
+<h2>{% translate "Logros conseguidos" %}</h2>
 <table class="table table-striped">
     <thead class="table-dark">
         <tr>
@@ -25,7 +25,7 @@
 </table>
 {% endif %}
 {% if locked %}
-<h3>{% translate "Logros pendientes" %}</h3>
+<h2>{% translate "Logros pendientes" %}</h2>
 <table class="table table-striped">
     <thead class="table-dark">
         <tr>

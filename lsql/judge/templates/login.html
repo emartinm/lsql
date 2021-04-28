@@ -12,7 +12,7 @@
 </div>
 {% endif %}
 
-  <h2>{% translate "Inicio de sesión" %}</h2>
+  <h1>{% translate "Inicio de sesión" %}</h1>
 <form action="{% url 'judge:login' %}" method="post">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ next }}">

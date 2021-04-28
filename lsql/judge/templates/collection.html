@@ -2,11 +2,11 @@
 {% load i18n %}
 {% load static %}
 {% block contenido %}
-<h2>{{collection.name_html|safe}}</h2>
+<h1>{{collection.name_html|safe}}</h1>
 {{collection.description_html|safe}}
 
 
-  <h4>{% translate "Listado de problemas" %}</h4>
+  <h2>{% translate "Listado de problemas" %}</h2>
   <table class="table">
     <thead class="table-dark">
       <tr>

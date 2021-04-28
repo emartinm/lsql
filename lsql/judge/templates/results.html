@@ -3,16 +3,15 @@
 {% load static %}
 {% block contenido %}
 
-{% if login.is_staff %}
 <div class="d-flex mb-3">
-    <h2 class="float-left">{% translate "Colección:" %} {{collection.name_html|safe}}</h2>
-<div class="col md-3">
-    <h2 class="float-right">{% translate "Desde" %} {{from_date|date:"d/m/Y"}} {% translate "hasta" %} {{to_date|date:"d/m/Y"}}</h2>
+    <h1 class="float-start">{% translate "Colección:" %} {{collection.name_html|safe}}</h1>
+    {% if login.is_staff %}
+    <div class="col md-3">
+        <h1 class="float-end">{% translate "Desde" %} {{from_date|date:"d/m/Y"}} {% translate "hasta" %} {{to_date|date:"d/m/Y"}}</h1>
+    </div>
+    {% endif %}
 </div>
-</div>
-{% else %}
-    <h2 class="text-center mb-3">{% translate "Colección:" %} {{collection.name_html|safe}}</h2>
-{% endif %}
+
 <div class="d-flex mb-1">
     <form class="d-flex" method="get" action="{% url 'judge:result' collection.id %}">
         <p class="h4">{% translate "Grupo:" %}</p>
@@ -23,13 +22,13 @@
             {% endfor %}
         </select>
         {% if login.is_staff %}
-            <p class="h4 ml-3 mr-1">{% translate "Desde:" %} </p>
+            <p class="h4 ms-3 me-1">{% translate "Desde:" %} </p>
             <input name="start" id="desde_date" type="date" data-date="{{start_date}}" data-date-format="DD MMMM YYYY"
             value="{{start_date|date:'Y-m-d'}}"  max="{{to_fixed}}">
-            <p class="h4 ml-3 mr-1">{% translate "Hasta:" %} </p>
+            <p class="h4 ms-3 me-1">{% translate "Hasta:" %} </p>
             <input name="end" id= "hasta_date" type="date" data-date="{{end_date}}" data-date-format="DD MMMM YYYY"
             value="{{end_date|date:'Y-m-d'}}" max="{{to_fixed}}">
-            <button id="filterButton" type="submit"  class="btn btn-primary ml-3"
+            <button id="filterButton" type="submit"  class="btn btn-primary ms-3"
                 title='{% translate "Filtro de ejercicios entre dos periodos" %}'>
                 <i class="bi bi-funnel-fill"></i> {% translate "Filtrar" %}
             </button>
@@ -37,7 +36,7 @@
     </form>
 
     {% if login.is_staff %}
-    <div class="col md-3">
+    <div class="col md-3 ms-3">
         <a href="{% url 'judge:download_ranking' collection.id %}?group={{group0.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}">
             <button type="button" class="btn btn-primary"
                     title='{% translate "Descargar fichero CSV con la clasificación" %}'>
@@ -47,7 +46,7 @@
     </div>
     {% endif %}
     <div class="col-0">
-        <button class="bg-white border-0 float-right" title='{% translate "Mostrar ayuda" %}'
+        <button class="bg-white border-0 float-end" title='{% translate "Mostrar ayuda" %}'
                 data-bs-target="#exampleModal" data-bs-toggle="modal" type="button">
             <i class="bi bi-question-circle bigger-icon" aria-hidden="true"></i>
         </button>
@@ -69,7 +68,7 @@
           </div>
           <div class="d-flex p-2">
                <div class="bg-success h-40 w-25 text-center mb-1 border border-dark">3/8 (5)</div>
-               <div class="text-left ml-1 w-75">{% translate "Ejercicio resuelto 3 veces de 8 intentos (1er envío aceptado en el 5º intento)" %}</div>
+               <div class="text-start ms-1 w-75">{% translate "Ejercicio resuelto 3 veces de 8 intentos (1er envío aceptado en el 5º intento)" %}</div>
           </div>
           <div class="d-flex p-2">
                <div class="bg-danger h-40 w-25 text-center mb-1 border border-dark">0/9 (9)</div>

@@ -11,7 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
 
-    <link rel="icon" href="{% static 'judge/img/database.svg' %}">
+    <link rel="icon" href="{% static 'judge/img/server.svg' %}">
     <link rel="stylesheet" href="{% static 'judge/css/style.css' %}">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css" 
@@ -27,41 +27,48 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-sm navbar-light bg-light">
-    <h1 data-toc-skip><a href="{% url 'judge:index' %}" class="main-link">Learn SQL</a></h1> <img src="{% static 'judge/img/database.svg' %}" height="50"/>
-    {% block menu %}
-    <a href="#" class="nav-link">{% translate "Opción del menú" %}</a>
-    {% endblock %}
-    <div class="collapse navbar-collapse justify-content-end" id="navbarLanguageContent">
-      <ul class="navbar-nav">
-        {% get_current_language as LANGUAGE_CODE %}
-        {% language_to_flag LANGUAGE_CODE as flag %}
-  
-        <li class="nav-link">
-          <a class="flag-icon {{ flag }}"></a>
-        </li>
+<nav class="navbar navbar-expand-md navbar-dark menu_bar">
+    <div class="container-fluid">
+        <a href="{% url 'judge:index' %}" class="navbar-brand abs">
+            Learn SQL <i class="bi bi-server bigger-icon"></i>
+        </a>
+        <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-collapse collapse" id="collapseNavbar">
+            <ul class="navbar-nav">
+                {% block menu %}
+                {% endblock %}
+            </ul>
+            <!-- Language selector -->
+            <ul class="navbar-nav ms-auto">
+                {% get_current_language as LANGUAGE_CODE %}
+                {% language_to_flag LANGUAGE_CODE as flag %}
 
-        <li>
-          {% get_language_info for LANGUAGE_CODE as lang %}
-          <form action="{% url 'set_language' %}" method="post">{% csrf_token %}
-            <input name="next" type="hidden" value="{{ redirect_to }}">
-            <select class="custom-select" data-style="btn-primary" name="language" onchange="this.form.submit()" id="language">
-              {% get_current_language as LANGUAGE_CODE %}
-              {% get_available_languages as LANGUAGES %}
-              {% get_language_info_list for LANGUAGES as languages %}
-              {% for language in languages %}
-              <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected{% endif %}>
-                {{ language.name_local  }}
-              </option>
-              {% endfor %}
-            </select>
-          </form>
-        </li>
-      </ul>
+                <li class="nav-link">
+                    <a class="flag-icon {{ flag }}"></a>
+                </li>
+                <li>
+                    {% get_language_info for LANGUAGE_CODE as lang %}
+                    <form action="{% url 'set_language' %}" method="post">{% csrf_token %}
+                        <input name="next" type="hidden" value="{{ redirect_to }}">
+                        <select class="custom-select" data-style="btn-primary" name="language" onchange="this.form.submit()" id="language">
+                        {% get_current_language as LANGUAGE_CODE %}
+                        {% get_available_languages as LANGUAGES %}
+                        {% get_language_info_list for LANGUAGES as languages %}
+                        {% for language in languages %}
+                            <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected{% endif %}>
+                                {{ language.name_local  }}
+                            </option>
+                        {% endfor %}
+                        </select>
+                    </form>
+                </li>
+            </ul>
+        </div>
     </div>
 </nav>
-
-<div class="container-fluid">
+<div class="container-fluid mt-4">
   <div class="row">
     <div class="col-12">
         {% block contenido %}

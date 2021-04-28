@@ -15,14 +15,14 @@ General template for a problem. Provides the following blocks:
 <script>hljs.highlightAll();</script>
 
 {% block name_text %}
-<h2>{{ problem.title_html|safe}}
+<h1>{{ problem.title_html|safe}}
 {% if problem.solved %}
   <i class="bi bi-check-circle-fill green-success" aria-hidden="true"></i>
   <span class="off-screen">{% translate "Problema resuelto" %}</span>
 {% else %}
   <i id="check-icon" class="bi bi-check-circle-fill green-success icon-hidden" aria-hidden="true"></i>
 {% endif %}
-</h2>
+</h1>
 <p>
 
 </p>
@@ -148,7 +148,7 @@ General template for a problem. Provides the following blocks:
 
 <br/>
 <div id="results_box" hidden>
-  <h3>{% translate "Retroalimentación" %}</h3>
+  <h2>{% translate "Retroalimentación" %}</h2>
   <div id="feedback_line" hidden></div>
   <div id="feedback_content"></div>
 </div>

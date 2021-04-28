@@ -89,3 +89,24 @@ img.screenshot {
 .bigger-icon {
     font-size: x-large
 }
+
+h1 {
+    font-size: xx-large;
+}
+
+h2 {
+    font-size: x-large;
+}
+
+h3 {
+    font-size: large;
+}
+
+nav.menu_bar {
+/*
+    background-color: #333300;
+    background-color: #003300;
+    background-color: #006666;
+*/
+    background-color: #003366;
+}
