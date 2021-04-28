@@ -283,7 +283,7 @@ class RankingTest(TestCase):
         ach_submissions.save()
         client.login(username='mazepin', password='passwordmazepin')
         submit_select_url = reverse('judge:submit', args=[problem.pk])
-        client.post(submit_select_url, {'code': 'CODIGO INCORRECTO'}, follow=True)
+        client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
         self.assertEqual(ObtainedAchievement.objects.filter(user=user).count(), 1)
 
     def test_return_none(self):
@@ -291,7 +291,7 @@ class RankingTest(TestCase):
         user = create_user('passwordmichu', 'michu')
         coll = create_collection('Coleccion de cartas')
         problem = create_select_problem(coll, 'Problema')
-        self.assertEqual(problem.solved_position(user), None)
+        self.assertIsNone(problem.solved_position(user))
 
     def test_str_method_obtained_achievement(self):
         """Test for check if __str__ return the name of the achievement"""

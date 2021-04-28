@@ -400,9 +400,11 @@ def submit(request, problem_id):
                     'veredict': VeredictCode.RE,
                     'title': VeredictCode.RE.label,
                     'message': VeredictCode.RE.message(),
-                    'feedback': f'{excp.statement} --> {excp.message}' if problem.problem_type() == ProblemType.FUNCTION
-                    else excp.message,
-                    'position': excp.position
+                    'feedback': (f'{excp.statement} --> {excp.message}'
+                                 if problem.problem_type() == ProblemType.FUNCTION else excp.message),
+                    'position': excp.position,
+                    'position_msg': _('Posición: línea {row}, columna {col}').format(row=excp.position[0]+1,
+                                                                                     col=excp.position[1]+1)
                 }
             elif excp.error_code == OracleStatusCode.TLE_USER_CODE:
                 data = {'veredict': VeredictCode.TLE, 'title': VeredictCode.TLE.label,
@@ -420,7 +422,7 @@ def submit(request, problem_id):
     submission = Submission(code=code, veredict_code=data['veredict'], veredict_message=data['message'],
                             user=request.user, problem=general_problem)
     submission.save()
-    # If veredict is correct look for an achievement to complete if it's possible
+    # If verdict is correct look for an achievement to complete if it's possible
     check_if_get_achievement(request.user, data['veredict'])
     logger.debug('Stored submission %s', submission)
     return JsonResponse(data)

@@ -11,6 +11,7 @@ from django.test import TestCase, Client
 import django.contrib.auth
 from django.urls import reverse
 from django.contrib.auth.models import Group
+
 from judge.models import Collection, SelectProblem, Submission, FunctionProblem, DMLProblem, ProcProblem, \
     TriggerProblem
 from judge.types import VeredictCode
@@ -21,7 +22,7 @@ from judge.feedback import filter_expected_db
 
 
 def create_select_problem(collection, name='Ejemplo'):
-    """Creates and stores a Select Problem"""
+    """ Creates and stores a Select Problem """
     create = 'CREATE TABLE test (n NUMBER);'
     insert = "INSERT INTO test VALUES (901)"
     solution = 'SELECT * FROM test'
@@ -209,17 +210,17 @@ class ViewsTest(TestCase):
         # OK and one collection with title
         response = client.get(collections_url, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn(collection.name_md, response.content.decode('utf-8'))
+        self.assertIn(collection.name_html, response.content.decode('utf-8'))
 
         # OK and one problem in collection
         response = client.get(collection_url, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn(problem.title_md, response.content.decode('utf-8'))
+        self.assertIn(problem.title_html, response.content.decode('utf-8'))
 
         # OK and title in problem page
         response = client.get(problem_url, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn(problem.title_md, response.content.decode('utf-8'))
+        self.assertIn(problem.title_html, response.content.decode('utf-8'))
 
         # NotFound
         response = client.get(no_problem_url, follow=True)
@@ -252,7 +253,7 @@ class ViewsTest(TestCase):
 
         # There must be 7 submission to problem
         response = client.get(submissions_url, follow=True)
-        self.assertEqual(response.content.decode('utf-8').count(problem.title_md), 7)
+        self.assertEqual(response.content.decode('utf-8').count(problem.title_html), 7)
 
         # JSON with VE (new Problem)
         response = client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
@@ -260,7 +261,7 @@ class ViewsTest(TestCase):
 
         # There must be 1 submission to new problem
         response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
-        self.assertEqual(response.content.decode('utf-8').count(problem_dml.title_md), 1)
+        self.assertEqual(response.content.decode('utf-8').count(problem_dml.title_html), 1)
 
         # problem_id is not numeric
         response = client.get(submissions_url, {'problem_id': 'problem', 'user_id': 'user'}, follow=True)
@@ -291,7 +292,7 @@ class ViewsTest(TestCase):
                                                 'start': first_day_of_course(datetime(2020, 9, 1)),
                                                 'end': datetime.today().strftime('%Y-%m-%d')},
                               follow=True)
-        self.assertEqual(response.content.decode('utf-8').count(problem_dml.title_md), 1)
+        self.assertEqual(response.content.decode('utf-8').count(problem_dml.title_html), 1)
         client.logout()
 
     def test_visibility_submission(self):
@@ -353,7 +354,7 @@ class ViewsTest(TestCase):
             problem_url = reverse('judge:problem', args=[problem.pk])
             response = client.get(problem_url, follow=True)
             self.assertEqual(response.status_code, 200)
-            self.assertIn(problem.title_md, response.content.decode('utf-8'))
+            self.assertIn(problem.title_html, response.content.decode('utf-8'))
 
     def test_download(self):
         """Download the script of a problem (CREATE + INSERT)"""
@@ -562,9 +563,9 @@ class ViewsTest(TestCase):
         self.assertNotIn(user_1.username, html)
 
         # I find that there are two exercises in the collection
-        self.assertIn(select_problem.title_md, html)
-        self.assertIn(dml_problem.title_md, html)
-        self.assertIn(select_problem_2.title_md, html)
+        self.assertIn(select_problem.title_html, html)
+        self.assertIn(dml_problem.title_html, html)
+        self.assertIn(select_problem_2.title_html, html)
 
         # I look at the group to where the students are
         response = client.get(classification_url,
@@ -646,8 +647,8 @@ class ViewsTest(TestCase):
         response = client.get(result_url, follow=True)
         title = 'Colecciones'
         self.assertEqual(response.status_code, 200)
-        self.assertIn(collection.name_md, response.content.decode('utf-8'))
-        self.assertIn(collection_2.name_md, response.content.decode('utf-8'))
+        self.assertIn(collection.name_html, response.content.decode('utf-8'))
+        self.assertIn(collection_2.name_html, response.content.decode('utf-8'))
         self.assertIn(title, response.content.decode('utf-8'))
         client.logout()
         # the user without a group can't see the page results
@@ -771,46 +772,46 @@ class ViewsTest(TestCase):
 
     def test_filter_expected_db(self):
         """Test for filter an expected db and transform for another to show"""
-        initial = { 'ESTA SE BORRA': {'rows': [['11111X', 'Real', 'Concha', 70000]],
-                                 'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                        ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
-                                        ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
-                                        ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]},
-                    'ESTA SE MODIFICA': {'rows': [['111X', '222X', '004X']],
-                                 'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]},
-                    'ESTA SE QUEDA IGUAL': {'rows': [['111X', '222X', '004X']],
-                                 'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
-        expected = {'ESTA SE AGREGA': {'rows': [['11111X', 'Gandia', 'Guillermo Olague', 70000]],
+        initial = {'ESTA SE BORRA': {'rows': [['11111X', 'Real', 'Concha', 70000]],
                                      'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
-                                             ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
-                                            ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]},
+                                                ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]},
+                   'ESTA SE MODIFICA': {'rows': [['111X', '222X', '004X']],
+                                        'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                   ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                   ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]},
+                   'ESTA SE QUEDA IGUAL': {'rows': [['111X', '222X', '004X']],
+                                           'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                      ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                      ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
+        expected = {'ESTA SE AGREGA': {'rows': [['11111X', 'Gandia', 'Guillermo Olague', 70000]],
+                                       'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                  ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                  ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                  ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]},
                     'ESTA SE MODIFICA': {'rows': [['111X', '333X', '004X']],
-                                     'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]},
+                                         'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                    ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                    ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]},
                     'ESTA SE QUEDA IGUAL': {'rows': [['111X', '222X', '004X']],
-                                    'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
+                                            'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                       ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                       ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
         result_added = {'ESTA SE AGREGA': {'rows': [['11111X', 'Gandia', 'Guillermo Olague', 70000]],
-                                'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
-                                            ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
-                                            ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]}}
+                                           'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                      ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                      ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                      ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]}}
         result_modified = {'ESTA SE MODIFICA': {'rows': [['111X', '333X', '004X']],
-                                'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
+                                                'header': [['CIF_LOCAL', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                           ['CIF_VISITANTE', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                           ['NIF', '<cx_Oracle.DbType DB_TYPE_CHAR>']]}}
         result_removed = {'ESTA SE BORRA': {'rows': [['11111X', 'Real', 'Concha', 70000]],
-                                'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
-                                            ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
-                                            ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
-                                            ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]}}
+                                            'header': [['CIF', '<cx_Oracle.DbType DB_TYPE_CHAR>'],
+                                                       ['NOMBRE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                       ['SEDE', '<cx_Oracle.DbType DB_TYPE_VARCHAR>'],
+                                                       ['NUM_SOCIOS', '<cx_Oracle.DbType DB_TYPE_NUMBER>']]}}
         ret_1, ret_2, ret_3 = filter_expected_db(expected, initial)
         self.assertEqual(ret_1, result_added)
         self.assertEqual(ret_2, result_modified)

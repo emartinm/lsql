@@ -610,7 +610,7 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
                 order_by('problem', 'creation_date').distinct('problem').values('creation_date')
             )).order_by('creation_date')
             for sub in order_problem_creation_date:
-                problem = Problem.objects.filter(title_md=sub.problem).select_subclasses()
+                problem = Problem.objects.filter(pk=sub.problem.pk).select_subclasses()
                 if problem[0].problem_type().name == self.problem_type:
                     count += 1
                     if count >= self.num_problems:

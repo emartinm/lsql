@@ -57,13 +57,13 @@ function select_error_in_editor(myJson) {
         ace.edit('user_code').selection.moveCursorTo(line, col, false);
         ace.edit('user_code').selection.selectAWord();
         $('#feedback_line').removeAttr('hidden');
-        $('#feedback_line').text("Posición: línea " + (line+1) + ", columna " + (col+1));
+        $('#feedback_line').text(myJson.position_msg);
     } else {
         $('#feedback_line').attr('hidden', true);
     }
 }
 
-// Submits the solution and receives and shows the veredict
+// Submits the solution and receives and shows the verdict
 function send_solution() {
     // Get endpoint from the form
     let endpoint = $('#endpoint').val();
