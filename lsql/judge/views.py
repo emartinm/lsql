@@ -454,7 +454,7 @@ def download_ranking(request, collection_id):
         book = work.active
 
         # Takes collection and date
-        data = soup.find_all("h2")
+        data = soup.find_all("h1")
         for i in data:
             book.cell(row=row, column=col, value=i.string.strip())
             row += 1
