@@ -1,7 +1,11 @@
 #! /bin/bash
 
-# Applies migrations, run tests and uploads reports to codecov
+# Prints environment
+echo "Environment"
+env
+echo "-----------"
 
+# Applies migrations, run tests and uploads reports to codecov
 cd lsql
 
 python manage.py migrate
