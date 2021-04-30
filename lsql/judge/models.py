@@ -123,6 +123,12 @@ class Collection(models.Model):
         return Submission.objects.filter(veredict_code='AC', problem__collection=self, user=user) \
             .distinct('problem').count()
 
+    def languages(self):
+        """Set with all the languages of the collection"""
+        languages = set()
+        for problem in Collection.problems(self):
+            languages.add(problem.language)
+        return languages
 
 class Problem(models.Model):
     """Base class for problems, with common attributes and methods"""
@@ -131,6 +137,7 @@ class Problem(models.Model):
     title_html = models.CharField(max_length=200)
     text_md = models.TextField(max_length=5000, blank=True)
     text_html = models.TextField(max_length=10000)
+    language = models.CharField(max_length=7, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
     create_sql = models.TextField(max_length=20000, blank=True)
     insert_sql = models.TextField(max_length=20000, blank=True)
     initial_db = JSONField(encoder=DjangoJSONEncoder, default=None, blank=True, null=True)

@@ -46,13 +46,13 @@
                 {% language_to_flag LANGUAGE_CODE as flag %}
 
                 <li class="nav-link">
-                    <a class="flag-icon {{ flag }}"></a>
+                    <span class="{{ flag }} d-inline-block align-bottom" id="current-language"></span>
                 </li>
                 <li>
                     {% get_language_info for LANGUAGE_CODE as lang %}
-                    <form action="{% url 'set_language' %}" method="post">{% csrf_token %}
+                    <form class="nav-link" action="{% url 'set_language' %}" method="post">{% csrf_token %}
                         <input name="next" type="hidden" value="{{ redirect_to }}">
-                        <select class="custom-select" data-style="btn-primary" name="language" onchange="this.form.submit()" id="language">
+                        <select class="form-select form-select-sm" data-style="btn-primary" name="language" onchange="this.form.submit()" id="language">
                         {% get_current_language as LANGUAGE_CODE %}
                         {% get_available_languages as LANGUAGES %}
                         {% get_language_info_list for LANGUAGES as languages %}

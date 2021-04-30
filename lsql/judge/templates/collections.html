@@ -1,5 +1,6 @@
 {% extends "base_menu.html" %}
 {% load i18n %}
+{% load languages_to_flags %}
 {% load static %}
 {% block contenido %}
   <h1>{% translate "Colecciones de problemas" %}</h1>
@@ -8,12 +9,14 @@
     <thead class="table-dark">
       <tr>
         <th scope="col">{% translate "Nombre" %}</th>
+        <th scope="col"></th>
         <th scope="col">{% translate "Resueltos" %}</th>
         <th scope="col">{% translate "Total problemas" %}</th>
       </tr>
     </thead>
     <tbody>
     {% for c in collections %}
+    {% collection_flags c.languages as flags %}
     <tr>
       <td>
         {% if c.num_problems == c.num_solved %}
@@ -23,6 +26,11 @@
         <i class="bi bi-check-circle-fill icon-hidden" aria-hidden="true"></i>
         {% endif %}
         <a href="{% url 'judge:collection' c.id %}">{{ c.name_html|safe }}</a>
+      </td>
+      <td class="text-right flags">
+        {% for flag in flags %}
+          <span class="{{ flag }}"></span>
+        {% endfor %}
       </td>
       <td>{{ c.num_solved }}</td>
       <td>{{ c.num_problems }}</td>
