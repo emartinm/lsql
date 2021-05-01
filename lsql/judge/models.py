@@ -125,10 +125,8 @@ class Collection(models.Model):
 
     def languages(self):
         """Set with all the languages of the collection"""
-        languages = set()
-        for problem in Collection.problems(self):
-            languages.add(problem.language)
-        return languages
+        return list(Collection.problems(self).order_by('language').distinct('language') \
+            .values_list('language', flat=True))
 
 class Problem(models.Model):
     """Base class for problems, with common attributes and methods"""

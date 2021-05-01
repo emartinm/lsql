@@ -322,7 +322,7 @@ class LanguagesTest(TestCase):
         html = client.get(collections_url, follow=True).content.decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
 
-        self.assertEqual(soup.find_all("td", {"class": "flags"})[0].find_all("span", {"flag-icon"}), [])
+        self.assertEqual(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"}), [])
 
         problem3 = SelectProblem(title_md='Dates', text_md='Example with dates', language="en",
                                  create_sql=create, insert_sql=insert, collection=collection,
@@ -337,10 +337,10 @@ class LanguagesTest(TestCase):
         html = client.get(collections_url, follow=True).content.decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
 
-        self.assertEqual(len(soup.find_all("td", {"class": "flags"})[0].find_all("span", {"flag-icon"})), 2)
+        self.assertEqual(len(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})), 2)
 
-        flags = soup.find_all("td", {"class": "flags"})[0].find_all("span", {"flag-icon"})[0]['class']
-        flags.extend(soup.find_all("td", {"class": "flags"})[0].find_all("span", {"flag-icon"})[1]['class'])
+        flags = soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})[0]['class']
+        flags.extend(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})[1]['class'])
 
         self.assertIn("flag-icon-us", flags)
         self.assertIn("flag-icon-es", flags)

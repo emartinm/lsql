@@ -9,7 +9,6 @@
     <thead class="table-dark">
       <tr>
         <th scope="col">{% translate "Nombre" %}</th>
-        <th scope="col"></th>
         <th scope="col">{% translate "Resueltos" %}</th>
         <th scope="col">{% translate "Total problemas" %}</th>
       </tr>
@@ -18,19 +17,21 @@
     {% for c in collections %}
     {% collection_flags c.languages as flags %}
     <tr>
-      <td>
-        {% if c.num_problems == c.num_solved %}
-        <i class="bi bi-check-circle-fill green-success" aria-hidden="true"></i>
-        <span class="off-screen">{% translate "Colección terminada" %}</span>
-        {% else %}
-        <i class="bi bi-check-circle-fill icon-hidden" aria-hidden="true"></i>
-        {% endif %}
-        <a href="{% url 'judge:collection' c.id %}">{{ c.name_html|safe }}</a>
-      </td>
-      <td class="text-right flags">
-        {% for flag in flags %}
-          <span class="{{ flag }}"></span>
-        {% endfor %}
+      <td class="d-flex">
+        <div>
+          {% if c.num_problems == c.num_solved %}
+          <i class="bi bi-check-circle-fill green-success" aria-hidden="true"></i>
+          <span class="off-screen">{% translate "Colección terminada" %}</span>
+          {% else %}
+          <i class="bi bi-check-circle-fill icon-hidden" aria-hidden="true"></i>
+          {% endif %}
+          <a href="{% url 'judge:collection' c.id %}">{{ c.name_html|safe }}</a>
+        </div>
+        <div class="mx-2 flags">
+          {% for flag in flags %}
+            <span class="{{ flag }}"></span>
+          {% endfor %}
+        </div>
       </td>
       <td>{{ c.num_solved }}</td>
       <td>{{ c.num_problems }}</td>
