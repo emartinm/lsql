@@ -147,7 +147,8 @@ class ShellTest(TestCase):
             sub.creation_date = datetime.datetime(2020, 9, 15)  # Sets an older date
             sub.save()
 
-        _, filename = mkstemp('_rejudge')
+        file_desc, filename = mkstemp('_rejudge')
+        os.close(file_desc)  # To avoid problems when removing the file in Windows
         rejudge(VeredictCode.IE, filename, tests=True)
         with open(filename, 'r') as summary_file:
             summary = summary_file.read()

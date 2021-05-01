@@ -18,8 +18,8 @@ class SelectProblemAdmin(admin.ModelAdmin):
     """Model for SelectProblem"""
     fieldsets = [
         ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
-                                          'position', 'check_order']}),
+        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
+                                          'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')
@@ -30,8 +30,8 @@ class DMLProblemAdmin(admin.ModelAdmin):
     """Model for DMLProblem"""
     fieldsets = [
         ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
-                                          'position', 'check_order']}),
+        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
+                                          'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')
@@ -42,8 +42,8 @@ class FunctionProblemAdmin(admin.ModelAdmin):
     """Model for FunctionProblem"""
     fieldsets = [
         ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
-                                          'position', 'check_order']}),
+        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
+                                          'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'calls']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')
@@ -55,8 +55,8 @@ class ProcProblemAdmin(admin.ModelAdmin):
     """Model for ProcProblem"""
     fieldsets = [
         ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
-                                          'position', 'check_order']}),
+        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
+                                          'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'proc_call']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')
@@ -68,8 +68,8 @@ class TriggerProblemAdmin(admin.ModelAdmin):
     """Model for TriggerProblem"""
     fieldsets = [
         ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
-                                          'position', 'check_order']}),
+        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
+                                          'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'tests']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')
@@ -81,8 +81,8 @@ class DiscriminantProblemAdmin(admin.ModelAdmin):
     """Model for FunctionProblem"""
     fieldsets = [
         ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection', 'author',
-                                          'position', 'check_order']}),
+        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
+                                          'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'correct_query', 'incorrect_query']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')

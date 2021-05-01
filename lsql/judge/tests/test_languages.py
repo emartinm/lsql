@@ -3,12 +3,13 @@
 Tests for languages
 """
 import os
+from bs4 import BeautifulSoup
 
 from django.test import TestCase, Client
 from django.conf import settings
 from django.urls import reverse
 from judge.tests.test_views import create_user, create_group, create_collection, create_select_problem
-from judge.models import ProcProblem, TriggerProblem
+from judge.models import SelectProblem, ProcProblem, TriggerProblem
 from judge.tests.test_parse import ParseTest
 from judge.templatetags import languages_to_flags
 from judge.feedback import compare_select_results
@@ -16,10 +17,17 @@ from judge.feedback import compare_select_results
 class LanguagesTest(TestCase):
     """Tests for the languages"""
 
-    def test_languages_to_flags(self):
+    def test_languages_to_flags_templatetag(self):
         """Test to check if css classes for flags are correctly generated"""
-        self.assertEqual(languages_to_flags.language_to_flag("en"), "flag-icon-us")
-        self.assertEqual(languages_to_flags.language_to_flag("es"), "flag-icon-es")
+        self.assertEqual(languages_to_flags.language_to_flag("en"), "flag-icon flag-icon-us")
+        self.assertEqual(languages_to_flags.language_to_flag("es"), "flag-icon flag-icon-es")
+
+    def test_collection_flags_templatetag(self):
+        """Test to check if css classes for flags are correctly generated"""
+        self.assertIn("flag-icon flag-icon-us", languages_to_flags.collection_flags({"en"}))
+        self.assertIn("flag-icon flag-icon-us", languages_to_flags.collection_flags({"es", "en"}))
+        self.assertIn("flag-icon flag-icon-es", languages_to_flags.collection_flags({"es", "en"}))
+        self.assertNotIn("flag-icon flag-icon-us", languages_to_flags.collection_flags({"es"}))
 
     def test_login_language(self):
         """Test to check if language in login page displays correctly"""
@@ -238,11 +246,9 @@ class LanguagesTest(TestCase):
     def test_language_selector(self):
         """Test to check language selector"""
         client = Client()
-        create_user('5555', 'pedro')
-        client.login(username='pedro', password='5555')
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
-        url = reverse('judge:collections')
+        url = reverse('judge:login')
         response = client.get(url, follow=True)
         self.assertIn('flag-icon-us', response.content.decode('utf-8'))
         self.assertNotIn('flag-icon-es', response.content.decode('utf-8'))
@@ -250,7 +256,7 @@ class LanguagesTest(TestCase):
         self.assertNotIn('value="es" selected', response.content.decode('utf-8'))
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
-        url = reverse('judge:collections')
+        url = reverse('judge:login')
         response = client.get(url, follow=True)
         self.assertIn('flag-icon-es', response.content.decode('utf-8'))
         self.assertNotIn('flag-icon-us', response.content.decode('utf-8'))
@@ -287,3 +293,54 @@ class LanguagesTest(TestCase):
         self.assertIn('LEYENDA', response.content.decode('utf-8'))
         self.assertIn('Resueltos', response.content.decode('utf-8'))
         self.assertIn('Suma del primer envío aceptado de cada ejercicio', response.content.decode('utf-8'))
+
+    def test_collection_languages(self):
+        """Test to check languages in collection list"""
+        client = Client()
+        collection = create_collection('Collection')
+        create_user('5555', 'pepe')
+        client.login(username='pepe', password='5555')
+
+        create = 'CREATE TABLE mytable (dd DATE);'
+        insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'yyyy/mm/dd'))"
+        solution = 'SELECT * FROM mytable'
+        problem1 = SelectProblem(title_md='Dates', text_md='Example with dates', language="es",
+                                 create_sql=create, insert_sql=insert, collection=collection,
+                                 solution=solution)
+        problem2 = SelectProblem(title_md='Dates', text_md='Example with dates', language="es",
+                                 create_sql=create, insert_sql=insert, collection=collection,
+                                 solution=solution)
+        problem1.clean()
+        problem1.save()
+        problem2.clean()
+        problem2.save()
+
+        self.assertIn("es", collection.languages())
+        self.assertNotIn("en", collection.languages())
+
+        collections_url = reverse('judge:collections')
+        html = client.get(collections_url, follow=True).content.decode('utf-8')
+        soup = BeautifulSoup(html, 'html.parser')
+
+        self.assertEqual(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"}), [])
+
+        problem3 = SelectProblem(title_md='Dates', text_md='Example with dates', language="en",
+                                 create_sql=create, insert_sql=insert, collection=collection,
+                                 solution=solution)
+        problem3.clean()
+        problem3.save()
+
+        self.assertIn("es", collection.languages())
+        self.assertIn("en", collection.languages())
+
+        collections_url = reverse('judge:collections')
+        html = client.get(collections_url, follow=True).content.decode('utf-8')
+        soup = BeautifulSoup(html, 'html.parser')
+
+        self.assertEqual(len(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})), 2)
+
+        flags = soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})[0]['class']
+        flags.extend(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})[1]['class'])
+
+        self.assertIn("flag-icon-us", flags)
+        self.assertIn("flag-icon-es", flags)

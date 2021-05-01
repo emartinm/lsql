@@ -14,5 +14,15 @@ register = template.Library()
 def language_to_flag(code):
     """Generates css flag class for the language code"""
     if code.lower() == 'en':
-        return 'flag-icon-us'
-    return 'flag-icon-' + code.lower()
+        return 'flag-icon flag-icon-us'
+    return 'flag-icon flag-icon-' + code.lower()
+
+@register.simple_tag
+def collection_flags(languages):
+    """Generates the necessary css flag classes for the language codes in a list"""
+    flags = []
+    if languages != ['es']:
+        for lang in languages:
+            flags.append(language_to_flag(lang))
+    return flags
+    
