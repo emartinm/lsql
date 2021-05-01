@@ -125,7 +125,7 @@ class Collection(models.Model):
 
     def languages(self):
         """Set with all the languages of the collection"""
-        return list(Collection.problems(self).order_by('language').distinct('language') \
+        return list(self.problems().order_by('language').distinct('language') \
             .values_list('language', flat=True))
 
 class Problem(models.Model):
