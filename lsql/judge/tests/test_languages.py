@@ -348,7 +348,7 @@ class LanguagesTest(TestCase):
         self.assertIn("flag-icon-es", flags)
 
     def test_help_page_language(self):
-        """Test to check help language page"""
+        """Test to check help page language"""
         client = Client()
         create_user('5555', 'pepe')
         client.login(username='pepe', password='5555')
