@@ -16,8 +16,8 @@
     <tbody>
         {% for obj in unlocked %}
         <tr>
-            <td>{{ obj.achievement_definition.name }}</td>
-            <td>{{ obj.achievement_definition.description }}</td>
+            <td>{{ obj.achievement_definition.get_name }}</td>
+            <td>{{ obj.achievement_definition.get_description }}</td>
             <td>{{ obj.obtained_date }}</td>
         </tr>
         {% endfor %}
@@ -36,8 +36,8 @@
     <tbody>
         {% for obj in locked %}
         <tr>
-            <td>{{ obj.name }}</td>
-            <td>{{ obj.description }}</td>
+            <td>{{ obj.get_name }}</td>
+            <td>{{ obj.get_description }}</td>
         </tr>
         {% endfor %}
     </tbody>

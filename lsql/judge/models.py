@@ -18,6 +18,7 @@ from django.conf import settings
 from django.core.validators import MinLengthValidator
 from django.db.models import JSONField, Subquery
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils import translation
 
 from .feedback import compare_select_results, compare_db_results, compare_function_results, compare_discriminant_db
 from .oracle_driver import OracleExecutor
@@ -488,8 +489,12 @@ class Submission(models.Model):
 
 class AchievementDefinition(models.Model):
     """Abstract class for Achievements"""
-    name = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
-    description = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
+    name = JSONField(encoder=DjangoJSONEncoder,
+                     default=lambda: {settings.LANGUAGE_CODE: ""},
+                     blank=True, null=True)
+    description = JSONField(encoder=DjangoJSONEncoder,
+                            default=lambda: {settings.LANGUAGE_CODE: ""},
+                            blank=True, null=True)
 
     # To query Problem to obtain subclass objects with '.select_subclasses()'
     objects = InheritanceManager()
@@ -512,8 +517,19 @@ class AchievementDefinition(models.Model):
 
     def __str__(self):
         """String for show the achievement name"""
-        return f"{self.name}"
+        return f"{self.name[translation.get_language()]}"
 
+    def get_name(self):
+        """Returns the name in the current language"""
+        if translation.get_language() in self.name:
+            return f"{self.name[translation.get_language()]}"
+        return f"{self.name[settings.LANGUAGE_CODE]}"
+
+    def get_description(self):
+        """Returns the description in the current language"""
+        if translation.get_language() in self.description:
+            return f"{self.description[translation.get_language()]}"
+        return f"{self.description[settings.LANGUAGE_CODE]}"
 
 class ObtainedAchievement(models.Model):
     """Store info about an obtained achievement"""
