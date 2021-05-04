@@ -357,12 +357,6 @@ class LanguagesTest(TestCase):
         help_url = reverse('judge:help')
         response = client.get(help_url, follow=True)
 
-        self.assertNotIn('Equipo de diseño y desarrollo', response.content.decode('utf-8'))
-
-        client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'ru'})
-        help_url = reverse('judge:help')
-        response = client.get(help_url, follow=True)
-
         self.assertIn('Equipo de diseño y desarrollo', response.content.decode('utf-8'))
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
