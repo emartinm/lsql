@@ -20,16 +20,22 @@ from judge.views import first_day_of_course
 def create_an_achievement_of_each(coll):
     """Create an achievement of each type: NumSolvedAchievementDefinition, PodiumAchievementDefinition and
     NumSolvedCollectionAchievementDefinition"""
-    ach_podium = PodiumAchievementDefinition(name='Presidente del podio', description='Consigue entrar\
-                                                    al podio', num_problems=1, position=3)
-    ach_collection = NumSolvedCollectionAchievementDefinition(name='Coleccionista', description='Resuelve 1 problema\
-                                                            de esta coleccion', num_problems=1, collection=coll)
-    ach_solved = NumSolvedAchievementDefinition(name='Resolvista', description='Resuelve 1 problema',
+    ach_podium = PodiumAchievementDefinition(name={"es":'Presidente del podio'},
+                                             description={"es":'Consigue entrar al podio'},
+                                             num_problems=1, position=3)
+    ach_collection = NumSolvedCollectionAchievementDefinition(name={"es":'Coleccionista'},
+                                                              description={"es":'Resuelve 1 problema\
+                                                              de esta coleccion'},
+                                                              num_problems=1, collection=coll)
+    ach_solved = NumSolvedAchievementDefinition(name={"es":'Resolvista'},
+                                                description={"es":'Resuelve 1 problema'},
                                                 num_problems=1)
-    ach_type = NumSolvedTypeAchievementDefinition(name='Tipos', description='Resuelve un problema SELECT',
+    ach_type = NumSolvedTypeAchievementDefinition(name={"es":'Tipos'},
+                                                  description={"es":'Resuelve un problema SELECT'},
                                                   num_problems=1, problem_type=ProblemType.SELECT.name)
-    ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(name='Primer envio',
-                                                                description='Realiza un envio a cualquier problema',
+    ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(name={"es":'Primer envio'},
+                                                                description={"es":'Realiza un envio a \
+                                                                cualquier problema'},
                                                                 num_submissions=1, num_problems=1)
     ach_type.save()
     ach_submi_pro.save()
@@ -44,7 +50,9 @@ class RankingTest(TestCase):
     def test_get_podium_achievement(self):
         """Test if get correctly a podium achievement"""
         client = Client()
-        podium_achievement = PodiumAchievementDefinition(name='Top 1', description='Se el primero', num_problems=1,
+        podium_achievement = PodiumAchievementDefinition(name={"es":"Top 1"},
+                                                         description={"es":'Se el primero'},
+                                                         num_problems=1,
                                                          position=1)
         podium_achievement.save()
         coll = create_collection('Test Podium')
@@ -60,8 +68,12 @@ class RankingTest(TestCase):
     def test_get_solved_achievement(self):
         """Test if get correctly a solved achievement and check_user function"""
         client = Client()
-        solved_achievement_1 = NumSolvedAchievementDefinition(name='Solo 1', description='Acierta 1', num_problems=1)
-        solved_achievement_2 = NumSolvedAchievementDefinition(name='Solo 2', description='Acierta 2', num_problems=2)
+        solved_achievement_1 = NumSolvedAchievementDefinition(name={"es":'Solo 1'},
+                                                             description={"es":'Acierta 1'},
+                                                             num_problems=1)
+        solved_achievement_2 = NumSolvedAchievementDefinition(name={"es":'Solo 2'},
+                                                             description={"es":'Acierta 2'},
+                                                             num_problems=2)
         solved_achievement_1.save()
         solved_achievement_2.save()
         coll = create_collection('Test Solved')
@@ -80,7 +92,8 @@ class RankingTest(TestCase):
         """Test if get correctly a collection achievement"""
         client = Client()
         coll = create_collection('Test Solved')
-        coll_achievement = NumSolvedCollectionAchievementDefinition(name='Solo 1', description='Acierta 1',
+        coll_achievement = NumSolvedCollectionAchievementDefinition(name={"es":'Solo 1'},
+                                                                    description={"es":'Acierta 1'},
                                                                     num_problems=1, collection=coll)
         coll_achievement.save()
         problem = create_select_problem(coll, 'Select 1')
@@ -130,25 +143,30 @@ class RankingTest(TestCase):
         # Create the Collection for the achievement NumSolvedCollectionAchievementDefinition and Problem
         coll = create_collection('Coleccion de cartas')
         # Create PodiumAchievementDefinition
-        ach_podium = PodiumAchievementDefinition(name='Presidente del podio', description='Consigue ser el primero',
+        ach_podium = PodiumAchievementDefinition(name={"es":'Presidente del podio'},
+                                                 description={"es":'Consigue ser el primero'},
                                                  num_problems=1, position=1)
         ach_podium.save()
         # Create NumSolvedCollectionAchievementDefinition
-        ach_collection = NumSolvedCollectionAchievementDefinition(name='Coleccionista', description='Resuelve 50\
-                                                                  problemas de esta coleccion', num_problems=50,
+        ach_collection = NumSolvedCollectionAchievementDefinition(name={"es":'Coleccionista'},
+                                                                  description={"es":'Resuelve 50\
+                                                                  problemas de esta coleccion'},
+                                                                  num_problems=50,
                                                                   collection=coll)
         ach_collection.save()
         # Create NumSolvedAchievementDefinition
-        ach_solved = NumSolvedAchievementDefinition(name='Resolvista', description='Resuelve 50 problemas',
+        ach_solved = NumSolvedAchievementDefinition(name={"es":'Resolvista'},
+                                                    description={"es":'Resuelve 50 problemas'},
                                                     num_problems=50)
         ach_solved.save()
         # Create NumSolvedTypeAchievementDefinition
-        ach_type = NumSolvedTypeAchievementDefinition(name='Procedista', description='Resuelve un problema PROC',
+        ach_type = NumSolvedTypeAchievementDefinition(name={"es":'Procedista'},
+                                                      description={"es":'Resuelve un problema PROC'},
                                                       num_problems=1, problem_type=ProblemType.PROC.name)
         ach_type.save()
         # Create NumSubmissionsProblemsAchievementDefinition
-        ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(name='Muchos envios',
-                                                                    description='Envia muchas soluciones',
+        ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(name={"es":'Muchos envios'},
+                                                                    description={"es":'Envia muchas soluciones'},
                                                                     num_submissions=80, num_problems=1)
         ach_submi_pro.save()
         # Create problem and submit correct answer with "immobile" user, for make this the first to solve the problem
@@ -188,7 +206,7 @@ class RankingTest(TestCase):
         client = Client()
         user = create_user('passwordmichu', 'michu')
         client.login(username='michu', password='passwordmichu')
-        achievement_definition = AchievementDefinition(name='nombre', description='descripcion')
+        achievement_definition = AchievementDefinition(name={"es":'nombre'}, description={"es":'descripcion'})
         with self.assertRaises(NotImplementedError):
             achievement_definition.check_and_save(user)
 
@@ -209,7 +227,8 @@ class RankingTest(TestCase):
         sub_2_u = Submission.objects.get(id=sub_2.id)
 
         # Test NumSolvedAchievementDefinition
-        ach_solved = NumSolvedAchievementDefinition(name='Resolvista', description='Resuelve 2 problemas',
+        ach_solved = NumSolvedAchievementDefinition(name={"es":'Resolvista'},
+                                                    description={"es":'Resuelve 2 problemas'},
                                                     num_problems=2)
         ach_solved.save()
         date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
@@ -221,9 +240,10 @@ class RankingTest(TestCase):
         ObtainedAchievement.objects.all().delete()
 
         # Test NumSolvedCollectionAchievementDefinition
-        ach_coll = NumSolvedCollectionAchievementDefinition(name='Coleccionista', description='Resuelve 2 \
-                                                            problemas de esta coleccion', num_problems=2,
-                                                            collection=coll)
+        ach_coll = NumSolvedCollectionAchievementDefinition(name={"es":'Coleccionista'},
+                                                            description={"es":'Resuelve 2 \
+                                                            problemas de esta coleccion'},
+                                                            num_problems=2, collection=coll)
         ach_coll.save()
         date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
         self.assertEqual(date[0], sub_2_u.creation_date)
@@ -234,7 +254,8 @@ class RankingTest(TestCase):
         ObtainedAchievement.objects.all().delete()
 
         # Test PodiumAchievementDefinition
-        ach_podium = PodiumAchievementDefinition(name='Presidente del podio', description='Consigue ser el primero',
+        ach_podium = PodiumAchievementDefinition(name={"es":'Presidente del podio'},
+                                                 description={"es":'Consigue ser el primero'},
                                                  num_problems=2, position=1)
         ach_podium.save()
         date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
@@ -246,7 +267,8 @@ class RankingTest(TestCase):
         ObtainedAchievement.objects.all().delete()
 
         # Test NumSolvedTypeAchievementDefinition
-        ach_type = NumSolvedTypeAchievementDefinition(name='Tipos', description='Resuelve un problema SELECT',
+        ach_type = NumSolvedTypeAchievementDefinition(name={"es":'Tipos'},
+                                                      description={"es":'Resuelve un problema SELECT'},
                                                       num_problems=2, problem_type=ProblemType.SELECT.name)
         ach_type.save()
         date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
@@ -258,9 +280,9 @@ class RankingTest(TestCase):
         ObtainedAchievement.objects.all().delete()
 
         # Test NumSubmissionsProblemsAchievementDefinition
-        ach_submissions = NumSubmissionsProblemsAchievementDefinition(name='Ya van dos problemas',
-                                                                      description='Realiza un envio en dos problemas',
-                                                                      num_problems=2, num_submissions=2)
+        ach_submissions = NumSubmissionsProblemsAchievementDefinition(name={"es":'Ya van dos problemas'},
+                                                  description={"es":'Realiza un envio en dos problemas'},
+                                                  num_problems=2, num_submissions=2)
         ach_submissions.save()
         date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
         self.assertEqual(date[0], sub_2_u.creation_date)
@@ -277,9 +299,9 @@ class RankingTest(TestCase):
         user = create_user('passwordmazepin', 'mazepin')
         coll = create_collection('Coleccion de cartas')
         problem = create_select_problem(coll, 'Problema')
-        ach_submissions = NumSubmissionsProblemsAchievementDefinition(name='Un envio',
-                                                                      description='Envia una solucion para un problema',
-                                                                      num_problems=1, num_submissions=1)
+        ach_submissions = NumSubmissionsProblemsAchievementDefinition(name={"es":'Un envio'},
+                                    description={"es":'Envia una solucion para un problema'},
+                                    num_problems=1, num_submissions=1)
         ach_submissions.save()
         client.login(username='mazepin', password='passwordmazepin')
         submit_select_url = reverse('judge:submit', args=[problem.pk])
@@ -295,8 +317,8 @@ class RankingTest(TestCase):
 
     def test_str_method_obtained_achievement(self):
         """Test for check if __str__ return the name of the achievement"""
-        achievement_definition = AchievementDefinition(name='nombre', description='descripcion')
-        self.assertEqual(str(achievement_definition), achievement_definition.name)
+        achievement_definition = AchievementDefinition(name={"es":'nombre'}, description={"es":'descripcion'})
+        self.assertEqual(str(achievement_definition), achievement_definition.name['es'])
 
     def test_download_ranking(self):
         """ Test to download excel of results """

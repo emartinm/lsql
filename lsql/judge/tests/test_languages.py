@@ -8,8 +8,10 @@ from bs4 import BeautifulSoup
 from django.test import TestCase, Client
 from django.conf import settings
 from django.urls import reverse
+from django.utils.translation import activate
 from judge.tests.test_views import create_user, create_group, create_collection, create_select_problem
-from judge.models import SelectProblem, ProcProblem, TriggerProblem
+from judge.models import SelectProblem, ProcProblem, TriggerProblem, AchievementDefinition, \
+     NumSolvedAchievementDefinition
 from judge.tests.test_parse import ParseTest
 from judge.templatetags import languages_to_flags
 from judge.feedback import compare_select_results
@@ -344,3 +346,91 @@ class LanguagesTest(TestCase):
 
         self.assertIn("flag-icon-us", flags)
         self.assertIn("flag-icon-es", flags)
+
+    def test_help_page_language(self):
+        """Test to check help page language"""
+        client = Client()
+        create_user('5555', 'pepe')
+        client.login(username='pepe', password='5555')
+
+        client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
+        help_url = reverse('judge:help')
+        response = client.get(help_url, follow=True)
+
+        self.assertIn('Equipo de diseño y desarrollo', response.content.decode('utf-8'))
+
+        client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
+        help_url = reverse('judge:help')
+        response = client.get(help_url, follow=True)
+
+        self.assertIn('Equipo de diseño y desarrollo', response.content.decode('utf-8'))
+
+    def test_get_achievement_name(self):
+        """Test to check the correct language value of achievement name"""
+        achievement_definition = AchievementDefinition(name={"es":'Nombre',"en":'Name'},
+                                                    description={"es":'Descripción',"en":'Description'})
+        activate('en')
+        self.assertEqual(achievement_definition.get_name(), "Name")
+        activate('ru')
+        self.assertEqual(achievement_definition.get_name(), "Nombre")
+        activate('es')
+        self.assertEqual(achievement_definition.get_name(), "Nombre")
+
+
+    def test_get_achievement_description(self):
+        """Test to check the correct language value of achievement description"""
+        achievement_definition = AchievementDefinition(name={"es":'Nombre',"en":'Name'},
+                                                    description={"es":'Descripción',"en":'Description'})
+        activate('en')
+        self.assertEqual(achievement_definition.get_description(), "Description")
+        activate('ru')
+        self.assertEqual(achievement_definition.get_description(), "Descripción")
+        activate('es')
+        self.assertEqual(achievement_definition.get_description(), "Descripción")
+
+    def test_achievement_language(self):
+        """Test to check the correct language display of achievements"""
+        client = Client()
+        solved_achievement_1 = NumSolvedAchievementDefinition(name={"es":'Nombre1',"en":'Name1'},
+                                                              description={"es":'Descripción1',"en":'Description1'},
+                                                              num_problems=1)
+        solved_achievement_2 = NumSolvedAchievementDefinition(name={"es":'Nombre2',"en":'Name2'},
+                                                              description={"es":'Descripción2',"en":'Description2'},
+                                                              num_problems=2)
+        solved_achievement_3 = NumSolvedAchievementDefinition(name={"es":'Nombre3'},
+                                                              description={"es":'Descripción3'},
+                                                              num_problems=3)
+        solved_achievement_1.save()
+        solved_achievement_2.save()
+        solved_achievement_3.save()
+        coll = create_collection('Achievements')
+        problem = create_select_problem(coll, 'Select1')
+        user = create_user('5555', 'pepe')
+        client.login(username='pepe', password='5555')
+        submit_select_url = reverse('judge:submit', args=[problem.pk])
+        client.post(submit_select_url, {'code': problem.solution}, follow=True)
+        client.post(submit_select_url, {'code': problem.solution}, follow=True)
+
+        client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
+        achievements_url = reverse('judge:achievements', args=[user.pk])
+        response = client.get(achievements_url, follow=True)
+        self.assertIn('Date', response.content.decode('utf-8'))
+        self.assertIn('Pending achievements', response.content.decode('utf-8'))
+        self.assertIn('Name1', response.content.decode('utf-8'))
+        self.assertIn('Name2', response.content.decode('utf-8'))
+        self.assertIn('Nombre3', response.content.decode('utf-8'))
+        self.assertIn('Description1', response.content.decode('utf-8'))
+        self.assertIn('Description2', response.content.decode('utf-8'))
+        self.assertIn('Descripción3', response.content.decode('utf-8'))
+
+        client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
+        achievements_url = reverse('judge:achievements', args=[user.pk])
+        response = client.get(achievements_url, follow=True)
+        self.assertIn('Fecha', response.content.decode('utf-8'))
+        self.assertIn('Logros pendientes', response.content.decode('utf-8'))
+        self.assertIn('Nombre1', response.content.decode('utf-8'))
+        self.assertIn('Nombre2', response.content.decode('utf-8'))
+        self.assertIn('Nombre3', response.content.decode('utf-8'))
+        self.assertIn('Descripción1', response.content.decode('utf-8'))
+        self.assertIn('Descripción2', response.content.decode('utf-8'))
+        self.assertIn('Descripción3', response.content.decode('utf-8'))

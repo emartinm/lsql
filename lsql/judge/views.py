@@ -21,6 +21,8 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext_lazy as _
 from django.contrib.admin.views.decorators import staff_member_required
+from django.conf import settings
+from django.template.exceptions import TemplateDoesNotExist
 
 from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table, filter_expected_db
@@ -134,8 +136,10 @@ def index(_):
 @login_required
 def help_page(request):
     """ Shows help page """
-    # FIX: handle languages
-    return render(request, 'help.es.html')
+    try:
+        return render(request, 'help.'+ request.LANGUAGE_CODE + '.html')
+    except TemplateDoesNotExist:
+        return render(request, 'help.'+ settings.LANGUAGE_CODE + '.html')
 
 
 @login_required
