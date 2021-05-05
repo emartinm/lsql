@@ -2,8 +2,9 @@
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
-Unit tests for the conection and execution of statements using the Oracle DB
+Unit tests for the connection and execution of statements using the Oracle DB
 """
+import os
 import time
 
 from django.test import TestCase
@@ -66,8 +67,8 @@ class OracleTest(TestCase):
 
         # Time-limit
         tle = SELECT_TLE
-        too_many_rows = 'select * from dual connect by level <= 1001;'
-        too_many_cols = 'select 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 from dual;'
+        too_many_rows = f"select * from dual connect by level <= {int(os.environ['ORACLE_MAX_ROWS'])+1};"
+        too_many_cols = f"select {','.join(['1']*(int(os.environ['ORACLE_MAX_COLS'])+1))} from dual;"
         self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
         self.assert_executor_exception(lambda: problem.judge(too_many_rows, oracle), OracleStatusCode.TLE_USER_CODE)
         self.assert_executor_exception(lambda: problem.judge(too_many_cols, oracle), OracleStatusCode.TLE_USER_CODE)
@@ -131,57 +132,22 @@ class OracleTest(TestCase):
                      CROSS JOIN
                      (select 'b' as Sede, 56789 AS Num_Socios from dual connect by level <= 5000)
                 GROUP BY CIF;'''
-        too_many_rows = """
+        # Creates a table with ORACLE_MAX_ROWS + 1 rows
+        too_many_rows = f"""
             INSERT INTO Club
-            SELECT level || '3333X', level || 'a', 'b', 45 from dual connect by level <= 1001;
+            SELECT level || '3333X', level || 'a', 'b', 45 from dual 
+            connect by level <= {int(os.environ['ORACLE_MAX_ROWS'])+1};
             """
-        too_many_cols = """
-            CREATE TABLE Test (
-                a1 NUMBER,
-                a2 NUMBER,
-                a3 NUMBER,
-                a4 NUMBER,
-                a5 NUMBER,
-                a6 NUMBER,
-                a7 NUMBER,
-                a8 NUMBER,
-                a9 NUMBER,
-                a10 NUMBER,
-                a11 NUMBER,
-                a12 NUMBER,
-                a13 NUMBER,
-                a14 NUMBER,
-                a15 NUMBER,
-                a16 NUMBER,
-                a17 NUMBER,
-                a18 NUMBER,
-                a19 NUMBER,
-                a20 NUMBER,
-                a21 NUMBER);
-            """
-        too_many_tables = """
-            CREATE TABLE t01(n NUMBER);
-            CREATE TABLE t02(n NUMBER);
-            CREATE TABLE t03(n NUMBER);
-            CREATE TABLE t04(n NUMBER);
-            CREATE TABLE t05(n NUMBER);
-            CREATE TABLE t06(n NUMBER);
-            CREATE TABLE t07(n NUMBER);
-            CREATE TABLE t08(n NUMBER);
-            CREATE TABLE t09(n NUMBER);
-            CREATE TABLE t10(n NUMBER);
-            CREATE TABLE t11(n NUMBER);
-            CREATE TABLE t12(n NUMBER);
-            CREATE TABLE t13(n NUMBER);
-            CREATE TABLE t14(n NUMBER);
-            CREATE TABLE t15(n NUMBER);
-            CREATE TABLE t16(n NUMBER);
-            CREATE TABLE t17(n NUMBER);
-            CREATE TABLE t18(n NUMBER);
-            CREATE TABLE t19(n NUMBER);
-            CREATE TABLE t20(n NUMBER);
-            CREATE TABLE t21(n NUMBER);           
-        """
+        # Create a table with ORACLE_MAX_COLS + 1 columns
+        too_many_cols = "CREATE TABLE Test( "
+        for i in range(int(os.environ['ORACLE_MAX_COLS'])):
+            too_many_cols += f"col{i} NUMBER, "
+        too_many_cols += "col_end NUMBER);"
+
+        # Creates ORACLE_MAX_TABLES + 1 tables
+        too_many_tables = ""
+        for i in range(int(os.environ['ORACLE_MAX_TABLES'])+1):
+            too_many_tables += f"CREATE TABLE table{i}(n NUMBER);"
 
         oracle = OracleExecutor.get()
         problem = DMLProblem(title_md='Test DML', text_md='bla bla bla',
