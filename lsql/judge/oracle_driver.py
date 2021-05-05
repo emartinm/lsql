@@ -270,7 +270,7 @@ def build_dsn_tns():
 
 
 class OracleExecutor:
-    """Class to connecto to Oracle DB and execute problems"""
+    """Class to connect to Oracle DB and execute problems"""
 
     __USER_PREFIX = 'lsql_'
     __ALPHABET = string.ascii_lowercase + string.digits
@@ -315,7 +315,7 @@ class OracleExecutor:
         """
         Creates a pool of connections with the admin user, taking the details from
         the configuration file. Throws a cx_Oracle.DatabaseError if it is not
-        possible to cretate the pool
+        possible to create the pool
         """
         self.dsn_tns = build_dsn_tns()
         self.connection_pool = cx_Oracle.SessionPool(

@@ -93,7 +93,7 @@ class CollectionAdmin(admin.ModelAdmin):
     """Model for Collection"""
     # define get_fieldsets(self, request, obj=None) to have a dynamic behavior
     fieldsets = [
-        ('Load problems from ZIP (only if the collecton exists).  The new problems will be added)',
+        ('Load problems from ZIP (only if the collection exists).  The new problems will be added)',
          {'fields': ('zipfile', )}),
         ('Collection data', {'fields': ('name_md', 'position', 'description_md', 'author')})
     ]

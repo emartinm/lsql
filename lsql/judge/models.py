@@ -517,7 +517,7 @@ class AchievementDefinition(models.Model):
 
     def __str__(self):
         """String for show the achievement name"""
-        return f"{self.name[translation.get_language()]}"
+        return self.get_name()
 
     def get_name(self):
         """Returns the name in the current language"""
@@ -530,6 +530,7 @@ class AchievementDefinition(models.Model):
         if translation.get_language() in self.description:
             return f"{self.description[translation.get_language()]}"
         return f"{self.description[settings.LANGUAGE_CODE]}"
+
 
 class ObtainedAchievement(models.Model):
     """Store info about an obtained achievement"""
@@ -577,7 +578,8 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
             if order_problem_creation_date.count() >= self.num_problems:
                 for sub in order_problem_creation_date:
                     prob = Problem.objects.get(pk=sub.problem.pk)
-                    if prob.solved_position(user) <= self.position:
+                    user_pos = prob.solved_position(user)
+                    if user_pos is not None and user_pos <= self.position:
                         total = total + 1
                         if total >= self.num_problems:
                             new_achievement = ObtainedAchievement(user=user, obtained_date=sub.creation_date,
