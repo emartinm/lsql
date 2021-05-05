@@ -8,6 +8,7 @@ from collections import Counter
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count
+from django.contrib.auth.models import Group
 
 from .models import Submission
 from .types import VeredictCode
@@ -52,3 +53,18 @@ def submission_count():
     result.update(counts)  # Keep all verdict_codes, even those withouth submissions (value of 0)
     result['all'] = sum(result.values())
     return result
+
+
+def participation_per_group():
+    """ Returns a dictionary {group: {'participating': int, 'acc': int, 'all': int}} with the number of participating
+        users, users with at least one AC submission, and total number users in each existing group. Users are
+        considered "participating" if they have sent one submission, and only non-staff and active are counted.
+    """
+    participating = dict()
+    for group in Group.objects.all():
+        users = group.user_set.filter(is_staff=False, is_active=True)
+        participating_count = Submission.objects.filter(user__in=users).order_by('user').distinct('user').count()
+        acc_count = (Submission.objects.filter(veredict_code=VeredictCode.AC, user__in=users).order_by('user')
+                     .distinct('user').count())
+        participating[group.name] = {'participating': participating_count, 'all': users.count(), 'acc': acc_count}
+    return participating

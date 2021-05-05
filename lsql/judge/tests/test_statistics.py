@@ -7,10 +7,10 @@ import pytz
 
 from django.test import TestCase
 
-from judge.tests.test_views import create_select_problem, create_collection, create_user
+from judge.tests.test_views import create_select_problem, create_collection, create_user, create_group
 from judge.types import VeredictCode
 from judge.models import Submission
-from judge.statistics import submissions_by_day, submission_count
+from judge.statistics import submissions_by_day, submission_count, participation_per_group
 
 
 class StatisticsTest(TestCase):
@@ -86,3 +86,28 @@ class StatisticsTest(TestCase):
         self.assertEqual(sub_count[VeredictCode.TLE], 1)
         self.assertEqual(sub_count[VeredictCode.VE], 1)
         self.assertEqual(sub_count[VeredictCode.IE], 0)
+
+    def test_participation(self):
+        """ Test the count of participating users in a group """
+        group = create_group('Grupo test')
+        user1 = create_user(username='u1', passwd='1111')
+        user2 = create_user(username='u2', passwd='1111')
+        user3 = create_user(username='u3', passwd='1111')
+        collection = create_collection('Test for statistics')
+        problem = create_select_problem(collection, 'Dummy for statistics')
+
+        for user in [user1, user2, user3]:
+            group.user_set.add(user)
+
+        subs = [
+            Submission(veredict_code=VeredictCode.AC, user=user1, problem=problem),
+            Submission(veredict_code=VeredictCode.WA, user=user2, problem=problem),
+            Submission(veredict_code=VeredictCode.RE, user=user2, problem=problem),
+            Submission(veredict_code=VeredictCode.TLE, user=user2, problem=problem),
+            Submission(veredict_code=VeredictCode.VE, user=user1, problem=problem),
+        ]
+        for sub in subs:
+            sub.save()
+
+        data = participation_per_group()
+        self.assertDictEqual(data, {'Grupo test': {'all': 3, 'acc': 1, 'participating': 2}})

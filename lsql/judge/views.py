@@ -31,7 +31,7 @@ from .models import Collection, Problem, Submission, ObtainedAchievement, Achiev
     NumSubmissionsProblemsAchievementDefinition
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
-from .statistics import submissions_by_day, submission_count
+from .statistics import submissions_by_day, submission_count, participation_per_group
 
 # TRANSLATIONS #
 # To translate the code to another language you need to create the translation file:
@@ -530,9 +530,11 @@ def statistics_submissions(request):
     wa_submissions = submissions_by_day(start, end, verdict_code=VeredictCode.WA)
     re_submissions = submissions_by_day(start, end, verdict_code=VeredictCode.RE)
     sub_count = submission_count()
+    involved_users = participation_per_group()
     return render(request, 'statistics_submissions.html',
                   {'all_submissions_count': all_submissions_count,
                    'ac_submissions_count': ac_submissions,
                    'wa_submissions_count': wa_submissions,
                    're_submissions_count': re_submissions,
-                   'submission_count': sub_count})
+                   'submission_count': sub_count,
+                   'participating_users': involved_users})
