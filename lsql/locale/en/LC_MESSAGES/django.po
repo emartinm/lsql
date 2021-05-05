@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-28 17:16+0200\n"
+"POT-Creation-Date: 2021-05-05 17:06+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Iván Ruiz <ivarui01@ucm.es@ADDRESS>\n"
 "Language-Team: Español\n"
@@ -84,7 +84,7 @@ msgid "Logros conseguidos"
 msgstr "Obtained achievements"
 
 #: judge/templates/achievements.html:11 judge/templates/achievements.html:32
-#: judge/templates/collection.html:13 judge/templates/collections.html:10
+#: judge/templates/collection.html:13 judge/templates/collections.html:11
 msgid "Nombre"
 msgstr "Name"
 
@@ -138,7 +138,6 @@ msgid "Listado de problemas"
 msgstr "Problem list"
 
 #: judge/templates/collection.html:14
-#: judge/templates/statistics_submissions.html:5
 msgid "Número de envíos"
 msgstr "Number of submissions"
 
@@ -158,19 +157,19 @@ msgstr "3rd"
 msgid "Problema resuelto"
 msgstr "Solved problem"
 
-#: judge/templates/collections.html:5
+#: judge/templates/collections.html:6
 msgid "Colecciones de problemas"
 msgstr "Problem collections"
 
-#: judge/templates/collections.html:11 judge/templates/results.html:111
+#: judge/templates/collections.html:12 judge/templates/results.html:111
 msgid "Resueltos"
 msgstr "Solved"
 
-#: judge/templates/collections.html:12
+#: judge/templates/collections.html:13
 msgid "Total problemas"
 msgstr "Total problems"
 
-#: judge/templates/collections.html:21
+#: judge/templates/collections.html:24
 msgid "Colección terminada"
 msgstr "Collection finished"
 
@@ -561,39 +560,67 @@ msgstr " (Modified table)"
 msgid " (Tabla eliminada)"
 msgstr " (Deleted table)"
 
-#: judge/templates/statistics_submissions.html:9
-#: judge/templates/statistics_submissions.html:50
+#: judge/templates/statistics_submissions.html:6
+msgid "Participación de usuarios por grupo"
+msgstr "User participation per group"
+
+#: judge/templates/statistics_submissions.html:10
+msgid "Grupo"
+msgstr "Group"
+
+#: judge/templates/statistics_submissions.html:11
+msgid "Usuarios con al menos 1 envío"
+msgstr "Users with at least 1 submission"
+
+#: judge/templates/statistics_submissions.html:12
+msgid "Usuarios con al menos 1 envío correcto"
+msgstr "Users with at least 1 correct submission"
+
+#: judge/templates/statistics_submissions.html:13
+msgid "Total de usuarios del grupo"
+msgstr "Total number of users in the group"
+
+#: judge/templates/statistics_submissions.html:30
+msgid "Número de envíos agrupados por resultado"
+msgstr "Number of submissions grouped by result"
+
+#: judge/templates/statistics_submissions.html:34
+#: judge/templates/statistics_submissions.html:78
 msgid "Total"
 msgstr "Total"
 
-#: judge/templates/statistics_submissions.html:10
-#: judge/templates/statistics_submissions.html:46
+#: judge/templates/statistics_submissions.html:35
+#: judge/templates/statistics_submissions.html:74
 msgid "AC"
 msgstr "AC"
 
-#: judge/templates/statistics_submissions.html:11
-#: judge/templates/statistics_submissions.html:38
+#: judge/templates/statistics_submissions.html:36
+#: judge/templates/statistics_submissions.html:66
 msgid "WA"
 msgstr "WA"
 
-#: judge/templates/statistics_submissions.html:12
-#: judge/templates/statistics_submissions.html:42
+#: judge/templates/statistics_submissions.html:37
+#: judge/templates/statistics_submissions.html:70
 msgid "RE"
 msgstr "RE"
 
-#: judge/templates/statistics_submissions.html:13
+#: judge/templates/statistics_submissions.html:38
 msgid "TLE"
 msgstr "TLE"
 
-#: judge/templates/statistics_submissions.html:14
+#: judge/templates/statistics_submissions.html:39
 msgid "VE"
 msgstr "VE"
 
-#: judge/templates/statistics_submissions.html:15
+#: judge/templates/statistics_submissions.html:40
 msgid "IE"
 msgstr "IE"
 
-#: judge/templates/statistics_submissions.html:62
+#: judge/templates/statistics_submissions.html:58
+msgid "Cantidad de envíos por día"
+msgstr "Total submissions per day"
+
+#: judge/templates/statistics_submissions.html:90
 msgid "Total de envíos por día"
 msgstr "Total submissions per day"
 
@@ -709,22 +736,23 @@ msgstr ""
 "Your submission must be made up of between {min_stmt} and {max_stmt} "
 "{ending}."
 
-#: judge/views.py:147 judge/views.py:220
+#: judge/views.py:151 judge/views.py:224
 msgid "¡Lo sentimos! No existe ningún grupo para ver resultados"
 msgstr "We are sorry! There is no group to see results"
 
-#: judge/views.py:226
+#: judge/views.py:230
 msgid "¡Lo sentimos! No tienes asignado un grupo de la asignatura."
 msgstr "We are sorry! You do not have a subject group assigned."
 
-#: judge/views.py:227
+#: judge/views.py:231
 msgid "Por favor, contacta con tu profesor para te asignen un grupo de clase."
 msgstr "Please, contact your teacher to assign you a class group."
 
-#: judge/views.py:319
+#: judge/views.py:323
 msgid "El identificador no tiene el formato correcto"
 msgstr "The identifier has not the correct format"
 
-#: judge/views.py:406
+#: judge/views.py:410
+#, python-brace-format
 msgid "Posición: línea {row}, columna {col}"
 msgstr "Position: Row {row}, Column {col}"
