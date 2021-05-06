@@ -11,9 +11,10 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 import django.contrib.auth
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 from judge.oracle_driver import OracleExecutor
-from judge.models import SelectProblem, Collection, Submission, Problem, DiscriminantProblem
+from judge.models import SelectProblem, Collection, Submission, Problem, DiscriminantProblem, default_json_lang
 from judge.types import VeredictCode
 
 
@@ -362,3 +363,7 @@ class ModelsTest(TestCase):
         self.assertIsNone(problem.solved_position(staff_user))
         self.assertIsNone(problem.solved_position(inactive_user))
         self.assertEqual(problem.solved_position(user), 1)
+
+    def test_default_json_lang(self):
+        """" Test that the default value for JSON texts in different languages """
+        self.assertDictEqual(default_json_lang(), {settings.LANGUAGE_CODE: ""})

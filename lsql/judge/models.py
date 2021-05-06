@@ -487,13 +487,18 @@ class Submission(models.Model):
         return f"{self.pk} - {self.user.email} - {self.veredict_code}"
 
 
+def default_json_lang():
+    """ Default values for name and description attributes in AchievementDefinition """
+    return {settings.LANGUAGE_CODE: ""}
+
+
 class AchievementDefinition(models.Model):
     """Abstract class for Achievements"""
     name = JSONField(encoder=DjangoJSONEncoder,
-                     default=lambda: {settings.LANGUAGE_CODE: ""},
+                     default=default_json_lang,
                      blank=True, null=True)
     description = JSONField(encoder=DjangoJSONEncoder,
-                            default=lambda: {settings.LANGUAGE_CODE: ""},
+                            default=default_json_lang,
                             blank=True, null=True)
 
     # To query Problem to obtain subclass objects with '.select_subclasses()'
