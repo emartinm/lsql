@@ -28,7 +28,7 @@ from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table, filter_expected_db
 from .forms import SubmitForm, ResultForm
 from .models import Collection, Problem, Submission, ObtainedAchievement, AchievementDefinition, \
-    NumSubmissionsProblemsAchievementDefinition
+    NumSubmissionsProblemsAchievementDefinition, Hint, UsedHint
 from .oracle_driver import OracleExecutor
 from .types import VeredictCode, OracleStatusCode, ProblemType
 from .statistics import submissions_by_day, submission_count, participation_per_group
@@ -284,6 +284,9 @@ def show_problem(request, problem_id):
     # Filter the expected result to display it
     problem.show_added, problem.show_modified, problem.show_removed = filter_expected_db(problem.expected_result[0],
                                                                                          problem.initial_db[0])
+    problem.available_hints = Hint.objects.filter(problem=problem).order_by('num_submit').count()
+    problem.used_hints = UsedHint.objects.filter(problem=problem).filter(user=request.user.pk).order_by('num_submit')
+    problem.used = UsedHint.objects.filter(problem=problem).filter(user=request.user.pk).count()
     return render(request, problem.template(), {'problem': problem})
 
 
@@ -538,3 +541,39 @@ def statistics_submissions(request):
                    're_submissions_count': re_submissions,
                    'submission_count': sub_count,
                    'participating_users': involved_users})
+
+
+@login_required
+def get_hint(request, problem_id):
+    """Returns a JSON with the information of Hints availables"""
+    problem = get_object_or_404(Problem, pk=problem_id)
+    num_error = Submission.objects.filter(problem=problem, user=request.user).count()
+    list_hints = Hint.objects.filter(problem=problem).order_by('num_submit')
+    list_used_hints = UsedHint.objects.filter(problem=problem, user=request.user.pk).order_by('num_submit')
+    data = {'pista': [], 'msg': ''}
+
+    # if there are not more hints available
+    if list_hints.count() == list_used_hints.count():
+        data['msg'] = 'No hay más pistas disponibles para este ejercicio.'
+    else:
+        num_hint = list_used_hints.count()
+        hint = list_hints[num_hint]
+
+        # if the number of wrong submission are less than the number of submissions required
+        if num_error >= hint.num_submit:
+            data['pista'].append(hint.name_html)
+            data['pista'].append(hint.description_html)
+            used_hint = UsedHint(name_md=hint.name_md, name_html=hint.name_html, description_md=hint.description_md,
+                                 description_html=hint.description_html, user=request.user, problem=problem,
+                                 num_submit=hint.num_submit)
+            used_hint.save()
+            if hint == list_hints[list_hints.count()-1]:
+                data['msg'] = 'No hay más pistas disponibles para este ejercicio.'
+            else:
+                num = list_hints[num_hint+1].num_submit
+                data['msg'] = 'La siguiente pista estará disponible cuando realices: ' + str(num) + ' envíos.'
+        else:
+            num = hint.num_submit - num_error
+            data['msg'] = 'Número de envíos que faltan para obtener la siguiente pista: ' + str(num) + '.'
+
+    return JsonResponse(data)

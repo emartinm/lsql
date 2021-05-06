@@ -11,7 +11,7 @@ from . import forms
 from .models import Collection, SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Problem, \
     Submission, AchievementDefinition, NumSolvedCollectionAchievementDefinition, PodiumAchievementDefinition, \
     NumSolvedAchievementDefinition, ObtainedAchievement, DiscriminantProblem, NumSolvedTypeAchievementDefinition, \
-    NumSubmissionsProblemsAchievementDefinition
+    NumSubmissionsProblemsAchievementDefinition, Hint, UsedHint
 
 
 class SelectProblemAdmin(admin.ModelAdmin):
@@ -155,6 +155,18 @@ class NumSubmissionsProblemsAchievementDefinitionAdmin(admin.ModelAdmin):
     list_filter = ['name']
 
 
+class HintAdmin(admin.ModelAdmin):
+    """Model for Hints"""
+    list_display = ('name_md', 'description_md', 'problem', 'num_submit')
+    list_filter = ['problem']
+
+
+class UsedHintAdmin(admin.ModelAdmin):
+    """Model for Hints"""
+    list_display = ('name_md', 'description_md', 'user', 'problem', 'num_submit')
+    list_filter = ['problem']
+
+
 admin.site.register(Collection, CollectionAdmin)
 admin.site.register(Problem, ProblemAdmin)
 admin.site.register(SelectProblem, SelectProblemAdmin)
@@ -171,3 +183,5 @@ admin.site.register(ObtainedAchievement, ObtainedAchievementAdmin)
 admin.site.register(DiscriminantProblem, DiscriminantProblemAdmin)
 admin.site.register(NumSolvedTypeAchievementDefinition, NumSolvedTypeAchievementDefinitionAdmin)
 admin.site.register(NumSubmissionsProblemsAchievementDefinition, NumSubmissionsProblemsAchievementDefinitionAdmin)
+admin.site.register(Hint, HintAdmin)
+admin.site.register(UsedHint, UsedHintAdmin)

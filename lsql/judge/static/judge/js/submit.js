@@ -117,3 +117,54 @@ function load_submission_code(event){
     };
     reader.readAsText(input.files[0]);
 }
+
+function buttonOff(){
+    $('#botonOn').attr('disabled', true);
+}
+
+function show_hint(){
+    // Get json with the hints
+    let hint_point = $('#hintpoint').val();
+
+    const config = {
+        method: 'POST',
+        mode: 'same-origin', // no-cors, *cors, same-origin
+        cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+        credentials: 'same-origin', // include, *same-origin, omit
+        headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() }, // CSRF token from form
+        redirect: 'follow', // manual, *follow, error
+        referrerPolicy: 'same-origin' // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    };
+
+    fetch(hint_point, config)
+        .then(function(response) {
+            if (response.ok) {
+                return response.json(); // Returns a new Promise, that can be chained
+            } else {
+                throw response;
+            }
+        })
+        .then(function(myJson) {
+            var hint = myJson['pista'];
+            var msg = myJson['msg'];
+
+            if (hint.length > 0){
+                var html = '<div class="d-flex p-2"> <div id="name_hint" class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center">'
+                + hint[0] + '</div> <div id="description_hint" class="text-center w-75">' + hint[1] + '</div> </div>';
+                $('#info_hint').append(html);
+                $('#msg_info').append(msg);
+                if(msg == 'No hay más pistas disponibles para este ejercicio.'){
+                    buttonOff();
+                }
+            }
+            if (msg.length > 0){
+                $('#msg').attr('style', '');
+                $('#msg_info').text(msg);
+
+                if(msg == 'No hay más pistas disponibles para este ejercicio.'){
+                    $('#msg').attr('style', 'display: none');
+                    buttonOff();
+                }
+            }
+        });
+}

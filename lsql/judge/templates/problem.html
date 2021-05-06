@@ -26,6 +26,94 @@ General template for a problem. Provides the following blocks:
 <p>
 
 </p>
+
+{% block pista %}
+
+    {% if problem.available_hints == 0 %}
+    <div class="col-0">
+        <button class="bg-white border-0 float-end" title='{% translate "Sin ayuda disponible" %}' type="button"
+            class="gold"><i class="bi bi-lightbulb-off-fill grey bigger-icon" aria-hidden="true"></i>
+        </button>
+    </div>
+    {% else %}
+    <div class="col-0">
+        <button class="bg-white border-0 float-end" title='{% translate "Mostrar ayuda" %}'
+                data-bs-target="#exampleModal" data-bs-toggle="modal" type="button"
+            class="gold"><i class="bi bi-lightbulb-fill gold bigger-icon" aria-hidden="true"></i>
+        </button>
+    </div>
+    {% endif %}
+
+</div>
+<div class="modal fade" data-bs-backdrop="static" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog  modal-lg">
+    <div class="modal-content">
+      <div class="modal-header d-block">
+        <h5 class="modal-title text-center" id="exampleModalLabel">{% translate "PISTAS" %}</h5>
+      </div>
+        <div class="modal-body">
+            <div class="alert alert-primary" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                </symbol></svg>
+                <div class="alert alert-primary d-flex align-items-center" role="alert">
+                      <svg class="bi flex-shrink-0 me-2" width="24" height="24"><use xlink:href="#info-fill"/></svg>
+                        Pulsa el botón "Solicitar pista" para obtener una pista.
+                        Ten en cuenta que solicitar pistas puede afectar a tu posición en la clasificación.
+                </div>
+                <div class="alert-link">Las pistas disponibles para este problemas son: {{problem.available_hints}}.</div>
+            </div>
+        </div>
+        <div id="info_hint" class="modal-body">
+             {% for hint in problem.used_hints %}
+             <div class="d-flex p-2">
+                 <div id="name_hint" class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center ">
+                  {{hint.name_html|safe}}
+                 </div>
+                 <div class="text-center w-75">
+                  {{hint.description_html|safe}}
+                 </div>
+             </div>
+             {% endfor %}
+        </div>
+        {% if problem.available_hints > problem.used %}
+        <div id='msg' class="modal-body" style="">
+            <div class="d-flex p-2">
+                <div class="bg-primary h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center" style="">
+                  INFO
+               </div>
+                <div id="msg_info" class="text-center w-75" style="">
+                    Todavía no has solicitado ninguna pista.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% if problem.available_hints == problem.used %}
+            <div  class="modal-footer d-flex justify-content-center">
+                <button type="button" class="btn btn-primary" title="No hay más pistas" disabled>{% translate "Solicitar pista" %}</button>
+            </div>
+        {% else %}
+            <div  class="modal-footer d-flex justify-content-center">
+                <form action="javascript:show_hint();">
+                    {% csrf_token %} {# Includes a hidden input with the CSRF token #}
+                    <input type="hidden" id="hintpoint" name="hintpoint" value="{% url 'judge:hint' problem.pk %}">
+                    <button type="button" id="botonOn" class="btn btn-primary" title='{% translate "Pedir pista nueva" %}' onclick="show_hint();">{% translate "Solicitar pista" %}</button>
+                </form>
+            </div>
+        {% endif %}
+
+      <div class="modal-footer d-flex">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{% translate "Cerrar" %}</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
 <div>
   {{ problem.text_html|safe }}
 </div>
