@@ -156,6 +156,9 @@ function show_hint(){
                 if(msg == 'No hay más pistas disponibles para este ejercicio.'){
                     buttonOff();
                 }
+                if(msg == ''){
+                    $('#msg').attr('style', 'display: none');
+                }
             }
             if (msg.length > 0){
                 $('#msg').attr('style', '');
