@@ -558,7 +558,6 @@ def get_hint(request, problem_id):
     else:
         num_hint = list_used_hints.count()
         hint = list_hints[num_hint]
-
         # if the number of wrong submission are less than the number of submissions required
         if num_error >= hint.num_submit:
             data['pista'].append(hint.name_html)
@@ -569,9 +568,7 @@ def get_hint(request, problem_id):
             used_hint.save()
             if hint == list_hints[list_hints.count()-1]:
                 data['msg'] = 'No hay más pistas disponibles para este ejercicio.'
-            else:
-                num = list_hints[num_hint+1].num_submit
-                data['msg'] = 'La siguiente pista estará disponible cuando realices: ' + str(num) + ' envíos.'
+                print(data)
         else:
             num = hint.num_submit - num_error
             data['msg'] = 'Número de envíos que faltan para obtener la siguiente pista: ' + str(num) + '.'
