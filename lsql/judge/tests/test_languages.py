@@ -16,6 +16,7 @@ from judge.tests.test_parse import ParseTest
 from judge.templatetags import languages_to_flags
 from judge.feedback import compare_select_results
 
+
 class LanguagesTest(TestCase):
     """Tests for the languages"""
 

@@ -126,8 +126,8 @@ class Collection(models.Model):
 
     def languages(self):
         """Set with all the languages of the collection"""
-        return list(self.problems().order_by('language').distinct('language') \
-            .values_list('language', flat=True))
+        return list(self.problems().order_by('language').distinct('language').values_list('language', flat=True))
+
 
 class Problem(models.Model):
     """Base class for problems, with common attributes and methods"""
@@ -236,7 +236,7 @@ class SelectProblem(Problem):
     expected_result = JSONField(encoder=DjangoJSONEncoder, default=None, blank=True, null=True)
 
     def clean(self):
-        """Executes the problem and stores the expected result"""
+        """ Executes the problem and stores the expected result """
         try:
             if self.zipfile:
                 # Replaces the fields with the information from the file
