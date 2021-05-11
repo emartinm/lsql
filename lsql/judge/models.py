@@ -126,8 +126,8 @@ class Collection(models.Model):
 
     def languages(self):
         """Set with all the languages of the collection"""
-        return list(self.problems().order_by('language').distinct('language') \
-            .values_list('language', flat=True))
+        return list(self.problems().order_by('language').distinct('language').values_list('language', flat=True))
+
 
 class Problem(models.Model):
     """Base class for problems, with common attributes and methods"""
@@ -671,29 +671,3 @@ class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.
                                                    achievement_definition=self)
                     new_achi.save()
 
-
-class Hint(models.Model):
-    """Hints of a problem"""
-    name_md = models.TextField(max_length=100, validators=[MinLengthValidator(1)], blank=True)
-    name_html = models.CharField(max_length=200, default='', blank=True)
-    description_md = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
-    description_html = models.CharField(max_length=10000, default='', blank=True)
-    problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
-    num_submit = models.PositiveIntegerField(default=1, null=False)
-
-    # To query Problem to obtain subclass objects with '.select_subclasses()'
-    objects = InheritanceManager()
-
-
-class UsedHint(models.Model):
-    """Hints used by user"""
-    name_md = models.TextField(max_length=100, validators=[MinLengthValidator(1)], blank=True)
-    name_html = models.CharField(max_length=200, default='', blank=True)
-    description_md = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
-    description_html = models.CharField(max_length=10000, default='', blank=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
-    num_submit = models.PositiveIntegerField(default=1, null=False)
-
-    # To query Problem to obtain subclass objects with '.select_subclasses()'
-    objects = InheritanceManager()

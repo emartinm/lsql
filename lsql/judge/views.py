@@ -545,32 +545,31 @@ def statistics_submissions(request):
 
 @login_required
 def get_hint(request, problem_id):
-    """Returns a JSON with the information of Hints availables"""
+    """Returns a JSON with the information of available Hints"""
     problem = get_object_or_404(Problem, pk=problem_id)
     num_error = Submission.objects.filter(problem=problem, user=request.user).count()
     list_hints = Hint.objects.filter(problem=problem).order_by('num_submit')
     list_used_hints = UsedHint.objects.filter(problem=problem, user=request.user.pk).order_by('num_submit')
-    data = {'pista': [], 'msg': ''}
+    data = {'hint': [], 'msg': '', 'more_hints': ''}
+    num_hint = list_used_hints.count()
+    hint = list_hints[num_hint]
+
+    # if the number of wrong submission are less than the number of submissions
+    if num_error >= hint.num_submit:
+        # data['hint'].append(hint.name_html)
+        # data['hint'].append(hint.description_html)
+        used_hint = UsedHint(name_md=hint.name_md, name_html=hint.name_html, description_md=hint.description_md,
+                             description_html=hint.description_html, user=request.user, problem=problem,
+                             num_submit=hint.num_submit)
+        used_hint.save()
+    else:
+        num = hint.num_submit - num_error
+        data['more_hints'] = 'true'
+        data['msg'] = f'Número de envíos que faltan para obtener la siguiente pista: {num}.'
 
     # if there are not more hints available
-    if list_hints.count() == list_used_hints.count():
+    if hint == list_hints[list_hints.count() - 1]:
+        data['more_hints'] = 'false'
         data['msg'] = 'No hay más pistas disponibles para este ejercicio.'
-    else:
-        num_hint = list_used_hints.count()
-        hint = list_hints[num_hint]
-        # if the number of wrong submission are less than the number of submissions required
-        if num_error >= hint.num_submit:
-            data['pista'].append(hint.name_html)
-            data['pista'].append(hint.description_html)
-            used_hint = UsedHint(name_md=hint.name_md, name_html=hint.name_html, description_md=hint.description_md,
-                                 description_html=hint.description_html, user=request.user, problem=problem,
-                                 num_submit=hint.num_submit)
-            used_hint.save()
-            if hint == list_hints[list_hints.count()-1]:
-                data['msg'] = 'No hay más pistas disponibles para este ejercicio.'
-                print(data)
-        else:
-            num = hint.num_submit - num_error
-            data['msg'] = 'Número de envíos que faltan para obtener la siguiente pista: ' + str(num) + '.'
 
     return JsonResponse(data)

@@ -118,13 +118,23 @@ function load_submission_code(event){
     reader.readAsText(input.files[0]);
 }
 
-function buttonOff(){
-    $('#botonOn').attr('disabled', true);
+// disable the button if no more available hints
+function disable_button_ask_hint(){
+    $('#button_ask_hint').attr('disabled', true);
 }
 
+function hide_hint_message(){
+    $('#msg').attr('style', 'display: none');
+}
+
+function show_hint_message(){
+    $('#msg').attr('style', '');
+}
+
+// show the requested hint or a message with information
 function show_hint(){
     // Get json with the hints
-    let hint_point = $('#hintpoint').val();
+    let hint_point = $('#hint_url').val();
 
     const config = {
         method: 'POST',
@@ -145,29 +155,25 @@ function show_hint(){
             }
         })
         .then(function(myJson) {
-            var hint = myJson['pista'];
+            var hint = myJson['hint'];
             var msg = myJson['msg'];
+            var more_hints = myJson['more_hints']
 
             if (hint.length > 0){
                 var html = '<div class="d-flex p-2"> <div id="name_hint" class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center">'
                 + hint[0] + '</div> <div id="description_hint" class="text-center w-75">' + hint[1] + '</div> </div>';
                 $('#info_hint').append(html);
                 $('#msg_info').append(msg);
-                if(msg == 'No hay más pistas disponibles para este ejercicio.'){
-                    buttonOff();
-                }
-                if(msg == ''){
-                    $('#msg').attr('style', 'display: none');
-                }
             }
-            if (msg.length > 0){
-                $('#msg').attr('style', '');
-                $('#msg_info').text(msg);
 
-                if(msg == 'No hay más pistas disponibles para este ejercicio.'){
-                    $('#msg').attr('style', 'display: none');
-                    buttonOff();
-                }
+            if (msg.length > 0){
+                show_hint_message();
+                $('#msg_info').text(msg);
+            }
+
+            if(more_hints == 'false'){
+                disable_button_ask_hint();
+                hide_hint_message();
             }
         });
 }

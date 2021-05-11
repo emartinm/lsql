@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Tests for rankings
+Tests for hints
 """
+from datetime import datetime
 
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -9,6 +10,7 @@ from django.urls import reverse
 from judge.models import Submission, Hint, UsedHint
 from judge.types import VeredictCode
 from judge.tests.test_views import create_user, create_collection, create_select_problem, create_submission
+
 
 def create_hint(problem, name, num):
     """ Creates and stores a Hint of a Problem """
@@ -21,18 +23,17 @@ def create_hint(problem, name, num):
 
 def create_used_hint(hint, user):
     """ Creates and stores a used Hint of a Problem """
-    used_hint = UsedHint(name_html=hint.name_html, description_html=hint.description_html, user=user,
-                         problem=hint.problem, num_submit=hint.num_submit)
+    used_hint = UsedHint(user=user, request_date=datetime(2020, 3, 5), hint_definition=hint)
     used_hint.clean()
     used_hint.save()
     return used_hint
 
 
 class HintTest(TestCase):
-    """Tests for the hinst and used hints"""
+    """Tests for the hints and used hints"""
 
     def test_give_hint(self):
-        """Request a hint"""
+        """check the correct operation of the hints"""
         client = Client()
         user = create_user('2222', 'tamara')
         collection = create_collection('Colleccion de prueba TTT')
@@ -53,7 +54,7 @@ class HintTest(TestCase):
         # JSON with the message that the next hint is not available
         num_error = Submission.objects.filter(problem=problem, user=user).count()
         num = hint2.num_submit - num_error
-        msg = 'Número de envíos que faltan para obtener la siguiente pista: ' + str(num) + '.'
+        msg = f'Número de envíos que faltan para obtener la siguiente pista: {num}.'
         response = client.get(hint_url, {'msg': msg}, follow=True)
         self.assertIn(response.json()['msg'], msg)
 

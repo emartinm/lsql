@@ -69,10 +69,8 @@ General template for a problem. Provides the following blocks:
              {% for hint in problem.used_hints %}
              <div class="d-flex p-2">
                  <div id="name_hint" class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center ">
-                  {{hint.name_html|safe}}
                  </div>
                  <div class="text-center w-75">
-                  {{hint.description_html|safe}}
                  </div>
              </div>
              {% endfor %}
@@ -83,9 +81,15 @@ General template for a problem. Provides the following blocks:
                 <div class="bg-primary h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center" style="">
                   INFO
                </div>
-                <div id="msg_info" class="text-center w-75" style="">
+                {% if problem.used == 0 %}
+                <div class="text-center w-75" style="">
                     Todavía no has solicitado ninguna pista.
                 </div>
+                {% else %}
+                 <div id="msg_info" class="text-center w-75" style="">
+                    Pulsa 'Solicitar pista' para ver el número de envíos que te faltan para ver una nueva pista.
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -97,8 +101,8 @@ General template for a problem. Provides the following blocks:
             <div  class="modal-footer d-flex justify-content-center">
                 <form action="javascript:show_hint();">
                     {% csrf_token %} {# Includes a hidden input with the CSRF token #}
-                    <input type="hidden" id="hintpoint" name="hintpoint" value="{% url 'judge:hint' problem.pk %}">
-                    <button type="button" id="botonOn" class="btn btn-primary" title='{% translate "Pedir pista nueva" %}' onclick="show_hint();">{% translate "Solicitar pista" %}</button>
+                    <input type="hidden" id="hint_url" name="hint_url" value="{% url 'judge:hint' problem.pk %}">
+                    <button type="button" id="button_ask_hint" class="btn btn-primary" title='{% translate "Pedir pista nueva" %}' onclick="show_hint();">{% translate "Solicitar pista" %}</button>
                 </form>
             </div>
         {% endif %}
