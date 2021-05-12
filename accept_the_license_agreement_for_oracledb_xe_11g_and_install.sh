@@ -2,7 +2,12 @@
 
 # Enrique:
 # File from https://raw.githubusercontent.com/Vincit/travis-oracledb-xe/master/accept_the_license_agreement_for_oracledb_xe_11g_and_install.sh
-# Modified to avoid apt-get update, which sometimes generate problems with
+# Modified to ignore "apt update" errors, as sometimes some packages have signature problems. For example Erlang
+# Solutions:
+#   W: GPG error: https://packages.erlang-solutions.com/ubuntu focal Release: The following signatures were invalid:
+#   BADSIG D208507CA14F4FCA Erlang Solutions Ltd. <packages@erlang-solutions.com>
+#   E: The repository 'https://packages.erlang-solutions.com/ubuntu focal Release' is not signed.
+
 
 wget -nv https://raw.githubusercontent.com/Vincit/travis-oracledb-xe/master/packages/oracle-xe-11.2.0-1.0.x86_64.rpm.zip.aa
 wget -nv https://raw.githubusercontent.com/Vincit/travis-oracledb-xe/master/packages/oracle-xe-11.2.0-1.0.x86_64.rpm.zip.ab
@@ -39,8 +44,8 @@ cd "$(dirname "$(readlink -f "$0")")"
 # dpkg -s bc libaio1 rpm unzip > /dev/null 2>&1 ||
 #   ( sudo apt-get -qq update && sudo apt-get --no-install-recommends -qq install bc libaio1 rpm unzip )
 # Enrique: modified part
-sudo apt -qq update || true # Avoid stopping if apt update fails for some repository problem
-sudo apt --no-install-recommends -y -qq install bc libaio1 rpm unzip
+sudo apt-get -qq update || true # Avoid stopping if apt update fails for some repository problem
+sudo apt-get --no-install-recommends -qq install bc libaio1 rpm unzip
 
 df -B1 /dev/shm | awk 'END { if ($1 != "shmfs" && $1 != "tmpfs" || $2 < 2147483648) exit 1 }' ||
   ( sudo rm -r /dev/shm && sudo mkdir /dev/shm && sudo mount -t tmpfs shmfs -o size=2G /dev/shm )
