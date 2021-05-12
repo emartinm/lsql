@@ -5,6 +5,7 @@ Copyright Enrique Martín <emartinm@ucm.es> 2021
 Methods for obtaining statistical information about submissions
 """
 from collections import Counter
+from statistics import mean, stdev, quantiles
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count
@@ -56,9 +57,19 @@ def submission_count():
 
 
 def participation_per_group():
-    """ Returns a dictionary {group: {'participating': int, 'acc': int, 'all': int}} with the number of participating
-        users, users with at least one AC submission, and total number users in each existing group. Users are
-        considered "participating" if they have sent one submission, and only non-staff and active are counted.
+    """ Returns a dictionary with information for each group
+        {
+            group: {
+                'participating': int,  # number of participating users
+                'acc': int,            # no. users with at least one AC submission
+                'all': int             # total no. users
+                'avg': float           # avg. submission per participating user
+                'stdev': float         # stdev of submissions per participating user
+                'quantiles': float     # cut points 0%-25%-50%-75%-100% of submissions per participating user
+            }
+        }
+        Users are considered "participating" if they have sent one submission, and only non-staff and active users
+        are counted.
     """
     participating = dict()
     for group in Group.objects.all():
@@ -66,5 +77,15 @@ def participation_per_group():
         participating_count = Submission.objects.filter(user__in=users).order_by('user').distinct('user').count()
         acc_count = (Submission.objects.filter(veredict_code=VeredictCode.AC, user__in=users).order_by('user')
                      .distinct('user').count())
-        participating[group.name] = {'participating': participating_count, 'all': users.count(), 'acc': acc_count}
+        # Statistics of submissions per user
+        subs_per_user = (Submission.objects.filter(user__in=users).values('user').annotate(count=Count('user')))
+        list_num_subs = [entry['count'] for entry in subs_per_user]
+        participating[group.name] = {
+            'participating': participating_count,
+            'all': users.count(),
+            'acc': acc_count,
+            'avg': mean(list_num_subs),
+            'stdev': stdev(list_num_subs),
+            'quantiles': ' - '.join(map(str, [min(list_num_subs)] + quantiles(list_num_subs) + [max(list_num_subs)])),
+        }
     return participating

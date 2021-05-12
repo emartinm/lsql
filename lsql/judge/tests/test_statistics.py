@@ -93,10 +93,11 @@ class StatisticsTest(TestCase):
         user1 = create_user(username='u1', passwd='1111')
         user2 = create_user(username='u2', passwd='1111')
         user3 = create_user(username='u3', passwd='1111')
+        user4 = create_user(username='u4', passwd='1111')
         collection = create_collection('Test for statistics')
         problem = create_select_problem(collection, 'Dummy for statistics')
 
-        for user in [user1, user2, user3]:
+        for user in [user1, user2, user3, user4]:
             group.user_set.add(user)
 
         subs = [
@@ -105,9 +106,20 @@ class StatisticsTest(TestCase):
             Submission(veredict_code=VeredictCode.RE, user=user2, problem=problem),
             Submission(veredict_code=VeredictCode.TLE, user=user2, problem=problem),
             Submission(veredict_code=VeredictCode.VE, user=user1, problem=problem),
+            Submission(veredict_code=VeredictCode.AC, user=user4, problem=problem),
         ]
         for sub in subs:
             sub.save()
 
         data = participation_per_group()
-        self.assertDictEqual(data, {'Grupo test': {'all': 3, 'acc': 1, 'participating': 2}})
+        expected = {
+            'Grupo test': {
+                'all': 4,
+                'acc': 2,
+                'participating': 3,
+                'avg': 2,
+                'stdev': 1.0,
+                'quantiles': '1 - 1.0 - 2.0 - 3.0 - 3',
+            }
+        }
+        self.assertDictEqual(data, expected)

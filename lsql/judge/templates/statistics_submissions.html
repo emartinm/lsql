@@ -7,19 +7,21 @@
 <table class="table">
     <thead class="table-dark">
     <tr>
-          <th scope="col">{% translate 'Grupo' %}</th>
-          <th scope="col">{% translate 'Usuarios con al menos 1 envío' %}</th>
-        <th scope="col">{% translate 'Usuarios con al menos 1 envío correcto' %}</th>
-          <th scope="col">{% translate 'Total de usuarios del grupo' %}</th>
+        <th scope="col">{% translate 'Grupo' %}</th>
+        <th scope="col">{% translate 'Usuarios totales' %}</th>
+        <th scope="col">{% translate 'Usuarios con al menos 1 envío (correcto)' %}</th>
+        <th scope="col">{% translate 'Envíos por usuario (media/desv. tip.)' %}</th>
+        <th scope="col">{% translate 'Envíos por usuario (cuartiles)' %}</th>
     </tr>
     </thead>
     <tbody>
     {% for group, data in participating_users.items %}
     <tr>
-        <td>{{ group }}</td>
-        <td>{{ data.participating }}</td>
-        <td>{{ data.acc }}</td>
+        <td><span class="remark">{{ group }}</span></td>
         <td>{{ data.all }}</td>
+        <td>{{ data.participating }} ({{ data.acc }})</td>
+        <td>{{ data.avg|floatformat }} / {{ data.stdev|floatformat }}</td>
+        <td>{{ data.quantiles }}</td>
     </tr>
     {% endfor %}
     </tbody>
