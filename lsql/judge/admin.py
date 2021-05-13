@@ -2,7 +2,7 @@
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
-Customize how to show add/edit forms for problems in the Admin
+Customize how to show add/edit forms for objects in the Admin
 """
 
 from django.contrib import admin
@@ -23,7 +23,7 @@ class SelectProblemAdmin(admin.ModelAdmin):
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')
-    list_filter = ['creation_date']
+    list_filter = ['collection', 'creation_date']
 
 
 class DMLProblemAdmin(admin.ModelAdmin):
@@ -35,7 +35,7 @@ class DMLProblemAdmin(admin.ModelAdmin):
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')
-    list_filter = ['creation_date']
+    list_filter = ['collection', 'creation_date']
 
 
 class FunctionProblemAdmin(admin.ModelAdmin):
@@ -47,7 +47,7 @@ class FunctionProblemAdmin(admin.ModelAdmin):
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'calls']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')
-    list_filter = ['creation_date']
+    list_filter = ['collection', 'creation_date']
     form = forms.FunctionProblemAdminForm
 
 
@@ -60,7 +60,7 @@ class ProcProblemAdmin(admin.ModelAdmin):
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'proc_call']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')
-    list_filter = ['creation_date']
+    list_filter = ['collection', 'creation_date']
     form = forms.ProcProblemAdminForm
 
 
@@ -73,7 +73,7 @@ class TriggerProblemAdmin(admin.ModelAdmin):
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'tests']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')
-    list_filter = ['creation_date']
+    list_filter = ['collection', 'creation_date']
     form = forms.TriggerProblemAdminForm
 
 
@@ -86,14 +86,14 @@ class DiscriminantProblemAdmin(admin.ModelAdmin):
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'correct_query', 'incorrect_query']}),
     ]
     list_display = ('title_md', 'creation_date', 'collection')
-    list_filter = ['creation_date']
+    list_filter = ['collection', 'creation_date']
 
 
 class CollectionAdmin(admin.ModelAdmin):
     """Model for Collection"""
     # define get_fieldsets(self, request, obj=None) to have a dynamic behavior
     fieldsets = [
-        ('Load problems from ZIP (only if the collection exists).  The new problems will be added)',
+        ('Load problems from ZIP (only if the collection exists). The new problems will be added',
          {'fields': ('zipfile', )}),
         ('Collection data', {'fields': ('name_md', 'position', 'description_md', 'author')})
     ]
@@ -104,49 +104,44 @@ class CollectionAdmin(admin.ModelAdmin):
 class SubmissionAdmin(admin.ModelAdmin):
     """Model for Submission"""
     list_display = ('pk', 'user', 'problem', 'veredict_code', 'creation_date')
-    list_filter = ['creation_date']
+    list_filter = ['creation_date', 'veredict_code', 'user']
 
 
 class ProblemAdmin(admin.ModelAdmin):
     """Model for Problem"""
     list_display = ('title_md', 'creation_date', 'collection')
-    list_filter = ['creation_date']
+    list_filter = ['collection', 'creation_date']
 
 
 class AchievementsAdmin(admin.ModelAdmin):
     """Model for Achievements"""
     list_display = ('name', 'description')
-    list_filter = ['name']
 
 
 class NumSolvedCollectionAchievementDefinitionAdmin(admin.ModelAdmin):
     """Model for Achievements"""
     list_display = ('name', 'description', 'num_problems', 'collection')
-    list_filter = ['name']
 
 
 class PodiumAchievementDefinitionAdmin(admin.ModelAdmin):
     """Model for Achievements"""
     list_display = ('name', 'description', 'num_problems', 'position')
-    list_filter = ['name']
 
 
 class NumSolvedAchievementDefinitionAdmin(admin.ModelAdmin):
     """Model for Achievements"""
     list_display = ('name', 'description', 'num_problems')
-    list_filter = ['name']
 
 
 class ObtainedAchievementAdmin(admin.ModelAdmin):
     """Model for Achievements"""
     list_display = ('user', 'achievement_definition', 'obtained_date')
-    list_filter = ['user']
+    list_filter = ['achievement_definition', 'obtained_date', 'user']
 
 
 class NumSolvedTypeAchievementDefinitionAdmin(admin.ModelAdmin):
     """Model for Achievements"""
     list_display = ('name', 'description', 'num_problems', 'problem_type')
-    list_filter = ['name']
 
 
 class NumSubmissionsProblemsAchievementDefinitionAdmin(admin.ModelAdmin):

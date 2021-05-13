@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-05 17:06+0200\n"
+"POT-Creation-Date: 2021-05-12 21:44+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Iván Ruiz <ivarui01@ucm.es@ADDRESS>\n"
 "Language-Team: Español\n"
@@ -569,58 +569,62 @@ msgid "Grupo"
 msgstr "Group"
 
 #: judge/templates/statistics_submissions.html:11
-msgid "Usuarios con al menos 1 envío"
-msgstr "Users with at least 1 submission"
+msgid "Usuarios totales"
+msgstr "Total users"
 
 #: judge/templates/statistics_submissions.html:12
-msgid "Usuarios con al menos 1 envío correcto"
-msgstr "Users with at least 1 correct submission"
+msgid "Usuarios con al menos 1 envío (correcto)"
+msgstr "Users with at least 1 submission (correct)"
 
 #: judge/templates/statistics_submissions.html:13
-msgid "Total de usuarios del grupo"
-msgstr "Total number of users in the group"
+msgid "Envíos por usuario (media/desv. tip.)"
+msgstr "Submissions per user (avg./std. dev.)"
 
-#: judge/templates/statistics_submissions.html:30
+#: judge/templates/statistics_submissions.html:14
+msgid "Envíos por usuario (cuartiles)"
+msgstr "Submissions per user (quartiles)"
+
+#: judge/templates/statistics_submissions.html:32
 msgid "Número de envíos agrupados por resultado"
 msgstr "Number of submissions grouped by result"
 
-#: judge/templates/statistics_submissions.html:34
-#: judge/templates/statistics_submissions.html:78
+#: judge/templates/statistics_submissions.html:36
+#: judge/templates/statistics_submissions.html:80
 msgid "Total"
 msgstr "Total"
 
-#: judge/templates/statistics_submissions.html:35
-#: judge/templates/statistics_submissions.html:74
+#: judge/templates/statistics_submissions.html:37
+#: judge/templates/statistics_submissions.html:76
 msgid "AC"
 msgstr "AC"
 
-#: judge/templates/statistics_submissions.html:36
-#: judge/templates/statistics_submissions.html:66
+#: judge/templates/statistics_submissions.html:38
+#: judge/templates/statistics_submissions.html:68
 msgid "WA"
 msgstr "WA"
 
-#: judge/templates/statistics_submissions.html:37
-#: judge/templates/statistics_submissions.html:70
+#: judge/templates/statistics_submissions.html:39
+#: judge/templates/statistics_submissions.html:72
 msgid "RE"
 msgstr "RE"
 
-#: judge/templates/statistics_submissions.html:38
+#: judge/templates/statistics_submissions.html:40
 msgid "TLE"
 msgstr "TLE"
 
-#: judge/templates/statistics_submissions.html:39
+#: judge/templates/statistics_submissions.html:41
 msgid "VE"
 msgstr "VE"
 
-#: judge/templates/statistics_submissions.html:40
+#: judge/templates/statistics_submissions.html:42
 msgid "IE"
 msgstr "IE"
 
-#: judge/templates/statistics_submissions.html:58
+#: judge/templates/statistics_submissions.html:60
 msgid "Cantidad de envíos por día"
 msgstr "Total submissions per day"
 
-#: judge/templates/statistics_submissions.html:90
+#: judge/templates/statistics_submissions.html:92
 msgid "Total de envíos por día"
 msgstr "Total submissions per day"
 
@@ -756,3 +760,6 @@ msgstr "The identifier has not the correct format"
 #, python-brace-format
 msgid "Posición: línea {row}, columna {col}"
 msgstr "Position: Row {row}, Column {col}"
+
+#~ msgid "Total de usuarios del grupo"
+#~ msgstr "Total number of users in the group"
