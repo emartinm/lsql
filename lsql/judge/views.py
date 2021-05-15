@@ -504,14 +504,13 @@ def download_ranking(request, collection_id):
             row += 1
 
         # create a temporary file to save the workbook with the results
-        temp = tempfile.NamedTemporaryFile(mode='w+b', buffering=-1, suffix='.xlsx')
-        file = pathlib.Path(temp.name)
-        name = file.name
-        work.save(name)
-        response = HttpResponse(open(name, 'rb').read())
-        response['Content-Type'] = 'application/xlsx'
-        response['Content-Disposition'] = "attachment; filename=ranking.xlsx"
-        temp.close()
+        with tempfile.NamedTemporaryFile(mode='w+b', buffering=-1, suffix='.xlsx') as temp:
+            file = pathlib.Path(temp.name)
+            name = file.name
+            work.save(name)
+            response = HttpResponse(open(name, 'rb').read())
+            response['Content-Type'] = 'application/xlsx'
+            response['Content-Disposition'] = "attachment; filename=ranking.xlsx"
         os.remove(name)
         return response
 

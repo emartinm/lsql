@@ -45,11 +45,11 @@ def load_many_problems(file, collection):
     try:
         with ZipFile(file) as zfile:
             for filename in zfile.infolist():
-                curr_file = zfile.open(filename)
-                problem = load_problem_from_file(curr_file)
-                problem.collection = collection
-                problem.author = collection.author
-                problems.append(problem)
+                with zfile.open(filename) as curr_file:
+                    problem = load_problem_from_file(curr_file)
+                    problem.collection = collection
+                    problem.author = collection.author
+                    problems.append(problem)
     except ZipFileParsingException as excp:
         raise ZipFileParsingException('{}: {}'.format(filename.filename, excp)) from excp
     except Exception as excp:
