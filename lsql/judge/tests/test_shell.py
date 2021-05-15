@@ -56,6 +56,7 @@ class ShellTest(TestCase):
         self.assertTrue(juan.check_password('11111111X'))
         self.assertFalse(juan.check_password('11113111X'))
         self.assertEqual(juan.first_name, 'Juan')
+        self.assertEqual(juan.last_name, '_')
         self.assertEqual(len(juan.groups.all()), 1)
         self.assertEqual(juan.groups.all()[0], new_group)
 
