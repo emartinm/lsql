@@ -18,25 +18,36 @@ from django.conf import settings
 from .models import Problem, Submission
 
 
-def create_users_from_csv(csv_filename: str, group_name: str):
+def create_users_from_csv(csv_filename: str, group_name: str, dry: bool = False):
     """
     Batch creation of users from a CSV file, each line representing a new user. The username is the
     first part of the email (before @) and the password is the document number. Assigns every new
     user to a new created group with name 'group_name'
 
+    If dry = True does not modify the DB but only show messages of the actions
+
     Each line has the following fields:
       FOTOGRAFÍA,NOMBRE COMPLETO,DOCUMENTO,ASIGNATURA,MAT.,CONV.,OBSERVACIÓN,CORREO,TELÉFONO
     """
-    group = Group.objects.create(name=group_name)
+    if dry:
+        print('Creating users from CSV (DRY RUN): NO USERS OR GROUPS WILL BE SAVED!')
+        group = Group(name=group_name)  # Dummy group not saved for dry run
+    else:
+        print('Creating users from CSV')
+        group = Group.objects.create(name=group_name)
+    print(f'* Created group {group_name}')
     with open(csv_filename, encoding='utf_8') as csvfile:
         reader = csv.DictReader(csvfile)
-        create_users_from_list(reader, group)
+        create_users_from_list(reader, group, dry)
+    print()
 
 
-def create_users_from_list(dict_list, group: Group):
+def create_users_from_list(dict_list, group: Group, dry: bool):
     """
     Batch creation of users from a list of dictionaries, each dictionary representing a new user. The username is the
     first part of the email (before @) and the password is the document number.
+
+    If dry = True does not modify the DB but only show messages of the actions
 
     Dictionaries have the following keys:
       FOTOGRAFÍA,NOMBRE COMPLETO,DOCUMENTO,ASIGNATURA,MAT.,CONV.,OBSERVACIÓN,CORREO,TELÉFONO
@@ -46,8 +57,12 @@ def create_users_from_list(dict_list, group: Group):
         email = user_dict['CORREO']
         username = email.split('@')[0]
         password = user_dict['DOCUMENTO']
-        first_name = user_dict['NOMBRE COMPLETO'].split(',')[1].strip()
-        last_name = user_dict['NOMBRE COMPLETO'].split(',')[0].strip()
+        if ',' in user_dict['NOMBRE COMPLETO']:
+            first_name = user_dict['NOMBRE COMPLETO'].split(',')[1].strip()
+            last_name = user_dict['NOMBRE COMPLETO'].split(',')[0].strip()
+        else:
+            first_name = user_dict['NOMBRE COMPLETO']
+            last_name = '_'
 
         # Safety checks
         assert username
@@ -55,12 +70,14 @@ def create_users_from_list(dict_list, group: Group):
         assert first_name
         assert last_name
 
-        user = get_user_model().objects.create_user(username, email, password)
-        user.first_name = first_name
-        user.last_name = last_name
-        user.save()
-        group.user_set.add(user)
-        print(f'Saved User("{username}", "{email}", "{password}", "{first_name}", "{last_name}") in group "{group}"')
+        if not dry:
+            user = get_user_model().objects.create_user(username, email, password)
+            user.first_name = first_name
+            user.last_name = last_name
+            user.save()
+            group.user_set.add(user)
+        print(f'* Saved User("username:{username}", email:"{email}", passwd:"{password}", '
+              f'first_name:"{first_name}", last_name:"{last_name}") in group "{group}"')
 
 
 def is_list_of_dict(value):
