@@ -43,6 +43,27 @@ class OracleTest(TestCase):
         """Test for cleaning a null SQL code"""
         self.assertEqual(clean_sql(None), [])
 
+    def test_clean_sql(self):
+        """ Test for cleaning SQL code with several lines and interleaved comments """
+        codes = [
+            ("\n   \n  --hello\n   SELECT *\n\n  \n \n FROM Club     ;",
+             ["\n   \n         \n   SELECT *\n\n  \n \n FROM Club      "]),
+            ("\n--comment   \n  --hola\n   SELECT *\n\n  \n \n FROM Club     ;--mas",
+             ["\n            \n        \n   SELECT *\n\n  \n \n FROM Club           "]),
+            ('\n  --hello\n  \n  ---hi hi \nUPDATE Club\nSET Atletas = 2000;  --something\n   \n \n --hola   '
+             '\nUPDATE Club\nSET Atletas = 107;',
+             ['\n         \n  \n           \nUPDATE Club\nSET Atletas = 2000              \n   \n \n          '
+              '\n           \n                  ',
+              '\n         \n  \n           \n           \n                                \n   \n \n          '
+              '\nUPDATE Club\nSET Atletas = 107 ']),
+        ]
+        for code, clean in codes:
+            cleaned = clean_sql(code)
+            self.assertEqual(cleaned, clean)
+            for stmt in cleaned:
+                # Every extended statement must have the same length as the original complete code
+                self.assertEqual(len(code), len(stmt))
+
     def test_select(self):
         """Tests for SelectProblem.judge()"""
         collection = Collection()
