@@ -135,3 +135,21 @@ en un esquema limpio de BD. Los esquemas generados de esta forma deben
 permitir un nivel de persistencia asociado al usuario, por ejemplo
 hasta las 00:00 del día siguiente. O mejor aún, que se pueda
 configurar para cada usuario.
+  
+# Ideas surgidas en el taller de LearnSQL (19 de mayo de 2021)
+* Realizar una medida de la complejidad de la consulta enviada por el usuario. 
+  En general esto puede ser complejo, pero se podría usar una métrica sencilla como
+  que no utiliza tablas innecesarias de acuerdo con la solución oficial.
+* Como el usuario ve la base de datos y el resultado esperado, se puede *cablear*
+  una consulta que devuelva los datos adecuados sin reunir tablas ni realizar 
+  `GROUP BY` o similar. Se podría definir un conjunto de comprobaciones personalizables
+  a realizar en el envío del usuario. Debería ser sencillo de configurar por parte del 
+  profesor y mostrarse a los alumnos para que sepan desde el principio los requisitos 
+  a cumplir:
+   1. La consulta involucra las tablas necesarias
+   1. Debe contener `GROUP BY`, `ORDER BY`, una consulta anidada, una operación `EXCEPT`,
+      etc.
+   1. La consulta no puede tener expresiones en la selección de columnas
+* Los mensajes de Oracle son muy poco informativos. Estudiar con Fernando Sáenz la
+  posibilidad de utilizar analizadores más potentes como los que usa DES para mejorar
+  los mensajes de error.
