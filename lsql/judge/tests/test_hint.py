@@ -16,7 +16,6 @@ def create_hint(problem, name, num):
     """ Creates and stores a Hint of a Problem """
     description = 'descripcion de la pista 1'
     hint = Hint(name_md=name, description_md=description, problem=problem, num_submit=num)
-    hint.clean()
     hint.save()
     return hint
 
@@ -24,7 +23,6 @@ def create_hint(problem, name, num):
 def create_used_hint(hint, user):
     """ Creates and stores a used Hint of a Problem """
     used_hint = UsedHint(user=user, request_date=datetime(2020, 3, 5), hint_definition=hint)
-    used_hint.clean()
     used_hint.save()
     return used_hint
 
@@ -44,6 +42,7 @@ class HintTest(TestCase):
         create_submission(problem, user, VeredictCode.WA, 'select *** from')
         create_submission(problem, user, VeredictCode.WA, 'select *** from')
         create_submission(problem, user, VeredictCode.WA, 'select *** from')
+
         hint_url = reverse('judge:hint', args=[problem.pk])
         client.login(username='tamara', password='2222')
 
@@ -56,16 +55,21 @@ class HintTest(TestCase):
         num = hint2.num_submit - num_error
         msg = f'Número de envíos que faltan para obtener la siguiente pista: {num}.'
         response = client.get(hint_url, {'msg': msg}, follow=True)
-        self.assertIn(response.json()['msg'], msg)
+        self.assertEqual(response.json()['msg'], msg)
 
         # JSON with the last hint
         create_submission(problem, user, VeredictCode.WA, 'select *** from')
         mens = 'No hay más pistas disponibles para este ejercicio.'
         response = client.post(hint_url, {'msg': mens}, follow=True)
-        self.assertIn(response.json()['msg'], mens)
+        self.assertEqual(response.json()['msg'], mens)
+
+        # JSON if the problem don't have any hint
+        problem_3 = create_select_problem(collection, 'SelectProblem 3 DEF ABC')
+        hint_url_3 = reverse('judge:hint', args=[problem_3.pk])
+        client.post(hint_url_3, follow=False)
 
     def test_same_hints(self):
-        """Test for same number of hints and used hints"""
+        """Test when the user use all available hints"""
         client = Client()
         user = create_user('2222', 'tamara')
         collection = create_collection('Colleccion de prueba TTT')
@@ -78,4 +82,4 @@ class HintTest(TestCase):
         msg = 'No hay más pistas disponibles para este ejercicio.'
         hint_url = reverse('judge:hint', args=[problem.pk])
         response = client.get(hint_url, {'msg': msg}, follow=True)
-        self.assertIn(response.json()['msg'], msg)
+        self.assertEqual(response.json()['msg'], msg)

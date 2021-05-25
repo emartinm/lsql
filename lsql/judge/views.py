@@ -23,6 +23,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.template.exceptions import TemplateDoesNotExist
+from django.template.loader import render_to_string
 
 from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table, filter_expected_db
@@ -285,8 +286,16 @@ def show_problem(request, problem_id):
     problem.show_added, problem.show_modified, problem.show_removed = filter_expected_db(problem.expected_result[0],
                                                                                          problem.initial_db[0])
     problem.available_hints = Hint.objects.filter(problem=problem).order_by('num_submit').count()
-    problem.used_hints = UsedHint.objects.filter(problem=problem).filter(user=request.user.pk).order_by('num_submit')
-    problem.used = UsedHint.objects.filter(problem=problem).filter(user=request.user.pk).count()
+    used_hints = UsedHint.objects.filter(user=request.user).filter(hint_definition__problem=problem)
+    hints = []
+    cont = 0
+    for used in used_hints:
+        cont += 1
+        name = f'Pista {cont}'
+        dic = {'num':  name, 'text_html': used.hint_definition.get_text_html()}
+        hints.append(dic)
+    problem.used_hints = hints
+    problem.used = len(hints)
     return render(request, problem.template(), {'problem': problem})
 
 
@@ -547,29 +556,32 @@ def statistics_submissions(request):
 def get_hint(request, problem_id):
     """Returns a JSON with the information of available Hints"""
     problem = get_object_or_404(Problem, pk=problem_id)
-    num_error = Submission.objects.filter(problem=problem, user=request.user).count()
+    num_subs = Submission.objects.filter(problem=problem, user=request.user).count()
     list_hints = Hint.objects.filter(problem=problem).order_by('num_submit')
-    list_used_hints = UsedHint.objects.filter(problem=problem, user=request.user.pk).order_by('num_submit')
-    data = {'hint': [], 'msg': '', 'more_hints': ''}
+    list_used_hints = UsedHint.objects.filter(user=request.user.pk).filter(hint_definition__problem=problem)
+    data = {'hint': '', 'msg': '', 'more_hints': ''}
     num_hint = list_used_hints.count()
-    hint = list_hints[num_hint]
-
-    # if the number of wrong submission are less than the number of submissions
-    if num_error >= hint.num_submit:
-        # data['hint'].append(hint.name_html)
-        # data['hint'].append(hint.description_html)
-        used_hint = UsedHint(name_md=hint.name_md, name_html=hint.name_html, description_md=hint.description_md,
-                             description_html=hint.description_html, user=request.user, problem=problem,
-                             num_submit=hint.num_submit)
-        used_hint.save()
-    else:
-        num = hint.num_submit - num_error
-        data['more_hints'] = 'true'
-        data['msg'] = f'Número de envíos que faltan para obtener la siguiente pista: {num}.'
 
     # if there are not more hints available
-    if hint == list_hints[list_hints.count() - 1]:
+    if list_hints.count() == list_used_hints.count():
         data['more_hints'] = 'false'
-        data['msg'] = 'No hay más pistas disponibles para este ejercicio.'
+        data['msg'] = _('No hay más pistas disponibles para este ejercicio.')
+
+    else:
+        hint = list_hints[num_hint]
+
+        # if the number of wrong submission are less than the number of submissions
+        if num_subs >= hint.num_submit:
+            name = f'Pista {list_used_hints.count() + 1}'
+            context = {'name': name, 'text': hint.get_text_html()}
+            html = render_to_string('hint.html', context, request)
+            data['hint'] = html
+            data['more_hints'] = 'true'
+            used_hint = UsedHint(user=request.user, hint_definition=hint)
+            used_hint.save()
+        else:
+            num = hint.num_submit - num_subs
+            data['more_hints'] = 'true'
+            data['msg'] = _('Número de envíos que faltan para obtener la siguiente pista: {number}.').format(number=num)
 
     return JsonResponse(data)

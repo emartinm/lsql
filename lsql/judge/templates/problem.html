@@ -50,27 +50,33 @@ General template for a problem. Provides the following blocks:
   <div class="modal-dialog  modal-lg">
     <div class="modal-content">
       <div class="modal-header d-block">
-        <h5 class="modal-title text-center" id="exampleModalLabel">{% translate "PISTAS" %}</h5>
+        <h5 class="modal-title text-center" id="exampleModalLabel">{% translate "Pistas" %}</h5>
       </div>
         <div class="modal-body">
             <div class="alert alert-primary" role="alert">
-                <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-                <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-                </symbol></svg>
-                <div class="text-center"><svg class="bi flex-shrink-0 me-2" width="24" height="24"><use xlink:href="#info-fill"/></svg>
-                        Pulsa el botón "Solicitar pista" para obtener una pista.
-                        Ten en cuenta que solicitar pistas puede afectar a tu posición en la clasificación.</div>
-
-                <div class="alert-link text-center">Las pistas disponibles para este problemas son: {{problem.available_hints}}.</div>
+                <div class="text-center">
+                    <i class="bi bi-info-circle-fill bigger-icon"></i>
+                    {% blocktranslate %}
+                        Pulsa el botón 'Solicitar pista' para obtener una pista.
+                        Ten en cuenta que solicitar pistas puede afectar a tu posición en la clasificación.
+                    {% endblocktranslate %}
+                </div>
+                <div class="alert-link text-center">
+                    {% blocktranslate %}
+                        Las pistas disponibles para este problemas son:
+                    {% endblocktranslate %}
+                    {{problem.available_hints}}
+                </div>
             </div>
         </div>
         <div id="info_hint" class="modal-body">
              {% for hint in problem.used_hints %}
              <div class="d-flex p-2">
-                 <div id="name_hint" class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center ">
+                 <div class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center ">
+                        {{ hint.num }}
                  </div>
                  <div class="text-center w-75">
+                        {{hint.text_html|safe}}
                  </div>
              </div>
              {% endfor %}
@@ -81,15 +87,11 @@ General template for a problem. Provides the following blocks:
                 <div class="bg-primary h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center" style="">
                   INFO
                </div>
-                {% if problem.used == 0 %}
-                <div class="text-center w-75" style="">
-                    Todavía no has solicitado ninguna pista.
-                </div>
-                {% else %}
                  <div id="msg_info" class="text-center w-75" style="">
-                    Pulsa 'Solicitar pista' para ver el número de envíos que te faltan para ver una nueva pista.
+                    {% blocktranslate %}
+                        Pulsa 'Solicitar pista' para obtener una pista o ver el número de envíos que te faltan para conseguirla.
+                    {% endblocktranslate %}
                 </div>
-                {% endif %}
             </div>
         </div>
         {% endif %}

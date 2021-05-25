@@ -127,8 +127,9 @@ function hide_hint_message(){
     $('#msg').attr('style', 'display: none');
 }
 
-function show_hint_message(){
+function show_hint_message(msg){
     $('#msg').attr('style', '');
+    $('#msg_info').text(msg);
 }
 
 // show the requested hint or a message with information
@@ -155,25 +156,24 @@ function show_hint(){
             }
         })
         .then(function(myJson) {
+
             var hint = myJson['hint'];
             var msg = myJson['msg'];
             var more_hints = myJson['more_hints']
+            console.log(myJson);
 
             if (hint.length > 0){
-                var html = '<div class="d-flex p-2"> <div id="name_hint" class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center">'
-                + hint[0] + '</div> <div id="description_hint" class="text-center w-75">' + hint[1] + '</div> </div>';
-                $('#info_hint').append(html);
-                $('#msg_info').append(msg);
+                $('#info_hint').append(hint);
+                hide_hint_message();
             }
 
             if (msg.length > 0){
-                show_hint_message();
-                $('#msg_info').text(msg);
+               show_hint_message(msg);
             }
 
             if(more_hints == 'false'){
+                show_hint_message(msg);
                 disable_button_ask_hint();
-                hide_hint_message();
             }
         });
 }

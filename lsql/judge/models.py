@@ -671,3 +671,22 @@ class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.
                                                    achievement_definition=self)
                     new_achi.save()
 
+
+class Hint(models.Model):
+    """Hints of a problem"""
+    text_md = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
+    problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
+    num_submit = models.PositiveIntegerField(default=0, null=False)
+
+    def get_text_html(self):
+        """Converts a markdown string into HTML"""
+        text_html = markdown_to_html(self.text_md, remove_initial_p=True)
+        return text_html
+
+
+class UsedHint(models.Model):
+    """Hints used by user"""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    request_date = models.DateTimeField(default=django.utils.timezone.now)
+    hint_definition = models.ForeignKey(Hint, on_delete=models.CASCADE)
+
