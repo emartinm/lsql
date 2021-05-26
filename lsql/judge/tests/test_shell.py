@@ -35,9 +35,20 @@ class ShellTest(TestCase):
         group_name = 'Clase ABC curso X/Y'
         curr_path = os.path.dirname(__file__)
         path = os.path.join(curr_path, self.FILE_FOLDER, self.CSV_OK_TEST)
-        create_users_from_csv(path, group_name)
 
-        # The new group has 3 memebers
+        # Invoking with dry=True does not create users or groups
+        old_groups = list(Group.objects.all())
+        old_users = list(get_user_model().objects.all())
+        create_users_from_csv(path, group_name, dry=True)
+        new_groups = list(Group.objects.all())
+        new_users = list(get_user_model().objects.all())
+        self.assertEqual(old_groups, new_groups)
+        self.assertEqual(old_users, new_users)
+
+        # Invoking with dry=False does create a group with the expected users
+        create_users_from_csv(path, group_name, dry=False)
+
+        # The new group has 3 members
         new_group = Group.objects.filter(name=group_name)[0]
         self.assertEqual(len(new_group.user_set.all()), 3)
 
@@ -45,6 +56,7 @@ class ShellTest(TestCase):
         self.assertTrue(juan.check_password('11111111X'))
         self.assertFalse(juan.check_password('11113111X'))
         self.assertEqual(juan.first_name, 'Juan')
+        self.assertEqual(juan.last_name, '_')
         self.assertEqual(len(juan.groups.all()), 1)
         self.assertEqual(juan.groups.all()[0], new_group)
 

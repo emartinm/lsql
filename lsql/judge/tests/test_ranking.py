@@ -349,19 +349,18 @@ class RankingTest(TestCase):
             "application/xlsx"
         )
 
-        file = tempfile.NamedTemporaryFile(mode='w+b', buffering=-1, suffix='.xlsx')
-        cont = response.content
-        file.write(cont)
-        work = openpyxl.load_workbook(file)
-        book = work.active
-        self.assertIn("Colección: " + collection.name_md, book.cell(row=1, column=1).value)
-        self.assertIn("1A", book.cell(row=3, column=1).value)
-        self.assertIn("1", book.cell(row=5, column=1).value)
-        self.assertIn(user.username, book.cell(row=5, column=2).value)
-        self.assertIn("0/1 (1)", book.cell(row=5, column=3).value)
-        self.assertIn("0", book.cell(row=5, column=4).value)
-        self.assertIn("0", book.cell(row=5, column=5).value)
-        file.close()
+        with tempfile.NamedTemporaryFile(mode='w+b', buffering=-1, suffix='.xlsx') as file:
+            cont = response.content
+            file.write(cont)
+            work = openpyxl.load_workbook(file)
+            book = work.active
+            self.assertIn("Colección: " + collection.name_md, book.cell(row=1, column=1).value)
+            self.assertIn("1A", book.cell(row=3, column=1).value)
+            self.assertIn("1", book.cell(row=5, column=1).value)
+            self.assertIn(user.username, book.cell(row=5, column=2).value)
+            self.assertIn("0/1 (1)", book.cell(row=5, column=3).value)
+            self.assertIn("0", book.cell(row=5, column=4).value)
+            self.assertIn("0", book.cell(row=5, column=5).value)
 
         # Date or group invalid
         response = client.get(url, {

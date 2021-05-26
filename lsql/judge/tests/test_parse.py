@@ -13,6 +13,8 @@ from django.core.exceptions import ValidationError
 
 from judge.models import Collection, Problem, SelectProblem, DMLProblem, FunctionProblem, \
     ProcProblem, TriggerProblem, DiscriminantProblem
+from judge.parse import get_language_from_json
+from judge.exceptions import ZipFileParsingException
 
 
 class ParseTest(TestCase):
@@ -132,6 +134,7 @@ class ParseTest(TestCase):
             self.assertTrue(problem.text_md)
             self.assertTrue('.html' in problem.template())
             self.assertTrue(str(problem))
+            self.assertEqual(problem.language, 'es')
 
     def test_load_many_problems(self):
         """Test for loading a ZIP containing several problems"""
@@ -191,3 +194,12 @@ class ParseTest(TestCase):
             zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
             problem = DiscriminantProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)
+
+    def test_language_json(self):
+        """ Tests that language is correctly extracted from a problem JSON and unsupported languages raise
+            ZipFileParsingException
+        """
+        self.assertEqual(get_language_from_json({'language': 'es'}), 'es')
+        self.assertEqual(get_language_from_json({'language': 'en'}), 'en')
+        with self.assertRaises(ZipFileParsingException):
+            get_language_from_json({'language': 'ru'})

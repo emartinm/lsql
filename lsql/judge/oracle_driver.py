@@ -12,6 +12,7 @@ import time
 import string
 import random
 import os
+import re
 import json
 import cx_Oracle
 from logzero import logger
@@ -23,17 +24,43 @@ from .exceptions import ExecutorException
 from .types import OracleStatusCode
 
 
-def clean_sql(code, min_stmt=None, max_stmt=None):
+def replace_rest_stmt_blanks(statements):
+    """ Given a list[str] of SQL statements extends every statement with as many spaces and newlines as the previous
+        and next statements. This way, executing each statement separately will produce the error in the same offset
+        position as the complete SQL block, so they could be shown correctly in the editor. For example:
+
+            'SELECT *\nFROM CLUB;\nSELECT *\nFROM CLUB;'          --> (Origina block code)
+           ['SELECT *\nFROM CLUB;', '\nSELECT *\nFROM CLUB;']     --> (Split statements)
+           ['SELECT *\nFROM CLUB;\n        \n          ',         --> (Split statements with equal length and \n)
+            '        \n          \nSELECT *\nFROM CLUB;'
     """
-    Parses SQL code into statements (removing ';').
+    num_stmt = len(statements)
+    result = []
+    for i in range(num_stmt):
+        pre = re.sub(r'\S', ' ', "".join(statements[:i]))
+        post = re.sub(r'\S', ' ', "".join(statements[i+1:]))
+        result.append(pre + statements[i] + post)
+    return result
+
+
+def clean_sql(code: str, min_stmt: int = None, max_stmt: int = None):
+    """
+    Parses SQL code into statements (removing comments and ';').
     :param code: str containing SQL code
     :param min_stmt: minimum number of statements
     :param max_stmt: maximum number of statements
-    :return: [str] if code is a sequence between min_stmt and max_stmt correct SQL statements.
+    :return: [str] if code is a sequence between min_stmt and max_stmt correct SQL statements, otherwise None
     """
     if code is None:
         code = ""
-    statements = [s.replace(';', ' ') for s in sqlparse.split(code)]
+    # Replaces every line comment by a sequence of spaces of the same length
+    code_no_comments = re.sub(r'--.*$', lambda match_obj: ' '*len(match_obj.group(0)), code, flags=re.MULTILINE)
+    # Splits statements and replaces \r by spaces (only \n for newline)
+    statements = [str(s).replace('\r', ' ') for s in sqlparse.parse(code_no_comments)]  # Uses only \n for newline
+    # Replaces the last ';' of each statement with spaces
+    statements = [re.sub(r';\s*$', lambda match_obj: ' '*len(match_obj.group(0)), s, flags=re.MULTILINE)
+                  for s in statements]
+    statements = replace_rest_stmt_blanks(statements)
     num_sql = len(statements)
     if (min_stmt and num_sql < min_stmt) or (max_stmt and num_sql > max_stmt):
         statements = None
@@ -44,7 +71,7 @@ def random_str(alphabet, size=8):
     """
     Creates a random string of 'n' letters from 'alphabet'
     :param alphabet: Candidate letters
-    :param size: Lenght of the generated random string
+    :param size: Length of the generated random string
     :return: Random string of 'n' letters from 'alphabet'
     """
     ret = ''
@@ -162,9 +189,8 @@ def execute_select_statement(conn, statement):
 
     with conn.cursor() as cursor:
         cursor.execute(statements[0])
-        # conn.commit()
         logger.debug('User %s - SQL select statement <<%s>> executed in %s seconds',
-                     conn.username, statements[0], time.time() - init)
+                     conn.username, statement, time.time() - init)
         table = table_from_cursor(cursor)
     return table
 

@@ -56,4 +56,4 @@ class ResultForm(forms.Form):
 
 class SubmitForm(forms.Form):
     """Form used to validate user submissions"""
-    code = forms.CharField(label='Codigo', min_length=10)
+    code = forms.CharField(min_length=10, strip=False)  # Keep spaces for error messages

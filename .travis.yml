@@ -17,7 +17,7 @@ env:
 before_install:
   - ./travis_oracle_instant_client.sh # Downloads and unpack Oracle Instant Client
   - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/tmp/instantclient_19_8 # Update when new versions of Oracle Instant Client are released
-  - wget https://raw.githubusercontent.com/Vincit/travis-oracledb-xe/master/accept_the_license_agreement_for_oracledb_xe_11g_and_install.sh
+  # - wget https://raw.githubusercontent.com/Vincit/travis-oracledb-xe/master/accept_the_license_agreement_for_oracledb_xe_11g_and_install.sh
   - bash ./accept_the_license_agreement_for_oracledb_xe_11g_and_install.sh
 # command to install dependencies
 install:
