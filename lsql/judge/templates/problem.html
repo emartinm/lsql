@@ -26,6 +26,99 @@ General template for a problem. Provides the following blocks:
 <p>
 
 </p>
+
+{% block pista %}
+
+    {% if problem.available_hints == 0 %}
+    <div class="col-0">
+        <button class="bg-white border-0 float-end" title='{% translate "Sin ayuda disponible" %}' type="button"
+            class="gold"><i class="bi bi-lightbulb-off-fill grey bigger-icon" aria-hidden="true"></i>
+        </button>
+    </div>
+    {% else %}
+    <div class="col-0">
+        <button class="bg-white border-0 float-end" title='{% translate "Mostrar ayuda" %}'
+                data-bs-target="#exampleModal" data-bs-toggle="modal" type="button"
+            class="gold"><i class="bi bi-lightbulb-fill gold bigger-icon" aria-hidden="true"></i>
+        </button>
+    </div>
+    {% endif %}
+
+</div>
+<div class="modal fade" data-bs-backdrop="static" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog  modal-lg">
+    <div class="modal-content">
+      <div class="modal-header d-block">
+        <h5 class="modal-title text-center" id="exampleModalLabel">{% translate "Pistas" %}</h5>
+      </div>
+        <div class="modal-body">
+            <div class="alert alert-primary" role="alert">
+                <div class="text-center">
+                    <i class="bi bi-info-circle-fill bigger-icon"></i>
+                    {% blocktranslate %}
+                        Pulsa el botón 'Solicitar pista' para obtener una pista.
+                        Ten en cuenta que solicitar pistas puede afectar a tu posición en la clasificación.
+                    {% endblocktranslate %}
+                </div>
+                <div class="alert-link text-center">
+                    {% blocktranslate %}
+                        Las pistas disponibles para este problemas son:
+                    {% endblocktranslate %}
+                    {{problem.available_hints}}
+                </div>
+            </div>
+        </div>
+        <div id="info_hint" class="modal-body">
+             {% for hint in problem.used_hints %}
+             <div class="d-flex p-2">
+                 <div class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center ">
+                        {{ hint.num }}
+                 </div>
+                 <div class="text-center w-75">
+                        {{hint.text_html|safe}}
+                 </div>
+             </div>
+             {% endfor %}
+        </div>
+        {% if problem.available_hints > problem.used %}
+        <div id='msg' class="modal-body" style="">
+            <div class="d-flex p-2">
+                <div class="bg-primary h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center" style="">
+                  INFO
+               </div>
+                 <div id="msg_info" class="text-center w-75" style="">
+                    {% blocktranslate %}
+                        Pulsa 'Solicitar pista' para obtener una pista o ver el número de envíos que te faltan para conseguirla.
+                    {% endblocktranslate %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% if problem.available_hints == problem.used %}
+            <div  class="modal-footer d-flex justify-content-center">
+                <button type="button" class="btn btn-primary" title="No hay más pistas" disabled>{% translate "Solicitar pista" %}</button>
+            </div>
+        {% else %}
+            <div  class="modal-footer d-flex justify-content-center">
+                <form action="javascript:show_hint();">
+                    {% csrf_token %} {# Includes a hidden input with the CSRF token #}
+                    <input type="hidden" id="hint_url" name="hint_url" value="{% url 'judge:hint' problem.pk %}">
+                    <button type="button" id="button_ask_hint" class="btn btn-primary" title='{% translate "Pedir pista nueva" %}' onclick="show_hint();">{% translate "Solicitar pista" %}</button>
+                </form>
+            </div>
+        {% endif %}
+
+      <div class="modal-footer d-flex">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{% translate "Cerrar" %}</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
 <div>
   {{ problem.text_html|safe }}
 </div>

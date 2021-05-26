@@ -117,3 +117,65 @@ function load_submission_code(event){
     };
     reader.readAsText(input.files[0]);
 }
+
+// disable the button if no more available hints
+function disable_button_ask_hint(){
+    $('#button_ask_hint').attr('disabled', true);
+}
+
+function hide_hint_message(){
+    $('#msg').attr('style', 'display: none');
+}
+
+function show_hint_message(msg){
+    $('#msg').attr('style', '');
+    $('#msg_info').text(msg);
+}
+
+// show the requested hint or a message with information
+function show_hint(){
+    // Get json with the hints
+    let hint_point = $('#hint_url').val();
+
+    const config = {
+        method: 'POST',
+        mode: 'same-origin', // no-cors, *cors, same-origin
+        cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+        credentials: 'same-origin', // include, *same-origin, omit
+        headers: { 'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val() }, // CSRF token from form
+        redirect: 'follow', // manual, *follow, error
+        referrerPolicy: 'same-origin' // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    };
+
+    fetch(hint_point, config)
+        .then(function(response) {
+            if (response.ok) {
+                return response.json(); // Returns a new Promise, that can be chained
+            } else {
+                throw response;
+            }
+        })
+        .then(function(myJson) {
+
+            var hint = myJson['hint'];
+            var msg = myJson['msg'];
+            var more_hints = myJson['more_hints']
+            console.log(myJson);
+
+            if (hint.length > 0){
+                $('#info_hint').append(hint);
+                hide_hint_message();
+            }
+
+            if (msg.length > 0){
+               show_hint_message(msg);
+            }else{
+                hide_hint_message();
+            }
+
+            if(!more_hints){
+                show_hint_message(msg);
+                disable_button_ask_hint();
+            }
+        });
+}
