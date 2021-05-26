@@ -7,5 +7,3 @@ postgres/
 lsql/problem_zips
 lsql/.coverage
 lsql/allstaticfiles/
-django.po
-django.mo

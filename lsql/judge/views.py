@@ -560,7 +560,7 @@ def get_hint(request, problem_id):
     num_subs = Submission.objects.filter(problem=problem, user=request.user).count()
     list_hints = Hint.objects.filter(problem=problem).order_by('num_submit')
     list_used_hints = UsedHint.objects.filter(user=request.user.pk).filter(hint_definition__problem=problem)
-    data = {'hint': '', 'msg': '', 'more_hints': ''}
+    data = {'hint': '', 'msg': '', 'more_hints': False}
     num_hint = list_used_hints.count()
 
     # if there are not more hints available
