@@ -687,6 +687,5 @@ class Hint(models.Model):
 class UsedHint(models.Model):
     """Hints used by user"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    request_date = models.DateTimeField(default=django.utils.timezone.now)
+    request_date = models.DateTimeField(auto_now_add=True)
     hint_definition = models.ForeignKey(Hint, on_delete=models.CASCADE)
-

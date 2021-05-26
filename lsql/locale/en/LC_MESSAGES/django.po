@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-25 16:31+0200\n"
+"POT-Creation-Date: 2021-05-26 14:07+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Iván Ruiz <ivarui01@ucm.es@ADDRESS>\n"
 "Language-Team: Español\n"
@@ -365,7 +365,7 @@ msgstr "Your password has been successfully modified"
 
 #: .\judge\templates\problem.html:34
 msgid "Sin ayuda disponible"
-msgstr "No help available"
+msgstr ""
 
 #: .\judge\templates\problem.html:40 .\judge\templates\results.html:49
 msgid "Mostrar ayuda"
@@ -378,13 +378,16 @@ msgstr "Hints"
 #: .\judge\templates\problem.html:59
 msgid ""
 "\n"
-"                        Pulsa el botón 'Solicitar pista' para obtener una pista.\n"
-"                        Ten en cuenta que solicitar pistas puede afectar a tu posición en la clasificación.\n"
+"                        Pulsa el botón 'Solicitar pista' para obtener una "
+"pista.\n"
+"                        Ten en cuenta que solicitar pistas puede afectar a "
+"tu posición en la clasificación.\n"
 "                    "
 msgstr ""
 "\n"
 "                        Press the 'Request hint' button to get a hint.\n"
-"                        Be aware that requesting clues can affect your position on the leaderboard.\n"
+"                        Be aware that requesting hints can affect your "
+"position on the leaderboard.\n"
 "                    "
 
 #: .\judge\templates\problem.html:65
@@ -394,7 +397,7 @@ msgid ""
 "                    "
 msgstr ""
 "\n"
-"                        The clues available for this problem are: \n"
+"                        The hints available for this problem are: \n"
 "                    "
 
 #: .\judge\templates\problem.html:91
@@ -405,17 +408,17 @@ msgid ""
 "                    "
 msgstr ""
 "\n"
-"                        Press 'Request track' to get a track or see "
-"the number of shipments you need to get it.\n"
+"                        Press 'Request hint' to get a track or see the "
+"number of shipments you need to get it.\n"
 "                    "
 
 #: .\judge\templates\problem.html:100 .\judge\templates\problem.html:107
 msgid "Solicitar pista"
-msgstr "Request track"
+msgstr "Request hint"
 
 #: .\judge\templates\problem.html:107
 msgid "Pedir pista nueva"
-msgstr "Request new track"
+msgstr "Request new hint"
 
 #: .\judge\templates\problem.html:113 .\judge\templates\problem.html:192
 #: .\judge\templates\problem.html:218 .\judge\templates\results.html:95
@@ -623,12 +626,16 @@ msgid "Grupo"
 msgstr "Group"
 
 #: .\judge\templates\statistics_submissions.html:11
+#, fuzzy
+#| msgid "Usuarios con al menos 1 envío (correcto)"
 msgid "Usuarios con al menos 1 envío"
-msgstr "Users with at least 1 submission"
+msgstr "Users with at least 1 submission (correct)"
 
 #: .\judge\templates\statistics_submissions.html:12
+#, fuzzy
+#| msgid "Usuarios con al menos 1 envío (correcto)"
 msgid "Usuarios con al menos 1 envío correcto"
-msgstr "Users with at least 1 correct submission"
+msgstr "Users with at least 1 submission (correct)"
 
 #: .\judge\templates\statistics_submissions.html:13
 msgid "Total de usuarios del grupo"
@@ -790,32 +797,46 @@ msgstr ""
 "Your submission must be made up of between {min_stmt} and {max_stmt} "
 "{ending}."
 
-#: .\judge\views.py:152 .\judge\views.py:225
+#: .\judge\views.py:153 .\judge\views.py:226
 msgid "¡Lo sentimos! No existe ningún grupo para ver resultados"
 msgstr "We are sorry! There is no group to see results"
 
-#: .\judge\views.py:231
+#: .\judge\views.py:232
 msgid "¡Lo sentimos! No tienes asignado un grupo de la asignatura."
 msgstr "We are sorry! You do not have a subject group assigned."
 
-#: .\judge\views.py:232
+#: .\judge\views.py:233
 msgid "Por favor, contacta con tu profesor para te asignen un grupo de clase."
 msgstr "Please, contact your teacher to assign you a class group."
 
-#: .\judge\views.py:335
+#: .\judge\views.py:295 .\judge\views.py:577
+#, python-brace-format
+msgid "Pista {number}"
+msgstr "Hint {number}"
+
+#: .\judge\views.py:336
 msgid "El identificador no tiene el formato correcto"
 msgstr "The identifier has not the correct format"
 
-#: .\judge\views.py:422
+#: .\judge\views.py:423
 #, python-brace-format
 msgid "Posición: línea {row}, columna {col}"
 msgstr "Position: Row {row}, Column {col}"
 
-#: .\judge\views.py:568
+#: .\judge\views.py:570 .\judge\views.py:585
 msgid "No hay más pistas disponibles para este ejercicio."
-msgstr "There are no more tracks available for this exercise."
+msgstr "There are no more hints available for this exercise."
 
-#: .\judge\views.py:585
+#: .\judge\views.py:591
 #, python-brace-format
 msgid "Número de envíos que faltan para obtener la siguiente pista: {number}."
-msgstr "Number of shipments missing to get the next track: {number}."
+msgstr "Number of shipments missing to get the next hint: {number}."
+
+#~ msgid "Usuarios totales"
+#~ msgstr "Total users"
+
+#~ msgid "Envíos por usuario (media/desv. tip.)"
+#~ msgstr "Submissions per user (avg./std. dev.)"
+
+#~ msgid "Envíos por usuario (cuartiles)"
+#~ msgstr "Submissions per user (quartiles)"

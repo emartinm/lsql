@@ -169,9 +169,11 @@ function show_hint(){
 
             if (msg.length > 0){
                show_hint_message(msg);
+            }else{
+                hide_hint_message();
             }
 
-            if(more_hints == 'false'){
+            if(!more_hints){
                 show_hint_message(msg);
                 disable_button_ask_hint();
             }

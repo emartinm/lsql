@@ -24,6 +24,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import render_to_string
+from django.views.decorators.http import require_POST
 
 from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table, filter_expected_db
@@ -291,7 +292,7 @@ def show_problem(request, problem_id):
     cont = 0
     for used in used_hints:
         cont += 1
-        name = f'Pista {cont}'
+        name = _('Pista {number}').format(number=cont)
         dic = {'num':  name, 'text_html': used.hint_definition.get_text_html()}
         hints.append(dic)
     problem.used_hints = hints
@@ -553,6 +554,7 @@ def statistics_submissions(request):
 
 
 @login_required
+@require_POST
 def get_hint(request, problem_id):
     """Returns a JSON with the information of available Hints"""
     problem = get_object_or_404(Problem, pk=problem_id)
@@ -564,24 +566,27 @@ def get_hint(request, problem_id):
 
     # if there are not more hints available
     if list_hints.count() == list_used_hints.count():
-        data['more_hints'] = 'false'
+        data['more_hints'] = False
         data['msg'] = _('No hay más pistas disponibles para este ejercicio.')
-
     else:
         hint = list_hints[num_hint]
 
-        # if the number of wrong submission are less than the number of submissions
+        # if the number of wrong submission is less than the number of submissions
         if num_subs >= hint.num_submit:
-            name = f'Pista {list_used_hints.count() + 1}'
+            name = _('Pista {number}').format(number=list_used_hints.count()+1)
             context = {'name': name, 'text': hint.get_text_html()}
-            html = render_to_string('hint.html', context, request)
+            html = render_to_string('hint.html', context)
             data['hint'] = html
-            data['more_hints'] = 'true'
             used_hint = UsedHint(user=request.user, hint_definition=hint)
             used_hint.save()
+            if list_hints.count() == list_used_hints.count():
+                data['more_hints'] = False
+                data['msg'] = _('No hay más pistas disponibles para este ejercicio.')
+            else:
+                data['more_hints'] = True
         else:
             num = hint.num_submit - num_subs
-            data['more_hints'] = 'true'
+            data['more_hints'] = True
             data['msg'] = _('Número de envíos que faltan para obtener la siguiente pista: {number}.').format(number=num)
 
     return JsonResponse(data)
