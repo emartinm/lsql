@@ -355,6 +355,24 @@ def show_achievements(request, user_id):
 
 
 @login_required
+def show_hints(request, user_id):
+    """View for show the used hints"""
+    this_user = get_user_model().objects.get(pk=user_id)
+    dic = {'user': this_user.username, 'elems': [], 'used': False}
+    problems = Problem.objects.select_subclasses()
+    for prb in problems:
+        table = {'problem': '', 'list_hints': []}
+        problem = Problem.objects.filter(title_md=prb)
+        hints = UsedHint.objects.filter(user=request.user.pk).filter(hint_definition__problem=problem[0])
+        if len(hints) > 0:
+            table['problem'] = problem[0]
+            table['list_hints'] = hints
+            dic['elems'].append(table)
+            dic['used'] = True
+    return render(request, 'hint_table.html', dic)
+
+
+@login_required
 def show_submission(request, submission_id):
     """Shows a submission of the current user"""
     submission = get_object_or_404(Submission, pk=submission_id)

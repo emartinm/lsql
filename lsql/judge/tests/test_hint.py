@@ -116,3 +116,18 @@ class HintTest(TestCase):
         problem_url = reverse('judge:problem', args=[problem.pk])
         response = client.get(problem_url, follow=True)
         self.assertIn('descripcion de la pista', response.content.decode('utf-8'))
+
+    def test_show_hints(self):
+        """Test to check the table of used hints of a user"""
+        client = Client()
+        user = create_user('2222', 'tamara')
+        collection = create_collection('Colleccion de prueba TTT')
+        problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        client.login(username='tamara', password='2222')
+        hint = create_hint(problem, 1)
+        create_used_hint(hint, user)
+        table_hint_url = reverse('judge:hint_table', args=[user.pk])
+        response = client.get(table_hint_url, follow=True)
+        self.assertIn(user.username, response.content.decode('utf-8'))
+        self.assertIn('SelectProblem ABC DEF', response.content.decode('utf-8'))
+        self.assertIn(hint.text_md, response.content.decode('utf-8'))
