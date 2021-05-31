@@ -18,8 +18,8 @@
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
             <a class="dropdown-item" href="{% url 'judge:submissions' %}">{% translate "Mis envíos" %}</a>
             <a class="dropdown-item" href="{% url 'judge:achievements' request.user.pk %}">{% translate "Mis logros" %}</a>
-            <a class="dropdown-item" href="{% url 'judge:hint_table' request.user.pk %}">{% translate "Mis pistas" %}</a>
-		    <a class="dropdown-item" href="{% url 'judge:password_change' %}">{% translate "Cambiar contraseña" %}</a>
+		    <a class="dropdown-item" href="{% url 'judge:hints' %}">{% translate "Mis pistas" %}</a>
+            <a class="dropdown-item" href="{% url 'judge:password_change' %}">{% translate "Cambiar contraseña" %}</a>
             {% if request.user.is_staff %}
             <a class="dropdown-item" href="{% url 'judge:statistics_submissions' %}">{% translate "Estadísticas del juez" %}</a>
             {% endif %}

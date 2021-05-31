@@ -41,12 +41,12 @@ class HintTest(TestCase):
                        '<div class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white ' \
                        'justify-content-center align-self-center ">\n' \
                        '        Pista 1\n    </div>\n    <div class="text-center w-75">\n        ' \
-                       'descripcion de la pista\n    </div>\n</div>\n'
+                       'descripcion de la pista\n    </div>\n</div>'
         description2 = '<div class="d-flex p-2">\n    ' \
                        '<div class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white ' \
                        'justify-content-center align-self-center ">\n' \
                        '        Pista 2\n    </div>\n    <div class="text-center w-75">\n        ' \
-                       'descripcion de la pista\n    </div>\n</div>\n'
+                       'descripcion de la pista\n    </div>\n</div>'
         create_hint(problem, 3)
         hint2 = create_hint(problem, 5)
         create_submission(problem, user, VeredictCode.WA, 'select *** from')
@@ -123,11 +123,39 @@ class HintTest(TestCase):
         user = create_user('2222', 'tamara')
         collection = create_collection('Colleccion de prueba TTT')
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        problem_3 = create_select_problem(collection, 'SelectProblem 3 DEF ABC')
         client.login(username='tamara', password='2222')
         hint = create_hint(problem, 1)
+        hint2 = create_hint(problem, 1)
+        hint3 = create_hint(problem_3, 1)
+
+        # The table is empty, th user has no used hint
+        table_hint_url = reverse('judge:hints')
+        response = client.get(table_hint_url, follow=True)
+        self.assertIn(user.username, response.content.decode('utf-8'))
+        self.assertNotIn('SelectProblem ABC DEF', response.content.decode('utf-8'))
+
+        # The table contains the first hint used for first problem
         create_used_hint(hint, user)
-        table_hint_url = reverse('judge:hint_table', args=[user.pk])
+        table_hint_url = reverse('judge:hints')
         response = client.get(table_hint_url, follow=True)
         self.assertIn(user.username, response.content.decode('utf-8'))
         self.assertIn('SelectProblem ABC DEF', response.content.decode('utf-8'))
         self.assertIn(hint.text_md, response.content.decode('utf-8'))
+
+        # The table contains the second hint used for first problem
+        create_used_hint(hint2, user)
+        table_hint_url2 = reverse('judge:hints')
+        response = client.get(table_hint_url2, follow=True)
+        self.assertIn(user.username, response.content.decode('utf-8'))
+        self.assertIn('SelectProblem ABC DEF', response.content.decode('utf-8'))
+        self.assertIn(hint.text_md, response.content.decode('utf-8'))
+        self.assertIn(hint2.text_md, response.content.decode('utf-8'))
+
+        # The table contains the first hit used for second problem
+        create_used_hint(hint3, user)
+        table_hint_url3 = reverse('judge:hints')
+        response = client.get(table_hint_url3, follow=True)
+        self.assertIn(user.username, response.content.decode('utf-8'))
+        self.assertIn('SelectProblem 3 DEF ABC', response.content.decode('utf-8'))
+        self.assertIn(hint3.text_md, response.content.decode('utf-8'))

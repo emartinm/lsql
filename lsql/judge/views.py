@@ -355,21 +355,27 @@ def show_achievements(request, user_id):
 
 
 @login_required
-def show_hints(request, user_id):
+def show_hints(request):
     """View for show the used hints"""
-    this_user = get_user_model().objects.get(pk=user_id)
-    dic = {'user': this_user.username, 'elems': [], 'used': False}
-    problems = Problem.objects.select_subclasses()
-    for prb in problems:
-        table = {'problem': '', 'list_hints': []}
-        problem = Problem.objects.filter(title_md=prb)
-        hints = UsedHint.objects.filter(user=request.user.pk).filter(hint_definition__problem=problem[0])
-        if len(hints) > 0:
-            table['problem'] = problem[0]
-            table['list_hints'] = hints
-            dic['elems'].append(table)
-            dic['used'] = True
-    return render(request, 'hint_table.html', dic)
+    this_user = get_user_model().objects.get(pk=request.user.pk)
+    context = {'user': this_user.username, 'elements': []}
+    elements = []
+    problems = []
+    hints = UsedHint.objects.filter(user=request.user.pk).order_by('request_date')
+    for hint in hints:
+        if hint.hint_definition.problem.title_html in problems:
+            for elem in elements:
+                value_problem = elem.get('problem')
+                if value_problem.title_html == hint.hint_definition.problem.title_html:
+                    value_hint = elem.get('hint')
+                    value_hint.append(hint)
+        else:
+            problems.append(hint.hint_definition.problem.title_html)
+            dic = {'problem': hint.hint_definition.problem, 'hint': [hint]}
+            elements.append(dic)
+
+    context['elements'] = elements
+    return render(request, 'hints.html', context)
 
 
 @login_required

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-27 14:00+0200\n"
+"POT-Creation-Date: 2021-05-31 18:59+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Iván Ruiz <ivarui01@ucm.es@ADDRESS>\n"
 "Language-Team: Español\n"
@@ -94,7 +94,7 @@ msgstr "Name"
 msgid "Descripción"
 msgstr "Description"
 
-#: .\judge\templates\achievements.html:13 .\judge\templates\hint_table.html:15
+#: .\judge\templates\achievements.html:13 .\judge\templates\hints.html:14
 #: .\judge\templates\macros.html:32 .\judge\templates\submission.html:11
 #: .\judge\templates\submissions.html:8
 msgid "Fecha"
@@ -125,10 +125,8 @@ msgid "Mis logros"
 msgstr "My achievements"
 
 #: .\judge\templates\base_menu.html:21
-#, fuzzy
-#| msgid "Pistas"
 msgid "Mis pistas"
-msgstr "Hints"
+msgstr "My hints"
 
 #: .\judge\templates\base_menu.html:22
 #: .\judge\templates\password_change.html:42
@@ -289,18 +287,15 @@ msgstr ""
 "    incorrect values in any column or that should not appear.\n"
 "    "
 
-#: .\judge\templates\hint_table.html:5
-
+#: .\judge\templates\hints.html:5
 msgid "Página de pistas de "
 msgstr "Hints page of "
 
-#: .\judge\templates\hint_table.html:8
-
+#: .\judge\templates\hints.html:7
 msgid "Problema: "
 msgstr "Problem: "
 
-#: .\judge\templates\hint_table.html:14
-
+#: .\judge\templates\hints.html:13
 msgid "Pista"
 msgstr "Hint"
 
@@ -831,7 +826,7 @@ msgstr "We are sorry! You do not have a subject group assigned."
 msgid "Por favor, contacta con tu profesor para te asignen un grupo de clase."
 msgstr "Please, contact your teacher to assign you a class group."
 
-#: .\judge\views.py:295 .\judge\views.py:593
+#: .\judge\views.py:295 .\judge\views.py:600
 #, python-brace-format
 msgid "Pista {number}"
 msgstr "Hint #{number}"
@@ -840,16 +835,16 @@ msgstr "Hint #{number}"
 msgid "El identificador no tiene el formato correcto"
 msgstr "The identifier has not the correct format"
 
-#: .\judge\views.py:441
+#: .\judge\views.py:448
 #, python-brace-format
 msgid "Posición: línea {row}, columna {col}"
 msgstr "Position: Row {row}, Column {col}"
 
-#: .\judge\views.py:587 .\judge\views.py:601
+#: .\judge\views.py:594 .\judge\views.py:608
 msgid "No hay más pistas disponibles para este ejercicio."
 msgstr "There are no more hints available for this problem."
 
-#: .\judge\views.py:607
+#: .\judge\views.py:614
 #, python-brace-format
 msgid "Número de envíos que faltan para obtener la siguiente pista: {number}."
 msgstr "Number of submissions needed for the next hint: {number}."
