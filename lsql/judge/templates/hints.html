@@ -1,0 +1,27 @@
+{% extends "base_menu.html" %}
+{% load i18n %}
+{% load static %}
+{% block contenido %}
+<h1>{% translate "Página de pistas de " %}<span class="headAchievement">{{ user }}</span></h1>
+{% for key, values in elements.items %}
+<h2>{% translate "Problema: " %}<span class="headAchievement"><a href="{% url 'judge:problem' key %}">
+    {{ values.0.hint_definition.problem.title_html|safe }}</a></span></h2>
+
+<table class="table table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th scope="col">{% translate "Pista" %}</th>
+            <th scope="col">{% translate "Fecha" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for obj in values %}
+        <tr>
+            <td>{{ obj.hint_definition.get_text_html|safe }}</td>
+            <td>{{ obj.request_date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endfor %}
+{% endblock %}

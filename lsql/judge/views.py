@@ -355,6 +355,21 @@ def show_achievements(request, user_id):
 
 
 @login_required
+def show_hints(request):
+    """View for show the used hints"""
+    context = {'user': request.user, 'elements': {}}
+    dic = {}
+    hints = UsedHint.objects.filter(user=request.user.pk).order_by('request_date')
+    for hint in hints:
+        if hint.hint_definition.problem.pk in dic:
+            dic[hint.hint_definition.problem.pk].append(hint)
+        else:
+            dic[hint.hint_definition.problem.pk] = [hint]
+    context['elements'] = dic
+    return render(request, 'hints.html', context)
+
+
+@login_required
 def show_submission(request, submission_id):
     """Shows a submission of the current user"""
     submission = get_object_or_404(Submission, pk=submission_id)
