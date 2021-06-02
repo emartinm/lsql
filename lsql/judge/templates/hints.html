@@ -3,9 +3,9 @@
 {% load static %}
 {% block contenido %}
 <h1>{% translate "Página de pistas de " %}<span class="headAchievement">{{ user }}</span></h1>
-{% for element in elements %}
-<h2>{% translate "Problema: " %}<span class="headAchievement"><a href="{% url 'judge:problem' element.problem.pk %}">
-    {{ element.problem.title_html|safe }}</a></span></h2>
+{% for key, values in elements.items %}
+<h2>{% translate "Problema: " %}<span class="headAchievement"><a href="{% url 'judge:problem' key %}">
+    {{ values.0.hint_definition.problem.title_html|safe }}</a></span></h2>
 
 <table class="table table-striped">
     <thead class="table-dark">
@@ -15,7 +15,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for obj in element.hint %}
+        {% for obj in values %}
         <tr>
             <td>{{ obj.hint_definition.get_text_html|safe }}</td>
             <td>{{ obj.request_date }}</td>
