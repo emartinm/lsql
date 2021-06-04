@@ -153,3 +153,21 @@ configurar para cada usuario.
 * Los mensajes de Oracle son muy poco informativos. Estudiar con Fernando Sáenz la
   posibilidad de utilizar analizadores más potentes como los que usa DES para mejorar
   los mensajes de error.
+
+# Otras ideas que pueden ser interesantes (Jesús)
+* Crear un modo "examen" que restrinja el acceso a determinados ejercicios, pistas, etc. 
+  y que se puedan asignar pesos a los ejercicios que formen el examen para obtener una
+  calificación automática. Habilitar un campo para que el profesor pueda introducir una 
+  calificación manual para obtener la calificación final.
+* Establecer criterios para evitar que el alumno pueda introducir consultas falsas que 
+  resuelven el problema con la BD inicial pero no son correctas para otras BD (está 
+  relacionado con problemas discriminantes, pero no es lo mismo). Por ejemplo, si la 
+  respuesta a un problema es una sola fila con "1", evitar soluciones del tipo "SELECT 1 
+  FROM DUAL". Generalizar esto para poder comprobar que un problema se resuelve de 
+  determinada forma (por ejemplo, con consultas anidadas, o con reuniones externas,
+  etc.).
+* Poder añadir referencias (o enlaces) a material docente (transparencias, capítulos de 
+  libro, sitios web). Que se puedan añadir en el enunciado del problema o en pistas. Se 
+  podría incluir el pdf del material del curso como parte del enunciado del problema.
+* Añadir en los problemas sugerencias de otros problemas que se recomienda hacer antes
+  o después de ese problema. También problemas relacionados.
