@@ -100,6 +100,7 @@ def adapt_db_result_to_list():
             prob.expected_result = [prob.expected_result]
         elif not is_list_of_dict(prob.expected_result):
             raise TypeError(f"Unexpected expected_result type: {prob.expected_result}")
+        setattr(prob, 'hints_info', '')
         prob.save()
 
 

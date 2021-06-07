@@ -146,6 +146,7 @@ class ParseTest(TestCase):
         collection.save()
         collection.zipfile = zip_path
         collection.clean()
+        setattr(collection, 'hints_info', '')
         collection.save()
 
         # The new collection contains as many problems as files in the ZIP file

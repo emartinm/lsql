@@ -153,6 +153,7 @@ class LanguagesTest(TestCase):
         user = create_user('5555', 'pepe')
         problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
         problem.clean()
+        setattr(problem, 'hints_info', '')
         problem.save()
         client.login(username='pepe', password='5555')
 
@@ -179,6 +180,7 @@ class LanguagesTest(TestCase):
         user = create_user('5555', 'pepe')
         problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
         problem.clean()
+        setattr(problem, 'hints_info', '')
         problem.save()
         client.login(username='pepe', password='5555')
 
@@ -307,16 +309,18 @@ class LanguagesTest(TestCase):
         create = 'CREATE TABLE mytable (dd DATE);'
         insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'yyyy/mm/dd'))"
         solution = 'SELECT * FROM mytable'
-        problem1 = SelectProblem(title_md='Dates', text_md='Example with dates', language="es",
+        problem = SelectProblem(title_md='Dates', text_md='Example with dates', language="es",
                                  create_sql=create, insert_sql=insert, collection=collection,
                                  solution=solution)
-        problem2 = SelectProblem(title_md='Dates', text_md='Example with dates', language="es",
+        problem3 = SelectProblem(title_md='Dates', text_md='Example with dates', language="es",
                                  create_sql=create, insert_sql=insert, collection=collection,
                                  solution=solution)
-        problem1.clean()
-        problem1.save()
-        problem2.clean()
-        problem2.save()
+        problem.clean()
+        setattr(problem, 'hints_info', '')
+        problem.save()
+        problem3.clean()
+        setattr(problem3, 'hints_info', '')
+        problem3.save()
 
         self.assertIn("es", collection.languages())
         self.assertNotIn("en", collection.languages())
@@ -331,6 +335,7 @@ class LanguagesTest(TestCase):
                                  create_sql=create, insert_sql=insert, collection=collection,
                                  solution=solution)
         problem3.clean()
+        setattr(problem3, 'hints_info', '')
         problem3.save()
 
         self.assertIn("es", collection.languages())

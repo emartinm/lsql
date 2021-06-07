@@ -3,6 +3,7 @@
 Tests for hints
 """
 from datetime import datetime
+import os
 
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -10,6 +11,10 @@ from django.urls import reverse
 from judge.models import Submission, Hint, UsedHint
 from judge.types import VeredictCode
 from judge.tests.test_views import create_user, create_collection, create_select_problem, create_submission
+from judge.models import SelectProblem, DMLProblem, FunctionProblem, \
+    ProcProblem, TriggerProblem, DiscriminantProblem
+from judge.exceptions import ZipFileParsingException
+from judge.parse import extract_hints_from_file
 
 
 def create_hint(problem, id_hint, num):
@@ -29,6 +34,15 @@ def create_used_hint(hint, user):
 
 class HintTest(TestCase):
     """Tests for the hints and used hints"""
+    ZIP_FOLDER = 'zip_files'
+    SELECT_HINTS = 'select_with_hints.zip'
+    DML_HINTS = 'dml_with_hints.zip'
+    FUNCTION_HINTS = 'function_with_hints.zip'
+    PROC_HINTS = 'proc_with_hints.zip'
+    TRIGGER_HINTS = 'trigger_with_hints.zip'
+    DISCRIMINANT_HINTS = 'discriminant_with_hints.zip'
+    SELECT_HINTS_WRONG_DESCRIPTION = 'select_with_hints_wrong_description'
+    SELECT_HINTS_WRONG_SUBMITS = 'select_with_hints_wrong_submits'
 
     def test_give_hint(self):
         """check the correct operation of the hints"""
@@ -123,7 +137,9 @@ class HintTest(TestCase):
         user = create_user('2222', 'tamara')
         collection = create_collection('Colleccion de prueba TTT')
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        setattr(problem, 'hints_info', '')
         problem_3 = create_select_problem(collection, 'SelectProblem 3 DEF ABC')
+        setattr(problem_3, 'hints_info', '')
         client.login(username='tamara', password='2222')
         hint = create_hint(problem, 1, 1)
         hint2 = create_hint(problem, 2, 1)
@@ -167,3 +183,56 @@ class HintTest(TestCase):
         self.assertIn(hint2.text_md, response.content.decode('utf-8'))
         self.assertIn('SelectProblem 3 DEF ABC', response.content.decode('utf-8'))
         self.assertIn(hint3.text_md, response.content.decode('utf-8'))
+
+    def test_load_hint(self):
+        """Test to check if hints.md is loaded correctly"""
+
+        curr_path = os.path.dirname(__file__)
+        zip_select_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_HINTS)
+        zip_dml_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DML_HINTS)
+        zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTION_HINTS)
+        zip_proc_path = os.path.join(curr_path, self.ZIP_FOLDER, self.PROC_HINTS)
+        zip_trigger_path = os.path.join(curr_path, self.ZIP_FOLDER, self.TRIGGER_HINTS)
+        zip_discriminant_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DISCRIMINANT_HINTS)
+
+        select = SelectProblem(zipfile=zip_select_path)
+        dml = DMLProblem(zipfile=zip_dml_path)
+        function = FunctionProblem(zipfile=zip_function_path)
+        proc = ProcProblem(zipfile=zip_proc_path)
+        trigger = TriggerProblem(zipfile=zip_trigger_path)
+        discriminant = DiscriminantProblem(zipfile=zip_discriminant_path)
+
+        hints = "3\r\n" \
+                "Es **importante** consultar las tablas `Club` e `Inversiones` " \
+                "@@@new hint@@@ " \
+                "5\r\n" \
+                "El resultado debe proyectar las siguientes filas: " \
+                "* Nombre renombrado a Name " \
+                "* Sede renombrado a Address"
+
+        hints_submit = "-12\r\n" \
+                       "Es **importante** consultar las tablas `Club` e `Inversiones` "
+
+        hints_description = "3\r\n" \
+                            "Es **importante** consultar las tablas `Club` e `Inversiones` " \
+                            "@@@new hint@@@ " \
+                            "5\r\n" \
+                            ""
+
+        collection = create_collection('Coleccion 1')
+
+        for problem in [select, dml, function, proc, trigger,
+                        discriminant]:
+            problem.clean()
+            hint_list = extract_hints_from_file(hints)
+            setattr(problem, 'hints_info', hint_list)
+            problem.collection = collection
+            problem.save()
+            count_hints = Hint.objects.filter(problem=problem).order_by('num_submit').count()
+            self.assertEqual(count_hints, 2)
+
+        with self.assertRaises(ZipFileParsingException):
+            extract_hints_from_file(hints_submit)
+
+        with self.assertRaises(ZipFileParsingException):
+            extract_hints_from_file(hints_description)
