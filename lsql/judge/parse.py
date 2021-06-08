@@ -54,32 +54,30 @@ def get_language_from_json(problem_json):
     return lang
 
 
-def extract_hints_from_file(hints_str):
+def extract_hints_from_file(problem, zfile):
     """ Extracts the hints from the file hints.md"""
     hint_separation = "@@@new hint@@@"
-    array = hints_str.split(hint_separation)
     hints = []
-    new_hints = []
-    for elem in array:
-        elem_x = elem.split('\r\n')
-        new_hints.append(elem_x)
+    with zfile.open('hints.md', 'r') as hints_file:
+        hints_str = hints_file.read().decode(encoding='utf-8')
 
-    for elem in new_hints:
-        for part in elem:
-            if part == '':
-                elem.remove(part)
-        description = ''
-        n_sub = elem[0]
-        if int(n_sub) < 0:
-            raise ZipFileParsingException('Invalid value for number of submissions in hints.md')
-        elem.remove(n_sub)
-        for ell in elem:
-            description += ell
+    hints_list = hints_str.split(hint_separation)
+
+    for hint in hints_list:
+        hint_lstrip = hint.lstrip()
+        hint_tupla = hint_lstrip.split(sep='\n', maxsplit=1)
+
+        n_sub = int(hint_tupla[0])
+        if n_sub < 0:
+            raise ZipFileParsingException(f'Invalid value for number of submissions: {n_sub} in hints.md')
+
+        description = hint_tupla[1]
         if description == '':
-            raise ZipFileParsingException('Invalid value for description in hints.md')
-        hints.append((n_sub, description))
-    return hints
+            raise ZipFileParsingException('Hint description cannot be empty in hints.md')
 
+        hints.append((n_sub, description))
+
+    problem.hints_info = hints
 
 def load_select_problem(problem, file) -> None:
     """
@@ -126,10 +124,7 @@ def load_select_problem(problem, file) -> None:
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
-                with zfile.open('hints.md', 'r') as hints_file:
-                    hints_str = hints_file.read().decode(encoding='utf-8')
-                    hints = extract_hints_from_file(hints_str)
-                    setattr(problem, 'hints_info', hints)
+                extract_hints_from_file(problem, zfile)
     except ZipFileParsingException:
         raise
     except Exception as excp:
@@ -181,10 +176,7 @@ def load_dml_problem(problem, file):
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
-                with zfile.open('hints.md', 'r') as hints_file:
-                    hints_str = hints_file.read().decode(encoding='utf-8')
-                    hints = extract_hints_from_file(hints_str)
-                    setattr(problem, 'hints_info', hints)
+                extract_hints_from_file(problem, zfile)
     except ZipFileParsingException:
         raise
     except Exception as excp:
@@ -240,10 +232,7 @@ def load_function_problem(problem, file):
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
-                with zfile.open('hints.md', 'r') as hints_file:
-                    hints_str = hints_file.read().decode(encoding='utf-8')
-                    hints = extract_hints_from_file(hints_str)
-                    setattr(problem, 'hints_info', hints)
+                extract_hints_from_file(problem, zfile)
     except ZipFileParsingException:
         raise
     except Exception as excp:
@@ -298,10 +287,7 @@ def load_proc_problem(problem, file):
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
-                with zfile.open('hints.md', 'r') as hints_file:
-                    hints_str = hints_file.read().decode(encoding='utf-8')
-                    hints = extract_hints_from_file(hints_str)
-                    setattr(problem, 'hints_info', hints)
+                extract_hints_from_file(problem, zfile)
     except ZipFileParsingException:
         raise
     except Exception as excp:
@@ -356,10 +342,7 @@ def load_trigger_problem(problem, file):
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
-                with zfile.open('hints.md', 'r') as hints_file:
-                    hints_str = hints_file.read().decode(encoding='utf-8')
-                    hints = extract_hints_from_file(hints_str)
-                    setattr(problem, 'hints_info', hints)
+                extract_hints_from_file(problem, zfile)
     except ZipFileParsingException:
         raise
     except Exception as excp:
@@ -416,10 +399,7 @@ def load_discriminant_problem(problem, file):
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
-                with zfile.open('hints.md', 'r') as hints_file:
-                    hints_str = hints_file.read().decode(encoding='utf-8')
-                    hints = extract_hints_from_file(hints_str)
-                    setattr(problem, 'hints_info', hints)
+                extract_hints_from_file(problem, zfile)
     except ZipFileParsingException:
         raise
     except Exception as excp:

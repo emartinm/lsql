@@ -80,47 +80,46 @@ class OracleTest(TestCase):
                     INSERT INTO "Nombre Club" VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);'''
         solution = 'SELECT * FROM "Nombre Club";'
         oracle = OracleExecutor.get()
-        problem_select = SelectProblem(title_md='Test Select', text_md='bla bla bla',
+        problem = SelectProblem(title_md='Test Select', text_md='bla bla bla',
                                 create_sql=create, insert_sql=insert, collection=collection,
                                 author=None, check_order=False, solution=solution)
-        problem_select.clean()  # Needed to compute extra HTML fields and solutions
-        setattr(problem_select, 'hints_info', '')
-        problem_select.save()
+        problem.clean()  # Needed to compute extra HTML fields and solutions
+        problem.save()
 
         # Time-limit
         tle = SELECT_TLE
         too_many_rows = f"select * from dual connect by level <= {int(os.environ['ORACLE_MAX_ROWS'])+1};"
         too_many_cols = f"select {','.join(['1']*(int(os.environ['ORACLE_MAX_COLS'])+1))} from dual;"
-        self.assert_executor_exception(lambda: problem_select.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
-        self.assert_executor_exception(lambda: problem_select.judge(too_many_rows, oracle),
+        self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(too_many_rows, oracle),
                                        OracleStatusCode.TLE_USER_CODE)
-        self.assert_executor_exception(lambda: problem_select.judge(too_many_cols, oracle),
+        self.assert_executor_exception(lambda: problem.judge(too_many_cols, oracle),
                                        OracleStatusCode.TLE_USER_CODE)
 
         # Validation error (only one statement supported)
-        self.assert_executor_exception(lambda: problem_select.judge('', oracle), OracleStatusCode.NUMBER_STATEMENTS)
-        self.assert_executor_exception(lambda: problem_select.judge('SELECT * FROM "Nombre Club"; SELECT * '
+        self.assert_executor_exception(lambda: problem.judge('', oracle), OracleStatusCode.NUMBER_STATEMENTS)
+        self.assert_executor_exception(lambda: problem.judge('SELECT * FROM "Nombre Club"; SELECT * '
                                                                     'FROM "Nombre Club"',
                                                                     oracle), OracleStatusCode.NUMBER_STATEMENTS)
 
         # Runtime error
-        self.assert_executor_exception(lambda: problem_select.judge('SELECT * from "Nombre ClubE"', oracle),
+        self.assert_executor_exception(lambda: problem.judge('SELECT * from "Nombre ClubE"', oracle),
                                        OracleStatusCode.EXECUTE_USER_CODE)
-        self.assert_executor_exception(lambda: problem_select.judge('SELECT * from Club', oracle),
+        self.assert_executor_exception(lambda: problem.judge('SELECT * from Club', oracle),
                                        OracleStatusCode.EXECUTE_USER_CODE)
-        self.assert_executor_exception(lambda: problem_select.judge('SELECT * FROM', oracle),
+        self.assert_executor_exception(lambda: problem.judge('SELECT * FROM', oracle),
                                        OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        self.assertEqual(problem_select.judge(solution, oracle)[0], VeredictCode.AC)
-        self.assertEqual(problem_select.judge('SELECT CIF, NOmbre, Sede, Num_Socios FROM "Nombre Club"', oracle)[0],
+        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
+        self.assertEqual(problem.judge('SELECT CIF, NOmbre, Sede, Num_Socios FROM "Nombre Club"', oracle)[0],
                          VeredictCode.AC)
-        self.assertEqual(problem_select.judge('SELECT * FROM "Nombre Club" ORDER BY Num_Socios ASC', oracle)[0],
+        self.assertEqual(problem.judge('SELECT * FROM "Nombre Club" ORDER BY Num_Socios ASC', oracle)[0],
                          VeredictCode.AC)
 
         # Incorrect solution
-        self.assertEqual(problem_select.judge('SELECT CIF FROM "Nombre Club"', oracle)[0], VeredictCode.WA)
-        self.assertEqual(problem_select.judge('SELECT * FROM "Nombre Club" WHERE Num_Socios < 50000', oracle)[0],
+        self.assertEqual(problem.judge('SELECT CIF FROM "Nombre Club"', oracle)[0], VeredictCode.WA)
+        self.assertEqual(problem.judge('SELECT * FROM "Nombre Club" WHERE Num_Socios < 50000', oracle)[0],
                          VeredictCode.WA)
 
     def test_dml(self):
@@ -184,10 +183,8 @@ class OracleTest(TestCase):
                               min_stmt=0, max_stmt=100,
                               author=None, check_order=False, solution=solution)
         problem.clean()  # Needed to compute extra fields and solutions
-        setattr(problem, 'hints_info', '')
         problem.save()
         problem2.clean()
-        setattr(problem2, 'hints_info', '')
         problem.save()
 
         # Validation error (there should be exactly 2 statements)
@@ -310,7 +307,6 @@ class OracleTest(TestCase):
                                   create_sql=create, insert_sql=insert, collection=collection,
                                   author=None, solution=solution, calls=calls)
         problem.clean()  # Needed to compute extra HTML fields and solutions
-        setattr(problem, 'hints_info', '')
         problem.save()
 
         # Time-limit
@@ -414,7 +410,6 @@ class OracleTest(TestCase):
                               create_sql=create, insert_sql=insert, collection=collection,
                               author=None, solution=solution, proc_call=call)
         problem.clean()  # Needed to compute extra HTML fields and solutions
-        setattr(problem, 'hints_info', '')
         problem.save()
 
         # Time-limit
@@ -519,7 +514,6 @@ class OracleTest(TestCase):
                                  create_sql=create, insert_sql=insert, collection=collection,
                                  author=None, solution=solution, tests=tests)
         problem.clean()  # Needed to compute extra HTML fields and solutions
-        setattr(problem, 'hints_info', '')
         problem.save()
 
         # Time-limit
@@ -577,7 +571,6 @@ class OracleTest(TestCase):
                                       insert_sql=insert, collection=collection, author=None,
                                       incorrect_query=incorrect_query, correct_query=correct_query)
         problem.clean()  # Needed to compute extra HTML fields and solutions
-        setattr(problem, 'hints_info', '')
         problem.save()
 
         # Time-limit
@@ -607,7 +600,6 @@ class OracleTest(TestCase):
                                 create_sql=create, insert_sql=insert, collection=collection,
                                 solution=solution)
         select_problem.clean()
-        setattr(select_problem, 'hints_info', '')
         select_problem.save()
         oracle = OracleExecutor.get()
         veredict, _ = select_problem.judge(solution, oracle)

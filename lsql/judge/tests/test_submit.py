@@ -30,7 +30,6 @@ def create_discriminant_problem(important_order, collection, name='Ejemplo'):
                                   correct_query=correct, incorrect_query=incorrect, check_order=important_order,
                                   collection=collection)
     problem.clean()
-    setattr(problem, 'hints_info', '')
     problem.save()
     return problem
 
@@ -119,7 +118,6 @@ class SubmitTest(TestCase):
                                 (proc_problem, proc_compile_error),
                                 (trigger_problem, trigger_compile_error)]:
             problem.clean()
-            setattr(problem, 'hints_info', '')
             problem.save()
             submit_url = reverse('judge:submit', args=[problem.pk])
             response = client.post(submit_url, {'code': code}, follow=True)
@@ -146,7 +144,6 @@ class SubmitTest(TestCase):
 
         for problem in [function_problem, proc_problem, trigger_problem]:
             problem.clean()
-            setattr(problem, 'hints_info', '')
             problem.save()
             submit_url = reverse('judge:submit', args=[problem.pk])
             response = client.post(submit_url, {'code': problem.solution}, follow=True)

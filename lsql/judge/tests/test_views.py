@@ -29,7 +29,6 @@ def create_select_problem(collection, name='Ejemplo'):
     problem = SelectProblem(title_md=name, text_md='texto largo',
                             create_sql=create, insert_sql=insert, collection=collection,
                             solution=solution)
-    setattr(problem, 'hints_info', '')
     problem.clean()
     problem.save()
     return problem
@@ -43,7 +42,6 @@ def create_dml_problem(collection, name='Ejemplo'):
     problem = DMLProblem(title_md=name, text_md='texto largo',
                          create_sql=create, insert_sql=insert, collection=collection,
                          solution=solution, min_stmt=2, max_stmt=3)
-    setattr(problem, 'hints_info', '')
     problem.clean()
     problem.save()
     return problem
@@ -65,7 +63,6 @@ def create_dml_complete_problem(collection, name='Ejemplo'):
     problem = DMLProblem(title_md=name, text_md='texto largo',
                          create_sql=create, insert_sql=insert, collection=collection,
                          solution=solution, min_stmt=2, max_stmt=10)
-    setattr(problem, 'hints_info', '')
     problem.clean()
     problem.save()
     return problem
@@ -353,7 +350,6 @@ class ViewsTest(TestCase):
 
         for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
             problem.clean()
-            setattr(problem, 'hints_info', '')
             problem.save()
             problem_url = reverse('judge:problem', args=[problem.pk])
             response = client.get(problem_url, follow=True)
@@ -383,7 +379,6 @@ class ViewsTest(TestCase):
 
         for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
             problem.clean()
-            setattr(problem, 'hints_info', '')
             problem.save()
             url = reverse('judge:create_insert', args=[problem.pk])
             response = client.get(url, follow=True)

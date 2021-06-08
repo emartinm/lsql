@@ -50,13 +50,10 @@ class ModelsTest(TestCase):
         user1 = user_model.objects.create_user(username='usuario1', email='algo@ucm.es', password='1234')
         user2 = user_model.objects.create_user(username='usuario2', email='algodistinto@ucm.es', password='1234')
         problem1.clean()
-        setattr(problem1, 'hints_info', '')
         problem1.save()
         problem2.clean()
-        setattr(problem2, 'hints_info', '')
         problem2.save()
         problem3.clean()
-        setattr(problem3, 'hints_info', '')
         problem3.save()
         user1.save()
         user2.save()
@@ -141,7 +138,6 @@ class ModelsTest(TestCase):
                                 create_sql=create, insert_sql=insert, collection=collection,
                                 author=None, check_order=False, solution=solution)
         problem.clean()
-        setattr(problem, 'hints_info', '')
         problem.save()
         self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
         self.assertEqual(problem.judge("SELECT Sede, Nombre FROM Club WHERE Nombre ='Madrid';", oracle)[0],
@@ -208,10 +204,8 @@ class ModelsTest(TestCase):
         user4 = user_model.objects.create_user(username='usuario4', email='algo3@ucm.es', password='1234')
 
         problem1.clean()
-        setattr(problem1, 'hints_info', '')
         problem1.save()
         problem2.clean()
-        setattr(problem2, 'hints_info', '')
         problem2.save()
         user1.save()
         user2.save()
@@ -352,7 +346,6 @@ class ModelsTest(TestCase):
         problem = SelectProblem(title_md='Example', text_md='Enunciado',
                                 create_sql=create, insert_sql="", collection=collection, solution=solution)
         problem.clean()
-        setattr(problem, 'hints_info', '')
         problem.save()
 
         sub1 = Submission(code='nada', veredict_code=VeredictCode.AC, user=staff_user, problem=problem)

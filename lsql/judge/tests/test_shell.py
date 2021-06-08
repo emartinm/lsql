@@ -109,7 +109,6 @@ class ShellTest(TestCase):
         ]
 
         for prob in problems:
-            setattr(prob, 'hints_info', '')
             prob.save()
 
         adapt_db_result_to_list()
@@ -140,7 +139,6 @@ class ShellTest(TestCase):
 
         # Tries every wrong program individually (removing it after checking the exception)
         for prob in wrong_problems:
-            setattr(prob, 'hints_info', '')
             prob.save()
             with self.assertRaises(TypeError):
                 adapt_db_result_to_list()

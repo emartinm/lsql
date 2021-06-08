@@ -47,61 +47,58 @@ def refresh_sub_prob_achievements(sender, **kwargs):
     kwargs['instance'].refresh()
 
 
-@receiver(post_save, sender=SelectProblem)
-def save_hints_select_problem(**kwargs):
-    """save Hints of a SelectProblem"""
+def save_hints(kwargs):
+    """Create the hints of a problem an save them"""
     for elem in kwargs['instance'].hints_info:
-        num_sub = int(elem[0])
+        num_sub = elem[0]
         description = elem[1]
         hint = Hint(text_md=description, problem=kwargs['instance'], num_submit=num_sub)
         hint.save()
+
+
+@receiver(post_save, sender=SelectProblem)
+def save_hints_select_problem(sender, **kwargs):
+    """save Hints of a SelectProblem"""
+    logger.debug('Signal post_save for %s %s', str(sender), str(kwargs['instance']))
+    if hasattr(kwargs['instance'], 'hints_info'):
+        save_hints(kwargs)
 
 
 @receiver(post_save, sender=ProcProblem)
-def save_hints_proc_problem(**kwargs):
+def save_hints_proc_problem(sender, **kwargs):
     """save Hints of a ProcProblem"""
-    for elem in kwargs['instance'].hints_info:
-        num_sub = int(elem[0])
-        description = elem[1]
-        hint = Hint(text_md=description, problem=kwargs['instance'], num_submit=num_sub)
-        hint.save()
+    logger.debug('Signal post_save for %s %s', str(sender), str(kwargs['instance']))
+    if hasattr(kwargs['instance'], 'hints_info'):
+        save_hints(kwargs)
 
 
 @receiver(post_save, sender=DiscriminantProblem)
-def save_hints_discriminant_problem(**kwargs):
+def save_hints_discriminant_problem(sender, **kwargs):
     """save Hints of a DiscriminantProblem"""
-    for elem in kwargs['instance'].hints_info:
-        num_sub = int(elem[0])
-        description = elem[1]
-        hint = Hint(text_md=description, problem=kwargs['instance'], num_submit=num_sub)
-        hint.save()
+    logger.debug('Signal post_save for %s %s', str(sender), str(kwargs['instance']))
+    if hasattr(kwargs['instance'], 'hints_info'):
+        save_hints(kwargs)
 
 
 @receiver(post_save, sender=DMLProblem)
-def save_hints_dml_problem(**kwargs):
+def save_hints_dml_problem(sender, **kwargs):
     """save Hints of a DMLProblem"""
-    for elem in kwargs['instance'].hints_info:
-        num_sub = int(elem[0])
-        description = elem[1]
-        hint = Hint(text_md=description, problem=kwargs['instance'], num_submit=num_sub)
-        hint.save()
+    logger.debug('Signal post_save for %s %s', str(sender), str(kwargs['instance']))
+    if hasattr(kwargs['instance'], 'hints_info'):
+        save_hints(kwargs)
 
 
 @receiver(post_save, sender=FunctionProblem)
-def save_hints_function_problem(**kwargs):
+def save_hints_function_problem(sender, **kwargs):
     """save Hints of a FunctionProblem"""
-    for elem in kwargs['instance'].hints_info:
-        num_sub = int(elem[0])
-        description = elem[1]
-        hint = Hint(text_md=description, problem=kwargs['instance'], num_submit=num_sub)
-        hint.save()
+    logger.debug('Signal post_save for %s %s', str(sender), str(kwargs['instance']))
+    if hasattr(kwargs['instance'], 'hints_info'):
+        save_hints(kwargs)
 
 
 @receiver(post_save, sender=TriggerProblem)
-def save_hints_trigger_problem(**kwargs):
+def save_hints_trigger_problem(sender, **kwargs):
     """save Hints of a TriggerProblem"""
-    for elem in kwargs['instance'].hints_info:
-        num_sub = int(elem[0])
-        description = elem[1]
-        hint = Hint(text_md=description, problem=kwargs['instance'], num_submit=num_sub)
-        hint.save()
+    logger.debug('Signal post_save for %s %s', str(sender), str(kwargs['instance']))
+    if hasattr(kwargs['instance'], 'hints_info'):
+        save_hints(kwargs)

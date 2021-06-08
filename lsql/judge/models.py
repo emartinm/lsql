@@ -97,7 +97,6 @@ class Collection(models.Model):
                 problems = load_many_problems(self.zipfile, self)
                 for problem in problems:
                     problem.clean()
-                    setattr(problem, 'hints_info', '')
                     problem.save()
                     logger.debug('Added problem %s "%s" from ZIP (batch)', type(problem), problem)
                 self.zipfile = None  # Avoids storing the file in the filesystem
