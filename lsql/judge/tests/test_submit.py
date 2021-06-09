@@ -80,7 +80,7 @@ class SubmitTest(TestCase):
                 INTO nombreClub
                 FROM Club
                 WHERE CIF = club_cif;
-        
+
                 FOR partido IN cr_partidos LOOP
                   IF partido.NAsistentes > 3 THEN
                     incrPartido := 100;
@@ -92,7 +92,7 @@ class SubmitTest(TestCase):
                   incrTotal := incrTotal + incrPartido;
                   nPartido := nPartido + 1;
                 END LOOP;
-        
+
                 UPDATE Club
                 SET Num_Socios = Num_Socios + incrTotal
                 WHERE CIF = club_cif;
@@ -108,7 +108,7 @@ class SubmitTest(TestCase):
                                   SELECT COUNT(*) INTO numJug
                                   FROM Jugador
                                   WHERE CIF = :NEW.CIF_C;
-        
+
                                   IF numJug >= 2 THEN
                                     :NEW.Cantidad := :NEW.Cantidad  1.25; -- Missing operator
                                   END IF;

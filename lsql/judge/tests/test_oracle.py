@@ -91,13 +91,16 @@ class OracleTest(TestCase):
         too_many_rows = f"select * from dual connect by level <= {int(os.environ['ORACLE_MAX_ROWS'])+1};"
         too_many_cols = f"select {','.join(['1']*(int(os.environ['ORACLE_MAX_COLS'])+1))} from dual;"
         self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
-        self.assert_executor_exception(lambda: problem.judge(too_many_rows, oracle), OracleStatusCode.TLE_USER_CODE)
-        self.assert_executor_exception(lambda: problem.judge(too_many_cols, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(too_many_rows, oracle),
+                                       OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(too_many_cols, oracle),
+                                       OracleStatusCode.TLE_USER_CODE)
 
         # Validation error (only one statement supported)
         self.assert_executor_exception(lambda: problem.judge('', oracle), OracleStatusCode.NUMBER_STATEMENTS)
-        self.assert_executor_exception(lambda: problem.judge('SELECT * FROM "Nombre Club"; SELECT * FROM "Nombre Club"',
-                                                             oracle), OracleStatusCode.NUMBER_STATEMENTS)
+        self.assert_executor_exception(lambda: problem.judge('SELECT * FROM "Nombre Club"; SELECT * '
+                                                                    'FROM "Nombre Club"',
+                                                                    oracle), OracleStatusCode.NUMBER_STATEMENTS)
 
         # Runtime error
         self.assert_executor_exception(lambda: problem.judge('SELECT * from "Nombre ClubE"', oracle),
@@ -593,15 +596,15 @@ class OracleTest(TestCase):
         create = 'CREATE TABLE test (day DATE);'
         insert = "INSERT INTO test VALUES (TO_DATE('2003/07/09', 'yyyy/mm/dd'))"
         solution = 'SELECT * FROM test'
-        problem = SelectProblem(title_md='Dates', text_md='Example with dates',
+        select_problem = SelectProblem(title_md='Dates', text_md='Example with dates',
                                 create_sql=create, insert_sql=insert, collection=collection,
                                 solution=solution)
-        problem.clean()
-        problem.save()
+        select_problem.clean()
+        select_problem.save()
         oracle = OracleExecutor.get()
-        veredict, _ = problem.judge(solution, oracle)
+        veredict, _ = select_problem.judge(solution, oracle)
         self.assertEqual(veredict, VeredictCode.AC)
-        veredict, _ = problem.judge("SELECT TO_DATE('2003/07/09', 'yyyy/mm/dd') AS day FROM dual", oracle)
+        veredict, _ = select_problem.judge("SELECT TO_DATE('2003/07/09', 'yyyy/mm/dd') AS day FROM dual", oracle)
         self.assertEqual(veredict, VeredictCode.AC)
 
     def test_dangling_users(self):

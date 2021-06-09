@@ -124,7 +124,7 @@ class ModelsTest(TestCase):
                     INSERT INTO Club VALUES ('11111112X', 'Futbol Club Barcelona', 'A', 80000);
                     INSERT INTO Club VALUES ('11111113X', 'Paris Saint-Germain Football Club', 'C', 1000);
                     INSERT INTO Persona VALUES ('00000001X', 'Peter Johnoson');
-                    
+
                     -- @new data base@
 
                     INSERT INTO Club VALUES ('11111111X', 'Madrid', 'A', 70000);
@@ -135,13 +135,13 @@ class ModelsTest(TestCase):
         solution = "SELECT Sede, Nombre FROM Club WHERE CIF = '11111111X' and Nombre ='Madrid';"
         oracle = OracleExecutor.get()
         problem = SelectProblem(title_md='Test Multiple db Select', text_md='bla',
-                            create_sql=create, insert_sql=insert, collection=collection,
-                            author=None, check_order=False, solution=solution)
+                                create_sql=create, insert_sql=insert, collection=collection,
+                                author=None, check_order=False, solution=solution)
         problem.clean()
         problem.save()
         self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
         self.assertEqual(problem.judge("SELECT Sede, Nombre FROM Club WHERE Nombre ='Madrid';", oracle)[0],
-                                       VeredictCode.WA)
+                         VeredictCode.WA)
         self.assertEqual(problem.judge("SELECT Sede, Nombre FROM Club;", oracle)[0], VeredictCode.WA)
 
         html = problem.judge("SELECT Sede, Nombre FROM Club WHERE CIF = '11111111X' and Nombre ='Madrid';", oracle)[1]
@@ -158,26 +158,27 @@ class ModelsTest(TestCase):
         soup = BeautifulSoup(html, 'html.parser')
         # Show second db if code is correct in the first db but not in the second db
         self.assertEqual(soup.find(id="bd").find('p').find('strong').string,
-                        "Base de datos utilizada para la ejecución de tu código SQL:")
-        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[0].string,"CIF")
-        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[1].string,"NOMBRE")
-        self.assertEqual(len(soup.find(id="bd").find_all('thead')),2)
-        self.assertEqual(soup.find(id="bd").find_all('thead')[1].find_all('th')[0].string,"NIF")
-        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[0].string,"11111112X")
-        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[2].string,"A")
-        self.assertEqual(len(soup.find(id="bd").find_all('tbody')[0].find_all('tr')),3)
+                         "Base de datos utilizada para la ejecución de tu código SQL:")
+        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[0].string, "CIF")
+        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[1].string, "NOMBRE")
+        self.assertEqual(len(soup.find(id="bd").find_all('thead')), 2)
+        self.assertEqual(soup.find(id="bd").find_all('thead')[1].find_all('th')[0].string, "NIF")
+        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[0].string,
+                         "11111112X")
+        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[2].string, "A")
+        self.assertEqual(len(soup.find(id="bd").find_all('tbody')[0].find_all('tr')), 3)
 
         html = problem.judge("SELECT Sede, Nombre FROM Club WHERE Nombre ='Madrid';", oracle)[1]
         soup = BeautifulSoup(html, 'html.parser')
         # Show third db if code is correct in the first and second dbs but not in the third db
         self.assertEqual(soup.find(id="bd").find('p').find('strong').string,
-                        "Base de datos utilizada para la ejecución de tu código SQL:")
-        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[0].string,"CIF")
-        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[1].string,"NOMBRE")
-        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[0].string,"11111112X")
-        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[2].string,"B")
-        self.assertEqual(len(soup.find(id="bd").find_all('tbody')[0].find_all('tr')),4)
-
+                         "Base de datos utilizada para la ejecución de tu código SQL:")
+        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[0].string, "CIF")
+        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[1].string, "NOMBRE")
+        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[0].string,
+                         "11111112X")
+        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[2].string, "B")
+        self.assertEqual(len(soup.find(id="bd").find_all('tbody')[0].find_all('tr')), 4)
 
     def test_podium(self):
         """Test the correct performance of the podium"""
