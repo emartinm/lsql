@@ -203,69 +203,21 @@ class HintTest(TestCase):
         hints_expected2 = (5, 'descripcion pista 2')
         hints_expected3 = (10, 'descripcion pista 3')
 
-        # Check hints loaded for DMLProblem
-        dml.clean()
-        dml.save()
-        hints = Hint.objects.filter(problem=dml).order_by('num_submit')
-        self.assertEqual(hints.count(), 3)
-        self.assertEqual(hints_expected1[0], hints[0].num_submit)
-        self.assertEqual(hints_expected1[1], hints[0].text_md)
-        self.assertEqual(hints_expected2[0], hints[1].num_submit)
-        self.assertEqual(hints_expected2[1], hints[1].text_md)
-        self.assertEqual(hints_expected3[0], hints[2].num_submit)
-        self.assertEqual(hints_expected3[1], hints[2].text_md)
+        for problem in [dml, function, proc, trigger, discriminant]:
+            problem.clean()
+            problem.save()
+            hints = Hint.objects.filter(problem=problem).order_by('num_submit')
+            self.assertEqual(hints.count(), 3)
+            self.assertEqual(hints_expected1[0], hints[0].num_submit)
+            self.assertEqual(hints_expected1[1], hints[0].text_md)
+            self.assertEqual(hints_expected2[0], hints[1].num_submit)
+            self.assertEqual(hints_expected2[1], hints[1].text_md)
+            self.assertEqual(hints_expected3[0], hints[2].num_submit)
+            self.assertEqual(hints_expected3[1], hints[2].text_md)
 
-        # Check hints loaded for FunctionProblem
-        function.clean()
-        function.collection = collection
-        function.save()
-        hints = Hint.objects.filter(problem=function).order_by('num_submit')
-        self.assertEqual(hints.count(), 3)
-        self.assertEqual(hints_expected1[0], hints[0].num_submit)
-        self.assertEqual(hints_expected1[1], hints[0].text_md)
-        self.assertEqual(hints_expected2[0], hints[1].num_submit)
-        self.assertEqual(hints_expected2[1], hints[1].text_md)
-        self.assertEqual(hints_expected3[0], hints[2].num_submit)
-        self.assertEqual(hints_expected3[1], hints[2].text_md)
-
-        # Check hints loaded for ProcProblem
-        proc.clean()
-        proc.save()
-        hints = Hint.objects.filter(problem=proc).order_by('num_submit')
-        self.assertEqual(hints.count(), 3)
-        self.assertEqual(hints_expected1[0], hints[0].num_submit)
-        self.assertEqual(hints_expected1[1], hints[0].text_md)
-        self.assertEqual(hints_expected2[0], hints[1].num_submit)
-        self.assertEqual(hints_expected2[1], hints[1].text_md)
-        self.assertEqual(hints_expected3[0], hints[2].num_submit)
-        self.assertEqual(hints_expected3[1], hints[2].text_md)
-
-        # Check hints loaded for TriggerProblem
-        trigger.clean()
-        trigger.save()
-        hints = Hint.objects.filter(problem=trigger).order_by('num_submit')
-        self.assertEqual(hints.count(), 3)
-        self.assertEqual(hints_expected1[0], hints[0].num_submit)
-        self.assertEqual(hints_expected1[1], hints[0].text_md)
-        self.assertEqual(hints_expected2[0], hints[1].num_submit)
-        self.assertEqual(hints_expected2[1], hints[1].text_md)
-        self.assertEqual(hints_expected3[0], hints[2].num_submit)
-        self.assertEqual(hints_expected3[1], hints[2].text_md)
-
-        # Check hints loaded for DiscriminantProblem
-        discriminant.clean()
-        discriminant.save()
-        hints = Hint.objects.filter(problem=discriminant).order_by('num_submit')
-        self.assertEqual(hints.count(), 3)
-        self.assertEqual(hints_expected1[0], hints[0].num_submit)
-        self.assertEqual(hints_expected1[1], hints[0].text_md)
-        self.assertEqual(hints_expected2[0], hints[1].num_submit)
-        self.assertEqual(hints_expected2[1], hints[1].text_md)
-        self.assertEqual(hints_expected3[0], hints[2].num_submit)
-        self.assertEqual(hints_expected3[1], hints[2].text_md)
-
-    def test_to_long_hint(self):
-        """Test to check if hints.md is loaded correctly fro SelectProblem"""
+    def test_long_hint(self):
+        """Test to check if hints.md is loaded correctly to a SelectProblem.
+        It checks both hints with one line and hints with several lines"""
         curr_path = os.path.dirname(__file__)
         zip_select_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_HINTS)
         zip_select_pro_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_HINTS_PRO)
@@ -296,7 +248,6 @@ class HintTest(TestCase):
         select_pro.clean()
         select_pro.save()
         hints = Hint.objects.filter(problem=select_pro).order_by('num_submit')
-
         self.assertEqual(hints.count(), 3)
         self.assertEqual(hints_expected1[0], hints[0].num_submit)
         self.assertEqual(hints_expected1[1], hints[0].text_md)
@@ -305,7 +256,7 @@ class HintTest(TestCase):
         self.assertEqual(hints_expected3[0], hints[2].num_submit)
         self.assertEqual(hints_expected3[1], hints[2].text_md)
 
-    def test_whit_wrong_zips(self):
+    def test_with_wrong_zips(self):
         """Test to check that ZIP files with wrong hints.md file raise ValidationError"""
         curr_path = os.path.dirname(__file__)
         zip_select_description_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_HINTS_WRONG_DESCRIPTION)
