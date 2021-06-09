@@ -2,7 +2,7 @@
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
-Custom exceptions when accesing the PostgreSQL database in LSQL
+Custom exceptions when accessing the PostgreSQL database in LSQL
 """
 
 
@@ -23,3 +23,7 @@ class ExecutorException(Exception):
         self.error_code = error_code
         self.statement = statement
         self.position = position
+
+
+class DESException(Exception):
+    """ Error while invoking or parsing DES output """

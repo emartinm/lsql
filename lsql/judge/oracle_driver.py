@@ -5,7 +5,7 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 Class to connect to Oracle and execute the different types of problems
 """
 
-# Needed to use cx_Oracle
+# Needs to use cx_Oracle
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/kike/xDownload/instantclient_19_6
 
 import time

@@ -228,8 +228,9 @@ class HintTest(TestCase):
         hints_expected1 = (3, 'descripcion pista 1')
         hints_expected2 = (5, 'descripcion pista 2')
         hints_expected3 = (10, 'descripcion pista 3')
-        text_md = "Ten en **cuenta** que:\r\n * debes seleccionar las tablas\r\n" \
-                  " * debes elegir cuidadosamente las columnas"
+        text_md = """Ten en **cuenta** que:
+ * debes seleccionar las tablas
+ * debes elegir cuidadosamente las columnas"""
         hits_expected_pro = (5, text_md)
 
         # Check hints loaded for SelectProblem
