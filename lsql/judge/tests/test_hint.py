@@ -34,13 +34,16 @@ class HintTest(TestCase):
     """Tests for the hints and used hints"""
     ZIP_FOLDER = 'zip_files'
     SELECT_HINTS = 'select_with_hints.zip'
+    SELECT_HINTS_PRO = 'select_with_hints_pro.zip'
     DML_HINTS = 'dml_with_hints.zip'
     FUNCTION_HINTS = 'function_with_hints.zip'
     PROC_HINTS = 'proc_with_hints.zip'
     TRIGGER_HINTS = 'trigger_with_hints.zip'
     DISCRIMINANT_HINTS = 'discriminant_with_hints.zip'
     SELECT_HINTS_WRONG_DESCRIPTION = 'select_wrong_description_hint.zip'
+    SELECT_HINTS_WRONG_DESCRIPTION2 = 'select_wrong_description_hint2.zip'
     SELECT_HINTS_WRONG_SUBMITS = 'select_wrong_num_sub_hint.zip'
+    SELECT_HINTS_WRONG_SUBMITS2 = 'select_wrong_num_sub_hint2.zip'
 
     def test_give_hint(self):
         """check the correct operation of the hints"""
@@ -183,31 +186,27 @@ class HintTest(TestCase):
     def test_load_hint(self):
         """Test to check if hints.md is loaded correctly"""
         curr_path = os.path.dirname(__file__)
-        zip_select_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_HINTS)
         zip_dml_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DML_HINTS)
         zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTION_HINTS)
         zip_proc_path = os.path.join(curr_path, self.ZIP_FOLDER, self.PROC_HINTS)
         zip_trigger_path = os.path.join(curr_path, self.ZIP_FOLDER, self.TRIGGER_HINTS)
         zip_discriminant_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DISCRIMINANT_HINTS)
-
-        select = SelectProblem(zipfile=zip_select_path)
-        dml = DMLProblem(zipfile=zip_dml_path)
-        function = FunctionProblem(zipfile=zip_function_path)
-        proc = ProcProblem(zipfile=zip_proc_path)
-        trigger = TriggerProblem(zipfile=zip_trigger_path)
-        discriminant = DiscriminantProblem(zipfile=zip_discriminant_path)
-
         collection = create_collection('Coleccion 1')
-        hints_expected1 = (3, 'descripcion pista 1\r\n')
-        hints_expected2 = (5, 'descripcion pista 2\r\n')
+
+        dml = DMLProblem(zipfile=zip_dml_path, collection=collection)
+        function = FunctionProblem(zipfile=zip_function_path, collection=collection)
+        proc = ProcProblem(zipfile=zip_proc_path, collection=collection)
+        trigger = TriggerProblem(zipfile=zip_trigger_path, collection=collection)
+        discriminant = DiscriminantProblem(zipfile=zip_discriminant_path, collection=collection)
+
+        hints_expected1 = (3, 'descripcion pista 1')
+        hints_expected2 = (5, 'descripcion pista 2')
         hints_expected3 = (10, 'descripcion pista 3')
 
-        for problem in [select, dml, function, proc, trigger, discriminant]:
-            problem.clean()
-            problem.collection = collection
-            problem.save()
-            hints = Hint.objects.filter(problem=problem).order_by('num_submit')
-
+        # Check hints loaded for DMLProblem
+        dml.clean()
+        dml.save()
+        hints = Hint.objects.filter(problem=dml).order_by('num_submit')
         self.assertEqual(hints.count(), 3)
         self.assertEqual(hints_expected1[0], hints[0].num_submit)
         self.assertEqual(hints_expected1[1], hints[0].text_md)
@@ -216,14 +215,108 @@ class HintTest(TestCase):
         self.assertEqual(hints_expected3[0], hints[2].num_submit)
         self.assertEqual(hints_expected3[1], hints[2].text_md)
 
+        # Check hints loaded for FunctionProblem
+        function.clean()
+        function.collection = collection
+        function.save()
+        hints = Hint.objects.filter(problem=function).order_by('num_submit')
+        self.assertEqual(hints.count(), 3)
+        self.assertEqual(hints_expected1[0], hints[0].num_submit)
+        self.assertEqual(hints_expected1[1], hints[0].text_md)
+        self.assertEqual(hints_expected2[0], hints[1].num_submit)
+        self.assertEqual(hints_expected2[1], hints[1].text_md)
+        self.assertEqual(hints_expected3[0], hints[2].num_submit)
+        self.assertEqual(hints_expected3[1], hints[2].text_md)
+
+        # Check hints loaded for ProcProblem
+        proc.clean()
+        proc.save()
+        hints = Hint.objects.filter(problem=proc).order_by('num_submit')
+        self.assertEqual(hints.count(), 3)
+        self.assertEqual(hints_expected1[0], hints[0].num_submit)
+        self.assertEqual(hints_expected1[1], hints[0].text_md)
+        self.assertEqual(hints_expected2[0], hints[1].num_submit)
+        self.assertEqual(hints_expected2[1], hints[1].text_md)
+        self.assertEqual(hints_expected3[0], hints[2].num_submit)
+        self.assertEqual(hints_expected3[1], hints[2].text_md)
+
+        # Check hints loaded for TriggerProblem
+        trigger.clean()
+        trigger.save()
+        hints = Hint.objects.filter(problem=trigger).order_by('num_submit')
+        self.assertEqual(hints.count(), 3)
+        self.assertEqual(hints_expected1[0], hints[0].num_submit)
+        self.assertEqual(hints_expected1[1], hints[0].text_md)
+        self.assertEqual(hints_expected2[0], hints[1].num_submit)
+        self.assertEqual(hints_expected2[1], hints[1].text_md)
+        self.assertEqual(hints_expected3[0], hints[2].num_submit)
+        self.assertEqual(hints_expected3[1], hints[2].text_md)
+
+        # Check hints loaded for DiscriminantProblem
+        discriminant.clean()
+        discriminant.save()
+        hints = Hint.objects.filter(problem=discriminant).order_by('num_submit')
+        self.assertEqual(hints.count(), 3)
+        self.assertEqual(hints_expected1[0], hints[0].num_submit)
+        self.assertEqual(hints_expected1[1], hints[0].text_md)
+        self.assertEqual(hints_expected2[0], hints[1].num_submit)
+        self.assertEqual(hints_expected2[1], hints[1].text_md)
+        self.assertEqual(hints_expected3[0], hints[2].num_submit)
+        self.assertEqual(hints_expected3[1], hints[2].text_md)
+
+    def test_to_long_hint(self):
+        """Test to check if hints.md is loaded correctly fro SelectProblem"""
+        curr_path = os.path.dirname(__file__)
+        zip_select_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_HINTS)
+        zip_select_pro_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_HINTS_PRO)
+        collection = create_collection('Coleccion 1')
+        select = SelectProblem(zipfile=zip_select_path, collection=collection)
+        select_pro = SelectProblem(zipfile=zip_select_pro_path, collection=collection)
+
+        hints_expected1 = (3, 'descripcion pista 1')
+        hints_expected2 = (5, 'descripcion pista 2')
+        hints_expected3 = (10, 'descripcion pista 3')
+        text_md = "Ten en **cuenta** que:\r\n * debes seleccionar las tablas\r\n" \
+                  " * debes elegir cuidadosamente las columnas"
+        hits_expected_pro = (5, text_md)
+
+        # Check hints loaded for SelectProblem
+        select.clean()
+        select.save()
+        hints = Hint.objects.filter(problem=select).order_by('num_submit')
+        self.assertEqual(hints.count(), 3)
+        self.assertEqual(hints_expected1[0], hints[0].num_submit)
+        self.assertEqual(hints_expected1[1], hints[0].text_md)
+        self.assertEqual(hints_expected2[0], hints[1].num_submit)
+        self.assertEqual(hints_expected2[1], hints[1].text_md)
+        self.assertEqual(hints_expected3[0], hints[2].num_submit)
+        self.assertEqual(hints_expected3[1], hints[2].text_md)
+
+        # Check hints loaded for SelectProblem pro
+        select_pro.clean()
+        select_pro.save()
+        hints = Hint.objects.filter(problem=select_pro).order_by('num_submit')
+
+        self.assertEqual(hints.count(), 3)
+        self.assertEqual(hints_expected1[0], hints[0].num_submit)
+        self.assertEqual(hints_expected1[1], hints[0].text_md)
+        self.assertEqual(hits_expected_pro[0], hints[1].num_submit)
+        self.assertEqual(hits_expected_pro[1], hints[1].text_md)
+        self.assertEqual(hints_expected3[0], hints[2].num_submit)
+        self.assertEqual(hints_expected3[1], hints[2].text_md)
+
     def test_whit_wrong_zips(self):
-        """Test to wrong loaded zips"""
+        """Test to check that ZIP files with wrong hints.md file raise ValidationError"""
         curr_path = os.path.dirname(__file__)
         zip_select_description_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_HINTS_WRONG_DESCRIPTION)
+        zip_select_description2_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_HINTS_WRONG_DESCRIPTION2)
         zip_select_sub_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_HINTS_WRONG_SUBMITS)
+        zip_select_sub2_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_HINTS_WRONG_SUBMITS2)
 
         select_description = SelectProblem(zipfile=zip_select_description_path)
+        select_description2 = SelectProblem(zipfile=zip_select_description2_path)
         select_sub = SelectProblem(zipfile=zip_select_sub_path)
+        select_sub2 = SelectProblem(zipfile=zip_select_sub2_path)
 
-        for problem in [select_description, select_sub]:
+        for problem in [select_description, select_sub, select_sub2, select_description2]:
             self.assertRaises(ValidationError, problem.clean)

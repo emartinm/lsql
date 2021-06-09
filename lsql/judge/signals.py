@@ -47,12 +47,12 @@ def refresh_sub_prob_achievements(sender, **kwargs):
     kwargs['instance'].refresh()
 
 
-def save_hints(kwargs):
+def save_hints(problem):
     """Create the hints of a problem an save them"""
-    for elem in kwargs['instance'].hints_info:
+    for elem in problem['instance'].hints_info:
         num_sub = elem[0]
         description = elem[1]
-        hint = Hint(text_md=description, problem=kwargs['instance'], num_submit=num_sub)
+        hint = Hint(text_md=description, problem=problem['instance'], num_submit=num_sub)
         hint.save()
 
 

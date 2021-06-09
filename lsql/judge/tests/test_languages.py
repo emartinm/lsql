@@ -307,16 +307,16 @@ class LanguagesTest(TestCase):
         create = 'CREATE TABLE mytable (dd DATE);'
         insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'yyyy/mm/dd'))"
         solution = 'SELECT * FROM mytable'
-        problem = SelectProblem(title_md='Dates', text_md='Example with dates', language="es",
+        problem1 = SelectProblem(title_md='Dates', text_md='Example with dates', language="es",
                                  create_sql=create, insert_sql=insert, collection=collection,
                                  solution=solution)
-        problem3 = SelectProblem(title_md='Dates', text_md='Example with dates', language="es",
+        problem2 = SelectProblem(title_md='Dates', text_md='Example with dates', language="es",
                                  create_sql=create, insert_sql=insert, collection=collection,
                                  solution=solution)
-        problem.clean()
-        problem.save()
-        problem3.clean()
-        problem3.save()
+        problem1.clean()
+        problem1.save()
+        problem2.clean()
+        problem2.save()
 
         self.assertIn("es", collection.languages())
         self.assertNotIn("en", collection.languages())

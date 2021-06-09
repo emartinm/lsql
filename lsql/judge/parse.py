@@ -62,17 +62,19 @@ def extract_hints_from_file(problem, zfile):
         hints_str = hints_file.read().decode(encoding='utf-8')
 
     hints_list = hints_str.split(hint_separation)
-
     for hint in hints_list:
-        hint_lstrip = hint.lstrip()
-        hint_tupla = hint_lstrip.split(sep='\n', maxsplit=1)
+        hint_tuple_list = hint.lstrip().split(sep='\n', maxsplit=1)
 
-        n_sub = int(hint_tupla[0])
+        try:
+            n_sub = int(hint_tuple_list[0])
+        except Exception as excp:
+            raise ZipFileParsingException('Invalid value for number of submissions, must be a number') from excp
+
         if n_sub < 0:
             raise ZipFileParsingException(f'Invalid value for number of submissions: {n_sub} in hints.md')
 
-        description = hint_tupla[1]
-        if description == '':
+        description = hint_tuple_list[1].strip()
+        if len(description) == 0:
             raise ZipFileParsingException('Hint description cannot be empty in hints.md')
 
         hints.append((n_sub, description))
