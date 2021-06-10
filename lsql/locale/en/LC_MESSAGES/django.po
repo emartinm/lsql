@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-31 18:59+0200\n"
+"POT-Creation-Date: 2021-06-10 20:39+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Iván Ruiz <ivarui01@ucm.es@ADDRESS>\n"
 "Language-Team: Español\n"
@@ -120,7 +120,7 @@ msgstr "Help"
 msgid "Mis envíos"
 msgstr "My submissions"
 
-#: .\judge\templates\base_menu.html:20
+#: .\judge\templates\base_menu.html:20 .\judge\templates\problem.html:196
 msgid "Mis logros"
 msgstr "My achievements"
 
@@ -437,8 +437,8 @@ msgstr "Request hint"
 msgid "Pedir pista nueva"
 msgstr "Request new hint"
 
-#: .\judge\templates\problem.html:113 .\judge\templates\problem.html:192
-#: .\judge\templates\problem.html:218 .\judge\templates\results.html:95
+#: .\judge\templates\problem.html:113 .\judge\templates\problem.html:204
+#: .\judge\templates\problem.html:231 .\judge\templates\results.html:95
 msgid "Cerrar"
 msgstr "Close"
 
@@ -477,11 +477,19 @@ msgstr "Send solution"
 msgid "Título"
 msgstr "Title"
 
-#: .\judge\templates\problem.html:205
+#: .\judge\templates\problem.html:194
+msgid "Accede a la página "
+msgstr "Access the "
+
+#: .\judge\templates\problem.html:196
+msgid " para obtener mas información."
+msgstr " page for more information."
+
+#: .\judge\templates\problem.html:218
 msgid "Error de conexión"
 msgstr "Connection error"
 
-#: .\judge\templates\problem.html:209
+#: .\judge\templates\problem.html:222
 msgid ""
 "\n"
 "          Ha sido imposible conectar con el corrector de ejercicios.\n"
@@ -499,7 +507,7 @@ msgstr ""
 "          Contact your teacher if the problem persists.\n"
 "        "
 
-#: .\judge\templates\problem.html:244
+#: .\judge\templates\problem.html:257
 msgid "Retroalimentación"
 msgstr "Feedback"
 
@@ -814,37 +822,37 @@ msgstr ""
 "Your submission must be made up of between {min_stmt} and {max_stmt} "
 "{ending}."
 
-#: .\judge\views.py:153 .\judge\views.py:226
+#: .\judge\views.py:158 .\judge\views.py:231
 msgid "¡Lo sentimos! No existe ningún grupo para ver resultados"
 msgstr "We are sorry! There is no group to see results"
 
-#: .\judge\views.py:232
+#: .\judge\views.py:237
 msgid "¡Lo sentimos! No tienes asignado un grupo de la asignatura."
 msgstr "We are sorry! You do not have a subject group assigned."
 
-#: .\judge\views.py:233
+#: .\judge\views.py:238
 msgid "Por favor, contacta con tu profesor para te asignen un grupo de clase."
 msgstr "Please, contact your teacher to assign you a class group."
 
-#: .\judge\views.py:295 .\judge\views.py:600
+#: .\judge\views.py:300 .\judge\views.py:602
 #, python-brace-format
 msgid "Pista {number}"
 msgstr "Hint #{number}"
 
-#: .\judge\views.py:336
+#: .\judge\views.py:341
 msgid "El identificador no tiene el formato correcto"
 msgstr "The identifier has not the correct format"
 
-#: .\judge\views.py:448
+#: .\judge\views.py:443
 #, python-brace-format
 msgid "Posición: línea {row}, columna {col}"
 msgstr "Position: Row {row}, Column {col}"
 
-#: .\judge\views.py:594 .\judge\views.py:608
+#: .\judge\views.py:596 .\judge\views.py:610
 msgid "No hay más pistas disponibles para este ejercicio."
 msgstr "There are no more hints available for this problem."
 
-#: .\judge\views.py:614
+#: .\judge\views.py:616
 #, python-brace-format
 msgid "Número de envíos que faltan para obtener la siguiente pista: {number}."
 msgstr "Number of submissions needed for the next hint: {number}."

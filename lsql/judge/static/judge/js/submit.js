@@ -4,9 +4,16 @@
 
 
 // Shows a modal window with a title and message
-function show_modal(title, message) {
+function show_modal(title, message, sentence_achievements, names) {
     $('#modal_title').text(title);
     $('#modal_message').text(message);
+    $('#modal_sentence_achieve').text(sentence_achievements);
+    $('#modal_name_achieve').text(names);
+    if(names.length == 0){
+        $('#info_achieve').hide()
+    }else{
+        $('#info_achieve').show()
+    }
     $('#result_window').modal("show")
     // Reloads highlight.js to format new code in feedback
     hljs.initHighlighting.called = false;
@@ -97,7 +104,7 @@ function send_solution() {
           mark_solved(myJson);
           show_feedback(myJson.feedback);
           select_error_in_editor(myJson);
-          show_modal(myJson.title, myJson.message);
+          show_modal(myJson.title, myJson.message, myJson.sentence_achievements, myJson.names);
           update_page_submission_received();
       }).catch(function(e) {
           console.log(e);

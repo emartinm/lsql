@@ -8,7 +8,9 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from judge.tests.test_parse import ParseTest
-from judge.models import FunctionProblem, ProcProblem, TriggerProblem, DiscriminantProblem
+from judge.models import FunctionProblem, ProcProblem, TriggerProblem, DiscriminantProblem, \
+    NumSubmissionsProblemsAchievementDefinition, ObtainedAchievement, NumSolvedTypeAchievementDefinition, \
+    SelectProblem
 from judge.tests.test_views import create_collection, create_user, create_select_problem, create_dml_problem
 from judge.types import VeredictCode, ProblemType
 
@@ -241,3 +243,74 @@ class SubmitTest(TestCase):
                                follow=True)
         self.assertEqual(response.json()['veredict'], VeredictCode.RE)
         self.assertEqual(disc_problem.problem_type(), ProblemType.DISC)
+
+    def test_achievements_submit(self):
+        """Test to show correct message when obtain an achievement"""
+        client = Client()
+        collection = create_collection('Colleccion de prueba XYZ')
+        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        user = create_user('5555', 'tamara')
+        sentence1 = 'Además con este envío has conseguido el siguiente logro: '
+        sentence2 = 'Además con este envío has conseguido los siguientes logros: '
+        vacio = []
+        ach_submission = NumSubmissionsProblemsAchievementDefinition(name={"es": 'Un envio'},
+                                                                      description={
+                                                                          "es": 'Envia una solucion para un problema'},
+                                                                      num_problems=1, num_submissions=1)
+        ach_submission.save()
+        ach_submissions = NumSubmissionsProblemsAchievementDefinition(name={"es": 'Tres envios'},
+                                                                      description={
+                                                                          "es": 'Envia tres soluciones de un problema'},
+                                                                      num_problems=1, num_submissions=3)
+        ach_submissions.save()
+        client.login(username='tamara', password='5555')
+        submit_select_url = reverse('judge:submit', args=[select_problem.pk])
+
+        # The user makes a submission and problem and obtain one achievement
+        response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
+        obtained_achieve = ObtainedAchievement.objects.filter(user=user)
+
+        self.assertEqual(obtained_achieve.count(), 1)
+        self.assertEqual(response.json()['names'][0][0], obtained_achieve[0].achievement_definition.name['es'])
+        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
+        self.assertEqual(response.json()['sentence_achievements'], sentence1)
+
+        # The user makes another submission and does not obtain an achievement
+        response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
+        obtained_achieve = ObtainedAchievement.objects.filter(user=user)
+
+        self.assertEqual(obtained_achieve.count(), 1)
+        self.assertEqual(response.json()['names'], vacio)
+        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
+        self.assertEqual(response.json()['sentence_achievements'], "")
+
+        # The user makes another submission and obtain two achievements
+        ach_type = NumSolvedTypeAchievementDefinition(name={"es": 'Es select'},
+                                                      description={"es": 'Resuelve un problema SELECT'},
+                                                      num_problems=1, problem_type=ProblemType.SELECT.name)
+        ach_type.save()
+        curr_path = os.path.dirname(__file__)
+        zip_select_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.SELECT_OK)
+        collection = create_collection('Coleccion 1')
+        select = SelectProblem(zipfile=zip_select_path, collection=collection)
+        select.clean()
+        select.save()
+        submit_url = reverse('judge:submit', args=[select.pk])
+
+        response = client.post(submit_url, {'code': select.solution}, follow=True)
+
+        obtained_achieve = ObtainedAchievement.objects.filter(user=user)
+
+        self.assertEqual(obtained_achieve.count(), 3)
+        self.assertEqual(response.json()['names'][0][0], obtained_achieve[1].achievement_definition.name['es'])
+        self.assertEqual(response.json()['names'][1][0], obtained_achieve[2].achievement_definition.name['es'])
+        self.assertEqual(response.json()['veredict'], VeredictCode.AC)
+        self.assertEqual(response.json()['sentence_achievements'], sentence2)
+
+        # The user makes another submission and does not obtain an achievement
+        response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
+        obtained_achieve = ObtainedAchievement.objects.filter(user=user)
+
+        self.assertEqual(response.json()['names'], vacio)
+        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
+        self.assertEqual(response.json()['sentence_achievements'], "")

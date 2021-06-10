@@ -488,7 +488,7 @@ class Submission(models.Model):
 
 
 def default_json_lang():
-    """ Default values for name and description attributes in AchievementDefinition """
+    """ Default values for name and description attributes in AchievementDefinitionAchievementDefinition """
     return {settings.LANGUAGE_CODE: ""}
 
 
@@ -563,6 +563,8 @@ class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
                                                       obtained_date=order_problem_creation_date[self.num_problems-1],
                                                       achievement_definition=self)
                 new_achievement.save()
+                return True
+        return False
 
 
 class PodiumAchievementDefinition(AchievementDefinition, models.Model):
@@ -590,7 +592,8 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
                             new_achievement = ObtainedAchievement(user=user, obtained_date=sub.creation_date,
                                                                   achievement_definition=self)
                             new_achievement.save()
-                            return
+                            return True
+        return False
 
 
 class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Model):
@@ -615,6 +618,8 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
                                                       obtained_date=order_problem_creation_date[self.num_problems - 1],
                                                       achievement_definition=self)
                 new_achievement.save()
+                return True
+        return False
 
 
 class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
@@ -646,7 +651,8 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
                                                               obtained_date=sub.creation_date,
                                                               achievement_definition=self)
                         new_achievement.save()
-                        return
+                        return True
+        return False
 
 
 class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.Model):
@@ -670,6 +676,8 @@ class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.
                                                    obtained_date=order_problem_creation_date[self.num_problems-1],
                                                    achievement_definition=self)
                     new_achi.save()
+                    return True
+        return False
 
 
 class Hint(models.Model):
