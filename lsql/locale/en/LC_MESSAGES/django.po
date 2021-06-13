@@ -479,7 +479,7 @@ msgstr "Title"
 
 #: .\judge\templates\problem.html:194
 msgid "Accede a la página "
-msgstr "Access the "
+msgstr "Access the webpage"
 
 #: .\judge\templates\problem.html:196
 msgid " para obtener mas información."

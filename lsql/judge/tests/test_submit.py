@@ -273,11 +273,7 @@ class SubmitTest(TestCase):
 
         # The user submits a new solution and does not receive any achievement
         response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
-        try:
-            response.json()['achievements']
-        except KeyError:
-            msg = 'no exixte'
-            self.assertEqual('no exixte', msg)
+        self.assertNotIn('achievements', response.json)
 
         # The user makes another submission and obtain two achievements
         ach_type.save()
@@ -295,8 +291,4 @@ class SubmitTest(TestCase):
 
         # The user submits a new solution and does not receive any achievement
         response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
-        try:
-            response.json()['achievements']
-        except KeyError:
-            msg = 'no exixte'
-            self.assertEqual('no exixte', msg)
+        self.assertNotIn('achievements', response.json)

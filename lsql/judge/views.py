@@ -116,20 +116,20 @@ def update_user_attempts_problem(attempts, user, problem, num_accepted, collecti
 
 
 def check_if_get_achievement(user, veredict):
-    """Check if the user get some achievement annd return a list of Achievementes obtained"""
-    names = []
+    """Check if the user get some achievement and return a list of Achievementes obtained"""
+    obtained_achievements = []
     if veredict == VeredictCode.AC:
         for ach in AchievementDefinition.objects.all().select_subclasses():
             if ach.check_and_save(user):
-                names.append(ach)
+                obtained_achievements.append(ach)
 
     # If the veredict != AC (correct) only can get a NumSubmissionsProblemsAchievementDefinition
     else:
         for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():
             if ach.check_and_save(user):
-                names.append(ach)
+                obtained_achievements.append(ach)
 
-    return names
+    return obtained_achievements
 
 
 ##############
