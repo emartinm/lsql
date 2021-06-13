@@ -4,10 +4,10 @@
 {% translate sentence %}
 {% for ach in achieve %}
     {% if forloop.last == forloop.first %}
-        <b>"{{ ach.get_name }}"</b></li>
+        <b>"{{ ach.get_name }}"</b></li>.
     {% else %}
         {% if forloop.last %}
-           y <b>"{{ ach.get_name }}"</b></li>
+           y <b>"{{ ach.get_name }}"</b></li>.
         {% elif forloop.first %}
             <b>"{{ ach.get_name }}"</b></li>
         {% else %}
