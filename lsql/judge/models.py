@@ -488,7 +488,7 @@ class Submission(models.Model):
 
 
 def default_json_lang():
-    """ Default values for name and description attributes in AchievementDefinitionAchievementDefinition """
+    """ Default values for name and description attributes in AchievementDefinition """
     return {settings.LANGUAGE_CODE: ""}
 
 
@@ -549,7 +549,7 @@ class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
     num_problems = models.PositiveIntegerField(default=1, null=False)
 
     def check_and_save(self, user):
-        """Check if an user is deserving for get an achievement, if it is, save that"""
+        """Return if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).distinct("problem").count()
             if corrects >= self.num_problems:
@@ -573,7 +573,7 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
     position = models.PositiveIntegerField(default=3, null=False)
 
     def check_and_save(self, user):
-        """Check if an user is deserving for get an achievement, if it is, save that"""
+        """Return if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
             # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
@@ -602,7 +602,7 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
 
     def check_and_save(self, user):
-        """Check if an user is deserving for get an achievement, if it is, save that"""
+        """Return if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user,
                                                  problem__collection=self.collection).distinct("problem").count()
@@ -633,7 +633,7 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
     )
 
     def check_and_save(self, user):
-        """Check if an user is deserving for get an achievement, if it is, save that"""
+        """Return if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             count = 0
             # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
@@ -661,7 +661,7 @@ class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.
     num_problems = models.PositiveIntegerField(default=1, null=False)
 
     def check_and_save(self, user):
-        """Check if an user is deserving for get an achievement, if it is, save that"""
+        """Return if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             total_submissions = Submission.objects.filter(user=user).count()
             if total_submissions >= self.num_submissions:

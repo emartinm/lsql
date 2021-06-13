@@ -187,23 +187,12 @@ General template for a problem. Provides the following blocks:
       </div>
       <div class="modal-body" id="modal_message">
       </div>
-      <div class="modal-body">
-          <p id="modal_sentence_achieve"></p>
-          <p id="modal_name_achieve"></p>
-          <div id="info_achieve">
-          {% translate "Accede a la página " %}
-          <a href="{% url 'judge:achievements' request.user.pk %}">
-          {% translate "Mis logros" %}</a>{% translate " para obtener mas información." %}
-          </div>
+        <div class="modal-body" id="achieve_sentence">
       </div>
-      <div class="modal-body" >
-      </div>
-
       <div class="modal-footer">
         <button id="close_result_window_button" type="button" class="btn btn-primary"
                 data-bs-dismiss="modal">{% translate "Cerrar" %}</button>
       </div>
-    </div>
     </div>
   </div>
 </div>

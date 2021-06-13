@@ -1,0 +1,22 @@
+{% load i18n %}
+
+<div class="modal-body" id="achieve_sentence">
+{% translate sentence %}
+{% for ach in achieve %}
+    {% if forloop.last == forloop.first %}
+        <b>"{{ ach.get_name }}"</b></li>
+    {% else %}
+        {% if forloop.last %}
+           y <b>"{{ ach.get_name }}"</b></li>
+        {% elif forloop.first %}
+            <b>"{{ ach.get_name }}"</b></li>
+        {% else %}
+            , <b>"{{ ach.get_name }}"</b></li>
+        {% endif %}
+    {% endif %}
+{% endfor %}
+
+{% translate "Accede a la página" %}
+<a href="{% url 'judge:achievements' user %}">
+{% translate "Mis logros" %}</a>{% translate " para obtener mas información."%}
+</div>

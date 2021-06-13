@@ -250,9 +250,6 @@ class SubmitTest(TestCase):
         collection = create_collection('Colleccion de prueba XYZ')
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         user = create_user('5555', 'tamara')
-        sentence1 = 'Además con este envío has conseguido el siguiente logro: '
-        sentence2 = 'Además con este envío has conseguido los siguientes logros: '
-        vacio = []
         ach_submission = NumSubmissionsProblemsAchievementDefinition(name={"es": 'Un envio'},
                                                                       description={
                                                                           "es": 'Envia una solucion para un problema'},
@@ -263,31 +260,26 @@ class SubmitTest(TestCase):
                                                                           "es": 'Envia tres soluciones de un problema'},
                                                                       num_problems=1, num_submissions=3)
         ach_submissions.save()
-        client.login(username='tamara', password='5555')
-        submit_select_url = reverse('judge:submit', args=[select_problem.pk])
-
-        # The user makes a submission and problem and obtain one achievement
-        response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
-        obtained_achieve = ObtainedAchievement.objects.filter(user=user)
-
-        self.assertEqual(obtained_achieve.count(), 1)
-        self.assertEqual(response.json()['names'][0][0], obtained_achieve[0].achievement_definition.name['es'])
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
-        self.assertEqual(response.json()['sentence_achievements'], sentence1)
-
-        # The user makes another submission and does not obtain an achievement
-        response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
-        obtained_achieve = ObtainedAchievement.objects.filter(user=user)
-
-        self.assertEqual(obtained_achieve.count(), 1)
-        self.assertEqual(response.json()['names'], vacio)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
-        self.assertEqual(response.json()['sentence_achievements'], "")
-
-        # The user makes another submission and obtain two achievements
         ach_type = NumSolvedTypeAchievementDefinition(name={"es": 'Es select'},
                                                       description={"es": 'Resuelve un problema SELECT'},
                                                       num_problems=1, problem_type=ProblemType.SELECT.name)
+        client.login(username='tamara', password='5555')
+        submit_select_url = reverse('judge:submit', args=[select_problem.pk])
+
+        # The user submits one solution and obtains the first achievement
+        response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
+        obtained_achieve = ObtainedAchievement.objects.filter(user=user)
+        self.assertIn( obtained_achieve[0].achievement_definition.name['es'], response.json()['achievements'])
+
+        # The user submits a new solution and does not receive any achievement
+        response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
+        try:
+            response.json()['achievements']
+        except KeyError:
+            msg = 'no exixte'
+            self.assertEqual('no exixte', msg)
+
+        # The user makes another submission and obtain two achievements
         ach_type.save()
         curr_path = os.path.dirname(__file__)
         zip_select_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.SELECT_OK)
@@ -296,21 +288,15 @@ class SubmitTest(TestCase):
         select.clean()
         select.save()
         submit_url = reverse('judge:submit', args=[select.pk])
-
         response = client.post(submit_url, {'code': select.solution}, follow=True)
-
         obtained_achieve = ObtainedAchievement.objects.filter(user=user)
+        self.assertIn( obtained_achieve[1].achievement_definition.name['es'], response.json()['achievements'])
+        self.assertIn( obtained_achieve[2].achievement_definition.name['es'], response.json()['achievements'])
 
-        self.assertEqual(obtained_achieve.count(), 3)
-        self.assertEqual(response.json()['names'][0][0], obtained_achieve[1].achievement_definition.name['es'])
-        self.assertEqual(response.json()['names'][1][0], obtained_achieve[2].achievement_definition.name['es'])
-        self.assertEqual(response.json()['veredict'], VeredictCode.AC)
-        self.assertEqual(response.json()['sentence_achievements'], sentence2)
-
-        # The user makes another submission and does not obtain an achievement
+        # The user submits a new solution and does not receive any achievement
         response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
-        obtained_achieve = ObtainedAchievement.objects.filter(user=user)
-
-        self.assertEqual(response.json()['names'], vacio)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
-        self.assertEqual(response.json()['sentence_achievements'], "")
+        try:
+            response.json()['achievements']
+        except KeyError:
+            msg = 'no exixte'
+            self.assertEqual('no exixte', msg)

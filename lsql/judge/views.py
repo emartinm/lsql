@@ -116,18 +116,19 @@ def update_user_attempts_problem(attempts, user, problem, num_accepted, collecti
 
 
 def check_if_get_achievement(user, veredict):
-    """Check if the user get some achievement"""
+    """Check if the user get some achievement annd return a list of Achievementes obtained"""
     names = []
     if veredict == VeredictCode.AC:
         for ach in AchievementDefinition.objects.all().select_subclasses():
             if ach.check_and_save(user):
-                names.append(list(ach.name.values()))
+                names.append(ach)
 
     # If the veredict != AC (correct) only can get a NumSubmissionsProblemsAchievementDefinition
     else:
         for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():
             if ach.check_and_save(user):
-                names.append(list(ach.name.values()))
+                names.append(ach)
+
     return names
 
 
@@ -421,7 +422,7 @@ def submit(request, problem_id):
     problem = get_subclass_problem(problem_id)
     submit_form = SubmitForm(request.POST)
     data = {'veredict': VeredictCode.IE, 'title': VeredictCode.IE.label,
-            'message': VeredictCode.IE.message(), 'feedback': '', 'names': [], 'sentence_achievements': ''}
+            'message': VeredictCode.IE.message(), 'feedback': ''}
     code = ''
     if submit_form.is_valid():
         try:
@@ -460,14 +461,16 @@ def submit(request, problem_id):
                             user=request.user, problem=general_problem)
     submission.save()
     # If verdict is correct look for an achievement to complete if it's possible
-    data['names'] = check_if_get_achievement(request.user, data['veredict'])
-    if len(data['names']) == 0:
-        data['sentence_achievements'] = ''
-    elif len(data['names']) == 1:
-        data['sentence_achievements'] = 'Además con este envío has conseguido el siguiente logro: '
-    else:
-        data['sentence_achievements'] = 'Además con este envío has conseguido los siguientes logros: '
+    achieve_list = check_if_get_achievement(request.user, data['veredict'])
 
+    if achieve_list:
+        if len(achieve_list) == 1:
+            sentence = _("Además, con este envío has conseguido el logro ")
+        else:
+            sentence = _("Además, con este envío has conseguido los logros ")
+        context = {'achieve': achieve_list, 'user': request.user.pk, 'sentence': sentence}
+        html = render_to_string('achievement_notice.html', context)
+        data['achievements'] = html
     logger.debug('Stored submission %s', submission)
     return JsonResponse(data)
 
