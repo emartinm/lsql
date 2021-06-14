@@ -116,7 +116,7 @@ def update_user_attempts_problem(attempts, user, problem, num_accepted, collecti
 
 
 def check_if_get_achievement(user, veredict):
-    """Check if the user get some achievement and return a list of Achievementes obtained"""
+    """Check if the user get some achievement and return a list of obtained achievements"""
     obtained_achievements = []
     if veredict == VeredictCode.AC:
         for ach in AchievementDefinition.objects.all().select_subclasses():
