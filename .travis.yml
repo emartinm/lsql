@@ -7,7 +7,7 @@ addons: # Mejor instalarlo como addon que como servicio
       - postgresql-12
       - postgresql-client-12
 python:
-  - "3.8"
+  - "3.9"
 ## Configure Oracle 11g R2 XE from https://github.com/Vincit/travis-oracledb-xe
 ## You will be able to connect the Oracle database in localhost:1521 with user/pass: travis/travis
 ## and with SYSDBA role user/pass: sys/travis [[simpler: SYSTEM/travis]]
