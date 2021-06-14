@@ -2,7 +2,7 @@
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
-Types used in LSQL
+Types used in LearnSQL
 """
 
 from enum import IntEnum, unique
@@ -10,8 +10,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-class VeredictCode(models.TextChoices):
-    """Codes representing different judge veredicts"""
+class VerdictCode(models.TextChoices):
+    """Codes representing different judge verdicts"""
     AC = 'AC', _('Aceptado')
     TLE = 'TLE', _('Tiempo limite excedido')
     RE = 'RE', _('Error en ejecución')
@@ -20,7 +20,7 @@ class VeredictCode(models.TextChoices):
     VE = 'VE', _('Error de validación')
 
     def html_short_name(self):
-        """Short name of the veredict code in HMTL with color"""
+        """Short name of the verdict code in HMTL with color"""
         if self == self.AC:
             return f'<span class="text-success">{self.label}</span>'
         return f'<span class ="text-danger">{self.label}</span>'
@@ -33,7 +33,7 @@ class VeredictCode(models.TextChoices):
         elif self == self.TLE:
             msg = _('Puede deberse a una sobrecarga puntual del servidor, pero seguramente sea debido a que tu '
                     'código SQL no es suficientemente eficiente. Vuelve a enviarlo en unos minutos y si sigues '
-                    'obteniendo el mismo veredicto trata de reescribir tu código para ser más eficiente.')
+                    'obteniendo el mismo verdicto trata de reescribir tu código para ser más eficiente.')
         elif self == self.RE:
             msg = _('Tu código SQL ha producido un error durante la ejecución. Consulta el cuadro rojo '
                     'de retroalimentación en la parte inferior de la página para ver los detalles e inspecciona '

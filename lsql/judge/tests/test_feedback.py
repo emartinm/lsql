@@ -9,7 +9,7 @@ from django.test import TestCase
 
 from judge.feedback import pretty_type, header_to_str, compare_select_results, compare_db_results, \
     compare_function_results, compare_discriminant_db
-from judge.types import VeredictCode
+from judge.types import VerdictCode
 
 
 class FeedbackTest(TestCase):
@@ -49,32 +49,32 @@ class FeedbackTest(TestCase):
                      'rows': [[1, 'a', 'a'], [2, 'b', 'b']]}
 
         # Expected equal to obtained
-        self.assertEqual(compare_select_results(expected, expected, True)[0], VeredictCode.AC)
-        self.assertEqual(compare_select_results(expected, expected, False)[0], VeredictCode.AC)
+        self.assertEqual(compare_select_results(expected, expected, True)[0], VerdictCode.AC)
+        self.assertEqual(compare_select_results(expected, expected, False)[0], VerdictCode.AC)
         # Obtained rows are correct but in other order
-        self.assertEqual(compare_select_results(expected, obtained1, False)[0], VeredictCode.AC)
-        self.assertEqual(compare_select_results(expected, obtained1, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained1, False)[0], VerdictCode.AC)
+        self.assertEqual(compare_select_results(expected, obtained1, True)[0], VerdictCode.WA)
         # Missing row in obtained
-        self.assertEqual(compare_select_results(expected, obtained2, False)[0], VeredictCode.WA)
-        self.assertEqual(compare_select_results(expected, obtained2, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained2, False)[0], VerdictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained2, True)[0], VerdictCode.WA)
         # Extra row in obtained
-        self.assertEqual(compare_select_results(expected, obtained3, False)[0], VeredictCode.WA)
-        self.assertEqual(compare_select_results(expected, obtained3, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained3, False)[0], VerdictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained3, True)[0], VerdictCode.WA)
         # Extra row in obtained, and the extra row is a duplicate of other row
-        self.assertEqual(compare_select_results(expected, obtained4, False)[0], VeredictCode.WA)
-        self.assertEqual(compare_select_results(expected, obtained4, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained4, False)[0], VerdictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained4, True)[0], VerdictCode.WA)
         # Obtained headers have a row with a different name
-        self.assertEqual(compare_select_results(expected, obtained5, False)[0], VeredictCode.WA)
-        self.assertEqual(compare_select_results(expected, obtained5, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained5, False)[0], VerdictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained5, True)[0], VerdictCode.WA)
         # Obtained headers have a row with a different type
-        self.assertEqual(compare_select_results(expected, obtained6, False)[0], VeredictCode.WA)
-        self.assertEqual(compare_select_results(expected, obtained6, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained6, False)[0], VerdictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained6, True)[0], VerdictCode.WA)
         # Obtained headers have less columns
-        self.assertEqual(compare_select_results(expected, obtained7, False)[0], VeredictCode.WA)
-        self.assertEqual(compare_select_results(expected, obtained7, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained7, False)[0], VerdictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained7, True)[0], VerdictCode.WA)
         # Obtained headers have more columns
-        self.assertEqual(compare_select_results(expected, obtained8, False)[0], VeredictCode.WA)
-        self.assertEqual(compare_select_results(expected, obtained8, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained8, False)[0], VerdictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained8, True)[0], VerdictCode.WA)
 
     def test_feedback_headers(self):
         """Test for feedback_headers"""
@@ -98,17 +98,17 @@ class FeedbackTest(TestCase):
         obtained7 = {'header': [['Id', "<class 'cx_Oracle.NUMBER'>"], ['NoMbre', "<class 'cx_Oracle.STRING'>"]],
                      'rows': [[1, 'a'], [2, 'b']]}
         # Comprobacion correcta
-        self.assertEqual(compare_select_results(expected, expected, True)[0], VeredictCode.AC)
-        self.assertEqual(compare_select_results(expected, expected, False)[0], VeredictCode.AC)
+        self.assertEqual(compare_select_results(expected, expected, True)[0], VerdictCode.AC)
+        self.assertEqual(compare_select_results(expected, expected, False)[0], VerdictCode.AC)
 
         # Comprobacion correcta con minusculas y mayusculas
-        self.assertEqual(compare_select_results(expected, obtained5, False)[0], VeredictCode.AC)
-        self.assertEqual(compare_select_results(expected, obtained6, False)[0], VeredictCode.AC)
-        self.assertEqual(compare_select_results(expected, obtained7, False)[0], VeredictCode.AC)
+        self.assertEqual(compare_select_results(expected, obtained5, False)[0], VerdictCode.AC)
+        self.assertEqual(compare_select_results(expected, obtained6, False)[0], VerdictCode.AC)
+        self.assertEqual(compare_select_results(expected, obtained7, False)[0], VerdictCode.AC)
 
         # Comprobacion de que salen WA
-        self.assertEqual(compare_select_results(expected, obtained2, True)[0], VeredictCode.WA)
-        self.assertEqual(compare_select_results(expected, obtained2, False)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained2, True)[0], VerdictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained2, False)[0], VerdictCode.WA)
 
         # Obtenido con mas filas que el esperado, compruebo sus mensajes
         self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained2, True)[1])
@@ -120,8 +120,8 @@ class FeedbackTest(TestCase):
         self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained2, False)[1])
 
         # Comprobacion de que salen WA
-        self.assertEqual(compare_select_results(expected, obtained3, True)[0], VeredictCode.WA)
-        self.assertEqual(compare_select_results(expected, obtained3, False)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained3, True)[0], VerdictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained3, False)[0], VerdictCode.WA)
 
         # Obtenido con menos filas que el esperado, compruebo sus mensajes
         self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained3, True)[1])
@@ -133,8 +133,8 @@ class FeedbackTest(TestCase):
         self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained3, False)[1])
 
         # Comprobacion de que salen WA
-        self.assertEqual(compare_select_results(expected, obtained1, False)[0], VeredictCode.WA)
-        self.assertEqual(compare_select_results(expected, obtained1, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained1, False)[0], VerdictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained1, True)[0], VerdictCode.WA)
 
         # Comprobacion de que las columnas estan cambiadas Esperado: ID NOMBRE y obtengo NOMBRE ID
         self.assertIn("nombre de la 1ª columna", compare_select_results(expected, obtained1, False)[1])
@@ -143,8 +143,8 @@ class FeedbackTest(TestCase):
                       compare_select_results(expected, obtained1, False)[1])
 
         # Comprobacion de que salen WA
-        self.assertEqual(compare_select_results(expected, obtained4, False)[0], VeredictCode.WA)
-        self.assertEqual(compare_select_results(expected, obtained4, True)[0], VeredictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained4, False)[0], VerdictCode.WA)
+        self.assertEqual(compare_select_results(expected, obtained4, True)[0], VerdictCode.WA)
 
         # Comprobacion de que los tipos no son los adecuados
         self.assertIn("Tipo generado por tu código SQL: ", compare_select_results(expected, obtained4, True)[1])
@@ -165,15 +165,15 @@ class FeedbackTest(TestCase):
         obtained4 = {'table1': table1, 'table2': table3}
 
         # Identical DB
-        self.assertEqual(compare_db_results(expected, expected)[0], VeredictCode.AC)
+        self.assertEqual(compare_db_results(expected, expected)[0], VerdictCode.AC)
         # Missing table
-        self.assertEqual(compare_db_results(expected, obtained1)[0], VeredictCode.WA)
+        self.assertEqual(compare_db_results(expected, obtained1)[0], VerdictCode.WA)
         # Extra table
-        self.assertEqual(compare_db_results(expected, obtained2)[0], VeredictCode.WA)
+        self.assertEqual(compare_db_results(expected, obtained2)[0], VerdictCode.WA)
         # Number and types of tables correct, but one table has different tuples
-        self.assertEqual(compare_db_results(expected, obtained3)[0], VeredictCode.WA)
+        self.assertEqual(compare_db_results(expected, obtained3)[0], VerdictCode.WA)
         # Number and types of tables correct, but one differs in order
-        self.assertEqual(compare_db_results(expected, obtained4)[0], VeredictCode.AC)
+        self.assertEqual(compare_db_results(expected, obtained4)[0], VerdictCode.AC)
 
     def test_compare_function(self):
         """Tests for compare_function_results"""
@@ -182,11 +182,11 @@ class FeedbackTest(TestCase):
         obtained2 = {'fun(1)': 33, 'fun(2)': 56}
 
         # Identical
-        self.assertEqual(compare_function_results(expected, expected)[0], VeredictCode.AC)
+        self.assertEqual(compare_function_results(expected, expected)[0], VerdictCode.AC)
         # Wrong result in first call
-        self.assertEqual(compare_function_results(expected, obtained2)[0], VeredictCode.WA)
+        self.assertEqual(compare_function_results(expected, obtained2)[0], VerdictCode.WA)
         # Wrong result in second call
-        self.assertEqual(compare_function_results(expected, obtained1)[0], VeredictCode.WA)
+        self.assertEqual(compare_function_results(expected, obtained1)[0], VerdictCode.WA)
 
     def test_discriminant_feedback(self):
         """Test for compare discriminant type problems feedback"""
@@ -204,11 +204,11 @@ class FeedbackTest(TestCase):
         order_2_bis = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['PK', "<class 'cx_Oracle.NUMBER'>"]],
                    'rows': [[2, 2], [1, 1]]}
         # Incorrect headers
-        self.assertEqual(compare_discriminant_db(header_e, header_o, False)[0], VeredictCode.WA)
+        self.assertEqual(compare_discriminant_db(header_e, header_o, False)[0], VerdictCode.WA)
         # Correct answer
-        self.assertEqual(compare_discriminant_db(ac_e, ac_o, False)[0], VeredictCode.AC)
+        self.assertEqual(compare_discriminant_db(ac_e, ac_o, False)[0], VerdictCode.AC)
         # Correct answer with order
-        self.assertEqual(compare_discriminant_db(order_1, order_2, True)[0], VeredictCode.AC)
+        self.assertEqual(compare_discriminant_db(order_1, order_2, True)[0], VerdictCode.AC)
         # Incorrect answer with order
         self.assertIn('La inserción que has propuesto no permite detectar el comportamiento erróneo de la sentencia.',
                       compare_discriminant_db(order_2, order_2_bis, True)[1])

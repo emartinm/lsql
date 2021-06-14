@@ -9,7 +9,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 
-from judge.types import VeredictCode
+from judge.types import VerdictCode
 from judge.tests.test_views import create_user, create_collection, create_select_problem, create_submission
 from judge.models import SelectProblem, DMLProblem, FunctionProblem, \
     ProcProblem, TriggerProblem, DiscriminantProblem, Submission, Hint, UsedHint
@@ -64,10 +64,10 @@ class HintTest(TestCase):
                        'descripcion de la pista 2\n    </div>\n</div>'
         create_hint(problem, 1, 3)
         hint2 = create_hint(problem, 2, 5)
-        create_submission(problem, user, VeredictCode.WA, 'select *** from')
-        create_submission(problem, user, VeredictCode.WA, 'select *** from')
-        create_submission(problem, user, VeredictCode.WA, 'select *** from')
-        create_submission(problem, user, VeredictCode.WA, 'select *** from')
+        create_submission(problem, user, VerdictCode.WA, 'select *** from')
+        create_submission(problem, user, VerdictCode.WA, 'select *** from')
+        create_submission(problem, user, VerdictCode.WA, 'select *** from')
+        create_submission(problem, user, VerdictCode.WA, 'select *** from')
 
         hint_url = reverse('judge:hint', args=[problem.pk])
         client.login(username='tamara', password='2222')
@@ -86,7 +86,7 @@ class HintTest(TestCase):
         self.assertEqual(response.json()['more_hints'], True)
 
         # JSON with the last hint
-        create_submission(problem, user, VeredictCode.WA, 'select *** from')
+        create_submission(problem, user, VerdictCode.WA, 'select *** from')
         mens = 'No hay más pistas disponibles para este ejercicio.'
         response = client.post(hint_url, follow=True)
         self.assertEqual(response.json()['hint'], description2)

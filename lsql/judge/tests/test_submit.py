@@ -12,7 +12,7 @@ from judge.models import FunctionProblem, ProcProblem, TriggerProblem, Discrimin
     NumSubmissionsProblemsAchievementDefinition, ObtainedAchievement, NumSolvedTypeAchievementDefinition, \
     SelectProblem
 from judge.tests.test_views import create_collection, create_user, create_select_problem, create_dml_problem
-from judge.types import VeredictCode, ProblemType
+from judge.types import VerdictCode, ProblemType
 
 
 def create_discriminant_problem(important_order, collection, name='Ejemplo'):
@@ -123,7 +123,7 @@ class SubmitTest(TestCase):
             problem.save()
             submit_url = reverse('judge:submit', args=[problem.pk])
             response = client.post(submit_url, {'code': code}, follow=True)
-            self.assertEqual(response.json()['veredict'], VeredictCode.WA)
+            self.assertEqual(response.json()['verdict'], VerdictCode.WA)
             self.assertIn('error', response.json()['feedback'])
             self.assertIn('compil', response.json()['feedback'])
 
@@ -149,7 +149,7 @@ class SubmitTest(TestCase):
             problem.save()
             submit_url = reverse('judge:submit', args=[problem.pk])
             response = client.post(submit_url, {'code': problem.solution}, follow=True)
-            self.assertEqual(response.json()['veredict'], VeredictCode.AC)
+            self.assertEqual(response.json()['verdict'], VerdictCode.AC)
 
     def test_validation_error(self):
         """Test messages obtained in submission that do not containt the correct number of statements"""
@@ -166,25 +166,25 @@ class SubmitTest(TestCase):
         # JSON with VE and correct message for one SQL
         response = client.post(submit_url_select, {'code': f'{select_problem.solution}; {select_problem.solution}'},
                                follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.VE)
         self.assertIn('exactamente 1 sentencia SQL', response.json()['message'])
 
         # JSON with VE and correct message for 1--3 SQL
         stmt = 'INSERT INTO test VALUES (25);'
         response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.VE)
         self.assertIn('entre 2 y 3 sentencias SQL', response.json()['message'])
 
         stmt = 'INSERT INTO test VALUES (25); INSERT INTO test VALUES (50); INSERT INTO test VALUES (75);' \
                'INSERT INTO test VALUES (100);'
         response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.VE)
         self.assertIn('entre 2 y 3 sentencias SQL', response.json()['message'])
 
         # JSON with VE and correct message for less than 10 characters
         stmt = 'holis'
         response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.VE)
         self.assertIn('tu solución no está vacía', response.json()['message'])
 
     def test_select_no_output(self):
@@ -202,7 +202,7 @@ class SubmitTest(TestCase):
 
         for stmt in stmts:
             response = client.post(submit_url_select, {'code': stmt}, follow=True)
-            self.assertEqual(response.json()['veredict'], VeredictCode.WA)
+            self.assertEqual(response.json()['verdict'], VerdictCode.WA)
             self.assertIn('Generado por tu código SQL: 0 columnas', response.json()['feedback'])
 
     def test_discriminant_problem(self):
@@ -216,17 +216,17 @@ class SubmitTest(TestCase):
 
         # Checks that invalid INSERTs are mappet to RE
         response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (a);'}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.RE)
         response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES ()'}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.RE)
         response = client.post(submit_discriminant_url, {'code': 'INSERT merienda;'}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.RE)
 
         # Check a correct answer and an incorrect
         response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (500)'}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.AC)
+        self.assertEqual(response.json()['verdict'], VerdictCode.AC)
         response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (2021)'}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.WA)
+        self.assertEqual(response.json()['verdict'], VerdictCode.WA)
 
         problem_url = reverse('judge:problem', args=[disc_problem.pk])
         response = client.get(problem_url, follow=True)
@@ -235,13 +235,13 @@ class SubmitTest(TestCase):
         submit_discriminant_url = reverse('judge:submit', args=[disc_problem.pk])
         response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (2000, 1990)'},
                                follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.AC)
+        self.assertEqual(response.json()['verdict'], VerdictCode.AC)
         response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (2000, 2000)'},
                                follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.WA)
+        self.assertEqual(response.json()['verdict'], VerdictCode.WA)
         response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table VALUES (2000, 2000)'},
                                follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.RE)
         self.assertEqual(disc_problem.problem_type(), ProblemType.DISC)
 
     def test_achievements_submit(self):

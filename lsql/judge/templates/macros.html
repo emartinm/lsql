@@ -31,7 +31,7 @@
             <th scope="col">{% translate "Usuario" %}</th>
             <th scope="col">{% translate "Fecha" %}</th>
             <th scope="col">{% translate "Problema" %}</th>
-            <th scope="col">{% translate "Veredicto" %}</th>
+            <th scope="col">{% translate "Verdicto" %}</th>
             <th></th>
         </tr>
         </thead>
@@ -42,7 +42,7 @@
             <td>{{s.email}}</td>
             <td>{{s.creation_date_str}}</td>
             <td><strong>{{s.title}}</strong></td>
-            <td>{% autoescape false %}{{s.veredict_code_html}}{% endautoescape %}</td>
+            <td>{% autoescape false %}{{s.verdict_code_html}}{% endautoescape %}</td>
             <td><a href="/sql/submission/{{s.sid}}" title='{% translate "Ver detalles del envío" %}'>{% translate "Ver" %}</a></td>
         </tr>
         {% endfor %}

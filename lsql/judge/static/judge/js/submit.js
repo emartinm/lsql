@@ -22,7 +22,7 @@ function show_error_modal() {
 
 // Shows the 'solved' mark next to the problem title
 function mark_solved(myJson) {
-    if (myJson.veredict == "AC")
+    if (myJson.verdict == "AC")
         $('#check-icon').removeClass("icon-hidden");
 }
 

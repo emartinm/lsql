@@ -103,8 +103,8 @@ class CollectionAdmin(admin.ModelAdmin):
 
 class SubmissionAdmin(admin.ModelAdmin):
     """Model for Submission"""
-    list_display = ('pk', 'user', 'problem', 'veredict_code', 'creation_date')
-    list_filter = ['creation_date', 'veredict_code', 'user']
+    list_display = ('pk', 'user', 'problem', 'verdict_code', 'creation_date')
+    list_filter = ['creation_date', 'verdict_code', 'user']
 
 
 class ProblemAdmin(admin.ModelAdmin):

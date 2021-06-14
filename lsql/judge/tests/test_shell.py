@@ -12,7 +12,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
-from judge.types import VeredictCode
+from judge.types import VerdictCode
 from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Collection, Problem, \
     Submission
 from judge.shell import create_users_from_csv, adapt_db_result_to_list, rejudge
@@ -150,9 +150,9 @@ class ShellTest(TestCase):
         problem = create_select_problem(collection, "example")
         user = create_user(passwd='1111', username='user_Test')
         subs = [
-            Submission(code=problem.solution, veredict_code=VeredictCode.IE, user=user, problem=problem),  # IE->AC
-            Submission(code='SELECT * FROM dual', veredict_code=VeredictCode.IE, user=user, problem=problem),  # IE->WA
-            Submission(code='SELECT * FRO dual', veredict_code=VeredictCode.IE, user=user, problem=problem),  # IE->RE
+            Submission(code=problem.solution, verdict_code=VerdictCode.IE, user=user, problem=problem),  # IE->AC
+            Submission(code='SELECT * FROM dual', verdict_code=VerdictCode.IE, user=user, problem=problem),  # IE->WA
+            Submission(code='SELECT * FRO dual', verdict_code=VerdictCode.IE, user=user, problem=problem),  # IE->RE
         ]
         for sub in subs:
             sub.save()
@@ -161,7 +161,7 @@ class ShellTest(TestCase):
 
         file_desc, filename = mkstemp('_rejudge')
         os.close(file_desc)  # To avoid problems when removing the file in Windows
-        rejudge(VeredictCode.IE, filename, tests=True)
+        rejudge(VerdictCode.IE, filename, tests=True)
         with open(filename, 'r') as summary_file:
             summary = summary_file.read()
             self.assertIn('IE --> AC', summary)

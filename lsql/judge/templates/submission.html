@@ -17,12 +17,12 @@
         </tr>
         <tr>
             <td><strong>{% translate "Resultado" %}:</strong></td>
-            <td>{{ submission.veredict_pretty|safe }}</a></td>
+            <td>{{ submission.verdict_pretty|safe }}</a></td>
         </tr>
-        {% if submission.veredict_msg %}
+        {% if submission.verdict_msg %}
         <tr>
             <td><strong>{% translate "Mensaje" %}:</strong></td>
-            <td>{{submission.veredict_msg}}</td>
+            <td>{{submission.verdict_msg}}</td>
         </tr>
         {% endif %}
         <tr>

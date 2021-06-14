@@ -2,7 +2,7 @@ asgiref==3.3.4
 astroid==2.5.6
 beautifulsoup4==4.9.3
 coverage==5.5
-cx-Oracle==8.1.0
+cx-Oracle==8.2.1
 Django==3.2.4
 django-dbbackup==3.3.0
 django-model-utils==4.1.1
@@ -17,7 +17,7 @@ mccabe==0.6.1
 multiset==2.1.1
 openpyxl==3.0.7
 psycopg2-binary==2.8.6
-pylint==2.8.2
+pylint==2.8.3
 pylint-django==2.4.4
 pylint-plugin-utils==0.6
 pytz==2021.1

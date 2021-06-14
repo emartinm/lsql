@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 from multiset import Multiset
 
-from .types import VeredictCode
+from .types import VerdictCode
 
 __ORACLE_TYPE_PATTERN_VERSION_7 = r"<class 'cx_Oracle\.(.*)'>"
 __ORACLE_TYPE_PATTERN_VERSION_8 = r"<cx_Oracle\.DbType (.*)>"
@@ -152,7 +152,7 @@ def compare_select_results(expected, obtained, order, initial_db=None):
     :param obtained: {'header': list, 'rows': list}, obtained SELECT result (student)
     :param order: Consider order when comparing rows
     :param initial_db: List containing all tables
-    :return: (veredict, feedback), where veredict is VeredictCode.AC or VeredictCode.WA and
+    :return: (verdict, feedback), where verdict is VerdictCode.AC or VerdictCode.WA and
              error is a str with feedback to the student
     """
     parsed_initial_db = None
@@ -164,8 +164,8 @@ def compare_select_results(expected, obtained, order, initial_db=None):
     feedback = feedback_headers(expected, obtained, parsed_initial_db)
     if not feedback:
         feedback = feedback_rows(expected, obtained, order, parsed_initial_db)
-    veredict = VeredictCode.WA if feedback else VeredictCode.AC
-    return veredict, feedback
+    verdict = VerdictCode.WA if feedback else VerdictCode.AC
+    return verdict, feedback
 
 
 def compare_discriminant_db(correct, incorrect, order):
@@ -173,8 +173,8 @@ def compare_discriminant_db(correct, incorrect, order):
     feedback = feedback_headers(correct, incorrect, None)
     if not feedback:
         feedback = feedback_rows_discriminant(correct, incorrect, order)
-    veredict = VeredictCode.WA if feedback else VeredictCode.AC
-    return veredict, feedback
+    verdict = VerdictCode.WA if feedback else VerdictCode.AC
+    return verdict, feedback
 
 
 def feedback_rows_discriminant(correct, incorrect, order):
@@ -196,10 +196,10 @@ def feedback_rows_discriminant(correct, incorrect, order):
 
 def compare_db_results(expected_db, obtained_db):
     """
-    Given an expected DB and an obtained DB, returns a veredict of the comparison and its HTML feedback
+    Given an expected DB and an obtained DB, returns a verdict of the comparison and its HTML feedback
     :param expected_db: dict {table_name: dict}
     :param obtained_db: dict {table_name: dict}
-    :return: (VeredictCode, str)
+    :return: (VerdictCode, str)
     """
     feedback = ''
     expected_tables = set(expected_db.keys())
@@ -208,35 +208,35 @@ def compare_db_results(expected_db, obtained_db):
     if expected_tables != obtained_tables:
         obtained = sorted(list(obtained_db.keys()))
         expected = sorted(list(expected_db.keys()))
-        return VeredictCode.WA, render_to_string('feedback_wa_tables.html',
+        return VerdictCode.WA, render_to_string('feedback_wa_tables.html',
                                                  {'obtained': obtained, 'expected': expected})
 
-    veredict = VeredictCode.AC
+    verdict = VerdictCode.AC
     for table in expected_db:
-        veredict, feedback = compare_select_results(expected_db[table], obtained_db[table], order=False)
-        if veredict != VeredictCode.AC:
+        verdict, feedback = compare_select_results(expected_db[table], obtained_db[table], order=False)
+        if verdict != VerdictCode.AC:
             feedback = _('<h4>La tabla <code>{table}</code> es '
                         'incorrecta:</h4>{feedback}').format(table=table, feedback = feedback)
             break
-    return veredict, feedback
+    return verdict, feedback
 
 
 def compare_function_results(expected, obtained):
     """
-    Given an expected DB and an obtained DB, returns a veredict of the comparison and its HTML feedback
+    Given an expected DB and an obtained DB, returns a verdict of the comparison and its HTML feedback
     :param expected: dict {call: result}
     :param obtained: dict {call: result}
-    :return: (VeredictCode, str)
+    :return: (VerdictCode, str)
     """
-    veredict = VeredictCode.AC
+    verdict = VerdictCode.AC
     feedback = ''
     for call in expected:
         if expected[call] != obtained[call]:
-            veredict = VeredictCode.WA
+            verdict = VerdictCode.WA
             feedback = render_to_string('feedback_wa_function.html',
                                         {'call': call, 'expected': expected[call], 'obtained': obtained[call]})
             break
-    return veredict, feedback
+    return verdict, feedback
 
 
 def compile_error_to_html_table(tab):
@@ -261,7 +261,7 @@ def filter_expected_db(expected_db, initial_db):
         ret_added = {x: expected_db[x] for x in expected_tables if x not in initial_tables}
         ret_removed = {x: initial_db[x] for x in initial_tables if x not in expected_tables}
     for table in common_tables:
-        veredict, _ = compare_select_results(expected_db[table], initial_db[table], order=False)
-        if veredict != VeredictCode.AC:
+        verdict, _ = compare_select_results(expected_db[table], initial_db[table], order=False)
+        if verdict != VerdictCode.AC:
             ret_modified[table] = expected_db[table]
     return ret_added, ret_modified, ret_removed

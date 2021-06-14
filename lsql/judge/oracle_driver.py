@@ -255,6 +255,11 @@ def offset_from_oracle_exception(excp: cx_Oracle.DatabaseError) -> int:
     return oracle_error.offset
 
 
+def is_tle_exception(error_msg):
+    """ Decides if the error_message from the Oracle exception can represent a timeout """
+    return 'DPI-1067' in error_msg or 'DPI-1080' in error_msg or 'DPI-1010' in error_msg
+
+
 # Dropping users will automatically remove all their objects
 # I keep this function just in case is useful in the future
 # def empty_schema(conn):
@@ -489,7 +494,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -518,7 +523,7 @@ class OracleExecutor:
         except cx_Oracle.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing SELECT statements: %s - %s - %s', state, excp, select)
-            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+            if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, select) from excp
             pos = line_col_from_offset(select, offset_from_oracle_exception(excp))
@@ -560,7 +565,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -606,7 +611,7 @@ class OracleExecutor:
         except cx_Oracle.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing DML statements: %s - %s - %s', state, excp, stmt)
-            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+            if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
             raise ExecutorException(state, error_msg, stmt) from excp
@@ -647,7 +652,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -701,7 +706,7 @@ class OracleExecutor:
         except cx_Oracle.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing function statements: %s - %s - %s', state, excp, stmt)
-            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+            if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, excp, stmt) from excp
             raise ExecutorException(state, excp, stmt) from excp
@@ -743,7 +748,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -797,7 +802,7 @@ class OracleExecutor:
         except cx_Oracle.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing procedure creation and call: %s - %s - %s', state, excp, stmt)
-            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+            if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
             raise ExecutorException(state, error_msg, stmt) from excp
@@ -839,7 +844,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -887,7 +892,7 @@ class OracleExecutor:
         except cx_Oracle.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing trigger creation and call: %s - %s - %s', state, excp, stmt)
-            if ('ORA-3156' in error_msg or 'ORA-24300' in error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
+            if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
             if 'ORA-04098' in error_msg:
@@ -934,7 +939,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.callTimeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -966,7 +971,7 @@ class OracleExecutor:
             error_msg = str(excp)
             logger.info('Error when testing DISCRIMINANT problem: %s - %s - %s - %s - %s', state, excp, insertion_user,
                         select_correct, select_incorrect)
-            if 'ORA-3156' in error_msg or 'ORA-24300' in error_msg:
+            if is_tle_exception(error_msg):
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg,
                                         (insertion_user, select_correct, select_incorrect)) from excp

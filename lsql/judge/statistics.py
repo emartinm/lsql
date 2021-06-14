@@ -12,7 +12,7 @@ from django.db.models import Count
 from django.contrib.auth.models import Group
 
 from .models import Submission
-from .types import VeredictCode
+from .types import VerdictCode
 
 
 def submissions_by_day(start=None, end=None, verdict_code=None):
@@ -24,8 +24,8 @@ def submissions_by_day(start=None, end=None, verdict_code=None):
         verdict. Ignores submissions by staff or inactive users.
     """
     active_students = get_user_model().objects.filter(is_staff=False, is_active=True)
-    codes = VeredictCode.values if verdict_code is None else [verdict_code]
-    subs = Submission.objects.filter(veredict_code__in=codes, user__in=active_students).order_by("pk")
+    codes = VerdictCode.values if verdict_code is None else [verdict_code]
+    subs = Submission.objects.filter(verdict_code__in=codes, user__in=active_students).order_by("pk")
 
     # List of epochs at 00:00 (in milliseconds) of each day for every submission
     days = list(map(lambda d: int(d.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()) * 1000,
@@ -48,9 +48,9 @@ def submission_count():
     """
     active_students = get_user_model().objects.filter(is_staff=False, is_active=True)
     counter = (Submission.objects.filter(user__in=active_students)
-               .values('veredict_code').annotate(count=Count('veredict_code')))
-    result = {k: 0 for k in VeredictCode.values}
-    counts = {entry['veredict_code']: entry['count'] for entry in counter}
+               .values('verdict_code').annotate(count=Count('verdict_code')))
+    result = {k: 0 for k in VerdictCode.values}
+    counts = {entry['verdict_code']: entry['count'] for entry in counter}
     result.update(counts)  # Keep all verdict_codes, even those withouth submissions (value of 0)
     result['all'] = sum(result.values())
     return result
@@ -75,7 +75,7 @@ def participation_per_group():
     for group in Group.objects.all():
         users = group.user_set.filter(is_staff=False, is_active=True)
         participating_count = Submission.objects.filter(user__in=users).order_by('user').distinct('user').count()
-        acc_count = (Submission.objects.filter(veredict_code=VeredictCode.AC, user__in=users).order_by('user')
+        acc_count = (Submission.objects.filter(verdict_code=VerdictCode.AC, user__in=users).order_by('user')
                      .distinct('user').count())
         # Statistics of submissions per user
         subs_per_user = (Submission.objects.filter(user__in=users).values('user').annotate(count=Count('user')))

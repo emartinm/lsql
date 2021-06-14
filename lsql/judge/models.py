@@ -22,7 +22,7 @@ from django.utils import translation
 
 from .feedback import compare_select_results, compare_db_results, compare_function_results, compare_discriminant_db
 from .oracle_driver import OracleExecutor
-from .types import VeredictCode, ProblemType
+from .types import VerdictCode, ProblemType
 from .parse import load_select_problem, load_dml_problem, load_function_problem, load_proc_problem, \
     load_trigger_problem, load_discriminant_problem
 from .exceptions import ZipFileParsingException
@@ -121,7 +121,7 @@ class Collection(models.Model):
 
     def num_solved_by_user(self, user):
         """Number of problems solved by user in this collection"""
-        return Submission.objects.filter(veredict_code='AC', problem__collection=self, user=user) \
+        return Submission.objects.filter(verdict_code='AC', problem__collection=self, user=user) \
             .distinct('problem').count()
 
     def languages(self):
@@ -180,7 +180,7 @@ class Problem(models.Model):
 
     def solved_by_user(self, user) -> bool:
         """Whether user has solved the problem or not"""
-        return Submission.objects.filter(user=user, problem=self, veredict_code=VeredictCode.AC).count() > 0
+        return Submission.objects.filter(user=user, problem=self, verdict_code=VerdictCode.AC).count() > 0
 
     def num_submissions_by_user(self, user):
         """Number of user submissions to the problem"""
@@ -189,7 +189,7 @@ class Problem(models.Model):
     def solved_n_position(self, position):
         """User (non-staff and active) who solved the problem in 'position' position"""
         active_students = get_user_model().objects.filter(is_staff=False, is_active=True)
-        pks = Submission.objects.filter(problem=self, veredict_code=VeredictCode.AC, user__in=active_students) \
+        pks = Submission.objects.filter(problem=self, verdict_code=VerdictCode.AC, user__in=active_students) \
             .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
         subs = Submission.objects.filter(pk__in=pks).order_by('pk')[position - 1:position]
         if len(subs) > 0 and subs[0] is not None:
@@ -214,7 +214,7 @@ class Problem(models.Model):
             active_students = get_user_model().objects.filter(is_staff=False, is_active=True)
             iterator = 1
             users_ac = (Submission.objects.
-                        filter(problem=self, user__in=active_students, veredict_code=VeredictCode.AC).
+                        filter(problem=self, user__in=active_students, verdict_code=VerdictCode.AC).
                         order_by('pk', 'user').
                         distinct('pk', 'user').
                         values_list('user', flat=True))
@@ -260,24 +260,24 @@ class SelectProblem(Problem):
         first_insert_sql = self.insert_sql_list()[0]
         oracle_result = executor.execute_select_test(self.create_sql, first_insert_sql, code, output_db=False)
         # Check first code with first db
-        veredict, feedback = compare_select_results(self.expected_result[0], oracle_result['result'], self.check_order)
-        if veredict != VeredictCode.AC:
-            return veredict, feedback
+        verdict, feedback = compare_select_results(self.expected_result[0], oracle_result['result'], self.check_order)
+        if verdict != VerdictCode.AC:
+            return verdict, feedback
         # Get results using secondary dbs
         insert_sql_extra_list = self.insert_sql_list()[1:]
         initial_db_count = 1
         for insert_sql_extra in insert_sql_extra_list:
             oracle_result_extra = executor.execute_select_test(self.create_sql, insert_sql_extra, code, output_db=False)
             # Check secondary results
-            veredict_extra, feedback_extra = compare_select_results(self.expected_result[initial_db_count],
+            verdict_extra, feedback_extra = compare_select_results(self.expected_result[initial_db_count],
                                                                     oracle_result_extra['result'],
                                                                     self.check_order,
                                                                     self.initial_db[initial_db_count])
-            if veredict_extra != VeredictCode.AC:
-                return veredict_extra, feedback_extra
+            if verdict_extra != VerdictCode.AC:
+                return verdict_extra, feedback_extra
             initial_db_count += 1
         # If all results are correct then return first one
-        return veredict, feedback
+        return verdict, feedback
 
     def problem_type(self):
         return ProblemType.SELECT
@@ -474,17 +474,17 @@ class Submission(models.Model):
     """ A user submission """
     creation_date = models.DateTimeField(auto_now_add=True)
     code = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
-    veredict_code = models.CharField(
+    verdict_code = models.CharField(
         max_length=3,
-        choices=VeredictCode.choices,
-        default=VeredictCode.AC
+        choices=VerdictCode.choices,
+        default=VerdictCode.AC
     )
-    veredict_message = models.CharField(max_length=5000, null=True)
+    verdict_message = models.CharField(max_length=5000, null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.pk} - {self.user.email} - {self.veredict_code}"
+        return f"{self.pk} - {self.user.email} - {self.verdict_code}"
 
 
 def default_json_lang():
@@ -551,12 +551,12 @@ class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
     def check_and_save(self, user):
         """Return if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
-            corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).distinct("problem").count()
+            corrects = Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).distinct("problem").count()
             if corrects >= self.num_problems:
-                # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
-                # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
+                # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
+                # Subquery return a list of creation_date of the problems that user have VerdictCode.AC
                 order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
-                    Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
+                    Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).
                     order_by('problem', 'creation_date').distinct('problem').values('creation_date'))).\
                     order_by('creation_date').values_list('creation_date', flat=True)
                 new_achievement = ObtainedAchievement(user=user,
@@ -575,10 +575,10 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
     def check_and_save(self, user):
         """Return if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
-            # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
-            # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
+            # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
+            # Subquery return a list of creation_date of the problems that user have VerdictCode.AC
             order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
-                Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
+                Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).
                 order_by('problem', 'creation_date').distinct('problem').values('creation_date'))). \
                 order_by('creation_date')
             total = 0
@@ -604,13 +604,13 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
     def check_and_save(self, user):
         """Return if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
-            corrects = Submission.objects.filter(veredict_code=VeredictCode.AC, user=user,
+            corrects = Submission.objects.filter(verdict_code=VerdictCode.AC, user=user,
                                                  problem__collection=self.collection).distinct("problem").count()
             if corrects >= self.num_problems:
-                # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
-                # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
+                # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
+                # Subquery return a list of creation_date of the problems that user have VerdictCode.AC
                 order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
-                    Submission.objects.filter(veredict_code=VeredictCode.AC, user=user,
+                    Submission.objects.filter(verdict_code=VerdictCode.AC, user=user,
                                               problem__collection=self.collection).
                     order_by('problem', 'creation_date').distinct('problem').values('creation_date')
                 )).order_by('creation_date').values_list('creation_date', flat=True)
@@ -636,10 +636,10 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
         """Return if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             count = 0
-            # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
-            # Subquery return a list of creation_date of the problems that user have VeredictCode.AC
+            # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
+            # Subquery return a list of creation_date of the problems that user have VerdictCode.AC
             order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
-                Submission.objects.filter(veredict_code=VeredictCode.AC, user=user).
+                Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).
                 order_by('problem', 'creation_date').distinct('problem').values('creation_date')
             )).order_by('creation_date')
             for sub in order_problem_creation_date:
@@ -667,7 +667,7 @@ class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.
             if total_submissions >= self.num_submissions:
                 total_prob = Submission.objects.filter(user=user).distinct("problem").count()
                 if total_prob >= self.num_problems:
-                    # First submission of each Problem that user have VeredictCode.AC. Ordered by 'creation_date'
+                    # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
                     # Subquery return a list of creation_date of the problems that user submitted a solution
                     order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
                         Submission.objects.filter(user=user).order_by('problem', 'creation_date').distinct('problem').

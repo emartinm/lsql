@@ -32,7 +32,7 @@ from .forms import SubmitForm, ResultForm
 from .models import Collection, Problem, Submission, ObtainedAchievement, AchievementDefinition, \
     NumSubmissionsProblemsAchievementDefinition, Hint, UsedHint
 from .oracle_driver import OracleExecutor
-from .types import VeredictCode, OracleStatusCode, ProblemType
+from .types import VerdictCode, OracleStatusCode, ProblemType
 from .statistics import submissions_by_day, submission_count, participation_per_group
 
 # TRANSLATIONS #
@@ -92,7 +92,7 @@ def update_user_with_scores(user_logged, user, collection, start, end):
         else:
             subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
         for (submission_pos, submission) in enumerate(subs):
-            if submission.veredict_code == VeredictCode.AC:
+            if submission.verdict_code == VerdictCode.AC:
                 num_accepted = num_accepted + 1
             if num_accepted == 1 and not enter:
                 enter = True
@@ -115,15 +115,15 @@ def update_user_attempts_problem(attempts, user, problem, num_accepted, collecti
     user.collection.append(problem)
 
 
-def check_if_get_achievement(user, veredict):
+def check_if_get_achievement(user, verdict):
     """Check if the user get some achievement and return a list of obtained achievements"""
     obtained_achievements = []
-    if veredict == VeredictCode.AC:
+    if verdict == VerdictCode.AC:
         for ach in AchievementDefinition.objects.all().select_subclasses():
             if ach.check_and_save(user):
                 obtained_achievements.append(ach)
 
-    # If the veredict != AC (correct) only can get a NumSubmissionsProblemsAchievementDefinition
+    # If the verdict != AC (correct) only can get a NumSubmissionsProblemsAchievementDefinition
     else:
         for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():
             if ach.check_and_save(user):
@@ -336,7 +336,7 @@ def show_submissions(request):
         else:
             subs = Submission.objects.filter(user=request.user).order_by('-pk')
         for submission in subs:
-            submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
+            submission.verdict_pretty = VerdictCode(submission.verdict_code).html_short_name()
         return render(request, 'submissions.html', {'submissions': subs})
     except ValueError:
         return HttpResponseNotFound(_("El identificador no tiene el formato correcto"))
@@ -381,7 +381,7 @@ def show_submission(request, submission_id):
     submission = get_object_or_404(Submission, pk=submission_id)
     if submission.user != request.user and not request.user.is_staff:
         return HttpResponseForbidden("Forbidden")
-    submission.veredict_pretty = VeredictCode(submission.veredict_code).html_short_name()
+    submission.verdict_pretty = VerdictCode(submission.verdict_code).html_short_name()
     return render(request, 'submission.html', {'submission': submission})
 
 
@@ -412,7 +412,7 @@ def download(_, problem_id):
 
 
 @login_required
-# pylint does not understand the dynamic attributes in VeredictCode (TextChoices), so we need to disable
+# pylint does not understand the dynamic attributes in VerdictCode (TextChoices), so we need to disable
 # no-member warning in this specific function
 # pylint: disable=no-member
 def submit(request, problem_id):
@@ -421,23 +421,23 @@ def submit(request, problem_id):
     general_problem = get_object_or_404(Problem, pk=problem_id)
     problem = get_subclass_problem(problem_id)
     submit_form = SubmitForm(request.POST)
-    data = {'veredict': VeredictCode.IE, 'title': VeredictCode.IE.label,
-            'message': VeredictCode.IE.message(), 'feedback': ''}
+    data = {'verdict': VerdictCode.IE, 'title': VerdictCode.IE.label,
+            'message': VerdictCode.IE.message(), 'feedback': ''}
     code = ''
     if submit_form.is_valid():
         try:
             # AC or WA
             code = submit_form.cleaned_data['code']
-            data['veredict'], data['feedback'] = problem.judge(code, OracleExecutor.get())
-            data['title'] = data['veredict'].label
-            data['message'] = data['veredict'].message()
+            data['verdict'], data['feedback'] = problem.judge(code, OracleExecutor.get())
+            data['title'] = data['verdict'].label
+            data['message'] = data['verdict'].message()
         except ExecutorException as excp:
             # Exceptions when judging: RE, TLE, VE or IE
             if excp.error_code == OracleStatusCode.EXECUTE_USER_CODE:
                 data = {
-                    'veredict': VeredictCode.RE,
-                    'title': VeredictCode.RE.label,
-                    'message': VeredictCode.RE.message(),
+                    'verdict': VerdictCode.RE,
+                    'title': VerdictCode.RE.label,
+                    'message': VerdictCode.RE.message(),
                     'feedback': (f'{excp.statement} --> {excp.message}'
                                  if problem.problem_type() == ProblemType.FUNCTION else excp.message),
                     'position': excp.position,
@@ -445,23 +445,23 @@ def submit(request, problem_id):
                                                                                      col=excp.position[1]+1)
                 }
             elif excp.error_code == OracleStatusCode.TLE_USER_CODE:
-                data = {'veredict': VeredictCode.TLE, 'title': VeredictCode.TLE.label,
-                        'message': VeredictCode.TLE.message(), 'feedback': ''}
+                data = {'verdict': VerdictCode.TLE, 'title': VerdictCode.TLE.label,
+                        'message': VerdictCode.TLE.message(), 'feedback': ''}
             elif excp.error_code == OracleStatusCode.NUMBER_STATEMENTS:
-                data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
-                        'message': VeredictCode.VE.message(problem), 'feedback': excp.message}
+                data = {'verdict': VerdictCode.VE, 'title': VerdictCode.VE.label,
+                        'message': VerdictCode.VE.message(problem), 'feedback': excp.message}
             elif excp.error_code == OracleStatusCode.COMPILATION_ERROR:
-                data = {'veredict': VeredictCode.WA, 'title': VeredictCode.WA.label,
-                        'message': VeredictCode.WA.message(), 'feedback': compile_error_to_html_table(excp.message)}
+                data = {'verdict': VerdictCode.WA, 'title': VerdictCode.WA.label,
+                        'message': VerdictCode.WA.message(), 'feedback': compile_error_to_html_table(excp.message)}
     else:
-        data = {'veredict': VeredictCode.VE, 'title': VeredictCode.VE.label,
-                'message': VeredictCode.VE.message(), 'feedback': ''}
+        data = {'verdict': VerdictCode.VE, 'title': VerdictCode.VE.label,
+                'message': VerdictCode.VE.message(), 'feedback': ''}
 
-    submission = Submission(code=code, veredict_code=data['veredict'], veredict_message=data['message'],
+    submission = Submission(code=code, verdict_code=data['verdict'], verdict_message=data['message'],
                             user=request.user, problem=general_problem)
     submission.save()
     # If verdict is correct look for an achievement to complete if it's possible
-    achieve_list = check_if_get_achievement(request.user, data['veredict'])
+    achieve_list = check_if_get_achievement(request.user, data['verdict'])
 
     if achieve_list:
         if len(achieve_list) == 1:
@@ -568,9 +568,9 @@ def statistics_submissions(request):
     all_submissions_count = submissions_by_day()
     start = all_submissions_count[0][0] if all_submissions_count else None
     end = all_submissions_count[-1][0] if all_submissions_count else None
-    ac_submissions = submissions_by_day(start, end, verdict_code=VeredictCode.AC)
-    wa_submissions = submissions_by_day(start, end, verdict_code=VeredictCode.WA)
-    re_submissions = submissions_by_day(start, end, verdict_code=VeredictCode.RE)
+    ac_submissions = submissions_by_day(start, end, verdict_code=VerdictCode.AC)
+    wa_submissions = submissions_by_day(start, end, verdict_code=VerdictCode.WA)
+    re_submissions = submissions_by_day(start, end, verdict_code=VerdictCode.RE)
     sub_count = submission_count()
     involved_users = participation_per_group()
     return render(request, 'statistics_submissions.html',

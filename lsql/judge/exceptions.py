@@ -2,7 +2,7 @@
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
-Custom exceptions when accessing the PostgreSQL database in LSQL
+Custom exceptions when running LearnSQL
 """
 
 

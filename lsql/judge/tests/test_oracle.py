@@ -12,7 +12,7 @@ from django.test import TestCase
 from judge.oracle_driver import OracleExecutor, clean_sql, line_col_from_offset
 from judge.models import SelectProblem, Collection, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, \
     DiscriminantProblem
-from judge.types import VeredictCode, OracleStatusCode
+from judge.types import VerdictCode, OracleStatusCode
 from judge.exceptions import ExecutorException
 
 SELECT_TLE = '''
@@ -111,16 +111,16 @@ class OracleTest(TestCase):
                                        OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
+        self.assertEqual(problem.judge(solution, oracle)[0], VerdictCode.AC)
         self.assertEqual(problem.judge('SELECT CIF, NOmbre, Sede, Num_Socios FROM "Nombre Club"', oracle)[0],
-                         VeredictCode.AC)
+                         VerdictCode.AC)
         self.assertEqual(problem.judge('SELECT * FROM "Nombre Club" ORDER BY Num_Socios ASC', oracle)[0],
-                         VeredictCode.AC)
+                         VerdictCode.AC)
 
         # Incorrect solution
-        self.assertEqual(problem.judge('SELECT CIF FROM "Nombre Club"', oracle)[0], VeredictCode.WA)
+        self.assertEqual(problem.judge('SELECT CIF FROM "Nombre Club"', oracle)[0], VerdictCode.WA)
         self.assertEqual(problem.judge('SELECT * FROM "Nombre Club" WHERE Num_Socios < 50000', oracle)[0],
-                         VeredictCode.WA)
+                         VerdictCode.WA)
 
     def test_dml(self):
         """Tests for DMLProblem.judge()"""
@@ -210,12 +210,12 @@ class OracleTest(TestCase):
             lambda: problem.judge(syntax_err, oracle), OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
-        self.assertEqual(problem.judge(solution_order, oracle)[0], VeredictCode.AC)
+        self.assertEqual(problem.judge(solution, oracle)[0], VerdictCode.AC)
+        self.assertEqual(problem.judge(solution_order, oracle)[0], VerdictCode.AC)
 
         # Incorrect solution
-        self.assertEqual(problem.judge(incorrect1, oracle)[0], VeredictCode.WA)
-        self.assertEqual(problem.judge(incorrect2, oracle)[0], VeredictCode.WA)
+        self.assertEqual(problem.judge(incorrect1, oracle)[0], VerdictCode.WA)
+        self.assertEqual(problem.judge(incorrect2, oracle)[0], VerdictCode.WA)
 
         # Time-limit
         self.assert_executor_exception(lambda: problem2.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
@@ -324,10 +324,10 @@ class OracleTest(TestCase):
                                        OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
+        self.assertEqual(problem.judge(solution, oracle)[0], VerdictCode.AC)
 
         # Incorrect solution
-        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VeredictCode.WA)
+        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VerdictCode.WA)
 
     def test_proc(self):
         """Tests for ProcProblem.judge()"""
@@ -427,10 +427,10 @@ class OracleTest(TestCase):
                                        OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
+        self.assertEqual(problem.judge(solution, oracle)[0], VerdictCode.AC)
 
         # Incorrect solution
-        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VeredictCode.WA)
+        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VerdictCode.WA)
 
     def test_trigger(self):
         """Tests for TriggerProblem.judge()"""
@@ -526,10 +526,10 @@ class OracleTest(TestCase):
         self.assert_executor_exception(lambda: problem.judge(runtime_error, oracle), OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
+        self.assertEqual(problem.judge(solution, oracle)[0], VerdictCode.AC)
 
         # Incorrect solution
-        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VeredictCode.WA)
+        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VerdictCode.WA)
 
     def test_discriminant(self):
         """Tests for DiscriminantProblem.judge(): clubs with more than 1000 followers"""
@@ -583,10 +583,10 @@ class OracleTest(TestCase):
             self.assertEqual(ctx.exception.error_code, OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
-        self.assertEqual(problem.judge(accepted, oracle)[0], VeredictCode.AC)
+        self.assertEqual(problem.judge(accepted, oracle)[0], VerdictCode.AC)
 
         # Incorrect solution
-        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VeredictCode.WA)
+        self.assertEqual(problem.judge(wrong_answer, oracle)[0], VerdictCode.WA)
 
     def test_table_with_date(self):
         """Check that DATEs are correctly stored and retrived from the DB, and comparing them to a new obtained
@@ -602,10 +602,10 @@ class OracleTest(TestCase):
         select_problem.clean()
         select_problem.save()
         oracle = OracleExecutor.get()
-        veredict, _ = select_problem.judge(solution, oracle)
-        self.assertEqual(veredict, VeredictCode.AC)
-        veredict, _ = select_problem.judge("SELECT TO_DATE('2003/07/09', 'yyyy/mm/dd') AS day FROM dual", oracle)
-        self.assertEqual(veredict, VeredictCode.AC)
+        verdict, _ = select_problem.judge(solution, oracle)
+        self.assertEqual(verdict, VerdictCode.AC)
+        verdict, _ = select_problem.judge("SELECT TO_DATE('2003/07/09', 'yyyy/mm/dd') AS day FROM dual", oracle)
+        self.assertEqual(verdict, VerdictCode.AC)
 
     def test_dangling_users(self):
         """Removes a manually created dangling user with an open connection"""

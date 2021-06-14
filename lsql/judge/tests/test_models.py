@@ -15,7 +15,7 @@ from django.conf import settings
 
 from judge.oracle_driver import OracleExecutor
 from judge.models import SelectProblem, Collection, Submission, Problem, DiscriminantProblem, default_json_lang
-from judge.types import VeredictCode
+from judge.types import VerdictCode
 
 
 class ModelsTest(TestCase):
@@ -58,12 +58,12 @@ class ModelsTest(TestCase):
         user1.save()
         user2.save()
 
-        sub1 = Submission(code='nada', veredict_code=VeredictCode.WA, user=user1, problem=problem1)
-        sub2 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1)
-        sub3 = Submission(code='nada', veredict_code=VeredictCode.TLE, user=user1, problem=problem1)
-        sub4 = Submission(code='nada', veredict_code=VeredictCode.RE, user=user1, problem=problem1)
-        sub5 = Submission(code='nada', veredict_code=VeredictCode.VE, user=user1, problem=problem1)
-        sub6 = Submission(code='nada', veredict_code=VeredictCode.IE, user=user1, problem=problem1)
+        sub1 = Submission(code='nada', verdict_code=VerdictCode.WA, user=user1, problem=problem1)
+        sub2 = Submission(code='nada', verdict_code=VerdictCode.AC, user=user1, problem=problem1)
+        sub3 = Submission(code='nada', verdict_code=VerdictCode.TLE, user=user1, problem=problem1)
+        sub4 = Submission(code='nada', verdict_code=VerdictCode.RE, user=user1, problem=problem1)
+        sub5 = Submission(code='nada', verdict_code=VerdictCode.VE, user=user1, problem=problem1)
+        sub6 = Submission(code='nada', verdict_code=VerdictCode.IE, user=user1, problem=problem1)
         self.assertTrue('WA' in str(sub1))
         self.assertTrue('AC' in str(sub2))
 
@@ -139,10 +139,10 @@ class ModelsTest(TestCase):
                                 author=None, check_order=False, solution=solution)
         problem.clean()
         problem.save()
-        self.assertEqual(problem.judge(solution, oracle)[0], VeredictCode.AC)
+        self.assertEqual(problem.judge(solution, oracle)[0], VerdictCode.AC)
         self.assertEqual(problem.judge("SELECT Sede, Nombre FROM Club WHERE Nombre ='Madrid';", oracle)[0],
-                         VeredictCode.WA)
-        self.assertEqual(problem.judge("SELECT Sede, Nombre FROM Club;", oracle)[0], VeredictCode.WA)
+                         VerdictCode.WA)
+        self.assertEqual(problem.judge("SELECT Sede, Nombre FROM Club;", oracle)[0], VerdictCode.WA)
 
         html = problem.judge("SELECT Sede, Nombre FROM Club WHERE CIF = '11111111X' and Nombre ='Madrid';", oracle)[1]
         soup = BeautifulSoup(html, 'html.parser')
@@ -215,11 +215,11 @@ class ModelsTest(TestCase):
         self.assertIsNone(problem1.solved_second())
         self.assertIsNone(problem1.solved_third())
 
-        sub1 = Submission(code='nada', veredict_code=VeredictCode.WA, user=user1, problem=problem1)
-        sub2 = Submission(code='nada', veredict_code=VeredictCode.IE, user=user1, problem=problem1)
-        sub3 = Submission(code='nada', veredict_code=VeredictCode.TLE, user=user1, problem=problem1)
-        sub4 = Submission(code='nada', veredict_code=VeredictCode.RE, user=user1, problem=problem1)
-        sub5 = Submission(code='nada', veredict_code=VeredictCode.VE, user=user1, problem=problem1)
+        sub1 = Submission(code='nada', verdict_code=VerdictCode.WA, user=user1, problem=problem1)
+        sub2 = Submission(code='nada', verdict_code=VerdictCode.IE, user=user1, problem=problem1)
+        sub3 = Submission(code='nada', verdict_code=VerdictCode.TLE, user=user1, problem=problem1)
+        sub4 = Submission(code='nada', verdict_code=VerdictCode.RE, user=user1, problem=problem1)
+        sub5 = Submission(code='nada', verdict_code=VerdictCode.VE, user=user1, problem=problem1)
 
         for sub in [sub1, sub2, sub3, sub4, sub5]:
             sub.save()
@@ -228,35 +228,35 @@ class ModelsTest(TestCase):
         self.assertIsNone(problem1.solved_second())
         self.assertIsNone(problem1.solved_third())
 
-        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
+        Submission(code='nada', verdict_code=VerdictCode.AC, user=user1, problem=problem1).save()
 
         self.assertEqual(problem1.solved_first(), user1)
         self.assertIsNone(problem1.solved_second())
         self.assertIsNone(problem1.solved_third())
 
-        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
-        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
+        Submission(code='nada', verdict_code=VerdictCode.AC, user=user1, problem=problem1).save()
+        Submission(code='nada', verdict_code=VerdictCode.AC, user=user1, problem=problem1).save()
 
         self.assertEqual(problem1.solved_first(), user1)
         self.assertIsNone(problem1.solved_second())
         self.assertIsNone(problem1.solved_third())
 
-        Submission(code='nada', veredict_code=VeredictCode.AC, user=user2, problem=problem1).save()
+        Submission(code='nada', verdict_code=VerdictCode.AC, user=user2, problem=problem1).save()
 
         self.assertEqual(problem1.solved_first(), user1)
         self.assertEqual(problem1.solved_second(), user2)
         self.assertIsNone(problem1.solved_third())
 
-        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
-        Submission(code='nada', veredict_code=VeredictCode.AC, user=user3, problem=problem1).save()
+        Submission(code='nada', verdict_code=VerdictCode.AC, user=user1, problem=problem1).save()
+        Submission(code='nada', verdict_code=VerdictCode.AC, user=user3, problem=problem1).save()
 
         self.assertEqual(problem1.solved_first(), user1)
         self.assertEqual(problem1.solved_second(), user2)
         self.assertEqual(problem1.solved_third(), user3)
 
-        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
-        Submission(code='nada', veredict_code=VeredictCode.AC, user=user1, problem=problem1).save()
-        Submission(code='nada', veredict_code=VeredictCode.AC, user=user4, problem=problem1).save()
+        Submission(code='nada', verdict_code=VerdictCode.AC, user=user1, problem=problem1).save()
+        Submission(code='nada', verdict_code=VerdictCode.AC, user=user1, problem=problem1).save()
+        Submission(code='nada', verdict_code=VerdictCode.AC, user=user4, problem=problem1).save()
 
         self.assertEqual(problem1.solved_first(), user1)
         self.assertEqual(problem1.solved_second(), user2)
@@ -348,9 +348,9 @@ class ModelsTest(TestCase):
         problem.clean()
         problem.save()
 
-        sub1 = Submission(code='nada', veredict_code=VeredictCode.AC, user=staff_user, problem=problem)
-        sub2 = Submission(code='nada', veredict_code=VeredictCode.AC, user=inactive_user, problem=problem)
-        sub3 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user, problem=problem)
+        sub1 = Submission(code='nada', verdict_code=VerdictCode.AC, user=staff_user, problem=problem)
+        sub2 = Submission(code='nada', verdict_code=VerdictCode.AC, user=inactive_user, problem=problem)
+        sub3 = Submission(code='nada', verdict_code=VerdictCode.AC, user=user, problem=problem)
         for sub in (sub1, sub2, sub3):
             sub.clean()
             sub.save()

@@ -106,14 +106,14 @@ def adapt_db_result_to_list():
 def rejudge(verdict_code, filename='rejudge.txt', tests=False, start=datetime.datetime(1970, 1, 1),
             end=datetime.datetime.now()):
     """ Judges again all the submission in the period [start, end] with some verdict_code. For each submission,
-        submit the code, compares the veredict, and stores detailed information in the 'filename'.
+        submit the code, compares the verdict, and stores detailed information in the 'filename'.
         Use tests=False for Django tests, tests=True for normal use
     """
     username = 'rejudge_user_test_983'
     passwd = '1111'
 
     try:
-        subs = Submission.objects.filter(veredict_code=verdict_code, creation_date__gte=start, creation_date__lte=end)
+        subs = Submission.objects.filter(verdict_code=verdict_code, creation_date__gte=start, creation_date__lte=end)
         rejudge_users = get_user_model().objects.filter(username=username)
         # In case the user was not deleted in a previous execution
         user = (rejudge_users[0] if len(rejudge_users) == 1 else
@@ -136,7 +136,7 @@ def rejudge(verdict_code, filename='rejudge.txt', tests=False, start=datetime.da
                 report.write(f'Date: {sub.creation_date}\n')
                 report.write(f'Code ({len(sub.code)} chars):\n{sub.code}\n')
                 response_json = response.json()
-                verdict_change = f'{sub.veredict_code} --> {response_json["veredict"]}'
+                verdict_change = f'{sub.verdict_code} --> {response_json["verdict"]}'
                 report.write(f'Verdict: {verdict_change}\n')
                 report.write(f'New feedback: {response_json["feedback"]}\n')
                 report.write('\n\n')

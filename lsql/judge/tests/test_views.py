@@ -14,7 +14,7 @@ from django.contrib.auth.models import Group
 
 from judge.models import Collection, SelectProblem, Submission, FunctionProblem, DMLProblem, ProcProblem, \
     TriggerProblem
-from judge.types import VeredictCode
+from judge.types import VerdictCode
 import judge.tests.test_oracle
 from judge.tests.test_parse import ParseTest
 from judge.views import first_day_of_course
@@ -99,9 +99,9 @@ def create_group(name='nombre'):
     return group
 
 
-def create_submission(problem, user, veredict, code='nada'):
+def create_submission(problem, user, verdict, code='nada'):
     """Creates and stores a submission"""
-    sub = Submission(code=code, veredict_code=veredict, user=user, problem=problem)
+    sub = Submission(code=code, verdict_code=verdict, user=user, problem=problem)
     sub.clean()
     sub.save()
     return sub
@@ -116,7 +116,7 @@ class ViewsTest(TestCase):
         collection = create_collection()
         problem = create_select_problem(collection)
         user = create_user('1234')
-        submission = create_submission(problem, user, VeredictCode.AC)
+        submission = create_submission(problem, user, VerdictCode.AC)
 
         collections_url = reverse('judge:collections')
         login_redirect_url = reverse('judge:login')
@@ -190,7 +190,7 @@ class ViewsTest(TestCase):
         problem_dml = create_dml_problem(collection, 'DMLProblem')
         user = create_user('5555', 'pepe')
         create_user('1234', 'ana')
-        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
+        submission = create_submission(problem, user, VerdictCode.AC, 'select *** from *** where *** and more')
         client.login(username='pepe', password='5555')
 
         collections_url = reverse('judge:collections')
@@ -228,28 +228,28 @@ class ViewsTest(TestCase):
 
         # JSON with AC
         response = client.post(submit_url, {'code': problem.solution}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.AC)
+        self.assertEqual(response.json()['verdict'], VerdictCode.AC)
 
         # JSON with WA
         response = client.post(submit_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.WA)
+        self.assertEqual(response.json()['verdict'], VerdictCode.WA)
 
         # JSON with VE
         response = client.post(submit_url, {'code': ''}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.VE)
 
         # JSON with VE
         response = client.post(submit_url, {'code': 'select * from test; select * from test;'}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.VE)
 
         # JSON with TLE
         tle = judge.tests.test_oracle.SELECT_TLE
         response = client.post(submit_url, {'code': tle}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.TLE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.TLE)
 
         # JSON with RE (table and column do not exist)
         response = client.post(submit_url, {'code': 'SELECT pumba FROM timon'}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.RE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.RE)
 
         # There must be 7 submission to problem
         response = client.get(submissions_url, follow=True)
@@ -257,7 +257,7 @@ class ViewsTest(TestCase):
 
         # JSON with VE (new Problem)
         response = client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        self.assertEqual(response.json()['veredict'], VeredictCode.VE)
+        self.assertEqual(response.json()['verdict'], VerdictCode.VE)
 
         # There must be 1 submission to new problem
         response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
@@ -303,7 +303,7 @@ class ViewsTest(TestCase):
         user = create_user('5555', 'pepe')
         create_superuser('aaaa', 'mr_teacher')
         create_user('1234', 'ana')
-        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
+        submission = create_submission(problem, user, VerdictCode.AC, 'select *** from *** where *** and more')
         submission_url = reverse('judge:submission', args=[submission.pk])
 
         # The same user can access submission details
@@ -433,15 +433,15 @@ class ViewsTest(TestCase):
         self.assertIn('Forbidden', html)
         # the first student makes three submissions (1/3 (3))
         sub1 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
-                                         user=user_1, veredict_code=VeredictCode.WA, problem=select_problem)
+                                         user=user_1, verdict_code=VerdictCode.WA, problem=select_problem)
         sub1.save()
         Submission.objects.filter(id=sub1.id).update(creation_date=datetime(2021, 3, 5))
         sub2 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
-                                         user=user_1, veredict_code=VeredictCode.WA, problem=select_problem)
+                                         user=user_1, verdict_code=VerdictCode.WA, problem=select_problem)
         sub2.save()
         Submission.objects.filter(id=sub2.id).update(creation_date=datetime(2021, 3, 5))
         sub3 = Submission.objects.create(code=select_problem.solution,
-                                         user=user_1, veredict_code=VeredictCode.AC, problem=select_problem)
+                                         user=user_1, verdict_code=VerdictCode.AC, problem=select_problem)
         sub3.save()
         Submission.objects.filter(id=sub3.id).update(creation_date=datetime(2021, 3, 7))
 
@@ -449,11 +449,11 @@ class ViewsTest(TestCase):
         client.login(username=user_2.username, password='12345')
         # the second student makes two submissions (1/2 (1))
         sub4 = Submission.objects.create(code=select_problem.solution,
-                                         user=user_2, veredict_code=VeredictCode.AC, problem=select_problem)
+                                         user=user_2, verdict_code=VerdictCode.AC, problem=select_problem)
         sub4.save()
         Submission.objects.filter(id=sub4.id).update(creation_date=datetime(2021, 3, 7))
         sub5 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
-                                         user=user_2, veredict_code=VeredictCode.WA, problem=select_problem)
+                                         user=user_2, verdict_code=VerdictCode.WA, problem=select_problem)
         sub5.save()
         Submission.objects.filter(id=sub5.id).update(creation_date=datetime(2021, 3, 7))
         response = client.get(submissions_url, {'problem_id': select_problem.pk, 'user_id': user_2.id,
@@ -703,7 +703,7 @@ class ViewsTest(TestCase):
         login_redirect_url = reverse('judge:login')
         collection = create_collection('Colleccion de prueba TTT')
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        submission = create_submission(problem, user, VeredictCode.AC, 'select *** from *** where *** and more')
+        submission = create_submission(problem, user, VerdictCode.AC, 'select *** from *** where *** and more')
 
         # Submission redirects to login
         submission_url = reverse('judge:submission', args=[submission.pk])

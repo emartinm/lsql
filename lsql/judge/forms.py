@@ -2,7 +2,7 @@
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
-Forms used in LSQL
+Forms used in LearnSQL
 """
 from datetime import date
 from django import forms

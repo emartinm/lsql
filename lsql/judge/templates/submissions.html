@@ -16,7 +16,7 @@
         <tr>
             <td>{{ s.creation_date }}</td>
             <td>{{ s.problem }}</td>
-            <td>{{ s.veredict_pretty|safe }}</td>
+            <td>{{ s.verdict_pretty|safe }}</td>
             <td><a href="{% url 'judge:submission' s.pk %}" title='{% translate "Ver detalles del envío" %}'>{% translate "Ver" %}</a></td>
         </tr>
     {% endfor %}

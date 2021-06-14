@@ -12,7 +12,7 @@ from django.urls import reverse
 from judge.models import NumSolvedCollectionAchievementDefinition, PodiumAchievementDefinition, \
     NumSolvedAchievementDefinition, AchievementDefinition, ObtainedAchievement, Submission, \
     NumSolvedTypeAchievementDefinition, NumSubmissionsProblemsAchievementDefinition
-from judge.types import VeredictCode, ProblemType
+from judge.types import VerdictCode, ProblemType
 from judge.tests.test_views import create_user, create_superuser, create_group, create_collection, create_select_problem
 from judge.views import first_day_of_course
 
@@ -216,8 +216,8 @@ class RankingTest(TestCase):
         coll = create_collection('Coleccion de cartas')
         problem_1 = create_select_problem(coll, 'Problema 1')
         problem_2 = create_select_problem(coll, 'Problema 2')
-        sub_1 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user, problem=problem_1)
-        sub_2 = Submission(code='nada', veredict_code=VeredictCode.AC, user=user, problem=problem_2)
+        sub_1 = Submission(code='nada', verdict_code=VerdictCode.AC, user=user, problem=problem_1)
+        sub_2 = Submission(code='nada', verdict_code=VerdictCode.AC, user=user, problem=problem_2)
         sub_1.save()
         sub_2.save()
         Submission.objects.filter(id=sub_1.id).update(creation_date=datetime(2006, 3, 5))
@@ -332,7 +332,7 @@ class RankingTest(TestCase):
         collection = create_collection('Coleccion 1')
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         sub = Submission.objects.create(code='SELECT * FROM test where n = 1000',
-                                        user=user, veredict_code=VeredictCode.WA, problem=select_problem)
+                                        user=user, verdict_code=VerdictCode.WA, problem=select_problem)
         sub.save()
         Submission.objects.filter(id=sub.id).update(creation_date=datetime(2021, 3, 5))
         client.login(username=teacher.username, password='1111')
