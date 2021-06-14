@@ -116,14 +116,20 @@ def update_user_attempts_problem(attempts, user, problem, num_accepted, collecti
 
 
 def check_if_get_achievement(user, veredict):
-    """Check if the user get some achievement"""
+    """Check if the user get some achievement and return a list of obtained achievements"""
+    obtained_achievements = []
     if veredict == VeredictCode.AC:
         for ach in AchievementDefinition.objects.all().select_subclasses():
-            ach.check_and_save(user)
+            if ach.check_and_save(user):
+                obtained_achievements.append(ach)
+
     # If the veredict != AC (correct) only can get a NumSubmissionsProblemsAchievementDefinition
     else:
         for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():
-            ach.check_and_save(user)
+            if ach.check_and_save(user):
+                obtained_achievements.append(ach)
+
+    return obtained_achievements
 
 
 ##############
@@ -455,7 +461,16 @@ def submit(request, problem_id):
                             user=request.user, problem=general_problem)
     submission.save()
     # If verdict is correct look for an achievement to complete if it's possible
-    check_if_get_achievement(request.user, data['veredict'])
+    achieve_list = check_if_get_achievement(request.user, data['veredict'])
+
+    if achieve_list:
+        if len(achieve_list) == 1:
+            sentence = _("Además, con este envío has conseguido el logro ")
+        else:
+            sentence = _("Además, con este envío has conseguido los logros ")
+        context = {'achieve': achieve_list, 'user': request.user.pk, 'sentence': sentence}
+        html = render_to_string('achievement_notice.html', context)
+        data['achievements'] = html
     logger.debug('Stored submission %s', submission)
     return JsonResponse(data)
 
