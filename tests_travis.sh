@@ -24,9 +24,13 @@ curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --import
 curl -Os https://uploader.codecov.io/latest/codecov-linux
 curl -Os https://uploader.codecov.io/latest/codecov-linux.SHA256SUM
 curl -Os https://uploader.codecov.io/latest/codecov-linux.SHA256SUM.sig
-GPG_OK=`gpg --verify codecov-linux.SHA256SUM.sig codecov-linux.SHA256SUM`
-SUM_OK=`shasum -a 256 -c codecov-linux.SHA256SUM`
-if [ $GPG_OK -eq 0 && $SUM_OK -eq 0 ]; then
+
+gpg --verify codecov-linux.SHA256SUM.sig codecov-linux.SHA256SUM
+GPG_OK=$?
+shasum -a 256 -c codecov-linux.SHA256SUM
+SUM_OK=$?
+
+if [ $GPG_OK -eq 0 ] && [ $SUM_OK -eq 1 ]; then
   chmod +x codecov-linux
   ./codecov-linux
 else
@@ -34,14 +38,3 @@ else
     echo "*IGNORING codecov EXECUTION*"
     echo
 fi
-
-# curl -s https://raw.githubusercontent.com/codecov/codecov-bash/master/SHA1SUM | grep codecov > SHA1SUM
-# curl -s https://codecov.io/bash > codecov
-# sha1sum -c SHA1SUM
-# if [ $? -eq 0 ]; then
-#     bash codecov
-# else
-#    echo "'codecov' uploader does not match expected checksum!"
-#    echo "*IGNORING codecov EXECUTION*"
-#    echo
-#fi
