@@ -26,8 +26,8 @@ shasum -a 256 -c codecov-linux.SHA256SUM
 SUM_OK=$?
 
 if [ $GPG_OK -eq 0 ] && [ $SUM_OK -eq 0 ]; then
-  chmod +x codecov-linux -v
-  ./codecov-linux
+  chmod +x codecov-linux
+  ./codecov-linux -v
 else
     echo "'codecov' uploader does not match expected checksum!"
     echo "*IGNORING codecov EXECUTION*"
