@@ -25,7 +25,7 @@ GPG_OK=$?
 shasum -a 256 -c codecov-linux.SHA256SUM
 SUM_OK=$?
 
-if [ $GPG_OK -eq 0 ] && [ $SUM_OK -eq 1 ]; then
+if [ $GPG_OK -eq 0 ] && [ $SUM_OK -eq 0 ]; then
   chmod +x codecov-linux
   ./codecov-linux
 else
