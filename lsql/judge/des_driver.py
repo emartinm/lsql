@@ -105,14 +105,13 @@ class DesExecutor:
             cls.__DES = DesExecutor()
         return cls.__DES
 
-    @staticmethod
-    def get_sql_messages_query(create, insert, query):
+    def get_sql_messages_query(self, create, insert, query):
         """ Invokes DES to obtain all the messages related to the query (error, warning and info).
             Returns a list of tuples (msg_type, text, query_fragment), or None if there is some error when
             executing DES (or timeouts)
         """
-        # _, path = tempfile.mkstemp(prefix=self.__FILE_PREFIX, text=True)
-        path = '/tmp/ojete'  # TODO: quitar cuando esté todo comprobado
+        _, path = tempfile.mkstemp(prefix=self.__FILE_PREFIX, text=True)
+        logger.debug('Writing DES file to %s', path)
         with open(path, 'w') as input_stream:
             input_stream.write('/type_casting on\n')
             input_stream.write('/sql\n')
@@ -130,7 +129,7 @@ class DesExecutor:
             logger.debug('Error or timeout when invoking DES. Status code: %s. Output: <<%s>>', error.returncode,
                          error.output)
             return None
-        # os.remove(path)  # TODO: descomentar
+        # os.remove(path)  # Descomentar cuando este funcionando
         clean_output = output[output.find('DES-SQL> ') + len('DES-SQL> '):]  # Removes banner from output
         num_commands = len(create_statements) + len(insert_statements) + 1
         msgs = parse_tapi_commands(clean_output, num_commands, pos=0)
