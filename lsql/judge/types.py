@@ -86,3 +86,10 @@ class OracleStatusCode(IntEnum):
     COMPILATION_ERROR = 13
     TLE_USER_CODE = 14
     EXECUTE_DISCRIMINANT_SELECT = 15
+
+
+class DesMessageType(IntEnum):
+    """ Types of DES message types """
+    ERROR = 0
+    WARNING = 1
+    INFO = 2

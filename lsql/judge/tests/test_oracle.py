@@ -24,7 +24,7 @@ SELECT_TLE = '''
 
 
 class OracleTest(TestCase):
-    """"Tests for oracle_driver"""
+    """Tests for oracle_driver"""
 
     def assert_executor_exception(self, function, status_code):
         """Checks if executing the nullary function raises an ExecutorException with the expected status_code"""

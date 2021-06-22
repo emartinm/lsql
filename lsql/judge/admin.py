@@ -22,7 +22,7 @@ class SelectProblemAdmin(admin.ModelAdmin):
                                           'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution']}),
     ]
-    list_display = ('title_md', 'creation_date', 'collection')
+    list_display = ('pk', 'title_md', 'creation_date', 'collection')
     list_filter = ['collection', 'creation_date']
 
 
@@ -34,7 +34,7 @@ class DMLProblemAdmin(admin.ModelAdmin):
                                           'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution']}),
     ]
-    list_display = ('title_md', 'creation_date', 'collection')
+    list_display = ('pk', 'title_md', 'creation_date', 'collection')
     list_filter = ['collection', 'creation_date']
 
 
@@ -46,7 +46,7 @@ class FunctionProblemAdmin(admin.ModelAdmin):
                                           'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'calls']}),
     ]
-    list_display = ('title_md', 'creation_date', 'collection')
+    list_display = ('pk', 'title_md', 'creation_date', 'collection')
     list_filter = ['collection', 'creation_date']
     form = forms.FunctionProblemAdminForm
 
@@ -59,7 +59,7 @@ class ProcProblemAdmin(admin.ModelAdmin):
                                           'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'proc_call']}),
     ]
-    list_display = ('title_md', 'creation_date', 'collection')
+    list_display = ('pk', 'title_md', 'creation_date', 'collection')
     list_filter = ['collection', 'creation_date']
     form = forms.ProcProblemAdminForm
 
@@ -72,7 +72,7 @@ class TriggerProblemAdmin(admin.ModelAdmin):
                                           'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'tests']}),
     ]
-    list_display = ('title_md', 'creation_date', 'collection')
+    list_display = ('pk', 'title_md', 'creation_date', 'collection')
     list_filter = ['collection', 'creation_date']
     form = forms.TriggerProblemAdminForm
 
@@ -85,7 +85,7 @@ class DiscriminantProblemAdmin(admin.ModelAdmin):
                                           'author', 'position', 'check_order']}),
         ('SQL', {'fields': ['create_sql', 'insert_sql', 'correct_query', 'incorrect_query']}),
     ]
-    list_display = ('title_md', 'creation_date', 'collection')
+    list_display = ('pk', 'title_md', 'creation_date', 'collection')
     list_filter = ['collection', 'creation_date']
 
 
@@ -97,7 +97,7 @@ class CollectionAdmin(admin.ModelAdmin):
          {'fields': ('zipfile', )}),
         ('Collection data', {'fields': ('name_md', 'position', 'description_md', 'author')})
     ]
-    list_display = ('name_md', 'author', 'creation_date')
+    list_display = ('pk', 'name_md', 'author', 'creation_date')
     list_filter = ['creation_date']
 
 

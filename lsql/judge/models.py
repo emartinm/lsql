@@ -22,7 +22,8 @@ from django.utils import translation
 
 from .feedback import compare_select_results, compare_db_results, compare_function_results, compare_discriminant_db
 from .oracle_driver import OracleExecutor
-from .types import VerdictCode, ProblemType
+from .des_driver import DesExecutor
+from .types import VerdictCode, ProblemType, DesMessageType
 from .parse import load_select_problem, load_dml_problem, load_function_problem, load_proc_problem, \
     load_trigger_problem, load_discriminant_problem
 from .exceptions import ZipFileParsingException
@@ -276,11 +277,32 @@ class SelectProblem(Problem):
             if verdict_extra != VerdictCode.AC:
                 return verdict_extra, feedback_extra
             initial_db_count += 1
-        # If all results are correct then return first one
+        # If all results are correct then return the first one
         return verdict, feedback
 
     def problem_type(self):
         return ProblemType.SELECT
+
+    def get_des_messages(self):
+        """ Return a list [DES_messages] for every test data base. A DES_messages object is a
+            list of pairs (statement, [DES message]) """
+        des = DesExecutor.get()
+        des_messages = list()
+        for insert in self.insert_sql_list():
+            des_messages.append(des.get_sql_messages_query(self.create_sql, insert, self.solution))
+        return des_messages
+
+    def validate_des(self, min_level=DesMessageType.ERROR):
+        """ Validates that the current problem does not generate any error message with
+            level smalles than 'level' (by default ERROR) """
+        des_messages = self.get_des_messages()
+        for bd_msgs in des_messages:
+            for stmt, msg_list in bd_msgs:
+                for des_level, text, stmt_snippet in msg_list:
+                    if des_level <= min_level:
+                        error_msg = f'DES Validation error in <{stmt}>: {des_level}, {text}, {stmt_snippet}'
+                        raise ValidationError(error_msg)
+
 
 
 class DMLProblem(Problem):
