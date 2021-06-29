@@ -36,7 +36,7 @@ class ModelsTest(TestCase):
         user_model = django.contrib.auth.get_user_model()
 
         create = 'CREATE TABLE mytable (dd DATE);'
-        insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'yyyy/mm/dd'))"
+        insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'YYYY/MM/DD'))"
         solution = 'SELECT * FROM mytable'
         problem1 = SelectProblem(title_md='Dates', text_md='Example with dates',
                                  create_sql=create, insert_sql=insert, collection=collection,
@@ -190,7 +190,7 @@ class ModelsTest(TestCase):
         user_model = django.contrib.auth.get_user_model()
 
         create = 'CREATE TABLE mytable (dd DATE);'
-        insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'yyyy/mm/dd'))"
+        insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'YYYY/MM/DD'))"
         solution = 'SELECT * FROM mytable'
         problem1 = SelectProblem(title_md='Dates', text_md='Example with dates',
                                  create_sql=create, insert_sql=insert, collection=collection,

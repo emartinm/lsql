@@ -305,7 +305,7 @@ class LanguagesTest(TestCase):
         client.login(username='pepe', password='5555')
 
         create = 'CREATE TABLE mytable (dd DATE);'
-        insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'yyyy/mm/dd'))"
+        insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'YYYY/MM/DD'))"
         solution = 'SELECT * FROM mytable'
         problem1 = SelectProblem(title_md='Dates', text_md='Example with dates', language="es",
                                  create_sql=create, insert_sql=insert, collection=collection,

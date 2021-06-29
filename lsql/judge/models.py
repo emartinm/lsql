@@ -243,14 +243,15 @@ class SelectProblem(Problem):
                 # Replaces the fields with the information from the file
                 load_select_problem(self, self.zipfile)
             super().clean()
-            executor = OracleExecutor.get()
             self.expected_result = []
             self.initial_db = []
+            executor = OracleExecutor.get()
             for insert_sql in self.insert_sql_list():
                 res = executor.execute_select_test(self.create_sql, insert_sql,
                                                    self.solution, output_db=True)
                 self.expected_result.append(res['result'])
                 self.initial_db.append(res['db'])
+            self.validate_des(DesMessageType.ERROR)  # Check the solution with DES
         except Exception as excp:
             raise ValidationError(excp) from excp
 
@@ -284,25 +285,35 @@ class SelectProblem(Problem):
         return ProblemType.SELECT
 
     def get_des_messages(self):
-        """ Return a list [DES_messages] for every test data base. A DES_messages object is a
-            list of pairs (statement, [DES message]) """
+        """ Return a list [DES_messages] **for every test data base**. A DES_messages object is a
+            list of pairs (statement, [DES message]) or None"""
         des = DesExecutor.get()
         des_messages = list()
         for insert in self.insert_sql_list():
-            des_messages.append(des.get_sql_messages_query(self.create_sql, insert, self.solution))
+            des_messages.append(des.get_des_messages_select(self.create_sql, insert, self.solution))
         return des_messages
+
+    def get_des_messages_solution(self, code):
+        """ Return a flat list of DES messages obtained for the user code """
+        des = DesExecutor.get()
+        des_messages = des.get_des_messages_select(self.create_sql, '', code)
+        if des_messages is None:
+            return list()
+        messages = [(msg_type, msg, snippet) for _, msgs in des_messages
+                    for msg_type, msg, snippet in msgs if msgs]
+        return messages
 
     def validate_des(self, min_level=DesMessageType.ERROR):
         """ Validates that the current problem does not generate any error message with
-            level smalles than 'level' (by default ERROR) """
+            level smaller than 'level' (by default ERROR) """
         des_messages = self.get_des_messages()
         for bd_msgs in des_messages:
             for stmt, msg_list in bd_msgs:
                 for des_level, text, stmt_snippet in msg_list:
                     if des_level <= min_level:
-                        error_msg = f'DES Validation error in <{stmt}>: {des_level}, {text}, {stmt_snippet}'
+                        error_msg = f'DES Validation error in <{stmt}>. Error code: {des_level}. ' \
+                                    f'Error message: {text}. Snippet: {stmt_snippet}'
                         raise ValidationError(error_msg)
-
 
 
 class DMLProblem(Problem):

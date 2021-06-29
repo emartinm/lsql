@@ -411,6 +411,21 @@ def download(_, problem_id):
     return response
 
 
+def extend_dictionary_with_des(data, problem, code):
+    """ Extend the data that answers a submission with DES feedback (if needed) """
+    if problem.problem_type() == ProblemType.SELECT:
+        messages_raw = problem.get_des_messages_solution(code)
+        # Takes the snippet to mark the position of the error
+        messages = list()
+        for (error_code, msg, snippet) in messages_raw:
+            if snippet:
+                len_last_line = len(snippet.strip().split('\n')[-1])
+                snippet += '.'*len_last_line + '^^^'
+            messages.append((error_code, msg, snippet))
+        # We strip to avoid submitting empty strings
+        data['des'] = render_to_string('feedback_des.html', {'des_msgs': messages}).strip()
+
+
 @login_required
 # pylint does not understand the dynamic attributes in VerdictCode (TextChoices), so we need to disable
 # no-member warning in this specific function
@@ -422,7 +437,7 @@ def submit(request, problem_id):
     problem = get_subclass_problem(problem_id)
     submit_form = SubmitForm(request.POST)
     data = {'verdict': VerdictCode.IE, 'title': VerdictCode.IE.label,
-            'message': VerdictCode.IE.message(), 'feedback': ''}
+            'message': VerdictCode.IE.message(), 'feedback': '', 'des': ''}
     code = ''
     if submit_form.is_valid():
         try:
@@ -431,31 +446,38 @@ def submit(request, problem_id):
             data['verdict'], data['feedback'] = problem.judge(code, OracleExecutor.get())
             data['title'] = data['verdict'].label
             data['message'] = data['verdict'].message()
+            extend_dictionary_with_des(data, problem, code)  # Check DES if needed
         except ExecutorException as excp:
             # Exceptions when judging: RE, TLE, VE or IE
             if excp.error_code == OracleStatusCode.EXECUTE_USER_CODE:
-                data = {
-                    'verdict': VerdictCode.RE,
-                    'title': VerdictCode.RE.label,
-                    'message': VerdictCode.RE.message(),
-                    'feedback': (f'{excp.statement} --> {excp.message}'
-                                 if problem.problem_type() == ProblemType.FUNCTION else excp.message),
-                    'position': excp.position,
-                    'position_msg': _('Posición: línea {row}, columna {col}').format(row=excp.position[0]+1,
-                                                                                     col=excp.position[1]+1)
-                }
+                data['verdict'] = VerdictCode.RE
+                data['title'] = VerdictCode.RE.label
+                data['message'] = VerdictCode.RE.message()
+                data['feedback'] = (f'{excp.statement} --> {excp.message}'
+                                    if problem.problem_type() == ProblemType.FUNCTION else excp.message)
+                data['position'] = excp.position
+                data['position_msg'] = _('Posición: línea {row}, columna {col}')\
+                    .format(row=excp.position[0]+1, col=excp.position[1]+1)
+                extend_dictionary_with_des(data, problem, code)  # Check DES if needed
             elif excp.error_code == OracleStatusCode.TLE_USER_CODE:
-                data = {'verdict': VerdictCode.TLE, 'title': VerdictCode.TLE.label,
-                        'message': VerdictCode.TLE.message(), 'feedback': ''}
+                data['verdict'] = VerdictCode.TLE
+                data['title'] = VerdictCode.TLE.label
+                data['message'] = VerdictCode.TLE.message()
+                extend_dictionary_with_des(data, problem, code)  # Check DES if needed
             elif excp.error_code == OracleStatusCode.NUMBER_STATEMENTS:
-                data = {'verdict': VerdictCode.VE, 'title': VerdictCode.VE.label,
-                        'message': VerdictCode.VE.message(problem), 'feedback': excp.message}
+                data['verdict'] = VerdictCode.VE
+                data['title'] = VerdictCode.VE.label
+                data['message'] = VerdictCode.VE.message(problem)
+                data['feedback'] = excp.message
             elif excp.error_code == OracleStatusCode.COMPILATION_ERROR:
-                data = {'verdict': VerdictCode.WA, 'title': VerdictCode.WA.label,
-                        'message': VerdictCode.WA.message(), 'feedback': compile_error_to_html_table(excp.message)}
+                data['verdict'] = VerdictCode.WA
+                data['title'] = VerdictCode.WA.label
+                data['message'] = VerdictCode.WA.message()
+                data['feedback'] = compile_error_to_html_table(excp.message)
     else:
-        data = {'verdict': VerdictCode.VE, 'title': VerdictCode.VE.label,
-                'message': VerdictCode.VE.message(), 'feedback': ''}
+        data['verdict'] = VerdictCode.VE
+        data['title'] = VerdictCode.VE.label
+        data['message'] = VerdictCode.VE.message()
 
     submission = Submission(code=code, verdict_code=data['verdict'], verdict_message=data['message'],
                             user=request.user, problem=general_problem)
@@ -602,8 +624,8 @@ def get_hint(request, problem_id):
 
         # if the number of wrong submission is less than the number of submissions
         if num_subs >= hint.num_submit:
-            name = _('Pista {number}').format(number=list_used_hints.count()+1)
-            context = {'name': name, 'text': hint.get_text_html()}
+            hint_number = list_used_hints.count() + 1
+            context = {'hint_number': hint_number, 'text': hint.get_text_html()}
             html = render_to_string('hint.html', context)
             data['hint'] = html
             used_hint = UsedHint(user=request.user, hint_definition=hint)

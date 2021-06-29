@@ -10,8 +10,9 @@ General template for a problem. Provides the following blocks:
 {% load static %}
 {% block contenido %}
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/default.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js" 
-    integrity="sha512-s+tOYYcC3Jybgr9mVsdAxsRYlGNq4mlAurOrfNuGMQ/SCofNPu92tjE7YRZCsdEtWL1yGkqk15fU/ark206YTg==" crossorigin="anonymous"></script>
+<link rel="stylesheet"
+      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/highlight.min.js"></script>
 <script>hljs.highlightAll();</script>
 
 {% block name_text %}
@@ -28,7 +29,6 @@ General template for a problem. Provides the following blocks:
 </p>
 
 {% block pista %}
-
     {% if problem.available_hints == 0 %}
     <div class="col-0">
         <button class="bg-white border-0 float-end" title='{% translate "No hay pistas disponibles para este problema" %}' type="button"
@@ -37,86 +37,53 @@ General template for a problem. Provides the following blocks:
     </div>
     {% else %}
     <div class="col-0">
-        <button class="bg-white border-0 float-end" title='{% translate "Mostrar ayuda" %}'
-                data-bs-target="#exampleModal" data-bs-toggle="modal" type="button"
+        <button class="bg-white border-0 float-end" title='{% translate "Mostrar pistas" %}'
+                data-bs-target="#hint_window" data-bs-toggle="modal" type="button"
             class="gold"><i class="bi bi-lightbulb-fill gold bigger-icon" aria-hidden="true"></i>
         </button>
     </div>
     {% endif %}
 
 </div>
-<div class="modal fade" data-bs-backdrop="static" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+<div class="modal fade" data-bs-backdrop="static" id="hint_window" tabindex="-1" aria-labelledby="hint_window_label"
      aria-hidden="true">
   <div class="modal-dialog  modal-lg">
     <div class="modal-content">
       <div class="modal-header d-block">
-        <h5 class="modal-title text-center" id="exampleModalLabel">{% translate "Pistas" %}</h5>
+        <h5 class="modal-title text-center" id="hint_window_label">{% translate "Pistas" %}</h5>
       </div>
         <div class="modal-body">
-            <div class="alert alert-primary" role="alert">
-                <div class="text-center">
+            <div class="alert alert-primary">
                     <i class="bi bi-info-circle-fill bigger-icon"></i>
-                    {% blocktranslate %}
-                        Pulsa el botón 'Solicitar pista' para obtener una pista.
-                        Ten en cuenta que solicitar pistas puede afectar a tu posición en la clasificación.
-                    {% endblocktranslate %}
-                </div>
-                <div class="alert-link text-center">
-                    {% blocktranslate %}
-                        Las pistas disponibles para este problemas son:
-                    {% endblocktranslate %}
-                    {{problem.available_hints}}
-                </div>
+                    {% translate "Pistas disponibles para este problema" %}: {{problem.available_hints}}
             </div>
         </div>
         <div id="info_hint" class="modal-body">
              {% for hint in problem.used_hints %}
-             <div class="d-flex p-2">
-                 <div class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center ">
-                        {{ hint.num }}
-                 </div>
-                 <div class="text-center w-75">
-                        {{hint.text_html|safe}}
-                 </div>
+             <div class="hint">
+                 <h5 class="hint_title">{% translate "Pista" %} {{ forloop.counter }} </h5>
+                 {{hint.text_html|safe}}
              </div>
              {% endfor %}
         </div>
-        {% if problem.available_hints > problem.used %}
-        <div id='msg' class="modal-body" style="">
-            <div class="d-flex p-2">
-                <div class="bg-primary h-40 w-25 text-center mb-1 border border-dark text-white justify-content-center align-self-center" style="">
-                  INFO
-               </div>
-                 <div id="msg_info" class="text-center w-75" style="">
-                    {% blocktranslate %}
-                        Pulsa 'Solicitar pista' para obtener una pista o ver el número de envíos que te faltan para conseguirla.
-                    {% endblocktranslate %}
-                </div>
-            </div>
+        <div id="msg_info" class="text-center">
         </div>
-        {% endif %}
-        {% if problem.available_hints == problem.used %}
-            <div  class="modal-footer d-flex justify-content-center">
-                <button type="button" class="btn btn-primary" title="No hay más pistas" disabled>{% translate "Solicitar pista" %}</button>
-            </div>
-        {% else %}
-            <div  class="modal-footer d-flex justify-content-center">
-                <form action="javascript:show_hint();">
-                    {% csrf_token %} {# Includes a hidden input with the CSRF token #}
-                    <input type="hidden" id="hint_url" name="hint_url" value="{% url 'judge:hint' problem.pk %}">
-                    <button type="button" id="button_ask_hint" class="btn btn-primary" title='{% translate "Pedir pista nueva" %}' onclick="show_hint();">{% translate "Solicitar pista" %}</button>
-                </form>
-            </div>
-        {% endif %}
-
       <div class="modal-footer d-flex">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{% translate "Cerrar" %}</button>
+        {% if problem.available_hints == problem.used %}
+            <button type="button" class="btn btn-primary" title="No hay más pistas" disabled>{% translate "No hay más pistas" %}</button>
+        {% else %}
+            <form action="javascript:show_hint();">
+                {% csrf_token %} {# Includes a hidden input with the CSRF token #}
+                <input type="hidden" id="hint_url" name="hint_url" value="{% url 'judge:hint' problem.pk %}">
+                <button type="button" id="button_ask_hint" class="btn btn-primary" title='{% translate "Pedir pista nueva" %}' onclick="show_hint();">{% translate "Solicitar pista" %}</button>
+            </form>
+        {% endif %}
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">{% translate "Cerrar" %}</button>
       </div>
 
     </div>
   </div>
 </div>
-
 {% endblock %}
 
 <div>
@@ -242,11 +209,74 @@ General template for a problem. Provides the following blocks:
 </script>
 
 <br/>
-<div id="results_box" hidden>
+<div class="alert alert-danger" role="alert" id="results_box" hidden>
   <h2>{% translate "Retroalimentación" %}</h2>
   <div id="feedback_line" hidden></div>
   <div id="feedback_content"></div>
 </div>
-<div><br/></div>
+<div class="alert alert-info" role="alert" id="des_box" hidden>
+  <h2>{% translate "Ayuda adicional proporcionada por el sistema DES" %}
+  <button class="bg-transparent border-0" title='{% translate "Mostrar ayuda" %}'
+                data-bs-target="#des_help" data-bs-toggle="modal" type="button">
+            <i class="bi bi-question-circle bigger-icon" aria-hidden="true"></i>
+        </button></h2>
+  <div id="des_content"></div>
+</div>
+
+<div class="modal fade" data-bs-backdrop="static" id="des_help" tabindex="-1" aria-labelledby="des_help_label"
+     aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header d-block">
+        <h5 class="modal-title text-center" id="des_help_label">{% translate "Ayuda adicional de DES" %}</h5>
+      </div>
+      <div class="modal-body">
+          <a href="https://www.fdi.ucm.es/profesor/fernan/DES/" target="_blank" rel="noopener noreferrer">DES</a>
+          {% blocktranslate %}
+          es un sistema para el aprendizaje de bases de datos que analiza el código SQL para
+          comprobar si es correcto e incluso proporciona sugerencias de mejora. LearnSQL invoca a
+          DES para obtener más retroalimentación que os pueda ser de ayuda.
+          {% endblocktranslate %}
+          <br/><br/>
+          {% translate "Concretamente, DES puede proporcionar 3 tipos de mensajes:" %}
+          <br/><br/>
+          <ul>
+              <li><strong>{% translate "Error" %}</strong>:
+                  {% blocktranslate %}
+                  Problema muy relevante en el código que se debe corregir, como puede ser un error de sintaxis
+                  o utilizar una tabla que no existe.
+                  {% endblocktranslate %}
+              </li><br/><br/>
+              <li><strong>{% translate "Posible mejora" %}</strong>:
+                  {% blocktranslate %}
+                  Muestra indicios sobre un aspecto del código que se podría mejorar, como una condición
+                  que siempre es cierta o una consulta que incluye en el bloque FROM tablas que luego no
+                  se usan en el resto de la consulta.
+                  {% endblocktranslate %}
+                  <strong>
+                      {% blocktranslate %}
+                      Aunque DES es muy certero con sus mensajes, a veces proporciona indicios sobre
+                      aspectos del código que realmente no admiten mejora. Por ello, es muy importante
+                      que analicéis este tipo de mensajes para comprobar si de verdad la mejora propuesta
+                      por DES es aplicable a vuestro código.
+                      {% endblocktranslate %}
+                  </strong>
+              </li><br/><br/>
+              <li><strong>{% translate "Mensaje informativo" %}</strong>:
+                  {% blocktranslate %}
+                  Mensaje que te ayuda a resolver un error. Por ejemplo, si en una consulta
+                  usas la tabla "Estudiante", que no existe, DES te indica que quizá
+                  quisiste escribir "Estudiantes".
+                  {% endblocktranslate %}
+              </li>
+          </ul>
+      </div>
+      <div class="modal-footer d-flex justify-content-center">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{% translate "Cerrar" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="bottom_div"><br/></div>
 {% endblock %}
 {% endblock %}

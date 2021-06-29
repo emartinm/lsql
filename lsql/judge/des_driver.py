@@ -105,7 +105,7 @@ class DesExecutor:
             cls.__DES = DesExecutor()
         return cls.__DES
 
-    def get_sql_messages_query(self, create, insert, query):
+    def get_des_messages_select(self, create, insert, query):
         """ Invokes DES to obtain all the messages related to the query (error, warning and info).
             Returns a list of tuples (msg_type, text, query_fragment), or None if there is some error when
             executing DES (or timeouts)
@@ -114,6 +114,7 @@ class DesExecutor:
         logger.debug('Writing DES file to %s', path)
         with open(path, 'w') as input_stream:
             input_stream.write('/type_casting on\n')
+            input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
             input_stream.write('/sql\n')
             create_statements = clean_sql(create)
             insert_statements = clean_sql(insert)
@@ -129,9 +130,43 @@ class DesExecutor:
             logger.debug('Error or timeout when invoking DES. Status code: %s. Output: <<%s>>', error.returncode,
                          error.output)
             return None
-        # os.remove(path)  # Descomentar cuando este funcionando
+        os.remove(path)
         clean_output = output[output.find('DES-SQL> ') + len('DES-SQL> '):]  # Removes banner from output
         num_commands = len(create_statements) + len(insert_statements) + 1
         msgs = parse_tapi_commands(clean_output, num_commands, pos=0)
         assert len(msgs) == num_commands
         return zip(create_statements + insert_statements + [query], msgs)
+
+    def get_des_messages_dml(self, create, insert, dml):
+        """ Invokes DES to obtain all the messages related to the DML statements (error, warning and info
+            messages). Returns a list of tuples (msg_type, text, query_fragment), or None if there is
+            some error when executing DES (or timeouts)
+        """
+        _, path = tempfile.mkstemp(prefix=self.__FILE_PREFIX, text=True)
+        logger.debug('Writing DES file to %s', path)
+        with open(path, 'w') as input_stream:
+            input_stream.write('/type_casting on\n')
+            input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
+            input_stream.write('/sql\n')
+            create_statements = clean_sql(create)
+            insert_statements = clean_sql(insert)
+            for stmt in create_statements + insert_statements:
+                input_stream.write("/tapi {}\n".format(stmt.strip().replace('\n', '')))
+            dml_statements = clean_sql(dml)
+            for stmt in dml_statements:
+                input_stream.write("/tapi /mparse\n{}\n$eot\n".format(stmt))
+            input_stream.write("/exit\n")
+
+        des_path = os.environ['DES_BIN']
+        try:
+            output = subprocess.check_output(f"timeout 10s {des_path} < {path}", shell=True).decode('utf8')
+        except subprocess.CalledProcessError as error:
+            logger.debug('Error or timeout when invoking DES. Status code: %s. Output: <<%s>>', error.returncode,
+                         error.output)
+            return None
+        os.remove(path)
+        clean_output = output[output.find('DES-SQL> ') + len('DES-SQL> '):]  # Removes banner from output
+        num_commands = len(create_statements) + len(insert_statements) + len(dml_statements)
+        msgs = parse_tapi_commands(clean_output, num_commands, pos=0)
+        assert len(msgs) == num_commands
+        return zip(create_statements + insert_statements + dml_statements, msgs)

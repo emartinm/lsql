@@ -5,11 +5,6 @@ tr.marked_row {
     border-color: red;
 }
 
-#results_box {
-    background-color: #F6CECE;
-    padding: 10px 10px 10px 10px;
-}
-
 textarea.code_box {
     font-family: monospace;
 }
@@ -113,4 +108,20 @@ nav.menu_bar {
     background-color: #006666;
 */
     background-color: #003366;
+}
+
+h5.hint_title {
+    text-decoration: underline;
+}
+
+div.hint {
+    margin-bottom: 15px;
+}
+
+div.info_hint {
+    margin-top = 0px;
+}
+
+div#msg_info {
+    font-weight: bold;
 }

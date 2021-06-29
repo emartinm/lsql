@@ -51,6 +51,17 @@ function show_feedback(html) {
     }
 }
 
+// Shows the DES feedback in the page. If DES feedback is empty, hides the area
+function show_des_feedback(html) {
+    if (html.length > 0) {
+        $('#des_box').removeAttr('hidden');
+        $('#des_content').empty();
+        $('#des_content')[0].insertAdjacentHTML('beforeend', html);
+    } else {
+        $('#des_box').attr('hidden', true);
+    }
+}
+
 // Selects in the editor the fragment of SQL code that generates a problem if offset if provided
 function select_error_in_editor(myJson) {
     if (myJson.position) {
@@ -98,7 +109,11 @@ function send_solution() {
           console.log(myJson);
           mark_solved(myJson);
           show_feedback(myJson.feedback);
+          show_des_feedback(myJson.des);
           select_error_in_editor(myJson);
+          // Scroll to the position of the button, to see the possible feedback
+          let scroll_pos = $('#submit_button').offset().top;
+          $("html, body").stop().animate({scrollTop:$(document).height()}, 500, 'swing');
           show_modal(myJson.title, myJson.message, myJson.achievements);
           update_page_submission_received();
       }).catch(function(e) {
@@ -171,13 +186,14 @@ function show_hint(){
 
             if (msg.length > 0){
                show_hint_message(msg);
-            }else{
+            } else {
                 hide_hint_message();
             }
 
-            if(!more_hints){
+            if (!more_hints){
                 show_hint_message(msg);
                 disable_button_ask_hint();
             }
+            hljs.highlightAll();
         });
 }

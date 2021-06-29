@@ -594,7 +594,7 @@ class OracleTest(TestCase):
         collection = Collection()
         collection.save()
         create = 'CREATE TABLE test (day DATE);'
-        insert = "INSERT INTO test VALUES (TO_DATE('2003/07/09', 'yyyy/mm/dd'))"
+        insert = "INSERT INTO test VALUES (TO_DATE('2003/07/09', 'YYYY/MM/DD'))"
         solution = 'SELECT * FROM test'
         select_problem = SelectProblem(title_md='Dates', text_md='Example with dates',
                                 create_sql=create, insert_sql=insert, collection=collection,
@@ -604,7 +604,7 @@ class OracleTest(TestCase):
         oracle = OracleExecutor.get()
         verdict, _ = select_problem.judge(solution, oracle)
         self.assertEqual(verdict, VerdictCode.AC)
-        verdict, _ = select_problem.judge("SELECT TO_DATE('2003/07/09', 'yyyy/mm/dd') AS day FROM dual", oracle)
+        verdict, _ = select_problem.judge("SELECT TO_DATE('2003/07/09', 'YYYY/MM/DD') AS day FROM dual", oracle)
         self.assertEqual(verdict, VerdictCode.AC)
 
     def test_dangling_users(self):

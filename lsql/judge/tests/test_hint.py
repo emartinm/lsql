@@ -52,16 +52,6 @@ class HintTest(TestCase):
         collection = create_collection('Colleccion de prueba TTT')
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
 
-        description1 = '<div class="d-flex p-2">\n    ' \
-                       '<div class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white ' \
-                       'justify-content-center align-self-center ">\n' \
-                       '        Pista 1\n    </div>\n    <div class="text-center w-75">\n        ' \
-                       'descripcion de la pista 1\n    </div>\n</div>'
-        description2 = '<div class="d-flex p-2">\n    ' \
-                       '<div class="bg-success h-40 w-25 text-center mb-1 border border-dark text-white ' \
-                       'justify-content-center align-self-center ">\n' \
-                       '        Pista 2\n    </div>\n    <div class="text-center w-75">\n        ' \
-                       'descripcion de la pista 2\n    </div>\n</div>'
         create_hint(problem, 1, 3)
         hint2 = create_hint(problem, 2, 5)
         create_submission(problem, user, VerdictCode.WA, 'select *** from')
@@ -74,7 +64,8 @@ class HintTest(TestCase):
 
         # JSON with the first hint
         response = client.post(hint_url, follow=True)
-        self.assertEqual(response.json()['hint'], description1)
+        self.assertIn('Pista 1', response.json()['hint'])
+        self.assertIn('descripcion de la pista 1', response.json()['hint'])
 
         # JSON with the message that the next hint is not available
         num_error = Submission.objects.filter(problem=problem, user=user).count()
@@ -89,7 +80,8 @@ class HintTest(TestCase):
         create_submission(problem, user, VerdictCode.WA, 'select *** from')
         mens = 'No hay más pistas disponibles para este ejercicio.'
         response = client.post(hint_url, follow=True)
-        self.assertEqual(response.json()['hint'], description2)
+        self.assertIn('Pista 2', response.json()['hint'])
+        self.assertIn('descripcion de la pista 2', response.json()['hint'])
         self.assertEqual(response.json()['msg'], mens)
         self.assertEqual(response.json()['more_hints'], False)
 
