@@ -1,0 +1,20 @@
+{% load i18n %}
+{% for code, msg, snippet in des_msgs %}
+<ul>
+    <li><strong>{% if code == 0 %}
+            {% translate "Error" %}:
+        {% elif code == 1 %}
+            {% translate "Posible mejora" %}:
+        {% elif code == 2 %}
+            {% translate "Mensaje informativo" %}:
+        {% else %}
+            {% translate "Mensaje" %}:
+        {% endif %}</strong>
+        <br/>
+        {{msg}}
+        {% if snippet %}
+        <pre><code class="SQL">{{ snippet }}</code></pre>
+        {%endif %}
+    </li>
+</ul>
+{% endfor %}
