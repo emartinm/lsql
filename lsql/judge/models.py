@@ -7,7 +7,6 @@ Models to store objects in the DB
 from zipfile import ZipFile
 import markdown
 from lxml import html
-from logzero import logger
 from model_utils.managers import InheritanceManager
 
 import django.utils.timezone
@@ -48,14 +47,12 @@ def load_many_problems(file, collection):
             for filename in zfile.infolist():
                 with zfile.open(filename) as curr_file:
                     problem = load_problem_from_file(curr_file)
-                    problem.collection = collection
-                    problem.author = collection.author
                     problems.append(problem)
     except ZipFileParsingException as excp:
         raise ZipFileParsingException('{}: {}'.format(filename.filename, excp)) from excp
     except Exception as excp:
         raise ZipFileParsingException("{}: {}".format(type(excp), excp)) from excp
-    return problems
+    collection.problems_from_zip = problems
 
 
 def load_problem_from_file(file):
@@ -65,8 +62,7 @@ def load_problem_from_file(file):
                      (FunctionProblem, load_function_problem),
                      (ProcProblem, load_proc_problem),
                      (TriggerProblem, load_trigger_problem),
-                     (DiscriminantProblem, load_discriminant_problem)
-                     ]
+                     (DiscriminantProblem, load_discriminant_problem)]
 
     for pclass, load_fun in problem_types:
         problem = pclass()
@@ -92,14 +88,10 @@ class Collection(models.Model):
     zipfile = models.FileField(upload_to='problem_zips/', default=None, blank=True, null=True)
 
     def clean(self):
-        """Loads and overwrite data from the ZIP file (if it is set) and creates HTML from markdown"""
+        """ Loads and overwrite data from the ZIP file (if it is set) and creates HTML from markdown """
         try:
             if self.zipfile:
-                problems = load_many_problems(self.zipfile, self)
-                for problem in problems:
-                    problem.clean()
-                    problem.save()
-                    logger.debug('Added problem %s "%s" from ZIP (batch)', type(problem), problem)
+                load_many_problems(self.zipfile, self)
                 self.zipfile = None  # Avoids storing the file in the filesystem
 
             super().clean()
@@ -165,7 +157,7 @@ class Problem(models.Model):
 
     def __str__(self):
         """String to show in the Admin interface"""
-        return f'(PK {self.pk}) {html.fromstring(self.title_html).text_content()}'
+        return f'(PK {self.pk}) {self.title_md}'
 
     def template(self):
         """Name of the HTML template used to show the problem"""
@@ -242,6 +234,7 @@ class SelectProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_select_problem(self, self.zipfile)
+                self.zipfile = None  # Avoids storing the file in the filesystem
             super().clean()
             self.expected_result = []
             self.initial_db = []
@@ -329,6 +322,7 @@ class DMLProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_dml_problem(self, self.zipfile)
+                self.zipfile = None  # Avoids storing the file in the filesystem
 
             super().clean()
             executor = OracleExecutor.get()
@@ -364,6 +358,7 @@ class FunctionProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_function_problem(self, self.zipfile)
+                self.zipfile = None  # Avoids storing the file in the filesystem
 
             super().clean()
             executor = OracleExecutor.get()
@@ -443,6 +438,7 @@ class TriggerProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_trigger_problem(self, self.zipfile)
+                self.zipfile = None  # Avoids storing the file in the filesystem
 
             super().clean()
             executor = OracleExecutor.get()
@@ -478,6 +474,8 @@ class DiscriminantProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_discriminant_problem(self, self.zipfile)
+                self.zipfile = None  # Avoids storing the file in the filesystem
+
             super().clean()
             executor = OracleExecutor.get()
             self.expected_result = []

@@ -9,7 +9,7 @@ from django.dispatch import receiver
 from .models import NumSolvedAchievementDefinition, PodiumAchievementDefinition,\
     NumSolvedCollectionAchievementDefinition, NumSolvedTypeAchievementDefinition,\
     NumSubmissionsProblemsAchievementDefinition, Hint, SelectProblem, ProcProblem, \
-    DiscriminantProblem, DMLProblem, FunctionProblem, TriggerProblem
+    DiscriminantProblem, DMLProblem, FunctionProblem, TriggerProblem, Collection
 
 
 @receiver(post_save, sender=NumSolvedAchievementDefinition)
@@ -100,3 +100,18 @@ def save_hints_trigger_problem(sender, **kwargs):
     logger.debug('Signal post_save for %s %s', str(sender), str(kwargs['instance']))
     if hasattr(kwargs['instance'], 'hints_info'):
         save_hints(kwargs['instance'])
+
+
+@receiver(post_save, sender=Collection)
+def add_problems_to_collection(sender, **kwargs):
+    """ Adds the problems loaded from the ZIP file to the saved collection """
+    collection = kwargs['instance']
+    logger.debug('Signal post_save for %s %s', str(sender), collection)
+    if hasattr(collection, 'problems_from_zip'):
+        for problem in collection.problems_from_zip:
+            problem.collection = collection
+            problem.author = collection.author
+            problem.clean()
+            problem.save()
+            logger.debug('Added problem %s "%s" from ZIP (batch) to collection %s',
+                         type(problem), problem, kwargs['instance'])

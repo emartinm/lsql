@@ -402,7 +402,7 @@ def load_discriminant_problem(problem, file):
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
                 extract_hints_from_file(problem, zfile)
-    except ZipFileParsingException:
+    except ZipFileParsingException as excp:
         raise
     except Exception as excp:
         raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp)) from excp
