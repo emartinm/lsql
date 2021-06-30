@@ -12,13 +12,13 @@ from django.core.exceptions import ValidationError
 from judge.types import VerdictCode
 from judge.tests.test_views import create_user, create_collection, create_select_problem, create_submission
 from judge.models import SelectProblem, DMLProblem, FunctionProblem, \
-    ProcProblem, TriggerProblem, DiscriminantProblem, Submission, Hint, UsedHint
+    ProcProblem, TriggerProblem, DiscriminantProblem, Hint, UsedHint
 
 
-def create_hint(problem, id_hint, num):
+def create_hint(problem, id_hint, num_submissions):
     """ Creates and stores a Hint of a Problem """
     description = f'descripcion de la pista {id_hint}'
-    hint = Hint(text_md=description, problem=problem, num_submit=num)
+    hint = Hint(text_md=description, problem=problem, num_submit=num_submissions)
     hint.save()
     return hint
 
@@ -52,8 +52,8 @@ class HintTest(TestCase):
         collection = create_collection('Colleccion de prueba TTT')
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
 
-        create_hint(problem, 1, 3)
-        hint2 = create_hint(problem, 2, 5)
+        create_hint(problem, id_hint=1, num_submissions=3)
+        create_hint(problem, id_hint=2, num_submissions=5)
         create_submission(problem, user, VerdictCode.WA, 'select *** from')
         create_submission(problem, user, VerdictCode.WA, 'select *** from')
         create_submission(problem, user, VerdictCode.WA, 'select *** from')
@@ -68,9 +68,7 @@ class HintTest(TestCase):
         self.assertIn('descripcion de la pista 1', response.json()['hint'])
 
         # JSON with the message that the next hint is not available
-        num_error = Submission.objects.filter(problem=problem, user=user).count()
-        num = hint2.num_submit - num_error
-        msg = f'Número de envíos que faltan para obtener la siguiente pista: {num}.'
+        msg = 'Te falta 1 envío para desbloquear la siguiente pista'
         response = client.post(hint_url, follow=True)
         self.assertEqual(response.json()['hint'], '')
         self.assertEqual(response.json()['msg'], msg)

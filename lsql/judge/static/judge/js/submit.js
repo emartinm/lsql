@@ -111,6 +111,7 @@ function send_solution() {
           show_feedback(myJson.feedback);
           show_des_feedback(myJson.des);
           select_error_in_editor(myJson);
+          hide_hint_message();
           // Scroll to the position of the button, to see the possible feedback
           let scroll_pos = $('#submit_button').offset().top;
           $("html, body").stop().animate({scrollTop:$(document).height()}, 500, 'swing');
@@ -123,6 +124,7 @@ function send_solution() {
       });
 }
 
+// Loads the text of the uploaded file into de ACE editor
 function load_submission_code(event){
     var input = event.target;
 
@@ -140,18 +142,20 @@ function disable_button_ask_hint(){
     $('#button_ask_hint').attr('disabled', true);
 }
 
+// Hides the bottom message of the hint modal window
 function hide_hint_message(){
-    $('#msg').attr('style', 'display: none');
+    $('#msg_info').attr('style', 'display: none');
 }
 
+// Sets the text of bottom message of the hint modal windows and makes it visible
 function show_hint_message(msg){
-    $('#msg').attr('style', '');
+    $('#msg_info').attr('style', '');
     $('#msg_info').text(msg);
 }
 
-// show the requested hint or a message with information
+// Request the next hint and updates the hint modal window accordingly
 function show_hint(){
-    // Get json with the hints
+    // Request Get JSON with the next hint information
     let hint_point = $('#hint_url').val();
 
     const config = {
@@ -173,7 +177,6 @@ function show_hint(){
             }
         })
         .then(function(myJson) {
-
             var hint = myJson['hint'];
             var msg = myJson['msg'];
             var more_hints = myJson['more_hints']

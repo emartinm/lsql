@@ -49,13 +49,14 @@ General template for a problem. Provides the following blocks:
      aria-hidden="true">
   <div class="modal-dialog  modal-lg">
     <div class="modal-content">
-      <div class="modal-header d-block">
-        <h5 class="modal-title text-center" id="hint_window_label">{% translate "Pistas" %}</h5>
-      </div>
         <div class="modal-body">
-            <div class="alert alert-primary">
+            <div class="alert alert-primary text-center alert_hints">
                     <i class="bi bi-info-circle-fill bigger-icon"></i>
-                    {% translate "Pistas disponibles para este problema" %}: {{problem.available_hints}}
+                    {% blocktranslate count num_hints=problem.available_hints %}
+                    Este problema dispone de {{ num_hints }} pista
+                    {% plural %}
+                    Este problema dispone de {{ num_hints }} pistas
+                    {% endblocktranslate %}
             </div>
         </div>
         <div id="info_hint" class="modal-body">

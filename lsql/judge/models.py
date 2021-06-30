@@ -165,7 +165,7 @@ class Problem(models.Model):
 
     def __str__(self):
         """String to show in the Admin interface"""
-        return html.fromstring(self.title_html).text_content()
+        return f'(PK {self.pk}) {html.fromstring(self.title_html).text_content()}'
 
     def template(self):
         """Name of the HTML template used to show the problem"""
@@ -724,9 +724,17 @@ class Hint(models.Model):
         text_html = markdown_to_html(self.text_md, remove_initial_p=True)
         return text_html
 
+    def __str__(self): # pragma: no cover
+        """ String representation of Hint object """
+        return f'Hint #{self.pk} - problem {self.problem}'
+
 
 class UsedHint(models.Model):
     """Hints used by user"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     request_date = models.DateTimeField(auto_now_add=True)
     hint_definition = models.ForeignKey(Hint, on_delete=models.CASCADE)
+
+    def __str__(self): # pragma: no cover
+        """ String representation of used Hint object """
+        return f'UsedHint (PK {self.pk})'

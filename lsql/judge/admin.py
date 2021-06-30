@@ -158,7 +158,8 @@ class HintAdmin(admin.ModelAdmin):
 
 class UsedHintAdmin(admin.ModelAdmin):
     """Model for Hints"""
-    list_display = ('user', 'request_date', 'hint_definition')
+    list_display = ('user', 'hint_definition', 'request_date')
+    list_display_links = ('user', 'hint_definition')
     list_filter = ['user']
 
 

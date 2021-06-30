@@ -119,9 +119,13 @@ div.hint {
 }
 
 div.info_hint {
-    margin-top = 0px;
+    margin-top: 0px;
 }
 
 div#msg_info {
     font-weight: bold;
+}
+
+div.alert_hints {
+    margin-bottom: 0px;
 }

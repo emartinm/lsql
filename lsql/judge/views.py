@@ -19,7 +19,7 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import login_required
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, ngettext
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.template.exceptions import TemplateDoesNotExist
@@ -638,6 +638,10 @@ def get_hint(request, problem_id):
         else:
             num = hint.num_submit - num_subs
             data['more_hints'] = True
-            data['msg'] = _('Número de envíos que faltan para obtener la siguiente pista: {number}.').format(number=num)
+            data['msg'] = ngettext(
+                'Te falta %(num)d envío para desbloquear la siguiente pista',
+                'Te faltan %(num)d envíos para desbloquear la siguiente pista',
+                num,
+            ) % {'num': num}
 
     return JsonResponse(data)
