@@ -1,5 +1,5 @@
 {% load i18n %}
-{% for code, msg, snippet in des_msgs %}
+{% for code, msg, snippet, line_col in des_msgs %}
 <ul>
     <li><strong>{% if code == 0 %}
             {% translate "Error" %}:
@@ -9,7 +9,12 @@
             {% translate "Mensaje informativo" %}:
         {% else %}
             {% translate "Mensaje" %}:
-        {% endif %}</strong>
+        {% endif %}
+        {% if line_col  %}
+        {% translate "línea" %} {{ line_col.0 }},
+        {% translate "columna" %} {{ line_col.1 }}
+        {% endif %}
+        </strong>
         <br/>
         {{msg}}
         {% if snippet %}

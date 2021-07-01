@@ -415,13 +415,17 @@ def extend_dictionary_with_des(data, problem, code):
     """ Extend the data that answers a submission with DES feedback (if needed) """
     if problem.problem_type() == ProblemType.SELECT:
         messages_raw = problem.get_des_messages_solution(code)
-        # Takes the snippet to mark the position of the error
+        # Extends the snippet to mark the position of the error and also extract line and column
         messages = list()
         for (error_code, msg, snippet) in messages_raw:
             if snippet:
                 len_last_line = len(snippet.strip().split('\n')[-1])
+                num_line = len(snippet.strip().split('\n'))
                 snippet += '.'*len_last_line + '^^^'
-            messages.append((error_code, msg, snippet))
+                line_col = (num_line, len_last_line)
+            else:
+                line_col = None
+            messages.append((error_code, msg, snippet, line_col))
         # We strip to avoid submitting empty strings
         data['des'] = render_to_string('feedback_des.html', {'des_msgs': messages}).strip()
 
