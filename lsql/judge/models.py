@@ -228,6 +228,10 @@ class SelectProblem(Problem):
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, default=None, blank=True, null=True)
 
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'Problem_Select'
+
     def clean(self):
         """ Executes the problem and stores the expected result """
         try:
@@ -316,6 +320,10 @@ class DMLProblem(Problem):
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, blank=True)
 
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'Problem_DML'
+
     def clean(self):
         """Executes the problem and stores the expected result"""
         try:
@@ -351,6 +359,10 @@ class FunctionProblem(Problem):
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     calls = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], default='', blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, blank=True)
+
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'Problem_Function'
 
     def clean(self):
         """Executes the problem and stores the expected result"""
@@ -393,6 +405,10 @@ class ProcProblem(Problem):
     proc_call = models.TextField(max_length=1000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, blank=True)
 
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'Problem_Procedure'
+
     def template(self):
         return 'problem_proc.html'
 
@@ -429,6 +445,10 @@ class TriggerProblem(Problem):
     tests = models.TextField(max_length=1000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, blank=True)
 
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'Problem_Trigger'
+
     def template(self):
         return 'problem_trigger.html'  # The same template works
 
@@ -464,6 +484,10 @@ class DiscriminantProblem(Problem):
     correct_query = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     incorrect_query = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, default=None, blank=True, null=True)
+
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'Problem_Discriminant'
 
     def template(self):
         return 'problem_disc.html'
@@ -574,10 +598,18 @@ class ObtainedAchievement(models.Model):
     obtained_date = models.DateTimeField(default=django.utils.timezone.now)
     achievement_definition = models.ForeignKey(AchievementDefinition, on_delete=models.CASCADE)
 
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'Achievement_Obtained'
+
 
 class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
     """Achievement by solving a number of problems"""
     num_problems = models.PositiveIntegerField(default=1, null=False)
+
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'AchievementDef_NumSolved'
 
     def check_and_save(self, user):
         """Return if an user is deserving for get an achievement, if it is, save that"""
@@ -602,6 +634,10 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
     """Achievement by solving X problems among the first N"""
     num_problems = models.PositiveIntegerField(default=1, null=False)
     position = models.PositiveIntegerField(default=3, null=False)
+
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'AchievementDef_Podium'
 
     def check_and_save(self, user):
         """Return if an user is deserving for get an achievement, if it is, save that"""
@@ -631,6 +667,10 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
     """Achievement by solving X problems of a Collection"""
     num_problems = models.PositiveIntegerField(default=1, null=False)
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'AchievementDef_NumSolvedCollection'
 
     def check_and_save(self, user):
         """Return if an user is deserving for get an achievement, if it is, save that"""
@@ -663,6 +703,10 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
         blank=True
     )
 
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'AchievementDef_NumSolvedType'
+
     def check_and_save(self, user):
         """Return if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
@@ -691,6 +735,10 @@ class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.
     num_submissions = models.PositiveIntegerField(default=1, null=False)
     num_problems = models.PositiveIntegerField(default=1, null=False)
 
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'AchievementDef_NumSubmissions'
+
     def check_and_save(self, user):
         """Return if an user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
@@ -717,6 +765,10 @@ class Hint(models.Model):
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
     num_submit = models.PositiveIntegerField(default=0, null=False)
 
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'Hint_definition'
+
     def get_text_html(self):
         """Converts a markdown string into HTML"""
         text_html = markdown_to_html(self.text_md, remove_initial_p=True)
@@ -732,6 +784,10 @@ class UsedHint(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     request_date = models.DateTimeField(auto_now_add=True)
     hint_definition = models.ForeignKey(Hint, on_delete=models.CASCADE)
+
+    class Meta:
+        """ Changes the name displayed in the admin interface"""
+        verbose_name_plural = 'Hint_Used'
 
     def __str__(self): # pragma: no cover
         """ String representation of used Hint object """
