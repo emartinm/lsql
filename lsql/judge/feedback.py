@@ -140,7 +140,7 @@ def feedback_rows(expected, obtained, order, initial_db=None):
                                     )
         return feedback
 
-    if order and expected != obtained:
+    if order and tupled_expected != tupled_obtained:
         return render_to_string('feedback_wa_order.html', {'expected': expected, 'obtained': obtained})
 
     return ''  # Everything OK => Accepted
@@ -209,14 +209,14 @@ def compare_db_results(expected_db, obtained_db):
         obtained = sorted(list(obtained_db.keys()))
         expected = sorted(list(expected_db.keys()))
         return VerdictCode.WA, render_to_string('feedback_wa_tables.html',
-                                                 {'obtained': obtained, 'expected': expected})
+                                                {'obtained': obtained, 'expected': expected})
 
     verdict = VerdictCode.AC
     for table in expected_db:
         verdict, feedback = compare_select_results(expected_db[table], obtained_db[table], order=False)
         if verdict != VerdictCode.AC:
             feedback = _('<h4>La tabla <code>{table}</code> es '
-                        'incorrecta:</h4>{feedback}').format(table=table, feedback = feedback)
+                         'incorrecta:</h4>{feedback}').format(table=table, feedback=feedback)
             break
     return verdict, feedback
 

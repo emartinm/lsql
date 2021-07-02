@@ -269,9 +269,9 @@ class SelectProblem(Problem):
             oracle_result_extra = executor.execute_select_test(self.create_sql, insert_sql_extra, code, output_db=False)
             # Check secondary results
             verdict_extra, feedback_extra = compare_select_results(self.expected_result[initial_db_count],
-                                                                    oracle_result_extra['result'],
-                                                                    self.check_order,
-                                                                    self.initial_db[initial_db_count])
+                                                                   oracle_result_extra['result'],
+                                                                   self.check_order,
+                                                                   self.initial_db[initial_db_count])
             if verdict_extra != VerdictCode.AC:
                 return verdict_extra, feedback_extra
             initial_db_count += 1
