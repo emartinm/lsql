@@ -14,6 +14,7 @@ from django.contrib.auth.models import Group
 from django.test import Client
 from django.urls import reverse
 from django.conf import settings
+from django.utils import timezone
 
 from .models import Problem, Submission
 
@@ -103,8 +104,9 @@ def adapt_db_result_to_list():
         prob.save()
 
 
-def rejudge(verdict_code, filename='rejudge.txt', tests=False, start=datetime.datetime(1970, 1, 1),
-            end=datetime.datetime.now()):
+def rejudge(verdict_code, filename='rejudge.txt', tests=False,
+            start=datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc),
+            end=timezone.now()):
     """ Judges again all the submission in the period [start, end] with some verdict_code. For each submission,
         submit the code, compares the verdict, and stores detailed information in the 'filename'.
         Use tests=False for Django tests, tests=True for normal use

@@ -1,7 +1,7 @@
 {% extends "base_menu.html" %}
 {% load i18n %}
 {% block contenido %}
-<h1>{% translate "Selecciona una colección para ver la clasificación" %}</h1>
+<h1>{% translate "Clasificación por colección" %}</h1>
   <table class="table">
     <thead class="table-dark">
       <tr>
@@ -12,15 +12,9 @@
     {% for c in results %}
     <tr>
       <td>
-        {% if user.is_staff %}
-          <a title="{{c.name_html|safe}}" href="{% url 'judge:result' c.id %}?group={{group}}&start={{start_date}}&end={{end_date}}">
-            {{ c.name_html|safe }}
-          </a>
-        {% else %}
         <a title="{{c.name_html|safe}}" href="{% url 'judge:result' c.id %}?group={{group}}">
             {{ c.name_html|safe }}
         </a>
-        {% endif %}
       </td>
     </tr>
     {% endfor %}

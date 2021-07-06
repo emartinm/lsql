@@ -2,9 +2,10 @@
 """
 Tests for rankings
 """
+import io
 from datetime import datetime
-import tempfile
-import openpyxl
+
+from pyexcel_ods3 import get_data
 
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -20,23 +21,26 @@ from judge.views import first_day_of_course
 def create_an_achievement_of_each(coll):
     """Create an achievement of each type: NumSolvedAchievementDefinition, PodiumAchievementDefinition and
     NumSolvedCollectionAchievementDefinition"""
-    ach_podium = PodiumAchievementDefinition(name={"es":'Presidente del podio'},
-                                             description={"es":'Consigue entrar al podio'},
-                                             num_problems=1, position=3)
-    ach_collection = NumSolvedCollectionAchievementDefinition(name={"es":'Coleccionista'},
-                                                              description={"es":'Resuelve 1 problema\
-                                                              de esta coleccion'},
-                                                              num_problems=1, collection=coll)
-    ach_solved = NumSolvedAchievementDefinition(name={"es":'Resolvista'},
-                                                description={"es":'Resuelve 1 problema'},
-                                                num_problems=1)
-    ach_type = NumSolvedTypeAchievementDefinition(name={"es":'Tipos'},
-                                                  description={"es":'Resuelve un problema SELECT'},
-                                                  num_problems=1, problem_type=ProblemType.SELECT.name)
-    ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(name={"es":'Primer envio'},
-                                                                description={"es":'Realiza un envio a \
-                                                                cualquier problema'},
-                                                                num_submissions=1, num_problems=1)
+    ach_podium = PodiumAchievementDefinition(
+        name={"es": 'Presidente del podio'},
+        description={"es": 'Consigue entrar al podio'},
+        num_problems=1, position=3)
+    ach_collection = NumSolvedCollectionAchievementDefinition(
+        name={"es": 'Coleccionista'},
+        description={"es": 'Resuelve 1 problema de esta coleccion'},
+        num_problems=1, collection=coll)
+    ach_solved = NumSolvedAchievementDefinition(
+        name={"es": 'Resolvista'},
+        description={"es": 'Resuelve 1 problema'},
+        num_problems=1)
+    ach_type = NumSolvedTypeAchievementDefinition(
+        name={"es": 'Tipos'},
+        description={"es":'Resuelve un problema SELECT'},
+        num_problems=1, problem_type=ProblemType.SELECT.name)
+    ach_submi_pro = NumSubmissionsProblemsAchievementDefinition(
+        name={"es": 'Primer envio'},
+        description={"es": 'Realiza un envio a cualquier problema'},
+        num_submissions=1, num_problems=1)
     ach_type.save()
     ach_submi_pro.save()
     ach_podium.save()
@@ -106,7 +110,7 @@ class RankingTest(TestCase):
         self.assertIn('Fecha', response.content.decode('utf-8'))
 
     def test_ranking_achievements(self):
-        """Test if we can see the number of achievements that have an user at ranking"""
+        """ Test if we can see the number of achievements that have a user at ranking """
         client = Client()
         user = create_user('passwordmichu', 'michu')
         client.login(username='michu', password='passwordmichu')
@@ -118,7 +122,7 @@ class RankingTest(TestCase):
         ranking_url = reverse('judge:result', args=[coll.pk])
         group_a = create_group('1A')
         group_a.user_set.add(user)
-        response = client.get(ranking_url, follow=True)
+        response = client.get(ranking_url + f'?group={group_a.pk}', follow=True)
         self.assertIn('x5', response.content.decode('utf-8'))
 
     def test_signal_new_achievement(self):
@@ -327,14 +331,21 @@ class RankingTest(TestCase):
         teacher = create_superuser('1111', 'teacher')
         group_a = create_group('1A')
         group_a.user_set.add(user)
-        start = first_day_of_course(datetime(2020, 9, 1))
+        start = first_day_of_course(datetime(2020, 9, 1)).strftime('%Y-%m-%d')
         end = datetime(2021, 3, 7).strftime('%Y-%m-%d')
         collection = create_collection('Coleccion 1')
-        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        sub = Submission.objects.create(code='SELECT * FROM test where n = 1000',
-                                        user=user, verdict_code=VerdictCode.WA, problem=select_problem)
-        sub.save()
-        Submission.objects.filter(id=sub.id).update(creation_date=datetime(2021, 3, 5))
+        select_problem = create_select_problem(collection, 'SelectProblem1')
+        select_problem_2 = create_select_problem(collection, 'SelectProblem2')
+        sub1 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
+                                         user=user, verdict_code=VerdictCode.WA, problem=select_problem)
+        Submission.objects.filter(id=sub1.id).update(creation_date=datetime(2021, 3, 1))
+        sub2 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
+                                         user=user, verdict_code=VerdictCode.AC, problem=select_problem_2)
+        Submission.objects.filter(id=sub2.id).update(creation_date=datetime(2021, 3, 2))
+        sub3 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
+                                         user=user, verdict_code=VerdictCode.RE, problem=select_problem_2)
+        Submission.objects.filter(id=sub3.id).update(creation_date=datetime(2021, 3, 4))
+
         client.login(username=teacher.username, password='1111')
         url = reverse('judge:download_ranking', args=[collection.pk])
         response = client.get(url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
@@ -342,27 +353,34 @@ class RankingTest(TestCase):
         # Teacher download ranking
         self.assertEqual(
             response.get('Content-Disposition'),
-            "attachment; filename=ranking.xlsx",
+            'attachment; filename="ranking.ods"',
         )
         self.assertEqual(
             response.get('Content-Type'),
-            "application/xlsx"
+            "application/vnd.oasis.opendocument.spreadsheet"
         )
 
-        with tempfile.NamedTemporaryFile(mode='w+b', buffering=-1, suffix='.xlsx') as file:
-            cont = response.content
-            file.write(cont)
-            work = openpyxl.load_workbook(file)
-            book = work.active
-            self.assertIn("Colección: " + collection.name_md, book.cell(row=1, column=1).value)
-            self.assertIn("1A", book.cell(row=3, column=1).value)
-            self.assertIn("1", book.cell(row=5, column=1).value)
-            self.assertIn(user.username, book.cell(row=5, column=2).value)
-            self.assertIn("0/1 (1)", book.cell(row=5, column=3).value)
-            self.assertIn("0", book.cell(row=5, column=4).value)
-            self.assertIn("0", book.cell(row=5, column=5).value)
+        cont = response.getvalue()
+        buffer = io.BytesIO(cont)
+        buffer.seek(0)
+        data = get_data(buffer)
+
+        self.assertIn(collection.name_md, data['1A'][0][1])
+        self.assertEqual("1A", data['1A'][1][1])
+        self.assertEqual(1, data['1A'][6][0])
+        self.assertEqual(user.username, data['1A'][6][1])
+        self.assertEqual("0/1", data['1A'][6][2])  # SelectProblem1
+        self.assertEqual("1/2 (1)", data['1A'][6][3])  # SelectProblem2
+        self.assertEqual(1, data['1A'][6][4])  # Score
+        self.assertEqual(1, data['1A'][6][5])  # Solved
 
         # Date or group invalid
+        response = client.get(url, {
+            'group': group_a.id, 'start': end, 'end': start}, follow=True)
+        self.assertIn("La fecha inicial no puede ser mayor que la fecha final", response.content.decode('utf-8'))
+        response = client.get(url, {
+            'group': group_a.id, 'start': start, 'end': datetime(4000, 7, 7).strftime('%Y-%m-%d')}, follow=True)
+        self.assertIn("La fecha final no puede ser mayor que la fecha de hoy", response.content.decode('utf-8'))
         response = client.get(url, {
             'group': group_a.id, 'start': start, 'end': ''}, follow=True)
         self.assertIn("Este campo es obligatorio", response.content.decode('utf-8'))
@@ -377,7 +395,7 @@ class RankingTest(TestCase):
                               {'group': '1A', 'start': start, 'end': end}, follow=True)
         self.assertIn('Introduzca un número entero', response.content.decode('utf-8'))
 
-        # User can't download ranking
+        # Students cannot download ranking
         client.logout()
         client.login(username=user.username, password='2222')
         response = client.get(url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)

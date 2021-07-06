@@ -37,8 +37,38 @@ class LoginForm(forms.Form):
     password = forms.CharField(label='Contraseña', max_length=100, widget=forms.PasswordInput)
 
 
-class ResultForm(forms.Form):
-    """Form used results"""
+class ResultStaffForm(forms.Form):
+    """ Form to validate ranking requests for staff """
+    group = forms.IntegerField(label='Grupo', min_value=1)
+    start = forms.DateField(label='Desde', input_formats=['%Y-%m-%d'], required=False)
+    end = forms.DateField(label='Hasta', input_formats=['%Y-%m-%d'], required=False)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get("start")
+        end = cleaned_data.get("end")
+        if end is not None and start is not None:
+            if end < start:
+                raise ValidationError(_("¡Error! La fecha inicial no puede ser mayor que la fecha final."))
+            if end > date.today():
+                raise ValidationError(_("¡Error! La fecha final no puede ser mayor que la fecha de hoy."))
+
+
+class ResultStudentForm(forms.Form):
+    """ Form to validate ranking requests for staff for students """
+    group = forms.IntegerField(label='Grupo', min_value=1)
+
+
+class ShowSubmissionsForm(forms.Form):
+    """ Form to validate a request to see submissions """
+    problem_id = forms.IntegerField(min_value=1, required=False)
+    user_id = forms.IntegerField(min_value=1, required=False)
+    start = forms.DateField(input_formats=['%Y-%m-%d'], required=False)
+    end = forms.DateField(input_formats=['%Y-%m-%d'], required=False)
+
+
+class DownloadRankingForm(forms.Form):
+    """ Form to validate download ranking requests for staff """
     group = forms.IntegerField(label='Grupo', min_value=1)
     start = forms.DateField(label='Desde', input_formats=['%Y-%m-%d'])
     end = forms.DateField(label='Hasta', input_formats=['%Y-%m-%d'])

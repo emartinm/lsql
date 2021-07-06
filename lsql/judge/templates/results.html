@@ -5,29 +5,27 @@
 
 <div class="d-flex mb-3">
     <h1 class="float-start">{% translate "Colección:" %} {{collection.name_html|safe}}</h1>
-    {% if login.is_staff %}
-    <div class="col md-3">
-        <h1 class="float-end">{% translate "Desde" %} {{from_date|date:"d/m/Y"}} {% translate "hasta" %} {{to_date|date:"d/m/Y"}}</h1>
-    </div>
-    {% endif %}
 </div>
 
 <div class="d-flex mb-1">
     <form class="d-flex" method="get" action="{% url 'judge:result' collection.id %}">
-        <p class="h4">{% translate "Grupo:" %}</p>
+        <p class="h4">{% translate "Grupo" %}:</p>
         <select class="ml-1" name="group" id="clase" onchange="this.parentNode.submit()">
-        <option id = "{{group0.name}}" value="{{group0.id}}"> {{group0.name}} </option>
-            {% for group in groups %}
-                <option id = "{{group.name}}" value="{{group.id}}"> {{group.name}} </option>
-            {% endfor %}
+        {% for group in groups %}
+            {% if group.name == current_group.name %}
+            <option id="{{group.name}}" value="{{group.id}}" selected> {{group.name}}</option>
+            {% else %}
+            <option id="{{group.name}}" value="{{group.id}}"> {{group.name}}</option>
+            {% endif %}
+        {% endfor %}
         </select>
-        {% if login.is_staff %}
-            <p class="h4 ms-3 me-1">{% translate "Desde:" %} </p>
-            <input name="start" id="desde_date" type="date" data-date="{{start_date}}" data-date-format="DD MMMM YYYY"
-            value="{{start_date|date:'Y-m-d'}}"  max="{{to_fixed}}">
-            <p class="h4 ms-3 me-1">{% translate "Hasta:" %} </p>
-            <input name="end" id= "hasta_date" type="date" data-date="{{end_date}}" data-date-format="DD MMMM YYYY"
-            value="{{end_date|date:'Y-m-d'}}" max="{{to_fixed}}">
+        {% if request.user.is_staff %}
+            <p class="h4 ms-3 me-1">{% translate "Desde" %}: </p>
+            <input name="start" id="start_date" type="date"
+            value="{{start_date|date:'Y-m-d'}}">
+            <p class="h4 ms-3 me-1">{% translate "Hasta" %}: </p>
+            <input name="end" id= "end_date" type="date"
+            value="{{end_date|date:'Y-m-d'}}">
             <button id="filterButton" type="submit"  class="btn btn-primary ms-3"
                 title='{% translate "Filtro de ejercicios entre dos periodos" %}'>
                 <i class="bi bi-funnel-fill"></i> {% translate "Filtrar" %}
@@ -35,9 +33,9 @@
         {% endif %}
     </form>
 
-    {% if login.is_staff %}
+    {% if request.user.is_staff %}
     <div class="col md-3 ms-3">
-        <a href="{% url 'judge:download_ranking' collection.id %}?group={{group0.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}">
+        <a href="{% url 'judge:download_ranking' collection.id %}?group={{current_group.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}">
             <button type="button" class="btn btn-primary"
                     title='{% translate "Descargar fichero CSV con la clasificación" %}'>
                 {% translate "Descargar ranking" %}
@@ -59,7 +57,7 @@
   <div class="modal-dialog  modal-lg">
     <div class="modal-content">
       <div class="modal-header d-block">
-        <h5 class="modal-title text-center" id="exampleModalLabel">{% translate "LEYENDA" %}</h5>
+        <h5 class="modal-title text-center" id="exampleModalLabel">{% translate "Clasificación" %}</h5>
       </div>
       <div class="modal-body">
           <div class="d-flex p-2">
@@ -71,12 +69,12 @@
                <div class="text-start ms-1 w-75">{% translate "Ejercicio resuelto 3 veces de 8 intentos (1er envío aceptado en el 5º intento)" %}</div>
           </div>
           <div class="d-flex p-2">
-               <div class="bg-danger h-40 w-25 text-center mb-1 border border-dark">0/9 (9)</div>
-              <div class="text-center w-75">{% translate "Ejercicio resuelto 0 veces de 9 intentos (9 intentos sin envío aceptado)" %}</div>
+               <div class="bg-danger h-40 w-25 text-center mb-1 border border-dark">0/9</div>
+              <div class="text-center w-75">{% translate "Ejercicio resuelto 0 veces de 9 intentos" %}</div>
           </div>
           <div class="d-flex p-2">
                <div class="bg-white h-40 w-25 text-center mb-1 border border-dark">0/0 (0)</div>
-              <div class="text-center w-75">{% translate "Ejercicio no intentado (0 intentos sin envío aceptado)" %}</div>
+              <div class="text-center w-75">{% translate "Ejercicio no intentado" %}</div>
           </div>
           <div class="d-flex p-2">
                <div class="bg-dark h-40 w-25 text-center mb-1 border border-dark text-white">{% translate "Puntuación" %}</div>
@@ -102,7 +100,7 @@
       <tr>
           <th class=" border border-light" scope="col">{% translate "Pos." %}</th>
           <th  class=" border border-light" scope="col">{% translate "Usuario" %}</th>
-          {% for p in collection.problem_list %}
+          {% for p in collection.problems %}
              <th  class=" border border-light" scope="col" >
                  <a class="text-white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">{% translate "EJ" %}{{forloop.counter}}</a>
              </th>
@@ -112,65 +110,53 @@
       </tr>
     </thead>
     <tbody>
-    {% for p in users %}
+    {% for user in ranking %}
     <tr class="text-dark">
-        {% if p == login %}
-        <td class="bg-info border border-dark">{{p.pos}}</td>
-        {% elif p.is_staff %}
-        <td class="bg-secondary border border-dark">{{p.pos}}</td>
+        {% if user == request.user %}
+        <td class="bg-info border border-dark">
         {% else %}
-        <td class="border border-dark">{{p.pos}}</td>
+        <td class="border border-dark">
         {% endif %}
+        {{ user.pos }}
+        </td>
 
         <td class="border border-dark">
-             <span class="ranking-username">{{p.username}}</span>
-             {% if p.n_achievements > 0 %}
-                <a href="{% url 'judge:achievements' p.pk %}" class="gold">
+             <span class="ranking-username">{{user.username}}</span>
+             {% if user.n_achievements > 0 %}
+                <a href="{% url 'judge:achievements' user.pk %}" class="gold">
                     <i class="bi bi-trophy-fill" aria-hidden="true"></i>
-                    <span class="off-screen">Logros</span>x{{p.n_achievements}}
+                    <span class="off-screen">Logros</span>x{{user.n_achievements}}
                 </a>
              {% endif %}
          </td>
 
-        {% for pp in p.collection %}
-                {% if pp.solved and pp.num_submissions != '0/0 (0)'%}
-                    {% if p == login or login.is_staff%}
-                         {% if login.is_staff %}
-                               <td class="bg-success border border-dark">
-                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
-                                 </td>
-                        {% else %}
-                           <td class="bg-success border border-dark">
-                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
-                           </td>
-                        {% endif %}
-                    {% else %}
-                        <td class="bg-success border border-dark">{{ pp.num_submissions }}</td>
-                    {% endif%}
-                {% elif not pp.solved and pp.num_submissions != '0/0 (0)' %}
-                     {% if p == login or login.is_staff %}
-                        {% if login.is_staff %}
-                               <td class="bg-danger border border-dark">
-                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
-                                 </td>
-                        {% else %}
-                           <td class="bg-danger border border-dark">
-                               <a href="{% url 'judge:submissions' %}?problem_id={{pp.id}}&user_id={{p.id}}" class="text-dark text-decoration-none">{{ pp.num_submissions }}</a>
-                           </td>
-                        {% endif %}
-                     {%else%}
-                         <td class="bg-danger border border-dark" >{{ pp.num_submissions }}</td>
-                     {% endif %}
-                {%else%}
+        {% for pk, problem in user.results.items %}
+            {% if problem.correct_submissions > 0 %}
+            <td class="bg-success border border-dark">
+            {% elif problem.total_submissions > 0 and problem.correct_submissions == 0 %}
+            <td class="bg-danger border border-dark">
+            {% else %}
+            <td class="border border-dark">
+            {% endif %}
 
-                          <td class="border border-dark">{{ pp.num_submissions }}</td>
-                {% endif %}
+            {% if request.user.is_staff or request.user == user %}
+            <a href="{% url 'judge:submissions' %}?problem_id={{pk}}&user_id={{user.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}" class="text-dark text-decoration-none">
+            {% endif %}
+            {% if problem.correct_submissions > 0 %}
+                {{problem.correct_submissions}}/{{problem.total_submissions}} ({{problem.first_correct_submission}})
+            {% else %}
+                {{problem.correct_submissions}}/{{problem.total_submissions}}
+            {% endif %}
+            {% if request.user.is_staff or request.user == user %}
+            </a>
+            {% endif %}
+            </td>
         {% endfor %}
         <td class="border border-dark">
-            {{p.score}}
+            {{user.score}}
         </td>
         <td class="border border-dark">
-            {{p.resolved}}
+            {{user.num_solved}}
         </td>
     </tr>
     {% endfor %}

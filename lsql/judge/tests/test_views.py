@@ -266,7 +266,7 @@ class ViewsTest(TestCase):
         # problem_id is not numeric
         response = client.get(submissions_url, {'problem_id': 'problem', 'user_id': 'user'}, follow=True)
         self.assertEqual(response.status_code, 404)
-        self.assertIn('El identificador no tiene el formato correcto', response.content.decode('utf-8'))
+        self.assertIn('Introduzca un número entero', response.content.decode('utf-8'))
 
         # Submission contains user code
         response = client.get(submission_url, follow=True)
@@ -279,7 +279,7 @@ class ViewsTest(TestCase):
         # Only submission from the same user
         client.logout()
         client.login(username='ana', password='1234')
-        # Submssion contains user code
+        # Submission contains user code
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, 403)
         response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
@@ -288,10 +288,12 @@ class ViewsTest(TestCase):
         # create a teacher and show submission to user pepe
         teacher = create_superuser('1111', 'teacher')
         client.login(username=teacher.username, password='1111')
-        response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id,
-                                                'start': first_day_of_course(datetime(2020, 9, 1)),
-                                                'end': datetime.today().strftime('%Y-%m-%d')},
+        response = client.get(submissions_url, {
+            'problem_id': problem_dml.pk, 'user_id': user.id,
+            'start': first_day_of_course(datetime(2020, 9, 1)).strftime('%Y-%m-%d'),
+            'end': datetime.today().strftime('%Y-%m-%d')},
                               follow=True)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content.decode('utf-8').count(problem_dml.title_html), 1)
         client.logout()
 
@@ -320,7 +322,7 @@ class ViewsTest(TestCase):
         self.assertIn('select *** from *** where *** and more', response.content.decode('utf-8'))
         client.logout()
 
-        # Non-teacher user cannot access submission details from a different uset
+        # Non-teacher user cannot access submission details from a different user
         client.login(username='ana', password='1234')
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, 403)
@@ -411,26 +413,25 @@ class ViewsTest(TestCase):
         user_2 = create_user('12345', 'ana')
         teacher = create_superuser('12345', 'iker')
 
-        # Create 1 group
+        # Create 2 groups
         group_a = create_group('1A')
+        group_b = create_group('1B')
 
-        # add the students and the teacher to the group a
+        # add the students and the teacher to the group a, and only user 2 to group B
         group_a.user_set.add(user_1)
         group_a.user_set.add(user_2)
         group_a.user_set.add(teacher)
+        group_b.user_set.add(user_2)
 
         # create course start date and today's date
-        start = first_day_of_course(datetime(2020, 9, 1))
+        start = first_day_of_course(datetime(2020, 9, 1)).strftime('%Y-%m-%d')
         end = datetime(2021, 3, 7).strftime('%Y-%m-%d')
 
-        # I connect to a student and in the url I insert dates
+        # I connect to a student and in the URL I insert dates
         client.login(username=user_1.username, password='12345')
         response = client.get(classification_url, follow=True)
-        self.assertEqual(200, response.status_code)
-        response = client.get(classification_url, {
-            'group': group_a.id, 'start': start, 'end': end}, follow=True)
-        html = response.content.decode('utf-8')
-        self.assertIn('Forbidden', html)
+        self.assertEqual(404, response.status_code)  # Missing group
+
         # the first student makes three submissions (1/3 (3))
         sub1 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
                                          user=user_1, verdict_code=VerdictCode.WA, problem=select_problem)
@@ -451,16 +452,17 @@ class ViewsTest(TestCase):
         sub4 = Submission.objects.create(code=select_problem.solution,
                                          user=user_2, verdict_code=VerdictCode.AC, problem=select_problem)
         sub4.save()
-        Submission.objects.filter(id=sub4.id).update(creation_date=datetime(2021, 3, 7))
+        Submission.objects.filter(id=sub4.id).update(creation_date=datetime(2021, 3, 7, 17, 45))
         sub5 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
                                          user=user_2, verdict_code=VerdictCode.WA, problem=select_problem)
         sub5.save()
-        Submission.objects.filter(id=sub5.id).update(creation_date=datetime(2021, 3, 7))
+        Submission.objects.filter(id=sub5.id).update(creation_date=datetime(2021, 3, 7, 18, 22))
         response = client.get(submissions_url, {'problem_id': select_problem.pk, 'user_id': user_2.id,
-                                                'start': first_day_of_course(datetime(2020, 9, 1)),
+                                                'start': first_day_of_course(datetime(2020, 9, 1)).strftime('%Y-%m-%d'),
                                                 'end': datetime(2021, 3, 7).strftime('%Y-%m-%d')},
                               follow=True)
-        self.assertIn('Forbidden', response.content.decode('utf-8'))
+        self.assertIn('7 de Marzo de 2021 a las 17:45', response.content.decode('utf-8'))
+        self.assertIn('7 de Marzo de 2021 a las 18:22', response.content.decode('utf-8'))
         client.logout()
 
         client.login(username=teacher.username, password='12345')
@@ -476,7 +478,7 @@ class ViewsTest(TestCase):
         # For yesterday's date student one must have two failed submissions and no correct submissions 0/2 (2)
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': last_end_date}, follow=True)
-        for fragment in ['0/2 (2)', '0', '0', '0/0 (0)']:
+        for fragment in ['0/2', '0', '0', '0/0']:
             self.assertIn(fragment, response.content.decode('utf-8'))
 
         # I test date formatting and incorrect or misplaced dates
@@ -495,36 +497,79 @@ class ViewsTest(TestCase):
                       response.content.decode('utf-8'))
 
         response = client.get(classification_url, {
-            'group': group_a.id, 'start': start, 'end': ''}, follow=True)
-        self.assertIn("Este campo es obligatorio", response.content.decode('utf-8'))
-        response = client.get(classification_url, {
             'group': group_a.id, 'start': 'eee', 'end': end}, follow=True)
         self.assertIn("Introduzca una fecha válida", response.content.decode('utf-8'))
-        response = client.get(classification_url, {
-            'group': group_a.id, 'end': end}, follow=True)
-        self.assertIn("Este campo es obligatorio",
-                      response.content.decode('utf-8'))
+
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': start}, follow=True)
-
         for fragment in ['0/0 (0)', '0', '0']:
             self.assertIn(fragment, response.content.decode('utf-8'))
+
+    def test_permission_ranking(self):
+        """ Test to access the ranking from different groups """
+        # Create 1 collection with 1 problem
+        collection = create_collection('Coleccion 1')
+        classification_url = reverse('judge:result', args=[collection.pk])
+        create_select_problem(collection, 'SelectProblem ABC DEF')
+
+        # Create 3 users (2 students y 1 professor)
+        user_1 = create_user('12345', 'pepe')
+        user_2 = create_user('12345', 'ana')
+        teacher = create_superuser('12345', 'iker')
+
+        # Create 2 groups
+        group_a = create_group('1A')
+        group_b = create_group('1B')
+
+        # add the students and the teacher to the group a, and only user 2 to group B
+        group_a.user_set.add(user_1)
+        group_a.user_set.add(user_2)
+        group_a.user_set.add(teacher)
+        group_b.user_set.add(user_2)
+
+        # create course start date and today's date
+        start = first_day_of_course(datetime(2020, 9, 1)).strftime('%Y-%m-%d')
+        end = datetime(2021, 3, 7).strftime('%Y-%m-%d')
+
+        # Checks access to rankings: 'pepe' only to group A, 'ana' to group A and B,
+        # 'iker' also to both groups as staff
+        client = Client()
+        client.login(username='pepe', password='12345')
+        response = client.get(classification_url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = client.get(classification_url, {'group': group_b.id, 'start': start, 'end': end}, follow=True)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('Forbidden', response.content.decode('utf-8'))
+
+        client.logout()
+        client.login(username='ana', password='12345')
+        response = client.get(classification_url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = client.get(classification_url, {'group': group_b.id, 'start': start, 'end': end}, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        client.logout()
+        client.login(username='iker', password='12345')
+        response = client.get(classification_url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = client.get(classification_url, {'group': group_b.id, 'start': start, 'end': end}, follow=True)
+        self.assertEqual(response.status_code, 200)
 
     def test_first_day_of_course(self):
         """Test that given a date returns you on the first day of the academic year"""
         #
-        self.assertEqual('2020-09-01', first_day_of_course(datetime(2020, 10, 2)))
-        self.assertEqual('2020-09-01', first_day_of_course(datetime(2020, 9, 1)))
-        self.assertEqual('2019-09-01', first_day_of_course(datetime(2020, 3, 2)))
-        self.assertEqual('2020-09-01', first_day_of_course(datetime(2021, 7, 25)))
-        self.assertEqual('2021-09-01', first_day_of_course(datetime(2021, 9, 5)))
-        self.assertEqual('2020-09-01', first_day_of_course(datetime(2021, 8, 31)))
-        self.assertEqual('2023-09-01', first_day_of_course(datetime(2024, 2, 29)))
-        self.assertEqual('2002-09-01', first_day_of_course(datetime(2003, 1, 29)))
-        self.assertEqual('2035-09-01', first_day_of_course(datetime(2035, 10, 22)))
+        self.assertEqual(datetime(2020, 9, 1), first_day_of_course(datetime(2020, 10, 2)))
+        self.assertEqual(datetime(2020, 9, 1), first_day_of_course(datetime(2020, 9, 1)))
+        self.assertEqual(datetime(2019, 9, 1, 0, 0), first_day_of_course(datetime(2020, 3, 2)))
+        self.assertEqual(datetime(2020, 9, 1, 0, 0), first_day_of_course(datetime(2021, 7, 25)))
+        self.assertEqual(datetime(2021, 9, 1, 0, 0), first_day_of_course(datetime(2021, 9, 5)))
+        self.assertEqual(datetime(2020, 9, 1, 0, 0), first_day_of_course(datetime(2021, 8, 31)))
+        self.assertEqual(datetime(2023, 9, 1, 0, 0), first_day_of_course(datetime(2024, 2, 29)))
+        self.assertEqual(datetime(2002, 9, 1, 0, 0), first_day_of_course(datetime(2003, 1, 29)))
+        self.assertEqual(datetime(2035, 9, 1, 0, 0), first_day_of_course(datetime(2035, 10, 22)))
 
     def test_show_result_classification(self):
-        """test to show the classification"""
+        """ Ranking is correct """
         client = Client()
         # Create 1 collection
         collection = create_collection('Coleccion 1')
@@ -545,14 +590,11 @@ class ViewsTest(TestCase):
         group_a.user_set.add(teacher)
 
         group_b.user_set.add(teacher)
-        start = first_day_of_course(datetime(2020, 9, 1))
+        start = first_day_of_course(datetime(2020, 9, 1)).strftime('%Y-%m-%d')
         end = datetime.today().strftime('%Y-%m-%d')
         # use the teacher to view the two groups
         client.login(username=teacher.username, password='12345')
         classification_url = reverse('judge:result', args=[collection.pk])
-        submit_select_url = reverse('judge:submit', args=[select_problem.pk])
-        submit_select_2_url = reverse('judge:submit', args=[select_problem_2.pk])
-        submit_dml_url = reverse('judge:submit', args=[dml_problem.pk])
         # I see group b where there is only the teacher
         # the table is empty because there is only the teacher
         response = client.get(classification_url, {
@@ -591,28 +633,30 @@ class ViewsTest(TestCase):
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
         self.assertEqual(response.status_code, 403)
 
-        client.post(submit_select_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
-        client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        client.post(submit_dml_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
-        client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
+        Submission.objects.create(problem=select_problem, code='  ', verdict_code=VerdictCode.WA, user=user_1)
+        Submission.objects.create(problem=select_problem, code='  ', verdict_code=VerdictCode.WA, user=user_1)
+        Submission.objects.create(problem=select_problem, code='  ', verdict_code=VerdictCode.AC, user=user_1)
+        Submission.objects.create(problem=dml_problem, code='  ', verdict_code=VerdictCode.WA, user=user_1)
+        Submission.objects.create(problem=dml_problem, code='  ', verdict_code=VerdictCode.WA, user=user_1)
+        Submission.objects.create(problem=dml_problem, code='  ', verdict_code=VerdictCode.WA, user=user_1)
+        Submission.objects.create(problem=dml_problem, code='  ', verdict_code=VerdictCode.AC, user=user_1)
 
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertIn('1/2 (2)', response.content.decode('utf-8'))
+        self.assertIn('1/3 (3)', response.content.decode('utf-8'))
         self.assertIn('1/4 (4)', response.content.decode('utf-8'))
-        self.assertIn('6', response.content.decode('utf-8'))
+        self.assertIn('7', response.content.decode('utf-8'))  # Score
+        self.assertIn('2', response.content.decode('utf-8'))  # Solved
 
         client.logout()
         client.login(username=user_2.username, password='12345')
 
-        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
-        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
-        client.post(submit_select_url, {'code': select_problem.solution}, follow=True)
+        Submission.objects.create(problem=select_problem, code='  ', verdict_code=VerdictCode.AC, user=user_2)
+        Submission.objects.create(problem=select_problem, code='  ', verdict_code=VerdictCode.AC, user=user_2)
+        Submission.objects.create(problem=select_problem, code='  ', verdict_code=VerdictCode.AC, user=user_2)
 
-        client.post(submit_dml_url, {'code': 'Select * from test'}, follow=True)
-        client.post(submit_dml_url, {'code': 'Select * from test'}, follow=True)
-        client.post(submit_dml_url, {'code': dml_problem.solution}, follow=True)
+        Submission.objects.create(problem=dml_problem, code='  ', verdict_code=VerdictCode.WA, user=user_2)
+        Submission.objects.create(problem=dml_problem, code='  ', verdict_code=VerdictCode.WA, user=user_2)
+        Submission.objects.create(problem=dml_problem, code='  ', verdict_code=VerdictCode.AC, user=user_2)
 
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
         html = response.content.decode('utf-8')
@@ -622,9 +666,9 @@ class ViewsTest(TestCase):
         # ana's position is better than pepe's position
         self.assertLess(html.index('ana'), html.index('pepe'))
 
-        client.post(submit_select_2_url, {'code': 'SELECT * FROM test where n = 1000'}, follow=True)
+        Submission.objects.create(problem=select_problem_2, code='  ', verdict_code=VerdictCode.WA, user=user_2)
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertIn('0/1 (1)', response.content.decode('utf-8'))
+        self.assertIn('0/1', response.content.decode('utf-8'))
 
         client.logout()
 
@@ -634,7 +678,7 @@ class ViewsTest(TestCase):
         # Create 2 collections
         collection = create_collection('Coleccion 1')
         collection_2 = create_collection('Coleccion 2')
-        # Create 2 useres
+        # Create 2 users
         user = create_user('123456', 'pepe')
         user2 = create_user('123456', 'ana')
         # create 1 group  and assign it to a user

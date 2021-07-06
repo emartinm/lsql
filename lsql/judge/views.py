@@ -4,22 +4,19 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 Functions that process HTTP connections
 """
 from datetime import timedelta, datetime
+import io
 
-import tempfile
-import os
-import pathlib
-from bs4 import BeautifulSoup
-import openpyxl
 from logzero import logger
+from pyexcel_ods3 import save_data
 
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden, FileResponse
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import login_required
-from django.utils.translation import gettext_lazy as _, ngettext
+from django.utils.translation import gettext_lazy as _, ngettext, gettext
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.template.exceptions import TemplateDoesNotExist
@@ -28,7 +25,7 @@ from django.views.decorators.http import require_POST
 
 from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table, filter_expected_db
-from .forms import SubmitForm, ResultForm
+from .forms import SubmitForm, ResultStaffForm, ResultStudentForm, ShowSubmissionsForm, DownloadRankingForm
 from .models import Collection, Problem, Submission, ObtainedAchievement, AchievementDefinition, \
     NumSubmissionsProblemsAchievementDefinition, Hint, UsedHint
 from .oracle_driver import OracleExecutor
@@ -57,62 +54,12 @@ def get_subclass_problem(problem_id):
     return None if len(queryset) == 0 else queryset[0]
 
 
-def pos(user_1, user_2):
-    """ Compares if user_1 has a better ranking than user_2 """
-    if user_1.resolved == user_2.resolved and user_1.score == user_2.score:
-        return False
-    return True
-
-
 def first_day_of_course(init_course):
-    """Returns the first day of the academic year"""
-    first_day = datetime(init_course.year, 9, 1).strftime('%Y-%m-%d')
+    """ Returns the first day of the academic year """
+    first_day = datetime(init_course.year, 9, 1)
     if 1 <= init_course.month < 9:
-        first_day = datetime(init_course.year - 1, 9, 1).strftime('%Y-%m-%d')
+        first_day = datetime(init_course.year - 1, 9, 1)
     return first_day
-
-
-def update_user_with_scores(user_logged, user, collection, start, end):
-    """Updates user object with information about submissions to problems in collection:
-       - user.score (int)
-       - user.collection (list of str representing "accepted submissions/all submission (first AC)") for problems in
-         collection (THE SAME ORDER)
-    """
-    for numb in range(collection.problem_list.count()):
-        num_accepted = 0
-        enter = False
-        attempts = 0
-        problem = collection.problem_list[numb]
-        user.first_AC = 0
-        if user_logged.is_staff:
-            subs = Submission.objects.filter(user=user,
-                                             problem=problem.id,
-                                             creation_date__range=[start, end + timedelta(days=1)]).order_by('pk')
-
-        else:
-            subs = Submission.objects.filter(user=user).filter(problem=problem.id).order_by('pk')
-        for (submission_pos, submission) in enumerate(subs):
-            if submission.verdict_code == VerdictCode.AC:
-                num_accepted = num_accepted + 1
-            if num_accepted == 1 and not enter:
-                enter = True
-                user.first_AC = submission_pos + 1
-                user.score = user.score + submission_pos + 1
-            attempts = attempts + 1
-        update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb, enter)
-
-
-def update_user_attempts_problem(attempts, user, problem, num_accepted, collection, numb, enter):
-    """Updates user.collection list with problem information:  "accepted submissions/all submission (first AC)"""
-    if attempts > 0 and user.first_AC == 0:
-        problem.num_submissions = f"{num_accepted}/{attempts} ({attempts})"
-        problem.solved = False
-    else:
-        problem.num_submissions = f"{num_accepted}/{attempts} ({user.first_AC})"
-        problem.solved = collection.problem_list[numb].solved_by_user(user)
-    if problem.solved and enter:
-        user.resolved = user.resolved + 1
-    user.collection.append(problem)
 
 
 def check_if_get_achievement(user, verdict):
@@ -152,80 +99,52 @@ def help_page(request):
 
 @login_required
 def show_result(request, collection_id):
-    """show the ranking of a group (GET param) for collection_id"""
+    """ Show the ranking of a group (GET param) for collection_id """
     if not Group.objects.all():
         # Show an informative message if there are not groups in the system
         return render(request, 'generic_error_message.html',
                       {'error': [_('¡Lo sentimos! No existe ningún grupo para ver resultados')]})
-    position = 1
-    result_form = ResultForm(request.GET)
-    start = None
-    end = None
-    up_to_classification_date = None
-    from_classification_date = None
-    up_to_classification = datetime.today().strftime('%Y-%m-%d')
     collection = get_object_or_404(Collection, pk=collection_id)
-    if request.user.is_staff and result_form.is_valid():
-        group_id = result_form.cleaned_data['group']
-        start = result_form.cleaned_data['start']
-        end = result_form.cleaned_data['end']
-        groups_user = Group.objects.all().order_by('name')
-        up_to_classification_date = end
-        from_classification_date = start
-    elif request.user.is_staff and not result_form.is_valid():
-        # Error 404 with all the validation errors as HTML
-        return HttpResponseNotFound(str(result_form.errors))
-    else:
-        if result_form.is_valid():
-            return HttpResponseForbidden("Forbidden")
-        groups_user = request.user.groups.all().order_by('name')
-        group_id = request.GET.get('group')
-    if group_id is None:
-        group_id = groups_user[0].id
-    group0 = get_object_or_404(Group, pk=group_id)
-    users = get_user_model().objects.filter(groups__name=group0.name)
-    if users.filter(id=request.user.id) or request.user.is_staff:
-        group0.name = group0.name
-        group0.id = group_id
-        groups_user = groups_user.exclude(id=group_id)
-        collection.problem_list = collection.problems()
-        collection.total_problem = collection.problem_list.count()
-        users = users.exclude(is_staff=True)
-        for user in users:
-            user.collection = []
-            user.resolved = 0
-            user.score = 0
-            user.n_achievements = ObtainedAchievement.objects.filter(user=user.pk).count()
-            update_user_with_scores(request.user, user, collection, start, end)
-        users = sorted(users, key=lambda x: (x.resolved, -x.score), reverse=True)
-        length = len(users)
-        for i in range(length):
-            if i != len(users) - 1:
-                if pos(users[i], users[i + 1]):
-                    users[i].pos = position
-                    position = position + 1
-                else:
-                    users[i].pos = position
-            else:
-                if pos(users[i], users[i - 1]):
-                    users[i].pos = position
-                    position = position + 1
-                else:
-                    users[i].pos = position
-        return render(request, 'results.html', {'collection': collection, 'groups': groups_user,
-                                                'users': users, 'login': request.user,
-                                                'group0': group0,
-                                                'to_fixed': up_to_classification,
-                                                'from_date': from_classification_date,
-                                                'to_date': up_to_classification_date,
-                                                'end_date': end, 'start_date': start})
+    result_staff_form = ResultStaffForm(request.GET)
+    result_student_form = ResultStudentForm(request.GET)
 
-    return HttpResponseForbidden("Forbidden")
+    if request.user.is_staff and result_staff_form.is_valid():
+        group_id = result_staff_form.cleaned_data['group']
+        group = get_object_or_404(Group, pk=group_id)
+        start = result_staff_form.cleaned_data.get('start')
+        end = result_staff_form.cleaned_data.get('end')
+        user_groups = Group.objects.all().order_by('name')
+    elif not request.user.is_staff and result_student_form.is_valid():
+        user_groups = request.user.groups.all().order_by('name')
+        group_id = result_student_form.cleaned_data['group']
+        group = get_object_or_404(Group, pk=group_id)
+        if group not in user_groups:
+            return HttpResponseForbidden("Forbidden")
+        start, end = None, None
+    elif request.user.is_staff and not result_staff_form.is_valid():
+        # Error 404 with all the validation errors as HTML
+        return HttpResponseNotFound(str(result_staff_form.errors))
+    elif not result_student_form.is_valid():
+        # Error 404 with all the validation errors as HTML
+        return HttpResponseNotFound(str(result_student_form.errors))
+
+    # Set start and end if they were not provided
+    start = first_day_of_course(datetime.today()) if start is None else start
+    end = datetime.today() if end is None else end
+    # Extends 'end' to 23:59:59 to cover today's latest submissions. Otherwise, ranking is not
+    # updated until next day (as plain dates have time 00:00:00)
+    end = datetime(end.year, end.month, end.day, 23, 59, 59)
+
+    ranking = collection.ranking(start, end, group)
+    return render(request, 'results.html', {'collection': collection, 'groups': user_groups,
+                                            'current_group': group,
+                                            'end_date': end, 'start_date': start,
+                                            'ranking': ranking})
 
 
 @login_required
 def show_results(request):
-    """shows the links to enter the results of each collection"""
+    """ Shows the links to enter the results of each collection """
     if not Group.objects.all():
         # Show an informative message if there are not groups in the system
         return render(request, 'generic_error_message.html',
@@ -240,21 +159,8 @@ def show_results(request):
                        })
     if groups_user.count() == 0 and request.user.is_staff:
         groups_user = Group.objects.all().order_by('name')
-    for results in cols:
-        # Templates can only invoke nullary functions or access object attribute, so we store
-        # the number of problems solved by the user in an attribute
-        results.num_solved = results.num_solved_by_user(request.user)
-    up_to_classification = datetime.today().strftime('%Y-%m-%d')
-    up_to_classification_date = datetime.strptime(up_to_classification, '%Y-%m-%d')
 
-    from_classification = first_day_of_course(datetime.today())
-    from_classification_date = datetime.strptime(from_classification, '%Y-%m-%d')
-    return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id,
-                                           'start_date': from_classification,
-                                           'from_date': from_classification_date,
-                                           'to_date': up_to_classification_date,
-                                           'to_fixed': up_to_classification,
-                                           'end_date': up_to_classification})
+    return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id})
 
 
 @login_required
@@ -308,38 +214,31 @@ def show_problem(request, problem_id):
 
 @login_required
 def show_submissions(request):
-    """Shows all the submissions of the current user"""
-
-    try:
-        pk_problem = request.GET.get('problem_id')
-        id_user = request.GET.get('user_id')
-        if pk_problem is not None or id_user is not None:
-            if int(id_user) == request.user.id and not request.user.is_staff:
-                start = request.GET.get('start')
-                end = request.GET.get('end')
-                if start is not None or end is not None:
-                    return HttpResponseForbidden("Forbidden")
-                problem = get_object_or_404(Problem, pk=pk_problem)
-                subs = Submission.objects.filter(user=request.user).filter(problem=problem.id).order_by('-pk')
-            elif request.user.is_staff:
-                start = request.GET.get('start')
-                end = request.GET.get('end')
-                starts = datetime.strptime(start, '%Y-%m-%d')
-                ends = datetime.strptime(end, '%Y-%m-%d')
-                problem = get_object_or_404(Problem, pk=pk_problem)
-                user = get_user_model().objects.filter(id=id_user)
-                subs = Submission.objects.filter(user=user.get()) \
-                    .filter(problem=problem.id, creation_date__range=[starts, ends + timedelta(days=1)]).order_by('-pk')
-            else:
-                return HttpResponseForbidden("Forbidden")
-
+    """ Shows all the submissions of one user, for some problem in a time window. Staff member
+        can see any submission, students only their own.
+    """
+    form = ShowSubmissionsForm(request.GET)
+    if form.is_valid():
+        problem_id = form.cleaned_data.get('problem_id')
+        problem = get_object_or_404(Problem, pk=problem_id) if problem_id is not None else None
+        user_id = form.cleaned_data.get('user_id')
+        user = get_object_or_404(get_user_model(), id=user_id) if user_id is not None else request.user
+        if not request.user.is_staff and user != request.user:
+            return HttpResponseForbidden("Forbidden")
+        first_submission_date = datetime(1950, 1, 1)
+        start = form.cleaned_data.get('start') if form.cleaned_data.get('start') is not None \
+            else first_submission_date
+        end = form.cleaned_data.get('end') if form.cleaned_data.get('end') is not None \
+            else datetime.today()
+        if problem is not None:
+            subs = Submission.objects.filter(user=user, problem=problem.id,
+                                             creation_date__range=[start, end + timedelta(days=1)]).order_by('-pk')
         else:
-            subs = Submission.objects.filter(user=request.user).order_by('-pk')
-        for submission in subs:
-            submission.verdict_pretty = VerdictCode(submission.verdict_code).html_short_name()
-        return render(request, 'submissions.html', {'submissions': subs})
-    except ValueError:
-        return HttpResponseNotFound(_("El identificador no tiene el formato correcto"))
+            subs = Submission.objects.filter(user=user,
+                                             creation_date__range=[start, end + timedelta(days=1)]).order_by('-pk')
+    else:
+        return HttpResponseNotFound(str(form.errors))
+    return render(request, 'submissions.html', {'submissions': subs, 'user': user})
 
 
 @login_required
@@ -515,74 +414,52 @@ def test_error_500(request):
     return HttpResponseNotFound()
 
 
+def cell_ranking(problem):
+    """ Generates the text inside a ranking cell """
+    if problem['correct_submissions'] > 0:
+        return "{}/{} ({})".format(problem['correct_submissions'],
+                                   problem['total_submissions'],
+                                   problem['first_correct_submission'])
+    return "{}/{}".format(problem['correct_submissions'],
+                          problem['total_submissions'])
+
+
 @login_required
 def download_ranking(request, collection_id):
-    """Download excel with the results of submissions"""
-    result_form = ResultForm(request.GET)
-
+    """ Download Excel file with the results of submissions """
+    collection = get_object_or_404(Collection, pk=collection_id)
+    result_form = DownloadRankingForm(request.GET)
     if request.user.is_staff and result_form.is_valid():
-        html = show_result(request, collection_id).content.decode('utf-8')
-        soup = BeautifulSoup(html, 'html.parser')
-        col = 1
-        row = 1
-        work = openpyxl.Workbook()
-        book = work.active
+        group = get_object_or_404(Group, pk=result_form.cleaned_data['group'])
+        start = result_form.cleaned_data.get('start')
+        end = result_form.cleaned_data.get('end')
+        # Extends 'end' to 23:59:59 to cover today's latest submissions. Otherwise, ranking is not
+        # updated until next day (as plain dates have time 00:00:00)
+        end = datetime(end.year, end.month, end.day, 23, 59, 59)
+        start = datetime(start.year, start.month, start.day, 0, 0, 0)
 
-        # Takes collection and date
-        data = soup.find_all("h1")
-        for i in data:
-            book.cell(row=row, column=col, value=i.string.strip())
-            row += 1
+        sheet_rows = list()
+        # Sheet header: collection name, dates and group in first 4 rows
+        sheet_rows.append([gettext('Colección'), collection.name_md])
+        sheet_rows.append([gettext('Grupo'), str(group)])
+        sheet_rows.append([gettext('Desde'), str(start)])
+        sheet_rows.append([gettext('Hasta'), str(end)])
+        sheet_rows.append([])
 
-        # Takes group
-        option = soup.find(id='clase').find("option")
-        book.cell(row=row, column=col, value=option.string.strip())
-        row += 1
-
-        # Takes the first column of table (Pos, User, Exercises, Score, Solved)
-        ths = soup.find_all("th")
-        for i in ths:
-            if i.string is not None:
-                book.cell(row=row, column=col, value=i.string.strip())
-                col += 1
-            exercises = i.find_all("a")
-            for j in exercises:
-                if j.string is not None:
-                    book.cell(row=row, column=col, value=j['title'].strip())
-                    col += 1
-        col = 1
-        # Takes the information for each student
-        trs = soup.find_all("tr")
-        for i in trs:
-            tds = i.find_all("td")
-            # Information of a student (Pos, User, Exercises, Score, Solved)
-            for j in tds:
-                name = j.find('span', class_='ranking-username')
-                if name is not None:
-                    book.cell(row=row, column=col, value=name.string.strip())
-                    col += 1
-                if j.string is not None:
-                    book.cell(row=row, column=col, value=j.string.strip())
-                    col += 1
-                num_submissions = j.find_all("a")
-                for k in num_submissions:
-                    if k.string is not None:
-                        book.cell(row=row, column=col, value=k.string.strip())
-                        col += 1
-            col = 1
-            row += 1
-
-        # create a temporary file to save the workbook with the results
-        with tempfile.NamedTemporaryFile(mode='w+b', buffering=-1, suffix='.xlsx') as temp:
-            file = pathlib.Path(temp.name)
-            name = file.name
-            work.save(name)
-            response = HttpResponse(open(name, 'rb').read())
-            response['Content-Type'] = 'application/xlsx'
-            response['Content-Disposition'] = "attachment; filename=ranking.xlsx"
-        os.remove(name)
-        return response
-
+        # Table header [Pos., User, Exercises..., Score, Solved] in row 6
+        sheet_rows.append([gettext("Pos."), gettext("Usuario")] +
+                          [problem.title_md for problem in collection.problems()] +
+                          [gettext("Puntuación."), gettext("Resueltos")])
+        # Ranking row by row
+        for user in collection.ranking(start, end, group):
+            sheet_rows.append([user.pos, user.username] +
+                              [cell_ranking(problem) for _, problem in user.results.items()] +
+                              [user.score, user.num_solved])
+        # Saves ODS to memory and includes it in the response
+        buffer = io.BytesIO()
+        save_data(buffer, {str(group): sheet_rows})
+        buffer.seek(0)  # Moves to the beginning of the buffer
+        return FileResponse(buffer, as_attachment=True, filename='ranking.ods')
     if request.user.is_staff and not result_form.is_valid():
         return HttpResponseNotFound(str(result_form.errors))
     return HttpResponseForbidden("Forbidden")

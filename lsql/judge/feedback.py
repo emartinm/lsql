@@ -107,30 +107,30 @@ def feedback_rows(expected, obtained, order, initial_db=None):
     :param initial_db: List containing all tables
     :return: (str) HTML code with the feedback, or '' if the table rows are equal (considering order)
     """
-    tupled_expected = [tuple(r) for r in expected['rows']]
-    tupled_obtained = [tuple(r) for r in obtained['rows']]
-    mset_expected = Multiset(tupled_expected)
-    mset_obtained = Multiset(tupled_obtained)
-    obtained_not_expected = mset_obtained - mset_expected
+    expected_tuples = [tuple(r) for r in expected['rows']]
+    obtained_tuples = [tuple(r) for r in obtained['rows']]
+    expected_multiset = Multiset(expected_tuples)
+    obtained_multiset = Multiset(obtained_tuples)
+    obtained_not_expected = obtained_multiset - expected_multiset
 
     if obtained_not_expected:
         # Some rows are not expected, get row numbers to mark them in the feedback
         incorrect_row_numbers = set()  # Starting from 0
         pos = 0
-        while pos < len(tupled_obtained) and obtained_not_expected:
-            if tupled_obtained[pos] in obtained_not_expected:
+        while pos < len(obtained_tuples) and obtained_not_expected:
+            if obtained_tuples[pos] in obtained_not_expected:
                 incorrect_row_numbers.add(pos)
-                obtained_not_expected.remove(tupled_obtained[pos], 1)  # Removes one appearance of that row
+                obtained_not_expected.remove(obtained_tuples[pos], 1)  # Removes one appearance of that row
             pos = pos + 1
         feedback = render_to_string('feedback_wa_wrong_rows.html',
-                                    {'table': {'header': expected['header'], 'rows': tupled_obtained},
+                                    {'table': {'header': expected['header'], 'rows': obtained_tuples},
                                      'name': None,
                                      'mark_rows': incorrect_row_numbers,
                                      'initial_db': initial_db}
                                     )
         return feedback
 
-    expected_not_obtained = mset_expected - mset_obtained
+    expected_not_obtained = expected_multiset - obtained_multiset
     if expected_not_obtained:
         feedback = render_to_string('feedback_wa_missing_rows.html',
                                     {'obtained': obtained,
@@ -140,7 +140,7 @@ def feedback_rows(expected, obtained, order, initial_db=None):
                                     )
         return feedback
 
-    if order and tupled_expected != tupled_obtained:
+    if order and expected_tuples != obtained_tuples:
         return render_to_string('feedback_wa_order.html', {'expected': expected, 'obtained': obtained})
 
     return ''  # Everything OK => Accepted
@@ -159,8 +159,8 @@ def compare_select_results(expected, obtained, order, initial_db=None):
     if initial_db is not None:
         parsed_initial_db = []
         for table_name in initial_db:
-            tupled_obtained = [tuple(r) for r in initial_db[table_name]['rows']]
-            parsed_initial_db.append({'header': initial_db[table_name]['header'], 'rows': tupled_obtained})
+            obtained_tuples = [tuple(r) for r in initial_db[table_name]['rows']]
+            parsed_initial_db.append({'header': initial_db[table_name]['header'], 'rows': obtained_tuples})
     feedback = feedback_headers(expected, obtained, parsed_initial_db)
     if not feedback:
         feedback = feedback_rows(expected, obtained, order, parsed_initial_db)
@@ -184,11 +184,11 @@ def feedback_rows_discriminant(correct, incorrect, order):
     :param order: consider order when comparing rows
     :return: (str) HTML code with the feedback, or '' if the table rows are not equal (considering order)
     """
-    tupled_correct = [tuple(r) for r in correct['rows']]
-    tupled_incorrect = [tuple(r) for r in incorrect['rows']]
-    mset_correct = Multiset(tupled_correct)
-    mset_incorrect = Multiset(tupled_incorrect)
-    obtained_not_expected = mset_correct - mset_incorrect
+    correct_tuples = [tuple(r) for r in correct['rows']]
+    incorrect_tuples = [tuple(r) for r in incorrect['rows']]
+    correct_multiset = Multiset(correct_tuples)
+    incorrect_multiset = Multiset(incorrect_tuples)
+    obtained_not_expected = correct_multiset - incorrect_multiset
     if (order and correct != incorrect) or obtained_not_expected:
         return ''
     return render_to_string('feedback_table_result.html', {'obtained': incorrect})

@@ -327,12 +327,6 @@ class OracleExecutor:
                               FROM all_users
                               WHERE USERNAME LIKE 'LSQ_%' AND (SYSDATE-CREATED)*24*60*60 > :age_seconds"""
     __KILL_SESSION = """ALTER SYSTEM KILL SESSION '{},{}'"""
-    __SLEEP_AFTER_TIMEOUT = 100
-    # milliseconds to sleep after a timeout when obtaining a
-    # a timeout error, so that user connections can be properly
-    # closed (otherwise, DROP USER throws an 'ORA-01940: cannot
-    # drop a user that is currently connected')
-
     __DB = None
 
     @classmethod

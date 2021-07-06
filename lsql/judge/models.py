@@ -106,7 +106,7 @@ class Collection(models.Model):
 
     def problems(self):
         """Returns a list of Problem objects in the collection using the inverse FK from Problem to Collection"""
-        return self.problem_set.all().order_by('position', '-creation_date')
+        return self.problem_set.all().order_by('position', 'creation_date')
 
     def num_problems(self):
         """Number of problems in the collection"""
@@ -120,6 +120,58 @@ class Collection(models.Model):
     def languages(self):
         """Set with all the languages of the collection"""
         return list(self.problems().order_by('language').distinct('language').values_list('language', flat=True))
+
+    def ranking(self, from_date, to_date, group):
+        """ Returns a list of the non-staff users in the group in the order they are in the ranking.
+            Each user is extended with the following attributes:
+              - n_achievements: number of achievements
+              - score: sum of the submissions needed to solve the problems in the collection
+              - num_solved: number of problems solved in the collection
+              - results: dictionary pk->info of dictionaries with the information for each problem.
+                         These inner dictionaries contain:
+                    'total_submissions': number of submissions
+                    'correct_submissions': number of correct submissions
+                    'first_correct_submission': position of the first correct submission (-1 if none)
+        """
+        users = get_user_model().objects.filter(groups__id=group.id, is_staff=False)
+        users_dict = {user.pk: user for user in users}
+        for _, user in users_dict.items():
+            user.results = {problem.pk: {'total_submissions': 0,
+                                         'correct_submissions': 0,
+                                         'first_correct_submission': 0}
+                            for problem in self.problems()}
+            user.n_achievements = len(ObtainedAchievement.objects.filter(user__pk=user.pk))
+        submissions = Submission.objects.filter(user__in=users, creation_date__gte=from_date,
+                                                creation_date__lte=to_date, problem__collection=self).order_by('pk')
+        for submission in submissions:
+            # Updates the information of the problem within each submission
+            user_pk = submission.user.pk
+            problem_pk = submission.problem.pk
+            users_dict[user_pk].results[problem_pk]['total_submissions'] += 1
+            if (submission.verdict_code == VerdictCode.AC and
+                    users_dict[user_pk].results[problem_pk]['correct_submissions'] == 0):
+                users_dict[user_pk].results[problem_pk]['first_correct_submission'] = \
+                    users_dict[user_pk].results[problem_pk]['total_submissions']
+            if submission.verdict_code == VerdictCode.AC:
+                users_dict[user_pk].results[problem_pk]['correct_submissions'] += 1
+
+        # Computes num. solved and score from problem statistics
+        for _, user in users_dict.items():
+            user.num_solved = len([True for info in user.results.values() if info['first_correct_submission'] > 0])
+            user.score = sum([info['first_correct_submission'] for info in user.results.values()])
+
+        # Sorts users by descending number of solved problems and then ascending by score.
+        ranking = sorted(users_dict.values(), key=lambda user: (-1 * user.num_solved, user.score))
+        # Sets positions
+        last_scores = (-1, -1)
+        last_pos = 0
+        for user in ranking:
+            if last_scores != (user.num_solved, user.score):
+                last_pos += 1
+            user.pos = last_pos
+            last_scores = (user.num_solved, user.score)
+
+        return ranking
 
 
 class Problem(models.Model):
@@ -142,7 +194,7 @@ class Problem(models.Model):
     # (Dirty) trick to upload ZIP files using the standard admin interface of Django
     zipfile = models.FileField(upload_to='problem_zips/', default=None, blank=True, null=True)
 
-    # To query Problem to obtain subclass objects with '.select_subclasses()'
+    # To query Problem and obtain subclass objects with '.select_subclasses()'
     objects = InheritanceManager()
 
     def clean(self):
@@ -540,6 +592,10 @@ class Submission(models.Model):
 
     def __str__(self):
         return f"{self.pk} - {self.user.email} - {self.verdict_code}"
+
+    def verdict_html_name(self):
+        """ Returns the HTML code with the verdict name in colors """
+        return VerdictCode(self.verdict_code).html_short_name()
 
 
 def default_json_lang():

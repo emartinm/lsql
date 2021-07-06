@@ -277,23 +277,23 @@ class LanguagesTest(TestCase):
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         ranking_url = reverse('judge:result', args=[collection.pk])
-        response = client.get(ranking_url, follow=True)
+        response = client.get(ranking_url + f'?group={group_a.pk}', follow=True)
 
         self.assertIn('Group', response.content.decode('utf-8'))
         self.assertIn('User', response.content.decode('utf-8'))
         self.assertIn('Score', response.content.decode('utf-8'))
-        self.assertIn('LEGEND', response.content.decode('utf-8'))
+        self.assertIn('Ranking', response.content.decode('utf-8'))
         self.assertIn('Solved', response.content.decode('utf-8'))
         self.assertIn('Sum of the first accepted submission of each exercise', response.content.decode('utf-8'))
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
         ranking_url = reverse('judge:result', args=[collection.pk])
-        response = client.get(ranking_url, follow=True)
+        response = client.get(ranking_url + f'?group={group_a.pk}', follow=True)
 
         self.assertIn('Grupo', response.content.decode('utf-8'))
         self.assertIn('Usuario', response.content.decode('utf-8'))
         self.assertIn('Puntuación', response.content.decode('utf-8'))
-        self.assertIn('LEYENDA', response.content.decode('utf-8'))
+        self.assertIn('Clasificación', response.content.decode('utf-8'))
         self.assertIn('Resueltos', response.content.decode('utf-8'))
         self.assertIn('Suma del primer envío aceptado de cada ejercicio', response.content.decode('utf-8'))
 
