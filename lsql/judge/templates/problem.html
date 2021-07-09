@@ -63,7 +63,7 @@ General template for a problem. Provides the following blocks:
              {% for hint in problem.used_hints %}
              <div class="hint">
                  <h5 class="hint_title">{% translate "Pista" %} {{ forloop.counter }} </h5>
-                 {{hint.text_html|safe}}
+                 {{hint.hint_definition.get_text_html|safe}}
              </div>
              {% endfor %}
         </div>

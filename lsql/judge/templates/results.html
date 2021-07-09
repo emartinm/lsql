@@ -37,7 +37,7 @@
     <div class="col md-3 ms-3">
         <a href="{% url 'judge:download_ranking' collection.id %}?group={{current_group.id}}&start={{start_date|date:'Y-m-d'}}&end={{end_date|date:'Y-m-d'}}">
             <button type="button" class="btn btn-primary"
-                    title='{% translate "Descargar fichero CSV con la clasificación" %}'>
+                    title='{% translate "Descargar fichero ODS con la clasificación" %}'>
                 {% translate "Descargar ranking" %}
             </button>
         </a>
@@ -95,18 +95,19 @@
     </div>
   </div>
 </div>
+
 <table class="table text-center border border-dark">
     <thead class="table-dark">
       <tr>
           <th class=" border border-light" scope="col">{% translate "Pos." %}</th>
-          <th  class=" border border-light" scope="col">{% translate "Usuario" %}</th>
+          <th class=" border border-light" scope="col">{% translate "Usuario" %}</th>
           {% for p in collection.problems %}
              <th  class=" border border-light" scope="col" >
                  <a class="text-white" title="{{ p.title_html|safe }}" href="{% url 'judge:problem' p.pk %}">{% translate "EJ" %}{{forloop.counter}}</a>
              </th>
           {% endfor %}
-          <th  class=" border border-light" scope="col" >{% translate "Puntuación" %}</th>
-          <th  class=" border border-light" scope="col">{% translate "Resueltos" %}</th>
+          <th class=" border border-light" scope="col" >{% translate "Puntuación" %}</th>
+          <th class=" border border-light" scope="col">{% translate "Resueltos" %}</th>
       </tr>
     </thead>
     <tbody>

@@ -173,7 +173,8 @@ class RankingTest(TestCase):
                                                                     description={"es":'Envia muchas soluciones'},
                                                                     num_submissions=80, num_problems=1)
         ach_submi_pro.save()
-        # Create problem and submit correct answer with "immobile" user, for make this the first to solve the problem
+        # Create problem and submit correct answer with "immobile" user,
+        # for make this the first to solve the problem
         problem = create_select_problem(coll, 'Problema')
         submit_select_url = reverse('judge:submit', args=[problem.pk])
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
@@ -399,4 +400,4 @@ class RankingTest(TestCase):
         client.logout()
         client.login(username=user.username, password='2222')
         response = client.get(url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
-        self.assertIn('Forbidden', response.content.decode('utf-8'))
+        self.assertIn('pero no está autorizado a acceder a esta página', response.content.decode('utf-8'))

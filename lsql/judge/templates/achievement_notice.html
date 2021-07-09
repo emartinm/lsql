@@ -1,9 +1,13 @@
 {% load i18n %}
 
 <div class="modal-body" id="achieve_sentence">
-{% translate sentence %}
+{% blocktranslate count count=achievement_list|length %}
+Además, con este envío has conseguido el logro
+{% plural %}
+Además, con este envío has conseguido los logros
+{% endblocktranslate %}
 
-{% for ach in achieve %}
+{% for ach in achievement_list %}
     {% if forloop.first %}
         <b>"{{ ach.get_name }}"</b>
     {% elif forloop.last %}
@@ -13,7 +17,7 @@
     {% endif %}
 {% endfor %}
 
-{% translate ". Accede a la página" %}
+. {% translate "Accede a la página" %}
 <a href="{% url 'judge:achievements' user %}">
-{% translate "Mis logros" %}</a>{% translate " para obtener mas información."%}
+{% translate "Mis logros" %}</a> {% translate "para obtener más información" %}.
 </div>

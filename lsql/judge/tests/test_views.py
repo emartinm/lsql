@@ -399,12 +399,12 @@ class ViewsTest(TestCase):
             self.assertEqual(response.status_code, 200)
 
     def test_show_result_classification_date(self):
-        """test to show the classification with dates"""
+        """ test to show the classification with dates """
         client = Client()
         submissions_url = reverse('judge:submissions')
 
         # Create 1 collection
-        collection = create_collection('Coleccion 1')
+        collection = create_collection('Collection 1')
         classification_url = reverse('judge:result', args=[collection.pk])
         # Create 1 problem
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
@@ -429,9 +429,6 @@ class ViewsTest(TestCase):
 
         # I connect to a student and in the URL I insert dates
         client.login(username=user_1.username, password='12345')
-        response = client.get(classification_url, follow=True)
-        self.assertEqual(404, response.status_code)  # Missing group
-
         # the first student makes three submissions (1/3 (3))
         sub1 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
                                          user=user_1, verdict_code=VerdictCode.WA, problem=select_problem)
@@ -481,7 +478,7 @@ class ViewsTest(TestCase):
         for fragment in ['0/2', '0', '0', '0/0']:
             self.assertIn(fragment, response.content.decode('utf-8'))
 
-        # I test date formatting and incorrect or misplaced dates
+        # Incorrect dates
         good_start_date = datetime(2019, 9, 1).strftime('%Y-%m-%d')
         wrong_end_date = datetime(2222, 2, 2).strftime('%Y-%m-%d')
         response = client.get(classification_url, {
@@ -510,16 +507,15 @@ class ViewsTest(TestCase):
         # Create 1 collection with 1 problem
         collection = create_collection('Coleccion 1')
         classification_url = reverse('judge:result', args=[collection.pk])
-        create_select_problem(collection, 'SelectProblem ABC DEF')
 
-        # Create 3 users (2 students y 1 professor)
+        # Create 3 users (2 students y 1 staff)
         user_1 = create_user('12345', 'pepe')
         user_2 = create_user('12345', 'ana')
         teacher = create_superuser('12345', 'iker')
 
         # Create 2 groups
-        group_a = create_group('1A')
         group_b = create_group('1B')
+        group_a = create_group('1A')
 
         # add the students and the teacher to the group a, and only user 2 to group B
         group_a.user_set.add(user_1)
@@ -535,25 +531,41 @@ class ViewsTest(TestCase):
         # 'iker' also to both groups as staff
         client = Client()
         client.login(username='pepe', password='12345')
-        response = client.get(classification_url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
+        response = client.get(classification_url, {'group': group_a.id}, follow=True)
         self.assertEqual(response.status_code, 200)
-        response = client.get(classification_url, {'group': group_b.id, 'start': start, 'end': end}, follow=True)
+        response = client.get(classification_url, {'group': group_b.id}, follow=True)
         self.assertEqual(response.status_code, 403)
         self.assertIn('Forbidden', response.content.decode('utf-8'))
-
+        response = client.get(classification_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('1A', response.content.decode('utf-8'))
         client.logout()
+
         client.login(username='ana', password='12345')
-        response = client.get(classification_url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
+        response = client.get(classification_url, {'group': group_a.id}, follow=True)
         self.assertEqual(response.status_code, 200)
-        response = client.get(classification_url, {'group': group_b.id, 'start': start, 'end': end}, follow=True)
+        response = client.get(classification_url, {'group': group_b.id}, follow=True)
         self.assertEqual(response.status_code, 200)
-
+        response = client.get(classification_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('1B', response.content.decode('utf-8'))
         client.logout()
+
         client.login(username='iker', password='12345')
         response = client.get(classification_url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
         self.assertEqual(response.status_code, 200)
         response = client.get(classification_url, {'group': group_b.id, 'start': start, 'end': end}, follow=True)
         self.assertEqual(response.status_code, 200)
+        response = client.get(classification_url, {'group': group_a.id, 'end': end}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = client.get(classification_url, {'group': group_b.id, 'start': start}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = client.get(classification_url, {'group': group_b.id}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = client.get(classification_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('1B', response.content.decode('utf-8'))
+        client.logout()
 
     def test_first_day_of_course(self):
         """Test that given a date returns you on the first day of the academic year"""
@@ -627,9 +639,12 @@ class ViewsTest(TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn(msg, response.content.decode('utf-8'))
         client.logout()
-        client.login(username=user_1.username, password='12345')
 
         # I connect to pepe at 1b
+        client.login(username=user_1.username, password='12345')
+        response = client.get(classification_url, {'group': 'patato'}, follow=True)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('Introduzca un número entero', response.content.decode('utf_8'))
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
         self.assertEqual(response.status_code, 403)
 
@@ -642,10 +657,8 @@ class ViewsTest(TestCase):
         Submission.objects.create(problem=dml_problem, code='  ', verdict_code=VerdictCode.AC, user=user_1)
 
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertIn('1/3 (3)', response.content.decode('utf-8'))
-        self.assertIn('1/4 (4)', response.content.decode('utf-8'))
-        self.assertIn('7', response.content.decode('utf-8'))  # Score
-        self.assertIn('2', response.content.decode('utf-8'))  # Solved
+        for expected in ['1/3 (3)', '1/4 (4)', '7', '2']:
+            self.assertIn(expected, response.content.decode('utf-8'))
 
         client.logout()
         client.login(username=user_2.username, password='12345')
@@ -673,14 +686,14 @@ class ViewsTest(TestCase):
         client.logout()
 
     def test_show_result(self):
-        """Test to enter the results page where you can see the collections."""
+        """ Test to enter the results page where you can see the collections """
         client = Client()
         # Create 2 collections
         collection = create_collection('Coleccion 1')
         collection_2 = create_collection('Coleccion 2')
         # Create 2 users
         user = create_user('123456', 'pepe')
-        user2 = create_user('123456', 'ana')
+        create_user('123456', 'ana')
         # create 1 group  and assign it to a user
         group = create_group('1A')
         group.user_set.add(user)
@@ -695,16 +708,6 @@ class ViewsTest(TestCase):
         self.assertIn(collection_2.name_html, response.content.decode('utf-8'))
         self.assertIn(title, response.content.decode('utf-8'))
         client.logout()
-        # the user without a group can't see the page results
-        client.login(username=user2.username, password='123456')
-        response = client.get(result_url, follow=True)
-        msg = 'Lo sentimos! No tienes asignado un grupo de la asignatura'
-        msg1 = 'Por favor, contacta con tu profesor para te asignen un grupo de clase.'
-        self.assertEqual(response.status_code, 200)
-        html = response.content.decode('utf-8')
-        self.assertIn(msg, html)
-        self.assertIn(msg1, html)
-        client.logout()
 
         # I connect with a teacher without groups
         teacher = create_superuser('12345', 'teacher')
@@ -713,7 +716,7 @@ class ViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_results_no_groups(self):
-        """The system does not crash if there are not groups defined"""
+        """ The system does not crash if there are not groups defined """
         client = Client()
         # Create 2 collections
         collection = create_collection('Coleccion 1')
@@ -723,20 +726,17 @@ class ViewsTest(TestCase):
         # URL for connections
         result_url = reverse('judge:results')
         classification_url = reverse('judge:result', args=[collection.pk])
-        msg = '¡Lo sentimos! No existe ningún grupo para ver resultados'
 
         client.login(username=user.username, password='123456')
         for url in [result_url, classification_url]:
             response = client.get(url, follow=True)
             self.assertEqual(response.status_code, 200)
-            self.assertIn(msg, response.content.decode('utf-8'))
         client.logout()
 
         client.login(username=teacher.username, password='12345')
         for url in [result_url, classification_url]:
             response = client.get(url, follow=True)
             self.assertEqual(response.status_code, 200)
-            self.assertIn(msg, response.content.decode('utf-8'))
 
     def test_download_submission(self):
         """ Test to download code of submission """
@@ -798,11 +798,12 @@ class ViewsTest(TestCase):
         create_superuser('1111', 'teacher')
         error_500_rul = reverse('judge:test_error_500')
 
-        # Unauthenticated users obtains 404
+        # Unauthenticated users obtain the login page
         response = client.get(error_500_rul, follow=True)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Entrar", response.content.decode('utf_8'))
 
-        # Studend also obtains 404
+        # Students obtain 404
         client.login(username='tamara', password='2222')
         response = client.get(error_500_rul, follow=True)
         self.assertEqual(response.status_code, 404)

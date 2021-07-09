@@ -270,7 +270,7 @@ class Problem(models.Model):
         return None
 
     def insert_sql_list(self):
-        """List containing all sql inserts"""
+        """ List containing all sql inserts """
         return self.insert_sql.split(self.__INSERT_SEPARATION)
 
 

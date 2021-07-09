@@ -39,7 +39,7 @@ class LoginForm(forms.Form):
 
 class ResultStaffForm(forms.Form):
     """ Form to validate ranking requests for staff """
-    group = forms.IntegerField(label='Grupo', min_value=1)
+    group = forms.IntegerField(label='Grupo', min_value=1, required=False)
     start = forms.DateField(label='Desde', input_formats=['%Y-%m-%d'], required=False)
     end = forms.DateField(label='Hasta', input_formats=['%Y-%m-%d'], required=False)
 
@@ -56,7 +56,7 @@ class ResultStaffForm(forms.Form):
 
 class ResultStudentForm(forms.Form):
     """ Form to validate ranking requests for staff for students """
-    group = forms.IntegerField(label='Grupo', min_value=1)
+    group = forms.IntegerField(label='Grupo', min_value=1, required=False)
 
 
 class ShowSubmissionsForm(forms.Form):

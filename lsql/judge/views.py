@@ -54,7 +54,7 @@ def get_subclass_problem(problem_id):
     return None if len(queryset) == 0 else queryset[0]
 
 
-def first_day_of_course(init_course):
+def first_day_of_course(init_course: datetime) -> datetime:
     """ Returns the first day of the academic year """
     first_day = datetime(init_course.year, 9, 1)
     if 1 <= init_course.month < 9:
@@ -84,42 +84,43 @@ def check_if_get_achievement(user, verdict):
 ##############
 
 def index(_):
-    """Redirect root access to collections"""
+    """ Redirect root access to collections """
     return HttpResponseRedirect(reverse('judge:collections'))
 
 
 @login_required
 def help_page(request):
-    """ Shows help page """
+    """ Shows help page, first the one for the request language and, if it doesn't exist,
+        the one for the default language
+    """
     try:
-        return render(request, 'help.'+ request.LANGUAGE_CODE + '.html')
+        return render(request, 'help.' + request.LANGUAGE_CODE + '.html')
     except TemplateDoesNotExist:
-        return render(request, 'help.'+ settings.LANGUAGE_CODE + '.html')
+        return render(request, 'help.' + settings.LANGUAGE_CODE + '.html')
 
 
 @login_required
 def show_result(request, collection_id):
-    """ Show the ranking of a group (GET param) for collection_id """
-    if not Group.objects.all():
-        # Show an informative message if there are not groups in the system
-        return render(request, 'generic_error_message.html',
-                      {'error': [_('¡Lo sentimos! No existe ningún grupo para ver resultados')]})
+    """ Show the ranking of a group for collection_id.
+        If the user is staff then it receives the following GET parameters:
+          * group = Group ID (optional). If not set, use the first group in the system
+          * start = date YYYY-MM-DD (optional). If not set, first day of the current course
+          * end = date YYYY-MM-DD (optional). If not set, today
+        If the user is standard, then it receives the following GET parameter:
+          * group = Group ID (optional). If not set, use the first group of the user
+    """
     collection = get_object_or_404(Collection, pk=collection_id)
     result_staff_form = ResultStaffForm(request.GET)
     result_student_form = ResultStudentForm(request.GET)
 
     if request.user.is_staff and result_staff_form.is_valid():
-        group_id = result_staff_form.cleaned_data['group']
-        group = get_object_or_404(Group, pk=group_id)
+        available_groups = Group.objects.all().order_by('name')
+        group_id = result_staff_form.cleaned_data.get('group')
         start = result_staff_form.cleaned_data.get('start')
         end = result_staff_form.cleaned_data.get('end')
-        user_groups = Group.objects.all().order_by('name')
     elif not request.user.is_staff and result_student_form.is_valid():
-        user_groups = request.user.groups.all().order_by('name')
+        available_groups = request.user.groups.all().order_by('name')
         group_id = result_student_form.cleaned_data['group']
-        group = get_object_or_404(Group, pk=group_id)
-        if group not in user_groups:
-            return HttpResponseForbidden("Forbidden")
         start, end = None, None
     elif request.user.is_staff and not result_staff_form.is_valid():
         # Error 404 with all the validation errors as HTML
@@ -127,6 +128,15 @@ def show_result(request, collection_id):
     elif not result_student_form.is_valid():
         # Error 404 with all the validation errors as HTML
         return HttpResponseNotFound(str(result_student_form.errors))
+
+    if not available_groups:
+        return render(request, 'generic_error_message.html',
+                      {'error': [_('¡Lo sentimos! No existe ningún grupo para ver la clasificación')]})
+    if group_id is None:
+        group_id = available_groups[0].pk
+    group = get_object_or_404(Group, pk=group_id)
+    if group not in available_groups:
+        return HttpResponseForbidden("Forbidden")
 
     # Set start and end if they were not provided
     start = first_day_of_course(datetime.today()) if start is None else start
@@ -136,7 +146,7 @@ def show_result(request, collection_id):
     end = datetime(end.year, end.month, end.day, 23, 59, 59)
 
     ranking = collection.ranking(start, end, group)
-    return render(request, 'results.html', {'collection': collection, 'groups': user_groups,
+    return render(request, 'results.html', {'collection': collection, 'groups': available_groups,
                                             'current_group': group,
                                             'end_date': end, 'start_date': start,
                                             'ranking': ranking})
@@ -144,28 +154,14 @@ def show_result(request, collection_id):
 
 @login_required
 def show_results(request):
-    """ Shows the links to enter the results of each collection """
-    if not Group.objects.all():
-        # Show an informative message if there are not groups in the system
-        return render(request, 'generic_error_message.html',
-                      {'error': [_('¡Lo sentimos! No existe ningún grupo para ver resultados')]})
-
+    """ Shows the links to enter the ranking of each collection """
     cols = Collection.objects.all().order_by('position', '-creation_date')
-    groups_user = request.user.groups.all().order_by('name')
-    if groups_user.count() == 0 and not request.user.is_staff:
-        return render(request, 'generic_error_message.html',
-                      {'error': [_('¡Lo sentimos! No tienes asignado un grupo de la asignatura.'),
-                                 _('Por favor, contacta con tu profesor para te asignen un grupo de clase.')]
-                       })
-    if groups_user.count() == 0 and request.user.is_staff:
-        groups_user = Group.objects.all().order_by('name')
-
-    return render(request, 'result.html', {'user': request.user, 'results': cols, 'group': groups_user[0].id})
+    return render(request, 'result.html', {'results': cols})
 
 
 @login_required
 def show_collections(request):
-    """Show all the collections"""
+    """ Show all the collections """
     cols = Collection.objects.all().order_by('position', '-creation_date')
     for collection in cols:
         # Templates can only invoke nullary functions or access object attribute, so we store
@@ -176,7 +172,7 @@ def show_collections(request):
 
 @login_required
 def show_collection(request, collection_id):
-    """Shows a collection"""
+    """ Shows a collection """
     collection = get_object_or_404(Collection, pk=collection_id)
     # New attribute to store the list of problems and include the number of submission in each problem
     collection.problem_list = collection.problems()
@@ -188,8 +184,7 @@ def show_collection(request, collection_id):
 
 @login_required
 def show_problem(request, problem_id):
-    """Shows a concrete problem"""
-    # Error 404 if there is no a Problem pk
+    """ Shows a problem statement page """
     get_object_or_404(Problem, pk=problem_id)
     # Look for problem pk in all the Problem classes
     problem = get_subclass_problem(problem_id)
@@ -198,17 +193,10 @@ def show_problem(request, problem_id):
     # Filter the expected result to display it
     problem.show_added, problem.show_modified, problem.show_removed = filter_expected_db(problem.expected_result[0],
                                                                                          problem.initial_db[0])
+    # Extends problem with hint information
     problem.available_hints = Hint.objects.filter(problem=problem).order_by('num_submit').count()
-    used_hints = UsedHint.objects.filter(user=request.user).filter(hint_definition__problem=problem)
-    hints = []
-    cont = 0
-    for used in used_hints:
-        cont += 1
-        name = _('Pista {number}').format(number=cont)
-        dic = {'num':  name, 'text_html': used.hint_definition.get_text_html()}
-        hints.append(dic)
-    problem.used_hints = hints
-    problem.used = len(hints)
+    problem.used_hints = UsedHint.objects.filter(user=request.user).filter(hint_definition__problem=problem)
+    problem.used = len(problem.used_hints)
     return render(request, problem.template(), {'problem': problem})
 
 
@@ -216,6 +204,11 @@ def show_problem(request, problem_id):
 def show_submissions(request):
     """ Shows all the submissions of one user, for some problem in a time window. Staff member
         can see any submission, students only their own.
+        A request receives the following GET parameters:
+         * problem_id (number, optional)
+         * user_id (number, optional)
+         * start (date YYYY-MM-DD, optional)
+         * end (date YYYY-MM-DD, optional)
     """
     form = ShowSubmissionsForm(request.GET)
     if form.is_valid():
@@ -225,9 +218,8 @@ def show_submissions(request):
         user = get_object_or_404(get_user_model(), id=user_id) if user_id is not None else request.user
         if not request.user.is_staff and user != request.user:
             return HttpResponseForbidden("Forbidden")
-        first_submission_date = datetime(1950, 1, 1)
         start = form.cleaned_data.get('start') if form.cleaned_data.get('start') is not None \
-            else first_submission_date
+            else datetime(1950, 1, 1)  # Very old date as default start
         end = form.cleaned_data.get('end') if form.cleaned_data.get('end') is not None \
             else datetime.today()
         if problem is not None:
@@ -243,11 +235,11 @@ def show_submissions(request):
 
 @login_required
 def show_achievements(request, user_id):
-    """View for show the achievements"""
-    this_user = get_user_model().objects.get(pk=user_id)
+    """ Achievements page """
+    user = get_object_or_404(get_user_model(), id=user_id)  # 404 if user doesn't exist
     achievements_locked = []
-    achievements_unlocked = ObtainedAchievement.objects.filter(user=this_user)
-    achievements_definitions_unlocked = ObtainedAchievement.objects.filter(user=this_user).\
+    achievements_unlocked = ObtainedAchievement.objects.filter(user=user)
+    achievements_definitions_unlocked = ObtainedAchievement.objects.filter(user=user).\
         values_list('achievement_definition', flat=True)
     all_achievements_definitions = AchievementDefinition.objects.values_list('pk', flat=True)
     achievements_locked_pk = all_achievements_definitions.difference(achievements_definitions_unlocked)
@@ -256,37 +248,34 @@ def show_achievements(request, user_id):
         achievements_locked.append(ach)
     return render(request, 'achievements.html', {'locked': achievements_locked,
                                                  'unlocked': achievements_unlocked,
-                                                 'username': this_user.username})
+                                                 'username': user.username})
 
 
 @login_required
 def show_hints(request):
-    """View for show the used hints"""
-    context = {'user': request.user, 'elements': {}}
-    dic = {}
+    """ Used hints page """
+    dic = dict()
     hints = UsedHint.objects.filter(user=request.user.pk).order_by('request_date')
     for hint in hints:
         if hint.hint_definition.problem.pk in dic:
             dic[hint.hint_definition.problem.pk].append(hint)
         else:
             dic[hint.hint_definition.problem.pk] = [hint]
-    context['elements'] = dic
-    return render(request, 'hints.html', context)
+    return render(request, 'hints.html', {'hints': dic})
 
 
 @login_required
 def show_submission(request, submission_id):
-    """Shows a submission of the current user"""
+    """ Shows a submission of the current user """
     submission = get_object_or_404(Submission, pk=submission_id)
     if submission.user != request.user and not request.user.is_staff:
         return HttpResponseForbidden("Forbidden")
-    submission.verdict_pretty = VerdictCode(submission.verdict_code).html_short_name()
     return render(request, 'submission.html', {'submission': submission})
 
 
 @login_required
 def download_submission(request, submission_id):
-    """ Return a script with te code of submission """
+    """ Return a script with the submission code """
     submission = get_object_or_404(Submission, pk=submission_id)
     if submission.user != request.user and not request.user.is_staff:
         return HttpResponseForbidden("Forbidden")
@@ -299,14 +288,12 @@ def download_submission(request, submission_id):
 
 @login_required
 def download(_, problem_id):
-    """Returns a script with the creation and insertion of the problem"""
-    get_object_or_404(Problem, pk=problem_id)
-    # Look for problem pk in all the Problem classes
-    problem = get_subclass_problem(problem_id)
+    """ Returns a script with the SQL code for creation and insertion """
+    problem = get_object_or_404(Problem, pk=problem_id)
     response = HttpResponse()
     response['Content-Type'] = 'application/sql'
     response['Content-Disposition'] = "attachment; filename=create_insert.sql"
-    response.write(problem.create_sql + '\n\n' + problem.insert_sql)
+    response.write(problem.create_sql + '\n\n' + problem.insert_sql_list()[0])
     return response
 
 
@@ -330,11 +317,14 @@ def extend_dictionary_with_des(data, problem, code):
 
 
 @login_required
+@require_POST
 # pylint does not understand the dynamic attributes in VerdictCode (TextChoices), so we need to disable
 # no-member warning in this specific function
 # pylint: disable=no-member
 def submit(request, problem_id):
-    """Process a user submission"""
+    """ Process a user submission. The POST request contains the following parameters:
+         * code: (string, required): code to be assessed
+    """
     # Error 404 if there is no Problem 'pk'
     general_problem = get_object_or_404(Problem, pk=problem_id)
     problem = get_subclass_problem(problem_id)
@@ -385,15 +375,11 @@ def submit(request, problem_id):
     submission = Submission(code=code, verdict_code=data['verdict'], verdict_message=data['message'],
                             user=request.user, problem=general_problem)
     submission.save()
-    # If verdict is correct look for an achievement to complete if it's possible
-    achieve_list = check_if_get_achievement(request.user, data['verdict'])
 
-    if achieve_list:
-        if len(achieve_list) == 1:
-            sentence = _("Además, con este envío has conseguido el logro ")
-        else:
-            sentence = _("Además, con este envío has conseguido los logros ")
-        context = {'achieve': achieve_list, 'user': request.user.pk, 'sentence': sentence}
+    # Look for obtained achievements
+    achievement_list = check_if_get_achievement(request.user, data['verdict'])
+    if achievement_list:
+        context = {'achievement_list': achievement_list, 'user': request.user.pk}
         html = render_to_string('achievement_notice.html', context)
         data['achievements'] = html
     logger.debug('Stored submission %s', submission)
@@ -402,15 +388,15 @@ def submit(request, problem_id):
 
 @login_required
 def password_change_done(request):
-    """Password change confirmation"""
+    """ Password change confirmation """
     return render(request, 'password_change_done.html')
 
 
+@login_required
 def test_error_500(request):
-    """Generates a server internal error, only for testing error reporting in deployment"""
+    """ Generates a server internal error, only for testing error reporting in deployment """
     if request.user and request.user.is_staff:
-        elems = list()
-        return HttpResponse(elems[55])  # list index out of range, error 500
+        return HttpResponse(list()[55])  # list index out of range, error 500
     return HttpResponseNotFound()
 
 
@@ -424,45 +410,48 @@ def cell_ranking(problem):
                           problem['total_submissions'])
 
 
-@login_required
+@staff_member_required
 def download_ranking(request, collection_id):
-    """ Download Excel file with the results of submissions """
+    """ Download ODS file with the ranking. Receives the following GET parameters:
+         * group (number, required): group ID
+         * start (date YYYY-MM-DD, required)
+         * end (date YYYY-MM-DD, required)
+    """
     collection = get_object_or_404(Collection, pk=collection_id)
     result_form = DownloadRankingForm(request.GET)
-    if request.user.is_staff and result_form.is_valid():
-        group = get_object_or_404(Group, pk=result_form.cleaned_data['group'])
-        start = result_form.cleaned_data.get('start')
-        end = result_form.cleaned_data.get('end')
-        # Extends 'end' to 23:59:59 to cover today's latest submissions. Otherwise, ranking is not
-        # updated until next day (as plain dates have time 00:00:00)
-        end = datetime(end.year, end.month, end.day, 23, 59, 59)
-        start = datetime(start.year, start.month, start.day, 0, 0, 0)
+    if not result_form.is_valid():
+        return HttpResponseNotFound(str(result_form.errors))  # Invalid parameters
 
-        sheet_rows = list()
-        # Sheet header: collection name, dates and group in first 4 rows
-        sheet_rows.append([gettext('Colección'), collection.name_md])
-        sheet_rows.append([gettext('Grupo'), str(group)])
-        sheet_rows.append([gettext('Desde'), str(start)])
-        sheet_rows.append([gettext('Hasta'), str(end)])
-        sheet_rows.append([])
+    group = get_object_or_404(Group, pk=result_form.cleaned_data['group'])
+    start = result_form.cleaned_data.get('start')
+    end = result_form.cleaned_data.get('end')
+    # Extends 'end' to 23:59:59 to cover today's latest submissions. Otherwise, ranking is not
+    # updated until next day (as plain dates have time 00:00:00)
+    end = datetime(end.year, end.month, end.day, 23, 59, 59)
+    start = datetime(start.year, start.month, start.day, 0, 0, 0)
 
-        # Table header [Pos., User, Exercises..., Score, Solved] in row 6
-        sheet_rows.append([gettext("Pos."), gettext("Usuario")] +
-                          [problem.title_md for problem in collection.problems()] +
-                          [gettext("Puntuación."), gettext("Resueltos")])
-        # Ranking row by row
-        for user in collection.ranking(start, end, group):
-            sheet_rows.append([user.pos, user.username] +
-                              [cell_ranking(problem) for _, problem in user.results.items()] +
-                              [user.score, user.num_solved])
-        # Saves ODS to memory and includes it in the response
-        buffer = io.BytesIO()
-        save_data(buffer, {str(group): sheet_rows})
-        buffer.seek(0)  # Moves to the beginning of the buffer
-        return FileResponse(buffer, as_attachment=True, filename='ranking.ods')
-    if request.user.is_staff and not result_form.is_valid():
-        return HttpResponseNotFound(str(result_form.errors))
-    return HttpResponseForbidden("Forbidden")
+    sheet_rows = list()
+    # Sheet header: collection name, dates and group in first 4 rows
+    sheet_rows.append([gettext('Colección'), collection.name_md])
+    sheet_rows.append([gettext('Grupo'), str(group)])
+    sheet_rows.append([gettext('Desde'), str(start)])
+    sheet_rows.append([gettext('Hasta'), str(end)])
+    sheet_rows.append([])
+
+    # Table header [Pos., User, Exercises..., Score, Solved] in row 6
+    sheet_rows.append([gettext("Pos."), gettext("Usuario")] +
+                       [problem.title_md for problem in collection.problems()] +
+                       [gettext("Puntuación."), gettext("Resueltos")])
+    # Ranking row by row
+    for user in collection.ranking(start, end, group):
+        sheet_rows.append([user.pos, user.username] +
+                          [cell_ranking(problem) for _, problem in user.results.items()] +
+                          [user.score, user.num_solved])
+    # Saves ODS to memory and includes it in the response
+    buffer = io.BytesIO()
+    save_data(buffer, {str(group): sheet_rows})
+    buffer.seek(0)  # Moves to the beginning of the buffer
+    return FileResponse(buffer, as_attachment=True, filename='ranking.ods')
 
 
 @staff_member_required
@@ -488,7 +477,7 @@ def statistics_submissions(request):
 @login_required
 @require_POST
 def get_hint(request, problem_id):
-    """Returns a JSON with the information of available Hints"""
+    """ Hint request, returns a JSON with the information of the next hint """
     problem = get_object_or_404(Problem, pk=problem_id)
     num_subs = Submission.objects.filter(problem=problem, user=request.user).count()
     list_hints = Hint.objects.filter(problem=problem).order_by('num_submit')

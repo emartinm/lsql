@@ -2,9 +2,9 @@
 {% load i18n %}
 {% load static %}
 {% block contenido %}
-<h1>{% translate "Página de pistas de " %}<span class="headAchievement">{{ user }}</span></h1>
-{% for key, values in elements.items %}
-<h2>{% translate "Problema: " %}<span class="headAchievement"><a href="{% url 'judge:problem' key %}">
+<h1>{% translate "Página de pistas de" %}<span class="headAchievement"> {{ request.user }}</span></h1>
+{% for key, values in hints.items %}
+<h2>{% translate "Problema" %}: <span class="headAchievement"><a href="{% url 'judge:problem' key %}">
     {{ values.0.hint_definition.problem.title_html|safe }}</a></span></h2>
 
 <table class="table table-striped">
