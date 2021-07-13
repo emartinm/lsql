@@ -24,7 +24,7 @@ from .oracle_driver import OracleExecutor
 from .des_driver import DesExecutor
 from .types import VerdictCode, ProblemType, DesMessageType
 from .parse import load_select_problem, load_dml_problem, load_function_problem, load_proc_problem, \
-    load_trigger_problem, load_discriminant_problem
+    load_trigger_problem, load_discriminant_problem, get_problem_type_from_zip
 from .exceptions import ZipFileParsingException
 
 
@@ -47,6 +47,7 @@ def load_many_problems(file, collection):
             for filename in zfile.infolist():
                 with zfile.open(filename) as curr_file:
                     problem = load_problem_from_file(curr_file)
+                    problem.clean()
                     problems.append(problem)
     except ZipFileParsingException as excp:
         raise ZipFileParsingException('{}: {}'.format(filename.filename, excp)) from excp
@@ -56,23 +57,19 @@ def load_many_problems(file, collection):
 
 
 def load_problem_from_file(file):
-    """Try to load all the types of problem from file, in order"""
-    problem_types = [(SelectProblem, load_select_problem),
-                     (DMLProblem, load_dml_problem),
-                     (FunctionProblem, load_function_problem),
-                     (ProcProblem, load_proc_problem),
-                     (TriggerProblem, load_trigger_problem),
-                     (DiscriminantProblem, load_discriminant_problem)]
+    """ Load the problem from file using the type in the JSON file """
+    problem_types = {ProblemType.SELECT: (SelectProblem, load_select_problem),
+                     ProblemType.DML: (DMLProblem, load_dml_problem),
+                     ProblemType.FUNCTION: (FunctionProblem, load_function_problem),
+                     ProblemType.PROC: (ProcProblem, load_proc_problem),
+                     ProblemType.TRIGGER: (TriggerProblem, load_trigger_problem),
+                     ProblemType.DISC: (DiscriminantProblem, load_discriminant_problem)}
+    problem_type = get_problem_type_from_zip(file)
+    prob_class, load_fun = problem_types[problem_type]
 
-    for pclass, load_fun in problem_types:
-        problem = pclass()
-        try:
-            load_fun(problem, file)
-            return problem
-        except ZipFileParsingException:
-            # It is not the type, try next one
-            pass
-    raise ZipFileParsingException(f'Unable to load {file}')
+    problem = prob_class()
+    load_fun(problem, file)
+    return problem
 
 
 class Collection(models.Model):

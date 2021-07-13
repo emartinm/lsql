@@ -10,7 +10,7 @@ import json
 from django.conf import settings
 
 from .exceptions import ZipFileParsingException
-
+from .types import ProblemType
 
 __MAX_INT = 2 ** 31
 __MIN_INT = -(2 ** 31)
@@ -35,15 +35,31 @@ def extract_json(file, problem_type):
             raise ZipFileParsingException('Falta el fichero {}'.format(__JSON_NAME))
 
         with zfile.open(__JSON_NAME, 'r') as jsonfile:
-            problem_json = json.load(jsonfile)
+            try:
+                problem_json = json.load(jsonfile)
+            except json.decoder.JSONDecodeError as excp:
+                raise ZipFileParsingException(f'Error when opening {__JSON_NAME}: {excp}') from excp
 
         json_problem_type = problem_json.get('type', None)
-        if json_problem_type is None:
+        if problem_type is not None and json_problem_type is None:
             raise ZipFileParsingException(f'Missing field "type" in file {__JSON_NAME}')
-        if json_problem_type != problem_type:
+        if problem_type is not None and json_problem_type != problem_type:
             raise ZipFileParsingException(f'Invalid "type" field in {__JSON_NAME}: '
                                           f'expected {problem_type} but {json_problem_type} obtained')
     return problem_json
+
+
+def get_problem_type_from_zip(file):
+    """ Returns the problem type of a ZIP file, or None if not defined in the JSON file """
+    problem_json = extract_json(file, None)
+    type_str = problem_json.get('type', None)
+    if type_str is None:
+        return None
+    try:
+        problem_type = ProblemType(problem_json.get('type', None))
+        return problem_type
+    except ValueError as excp:
+        raise ZipFileParsingException(f"Problem type is not defined in {file}") from excp
 
 
 def get_language_from_json(problem_json):
@@ -81,11 +97,12 @@ def extract_hints_from_file(problem, zfile):
 
     problem.hints_info = hints
 
+
 def load_select_problem(problem, file) -> None:
     """
     Load the problem information from a ZIP file and updates the attributes of 'problem'
     :param problem: SelectProblem to update
-    :param file: ZipFile previoulsy opened and with a JSON File
+    :param file: ZipFile previously opened and with a JSON File
     :return: None or raise ZipFileParsingException if there is any problem
     """
     state = 'Checking file existence'
@@ -94,7 +111,7 @@ def load_select_problem(problem, file) -> None:
         with ZipFile(file) as zfile:
             if not __SELECT_PROBLEM_FILES <= set(zfile.namelist()):
                 raise ZipFileParsingException(
-                    f'ZIP file must contain the following files: {__SELECT_PROBLEM_FILES}')
+                    f'SelectProblem ZIP file must contain the following files: {__SELECT_PROBLEM_FILES}')
 
             state = 'Reading JSON file'
             problem.title_md = problem_json.get('title', '')

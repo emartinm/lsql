@@ -16,6 +16,8 @@ from judge.models import Collection, Problem, SelectProblem, DMLProblem, Functio
 from judge.parse import get_language_from_json
 from judge.exceptions import ZipFileParsingException
 
+from judge.parse import get_problem_type_from_zip
+
 
 class ParseTest(TestCase):
     """Tests for module parse"""
@@ -24,6 +26,8 @@ class ParseTest(TestCase):
     MANY_PROBLEMS_ZIP_NAME = 'problems.zip'
 
     NO_JSON = 'no_json.zip'
+    JSON_DECODE_ERROR = 'select_json_decode_error.zip'
+    WRONG_TYPE = 'select_json_invalid_type.zip'
     NO_TYPE = 'no_type.zip'
 
     SELECT_OK = 'select_ok.zip'
@@ -203,3 +207,21 @@ class ParseTest(TestCase):
         self.assertEqual(get_language_from_json({'language': 'en'}), 'en')
         with self.assertRaises(ZipFileParsingException):
             get_language_from_json({'language': 'ru'})
+
+    def test_bad_json(self):
+        """ Errors when decoding JSON or missing type """
+        curr_path = os.path.dirname(__file__)
+        zip_path = os.path.join(curr_path, self.ZIP_FOLDER, self.JSON_DECODE_ERROR)
+        problem = SelectProblem(zipfile=zip_path)
+        with self.assertRaises(ValidationError) as ctxt:
+            problem.clean()
+        self.assertIn('Error when opening problem.json: Expecting value', str(ctxt.exception))
+
+        zip_path = os.path.join(curr_path, self.ZIP_FOLDER, self.NO_TYPE)
+        self.assertIsNone(get_problem_type_from_zip(zip_path))
+
+        zip_path = os.path.join(curr_path, self.ZIP_FOLDER, self.WRONG_TYPE)
+        problem = SelectProblem(zipfile=zip_path)
+        with self.assertRaises(ZipFileParsingException) as ctxt:
+            get_problem_type_from_zip(zip_path)
+        self.assertIn('Problem type is not defined in', str(ctxt.exception))

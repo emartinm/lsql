@@ -111,7 +111,7 @@ def add_problems_to_collection(sender, **kwargs):
         for problem in collection.problems_from_zip:
             problem.collection = collection
             problem.author = collection.author
-            problem.clean()
+            # Problems have been already cleaned when loading from the collection ZIP
             problem.save()
             logger.debug('Added problem %s "%s" from ZIP (batch) to collection %s',
                          type(problem), problem, kwargs['instance'])
