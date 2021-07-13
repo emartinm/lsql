@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 
 from judge.des_driver import parse_tapi_cmd, DesExecutor
 from judge.types import DesMessageType
-from judge.models import SelectProblem
+from judge.models import SelectProblem, DMLProblem
 from judge.exceptions import DESException
 
 
@@ -155,22 +155,79 @@ $eot
         self.assertIn("Expected FROM clause", ctx.exception.message)
 
     def test_dml(self):
-        """ Test that messages are empty in a correct submission """
+        """ Checks that messages are empty in correct statements and DES messages errors are correctly detected
+            in erroneous statements
+        """
         create = "CREATE TABLE t(name VARCHAR(20) primary key, age INT);"
         insert = "INSERT INTO t VALUES ('pepe', 30);\nINSERT INTO t VALUES ('eve', 25);"
-        # dml = "UPDATE t SET age = 45;\n DELETE FROM t WHERE name = 'pepe';\n INSERT INTO t VALUES ('eve', 25);"
-        dml = "INSERT INTO t VALUES ('eve', 67);"
-        msgs = list(DesExecutor.get().get_des_messages_dml(create, insert, dml))
-        # TODO: add when DES suports DML with /mparse
-        # self.assertEqual(len(msgs), 6)
+        dml1 = "UPDATE t SET age = 45;\n DELETE FROM t WHERE name = 'pepe';\n INSERT INTO t VALUES ('eve', 44);"
+        dml2 = "INSERT INTO t VALUES ('eve', 67);"
+        dml3 = """UPDATE t
+        SET age = age + 1
+        WHERE name = 'pepa'"""
+        dml4 = """UPDATE t
+        SET age = 45
+        WHERE name = 'pepa';
+        
+        DELETE FROM t 
+        WHERE name = 'pepa';
+        
+            INSERT INTO t 
+            VALUES ('eve', 44);"""
+
+        msgs = list(DesExecutor.get().get_des_messages_dml(create, insert, dml1))
+        self.assertEqual(len(msgs), 6)
         # All statements are OK wrt. DES but the last one
         for _, msg in msgs[:-1]:
             self.assertEqual(msg, [])
         # The last statement produces 1 DES message with error of duplicate primary key and an empty snippet
-        # self.assertEqual(len(msgs[-1][1]), 1)
-        # self.assertEqual(msgs[-1][1][0][0], DesMessageType.ERROR)
-        # self.assertIn('Primary key violation', msgs[-1][1][0][1])
-        # self.assertIsNone(msgs[-1][1][0][2])
+        self.assertEqual(len(msgs[-1][1]), 1)
+        self.assertEqual(msgs[-1][1][0][0], DesMessageType.ERROR)
+        self.assertIn('Primary key violation', msgs[-1][1][0][1])
+        self.assertIsNone(msgs[-1][1][0][2])
+
+        msgs = list(DesExecutor.get().get_des_messages_dml(create, insert, dml2))
+        self.assertEqual(len(msgs), 4)
+        # All statements are OK wrt. DES but the last one
+        for _, msg in msgs[:-1]:
+            self.assertEqual(msg, [])
+        # The last statement produces 1 DES message with error of duplicate primary key and an empty snippet
+        self.assertEqual(len(msgs[-1][1]), 1)
+        self.assertEqual(msgs[-1][1][0][0], DesMessageType.ERROR)
+        self.assertIn('Primary key violation', msgs[-1][1][0][1])
+        self.assertIsNone(msgs[-1][1][0][2])
+
+        msgs = list(DesExecutor.get().get_des_messages_dml(create, insert, dml3))
+        self.assertEqual(len(msgs), 4)
+        # All statements are OK wrt. DES but the last one
+        for _, msg in msgs[:-1]:
+            self.assertEqual(msg, [])
+        # The last statement produces 1 DES message with error of duplicate primary key and an empty snippet
+        self.assertEqual(len(msgs[-1][1]), 1)
+        self.assertEqual(msgs[-1][1][0][0], DesMessageType.WARNING)
+        self.assertIn("No tuple met the 'where' condition for updating", msgs[-1][1][0][1])
+        self.assertIsNone(msgs[-1][1][0][2])
+
+        msgs = list(DesExecutor.get().get_des_messages_dml(create, insert, dml4))
+        self.assertEqual(len(msgs), 6)
+        # All statements are OK wrt. DES but the last one
+        for _, msg in msgs[:-3]:
+            self.assertEqual(msg, [])
+        # The first DML statement statement produces 1 DES message (warning)
+        self.assertEqual(len(msgs[-3][1]), 1)
+        self.assertEqual(msgs[-3][1][0][0], DesMessageType.WARNING)
+        self.assertIn("No tuple met the 'where' condition for updating", msgs[-3][1][0][1])
+        self.assertIsNone(msgs[-3][1][0][2])
+        # The second DML statement statement produces 1 DES message (warning)
+        self.assertEqual(len(msgs[-2][1]), 1)
+        self.assertEqual(msgs[-2][1][0][0], DesMessageType.WARNING)
+        self.assertIn("No tuple met the 'where' condition for deleting", msgs[-2][1][0][1])
+        self.assertIsNone(msgs[-2][1][0][2])
+        # The third DML statement statement produces 1 DES message (error)
+        self.assertEqual(len(msgs[-1][1]), 1)
+        self.assertEqual(msgs[-1][1][0][0], DesMessageType.ERROR)
+        self.assertIn("Primary key violation", msgs[-1][1][0][1])
+        self.assertIsNone(msgs[-1][1][0][2])
 
     def test_dml_timeout(self):
         """ Timeout when checking a DML program with DES """
@@ -178,3 +235,55 @@ $eot
         dml = f'INSERT INTO Persona ({self.__QUERY_TIMEOUT});'
         msgs = DesExecutor.get().get_des_messages_dml(self.__CREATE_TIMEOUT, insert, dml)
         self.assertIsNone(msgs)
+
+    def test_des_dml_messages(self):
+        """ Check that get_des_messages_solution() returns the correct messages """
+        problem = DMLProblem(title_md='Test DML', text_md='bla bla bla',
+                             create_sql="CREATE TABLE t(name VARCHAR(20) PRIMARY KEY, age INT)",
+                             insert_sql="INSERT INTO t VALUES ('pepe', 3); INSERT INTO t VALUES ('ana', 13);",
+                             solution="INSERT INTO t VALUES ('eva', 18)")
+
+        code = ["INSERT INTO t VALUES('pepe', 48)",     # Primary key error
+                "INSERT INTO t VALUES ('eva', 18)",     # OK
+                "UPDATE t SET age = 0 WHERE age = -9",  # No tuple met the condition
+                "DELETE FROM t WHERE age = 10"]         # No tuple met the condition
+        msgs = problem.get_des_messages_solution(";\n".join(code))
+        self.assertEqual(len(msgs), 3)
+
+        # Message for INSERT (pepe, 48)
+        self.assertEqual(msgs[0][0], DesMessageType.ERROR)
+        self.assertIn('Primary key violation', msgs[0][1])
+        self.assertEqual(code[0], msgs[0][2])  # The statement is the snippet
+
+        # Message for UPDATE
+        self.assertEqual(msgs[1][0], DesMessageType.WARNING)
+        self.assertIn("No tuple met the 'where' condition for updating", msgs[1][1])
+        self.assertEqual(code[2], msgs[1][2])  # The statement is the snippet
+
+        # Message for DELETE
+        self.assertEqual(msgs[2][0], DesMessageType.WARNING)
+        self.assertIn("No tuple met the 'where' condition for deleting", msgs[2][1])
+        self.assertEqual(code[3], msgs[2][2])  # The statement is the snippet
+
+    def test_des_dml_timeout(self):
+        """ When DES timeouts DMLProblem.get_des_messages_solution returns [] """
+        problem = DMLProblem(title_md='Test DML', text_md='bla bla bla',
+                             create_sql=self.__CREATE_TIMEOUT,
+                             insert_sql='',
+                             solution=f"INSERT INTO t ({self.__QUERY_TIMEOUT})")
+        code = f"INSERT INTO t ({self.__QUERY_TIMEOUT})"
+        messages = problem.get_des_messages_solution(code)
+        self.assertEqual(messages, [])
+
+    def test_validate_dml(self):
+        """ Checks that validating a DMLProblem with errors returns some DES messages """
+        problem = DMLProblem(title_md='Test DML', text_md='bla bla bla',
+                             create_sql="CREATE TABLE t(name VARCHAR(20) PRIMARY KEY, age INT)",
+                             insert_sql="INSERT INTO t VALUES ('pepe', 3); INSERT INTO t VALUES ('pepe', 13);",
+                             solution="INSERT INTO t VALUES ('pepe', 18)")
+        with self.assertRaises(ValidationError) as ctxt:
+            problem.validate_des()
+        exception = str(ctxt.exception)
+        self.assertIn("Error code: 0", exception)
+        self.assertIn("Primary key violation", exception)
+        self.assertIn("t(pepe,13)", exception)

@@ -248,18 +248,18 @@ General template for a problem. Provides the following blocks:
                   o utilizar una tabla que no existe.
                   {% endblocktranslate %}
               </li><br/><br/>
-              <li><strong>{% translate "Posible mejora" %}</strong>:
+              <li><strong>{% translate "Posible error o mejora" %}</strong>:
                   {% blocktranslate %}
-                  Muestra indicios sobre un aspecto del código que se podría mejorar, como una condición
-                  que siempre es cierta o una consulta que incluye en el bloque FROM tablas que luego no
-                  se usan en el resto de la consulta.
+                  Muestra indicios sobre un posible error o usos inadecuados en la consulta, como una
+                  condición que siempre es cierta o una consulta que incluye en el bloque FROM tablas
+                  que luego no se usan en el resto de la consulta.
                   {% endblocktranslate %}
                   <strong>
                       {% blocktranslate %}
                       Aunque DES es muy certero con sus mensajes, a veces proporciona indicios sobre
                       aspectos del código que realmente no admiten mejora. Por ello, es muy importante
-                      que analicéis este tipo de mensajes para comprobar si de verdad la mejora propuesta
-                      por DES es aplicable a vuestro código.
+                      que analicéis este tipo de mensajes para comprobar si de verdad el mensaje que
+                      proporciona DES es aplicable a vuestro código.
                       {% endblocktranslate %}
                   </strong>
               </li><br/><br/>

@@ -79,3 +79,46 @@ configurar para cada usuario.
   podría incluir el pdf del material del curso como parte del enunciado del problema.
 * Añadir en los problemas sugerencias de otros problemas que se recomienda hacer antes
   o después de ese problema. También problemas relacionados.
+  
+# Más ideas interesantes (Fernando)
+* Como propuesta de mejora, añadiría botones de navegación para ir de 
+  un problema a otro. Es posible que el alumno se atasque con alguno y 
+  decida saltárselo para resolverlo más tarde. Se podrían añadir 
+  botones "Siguiente", "Anterior" y quizás "Todos" para regresar al 
+  listado de problemas.
+* También como mejora añadiría un esquema gráfico de las relaciones 
+  entre las tablas. Creo que esto se puede hacer individualmente según 
+  vayamos subiendo ejercicios. Quizás estaría bien usar una notación 
+  compartida por todos nosotros. Solo como ejemplo, en SQLZoo se usa 
+  UML, si no me equivoco.
+* Al desplegar el contenido de las tablas lo haría en un frame con 
+  barras de scroll para que no ocupase mucho. En algunas tablas 
+  podría haber muchas filas (en los ejemplos que yo tengo sí que las 
+  hay).
+* Cuando se despliegue el contenido de una tabla con el botón "+", 
+  cambiarlo a "-" y viceversa.
+* Quizás se podrían añadir distintos itinerarios. Ya que somos tan 
+  individualistas o bien queramos adaptarnos a los distintos niveles 
+  de los grupos de BD (los del DG por ejemplo son bastante buenos) se
+  podría añadir un filtro sobre las colecciones de problemas para 
+  elegir un grupo en concreto (o cualquier otro criterio 
+  identificador que queramos poner).  
+  
+# Retroalimentación de los alumnos de BD 2020-21:
+* En algún momento me he quedado con la duda de cómo se hacían 
+  algunos ejercicios que no conseguí solucionar. Diría que estaría 
+  bien que despues de algunos envíos fallidos diera alguna pista 
+  sobre cómo se soluciona ese caso.
+* Estaría bien una opción de pasar al siguiente problema una vez 
+  has resuelto uno
+* No es que sea muy útil pero a mi me gusta ver el resultado del 
+  código, no solo un mensaje que diga que "resultado correcto". 
+  Como en los mensajes de error, cuando muestra lo que se escribió mal.
+* Vendría bien que tuviera soluciones a los ejercicios aunque esto 
+  no sería tanto como una funcionalidad del juez sino mas una 
+  característica que podría ser útil
+* Cuando da correct yo sacaría por pantalla el código de una posible 
+  solución, para saber si se ha planteado bien. Aunque sé que esto 
+  puede hacer que las respuestas corran de alumno en alumno, 
+  solventaría cualquier duda sobre si se ha planteado bien el 
+  problema.

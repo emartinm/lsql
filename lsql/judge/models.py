@@ -342,7 +342,8 @@ class SelectProblem(Problem):
     def get_des_messages_solution(self, code):
         """ Return a flat list of DES messages obtained for the user code """
         des = DesExecutor.get()
-        des_messages = des.get_des_messages_select(self.create_sql, '', code)
+        # Checks DES only with the first DB
+        des_messages = des.get_des_messages_select(self.create_sql, self.insert_sql_list()[0], code)
         if des_messages is None:
             return list()
         messages = [(msg_type, msg, snippet) for _, msgs in des_messages
@@ -399,6 +400,43 @@ class DMLProblem(Problem):
 
     def problem_type(self):
         return ProblemType.DML
+
+    def get_des_messages(self):
+        """ Return a list [DES_messages] **for every test data base**. A DES_messages object is a
+            list of pairs (statement, [DES message]) or None"""
+        des = DesExecutor.get()
+        des_messages = list()
+        for insert in self.insert_sql_list():
+            des_messages.append(des.get_des_messages_dml(self.create_sql, insert, self.solution))
+        return des_messages
+
+    def get_des_messages_solution(self, code):
+        """ Return a flat list of DES messages obtained for the user code """
+        des = DesExecutor.get()
+        # Checks DES only with the first DB
+        des_messages = des.get_des_messages_dml(self.create_sql, self.insert_sql_list()[0], code)
+        if des_messages is None:
+            return list()
+        # Uses the whole statement as snippet because:
+        # A) DES doesn't seem to provide detailed snippets for DML errors
+        # B) DML problems can have several statements, so messages without context are difficult to understand
+        messages = [(msg_type, msg, stmt.strip()) for stmt, msgs in des_messages
+                    for msg_type, msg, snippet in msgs if msgs]
+        return messages
+
+    def validate_des(self, min_level=DesMessageType.ERROR):
+        """ Validates that the current problem does not generate any error message with
+            level smaller than 'level' (by default ERROR). If some message is found,
+            raises a ValidationError with that first message
+        """
+        des_messages = self.get_des_messages()
+        for bd_msgs in des_messages:
+            for stmt, msg_list in bd_msgs:
+                for des_level, text, stmt_snippet in msg_list:
+                    if des_level <= min_level:
+                        error_msg = f'DES Validation error in <{stmt.strip()}>. Error code: {des_level}. ' \
+                                    f'Error message: {text}. Snippet: {stmt_snippet}'
+                        raise ValidationError(error_msg)
 
 
 class FunctionProblem(Problem):

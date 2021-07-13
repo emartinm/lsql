@@ -299,12 +299,12 @@ def download(_, problem_id):
 
 def extend_dictionary_with_des(data, problem, code):
     """ Extend the data that answers a submission with DES feedback (if needed) """
-    if problem.problem_type() == ProblemType.SELECT:
+    if problem.problem_type() in [ProblemType.SELECT, ProblemType.DML]:
         messages_raw = problem.get_des_messages_solution(code)
         # Extends the snippet to mark the position of the error and also extract line and column
         messages = list()
         for (error_code, msg, snippet) in messages_raw:
-            if snippet:
+            if snippet and problem.problem_type() == ProblemType.SELECT:
                 len_last_line = len(snippet.strip().split('\n')[-1])
                 num_line = len(snippet.strip().split('\n'))
                 snippet += '.'*len_last_line + '^^^'

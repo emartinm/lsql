@@ -154,7 +154,8 @@ class DesExecutor:
                 input_stream.write("/tapi {}\n".format(stmt.strip().replace('\n', '')))
             dml_statements = clean_sql(dml)
             for stmt in dml_statements:
-                input_stream.write("/tapi /mparse\n{}\n$eot\n".format(stmt))
+                flat_stmt = stmt.replace("\n", " ").strip()
+                input_stream.write("/tapi {}\n".format(flat_stmt))
             input_stream.write("/exit\n")
 
         des_path = os.environ['DES_BIN']
