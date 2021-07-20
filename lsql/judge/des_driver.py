@@ -114,7 +114,7 @@ class DesExecutor:
         logger.debug('Writing DES file to %s', path)
         with open(path, 'w') as input_stream:
             input_stream.write('/type_casting on\n')
-            input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
+            # input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
             input_stream.write('/sql\n')
             create_statements = clean_sql(create)
             insert_statements = clean_sql(insert)
@@ -146,7 +146,7 @@ class DesExecutor:
         logger.debug('Writing DES file to %s', path)
         with open(path, 'w') as input_stream:
             input_stream.write('/type_casting on\n')
-            input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
+            # input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
             input_stream.write('/sql\n')
             create_statements = clean_sql(create)
             insert_statements = clean_sql(insert)

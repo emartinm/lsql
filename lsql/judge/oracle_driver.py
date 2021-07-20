@@ -250,7 +250,7 @@ def get_compilation_errors(conn):
 def offset_from_oracle_exception(excp: cx_Oracle.DatabaseError) -> int:
     """Extracts the offset from a DataBaseError"""
     # pylint: disable = no-member
-    # Locally disabled memeber checks because pylint thinks oracle_error is str
+    # Locally disabled member checks because pylint thinks oracle_error is str
     oracle_error, = excp.args
     return oracle_error.offset
 
@@ -520,7 +520,9 @@ class OracleExecutor:
             if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, select) from excp
-            pos = line_col_from_offset(select, offset_from_oracle_exception(excp))
+            pos = None
+            if state == OracleStatusCode.EXECUTE_USER_CODE:
+                pos = line_col_from_offset(select, offset_from_oracle_exception(excp))
             raise ExecutorException(state, error_msg, select, pos) from excp
         finally:
             if conn:
@@ -969,8 +971,10 @@ class OracleExecutor:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg,
                                         (insertion_user, select_correct, select_incorrect)) from excp
-            # Errors can only happen in user code, i.e., insertion_user
-            pos = line_col_from_offset(insertion_user, offset_from_oracle_exception(excp))
+            # Only extracts the position in the error is found in the user code
+            pos = None
+            if state == OracleStatusCode.EXECUTE_USER_CODE:
+                pos = line_col_from_offset(insertion_user, offset_from_oracle_exception(excp))
             raise ExecutorException(state, error_msg, insertion_user, pos) from excp
         finally:
             if conn:
