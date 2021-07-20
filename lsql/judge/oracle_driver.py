@@ -185,7 +185,8 @@ def execute_select_statement(conn, statement):
     if len(statements) != 1:
         logger.debug('User %s - <<%s>> contains more than one SQL statement',
                      conn.username, statement)
-        raise ExecutorException(OracleStatusCode.NUMBER_STATEMENTS)
+        raise ExecutorException(OracleStatusCode.NUMBER_STATEMENTS,
+                                f'The SQL query must have exactly one statement: <<{statement}>>')
 
     with conn.cursor() as cursor:
         cursor.execute(statements[0])
@@ -579,7 +580,9 @@ class OracleExecutor:
             if not statements:
                 logger.debug('User %s - <<%s>> contains unexpected number of statements [%s - %s]',
                              conn.username, statements, min_stmt, max_stmt)
-                raise ExecutorException(OracleStatusCode.NUMBER_STATEMENTS)
+                raise ExecutorException(OracleStatusCode.NUMBER_STATEMENTS,
+                                        f'The SQL code must have between {min_stmt} and {max_stmt} statements:'
+                                        f'<<dml>>')
             with conn.cursor() as cursor:
                 for stmt in statements:
                     cursor.execute(stmt)
