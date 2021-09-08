@@ -129,3 +129,12 @@ div#msg_info {
 div.alert_hints {
     margin-bottom: 0px;
 }
+
+a.hidden {
+    color: gray;
+}
+
+span.hidden {
+    color: gray;
+    font-weight: bold;
+}

@@ -87,3 +87,8 @@ class DownloadRankingForm(forms.Form):
 class SubmitForm(forms.Form):
     """Form used to validate user submissions"""
     code = forms.CharField(min_length=10, strip=False)  # Keep spaces for error messages
+
+
+class CollectionFilterForm(forms.Form):
+    """ Form to validate filter requests for collections """
+    group = forms.IntegerField(label='Grupo', min_value=0, required=False)

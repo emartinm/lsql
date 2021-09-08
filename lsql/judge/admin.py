@@ -143,9 +143,9 @@ class CollectionAdmin(admin.ModelAdmin):
     fieldsets = [
         ('If provided, loads problems from ZIP file and add them to the collection',
          {'fields': ('zipfile', )}),
-        ('Collection data', {'fields': ('name_md', 'position', 'description_md')})
+        ('Collection data', {'fields': ('name_md', 'position', 'description_md', 'visible')})
     ]
-    list_display = ('pk', 'name_md', 'creation_date', 'author')
+    list_display = ('pk', 'name_md', 'creation_date', 'author', 'visible')
     list_filter = ['creation_date']
 
     def save_model(self, request, obj, form, change):

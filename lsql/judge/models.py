@@ -81,6 +81,7 @@ class Collection(models.Model):
     description_html = models.CharField(max_length=10000, default='', blank=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     creation_date = models.DateTimeField(auto_now_add=True)
+    visible = models.BooleanField(default=True)
     # (Dirty) trick to load problems from a ZIP fil by editing a collection using the standard admin interface of Django
     zipfile = models.FileField(upload_to='problem_zips/', default=None, blank=True, null=True)
 

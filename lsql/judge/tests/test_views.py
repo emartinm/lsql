@@ -68,9 +68,9 @@ def create_dml_complete_problem(collection, name='Ejemplo'):
     return problem
 
 
-def create_collection(name='Prueba'):
+def create_collection(name='Prueba', visibility=True, author=None):
     """Creates and stores a collection"""
-    collection = Collection(name_md=name, description_md='texto explicativo')
+    collection = Collection(name_md=name, description_md='texto explicativo', visible=visibility, author=author)
     collection.clean()
     collection.save()
     return collection
@@ -185,11 +185,11 @@ class ViewsTest(TestCase):
     def test_logged(self):
         """Connections from a logged user"""
         client = Client()
-        collection = create_collection('Colleccion de prueba XYZ')
-        problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        problem_dml = create_dml_problem(collection, 'DMLProblem')
         user = create_user('5555', 'pepe')
         create_user('1234', 'ana')
+        collection = create_collection('Colleccion de prueba XYZ', author=create_superuser('0000', 'the_teacher'))
+        problem = create_select_problem(collection, 'SelectProblem ABC DEF')
+        problem_dml = create_dml_problem(collection, 'DMLProblem')
         submission = create_submission(problem, user, VerdictCode.AC, 'select *** from *** where *** and more')
         client.login(username='pepe', password='5555')
 
@@ -916,3 +916,76 @@ class ViewsTest(TestCase):
         response = client.get(stats_url, follow=True)
         self.assertEqual(response.redirect_chain,
                          [(login_redirect_stats_url, 302)])
+
+    def test_visibility(self):
+        """ Collection list is properly shown depending on visibility and user role """
+        user_staff = create_superuser('0000', username='staff')
+        create_user('5555', 'pepe')
+        create_collection('Visible collection', visibility=True, author=user_staff)
+        create_collection('Not visible collection', visibility=False, author=user_staff)
+
+        collections_url = reverse('judge:collections')
+        client = Client()
+
+        client.login(username='pepe', password='5555')
+        response = client.get(collections_url, follow=True)
+        self.assertIn('Visible collection', response.content.decode('utf-8'))
+        self.assertNotIn('Not visible collection', response.content.decode('utf-8'))
+        client.logout()
+
+        client.login(username='staff', password='0000')
+        response = client.get(collections_url, follow=True)
+        self.assertIn('Visible collection', response.content.decode('utf-8'))
+        self.assertIn('Not visible collection', response.content.decode('utf-8'))
+        client.logout()
+
+    def test_visibility_group(self):
+        """ Collections are properly shown when filtered by groups """
+        profe1 = create_superuser('0000', username='profe1')
+        profe2 = create_superuser('0000', username='profe2')
+        create_user('0000', 'pepe')
+        group1 = Group.objects.create(name='g1')
+        group2 = Group.objects.create(name='g2')
+        group1.user_set.add(profe1)
+        group2.user_set.add(profe1)
+        group2.user_set.add(profe2)
+
+        col1 = create_collection('Col1', visibility=True, author=profe1)
+        col2 = create_collection('Col2', visibility=False, author=profe1)
+        col3 = create_collection('Col3', visibility=True, author=profe2)
+
+        collections_url = reverse('judge:collections')
+        client = Client()
+
+        # Teachers can view all collections from authors in the group
+        client.login(username='profe1', password='0000')
+
+        response = client.get(collections_url + '?group=500', follow=True)  # Group does not exist
+        self.assertEqual(response.status_code, 404)
+
+        response = client.get(collections_url + '?group=dolphin', follow=True)  # Invalid group
+        self.assertEqual(response.status_code, 404)
+
+        response = client.get(collections_url + f'?group={group1.pk}', follow=True)
+        self.assertIn(col1.name_html, response.content.decode('utf-8'))
+        self.assertIn(col2.name_html, response.content.decode('utf-8'))
+        self.assertNotIn(col3.name_html, response.content.decode('utf-8'))
+
+        response = client.get(collections_url + f'?group={group2.pk}', follow=True)
+        self.assertIn(col1.name_html, response.content.decode('utf-8'))
+        self.assertIn(col2.name_html, response.content.decode('utf-8'))
+        self.assertIn(col3.name_html, response.content.decode('utf-8'))
+        client.logout()
+
+        # Students can only view visible collections from authors in the group
+        client.login(username='pepe', password='0000')
+        response = client.get(collections_url + f'?group={group1.pk}', follow=True)
+        self.assertIn(col1.name_html, response.content.decode('utf-8'))
+        self.assertNotIn(col2.name_html, response.content.decode('utf-8'))
+        self.assertNotIn(col3.name_html, response.content.decode('utf-8'))
+
+        response = client.get(collections_url + f'?group={group2.pk}', follow=True)
+        self.assertIn(col1.name_html, response.content.decode('utf-8'))
+        self.assertNotIn(col2.name_html, response.content.decode('utf-8'))
+        self.assertIn(col3.name_html, response.content.decode('utf-8'))
+        client.logout()

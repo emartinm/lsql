@@ -3,7 +3,23 @@
 {% load languages_to_flags %}
 {% load static %}
 {% block contenido %}
-  <h1>{% translate "Colecciones de problemas" %}</h1>
+  <h1>{% translate "Colecciones de problemas" %}
+      {% if group_name %}
+      {% translate "para" %} "{{ group_name }}"
+      {% endif %}
+<span class="dropdown float-end">
+  <button class="btn btn-primary dropdown-toggle" type="button" id="filterClass" data-bs-toggle="dropdown"
+          aria-expanded="false">
+    {% translate "Filtrar por clase" %}
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="filterClass">
+    {% for group in filter_groups %}
+      <li><a class="dropdown-item" href="{% url 'judge:collections' %}?group={{group.pk}}">{{ group.name }}</a></li>
+    {% endfor %}
+      <li><a class="dropdown-item" href="{% url 'judge:collections' %}">Todas</a></li>
+  </ul>
+</span>
+    </h1>
 
   <table class="table">
     <thead class="table-dark">
@@ -25,7 +41,11 @@
           {% else %}
           <i class="bi bi-check-circle-fill icon-hidden" aria-hidden="true"></i>
           {% endif %}
+          {% if not c.visible %}
+          <span class="hidden">[Hidden]</span> <a href="{% url 'judge:collection' c.id %}" class="hidden">{{ c.name_html|safe }}</a>
+          {% else %}
           <a href="{% url 'judge:collection' c.id %}">{{ c.name_html|safe }}</a>
+          {% endif %}
         </div>
         <div class="mx-2 flags">
           {% for flag in flags %}

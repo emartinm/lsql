@@ -25,7 +25,8 @@ from django.views.decorators.http import require_POST
 
 from .exceptions import ExecutorException
 from .feedback import compile_error_to_html_table, filter_expected_db
-from .forms import SubmitForm, ResultStaffForm, ResultStudentForm, ShowSubmissionsForm, DownloadRankingForm
+from .forms import SubmitForm, ResultStaffForm, ResultStudentForm, ShowSubmissionsForm, DownloadRankingForm, \
+    CollectionFilterForm
 from .models import Collection, Problem, Submission, ObtainedAchievement, AchievementDefinition, \
     NumSubmissionsProblemsAchievementDefinition, Hint, UsedHint
 from .oracle_driver import OracleExecutor
@@ -109,6 +110,7 @@ def show_result(request, collection_id):
         If the user is standard, then it receives the following GET parameter:
           * group = Group ID (optional). If not set, use the first group of the user
     """
+    # TODO: students should not access ranking of a hidden collection --> Forbidden
     collection = get_object_or_404(Collection, pk=collection_id)
     result_staff_form = ResultStaffForm(request.GET)
     result_student_form = ResultStudentForm(request.GET)
@@ -155,24 +157,50 @@ def show_result(request, collection_id):
 @login_required
 def show_results(request):
     """ Shows the links to enter the ranking of each collection """
+    # TODO: hide non-visible collections for students
     cols = Collection.objects.all().order_by('position', '-creation_date')
     return render(request, 'result.html', {'results': cols})
 
 
 @login_required
 def show_collections(request):
-    """ Show all the collections """
-    cols = Collection.objects.all().order_by('position', '-creation_date')
+    """ Show all the collections. Teachers can view all collections, whereas students can only
+        view "visible" collections.
+        If the parameter "group=X" is passed, only shows those collections authored by
+        teachers in group X.
+    """
+    col_form = CollectionFilterForm(request.GET)
+    if not col_form.is_valid():
+        return HttpResponseNotFound(str(col_form.errors))
+
+    group_id = col_form.cleaned_data.get('group')
+    if group_id is None:
+        authors = get_user_model().objects.filter(is_staff=True)
+        group_name = ""
+    else:
+        authors = get_object_or_404(Group, pk=group_id).user_set.filter(is_staff=True)
+        group_name = get_object_or_404(Group, pk=group_id).name
+
+    if request.user.is_staff:
+        # Teachers see all collections, even those not visible
+        cols = Collection.objects.filter(author__in=authors).order_by('position', '-creation_date')
+    else:
+        cols = Collection.objects.filter(visible=True, author__in=authors).order_by('position', '-creation_date')
     for collection in cols:
         # Templates can only invoke nullary functions or access object attribute, so we store
         # the number of problems solved by the user in an attribute
         collection.num_solved = collection.num_solved_by_user(request.user)
-    return render(request, 'collections.html', {'collections': cols})
+
+    filter_groups = {group for teacher in get_user_model().objects.filter(is_staff=True)
+                     for group in teacher.groups.all()}
+    return render(request, 'collections.html', {'collections': cols, 'filter_groups': filter_groups,
+                                                'group_name': group_name})
 
 
 @login_required
 def show_collection(request, collection_id):
     """ Shows a collection """
+    # TODO: students should not access hidden collections -> Forbidden
     collection = get_object_or_404(Collection, pk=collection_id)
     # New attribute to store the list of problems and include the number of submission in each problem
     collection.problem_list = collection.problems()
@@ -185,6 +213,7 @@ def show_collection(request, collection_id):
 @login_required
 def show_problem(request, problem_id):
     """ Shows a problem statement page """
+    # TODO: students should not access problems from hidden collections -> Forbidden
     get_object_or_404(Problem, pk=problem_id)
     # Look for problem pk in all the Problem classes
     problem = get_subclass_problem(problem_id)

@@ -9,7 +9,7 @@ from django.test import TestCase, Client
 from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import activate
-from judge.tests.test_views import create_user, create_group, create_collection, create_select_problem
+from judge.tests.test_views import create_user, create_group, create_collection, create_select_problem, create_superuser
 from judge.models import SelectProblem, ProcProblem, TriggerProblem, AchievementDefinition, \
      NumSolvedAchievementDefinition
 from judge.tests.test_parse import ParseTest
@@ -300,7 +300,7 @@ class LanguagesTest(TestCase):
     def test_collection_languages(self):
         """Test to check languages in collection list"""
         client = Client()
-        collection = create_collection('Collection')
+        collection = create_collection('Collection', author=create_superuser('0000', 'teacher1'))
         create_user('5555', 'pepe')
         client.login(username='pepe', password='5555')
 
