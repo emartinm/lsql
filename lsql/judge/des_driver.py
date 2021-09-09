@@ -26,7 +26,7 @@ def get_block(output, pos, sep):
     """ Returns the current block of output from 'pos' to the next separator in the list of 'sep'.
         Also returns the position where there the first separator of the list 'sep' is
     """
-    sep_pos = list()
+    sep_pos = []
     for separator in sep:
         sep_pos.append(output.find(separator, pos))
     first_separator = min([s for s in sep_pos if s >= 0])  # Position of the first separator found (discarding -1)
@@ -36,7 +36,7 @@ def get_block(output, pos, sep):
 
 def parse_tapi_error_messages(output, pos):
     """ Returns the list of DES error messages (Type, Message) until the next '$eot', starting from pos """
-    msgs = list()
+    msgs = []
     current_msg, pos = get_block(output, pos, ['\n'])
     pos += 1
     while current_msg != "$eot":
@@ -86,7 +86,7 @@ def parse_tapi_commands(output: str, num_commands: int, pos: int) -> list:
     """ Parses the output of several DES TAPI commands whose output start from position 'pos'.
         Returns a list of lists, with the messages for each TAPI command.
     """
-    msg_list = list()
+    msg_list = []
     for _ in range(num_commands):
         pos, msgs = parse_tapi_cmd(output, pos)
         msg_list.append(msgs)
@@ -112,7 +112,7 @@ class DesExecutor:
         """
         _, path = tempfile.mkstemp(prefix=self.__FILE_PREFIX, text=True)
         logger.debug('Writing DES file to %s', path)
-        with open(path, 'w') as input_stream:
+        with open(path, 'w', encoding='utf-8') as input_stream:
             input_stream.write('/type_casting on\n')
             # input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
             input_stream.write('/sql\n')
@@ -144,7 +144,7 @@ class DesExecutor:
         """
         _, path = tempfile.mkstemp(prefix=self.__FILE_PREFIX, text=True)
         logger.debug('Writing DES file to %s', path)
-        with open(path, 'w') as input_stream:
+        with open(path, 'w', encoding='utf-8') as input_stream:
             input_stream.write('/type_casting on\n')
             # input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
             input_stream.write('/sql\n')

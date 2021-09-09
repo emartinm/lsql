@@ -9,12 +9,12 @@ from django.test import TestCase, Client
 from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import activate
-from judge.tests.test_views import create_user, create_group, create_collection, create_select_problem, create_superuser
 from judge.models import SelectProblem, ProcProblem, TriggerProblem, AchievementDefinition, \
-     NumSolvedAchievementDefinition
-from judge.tests.test_parse import ParseTest
+    NumSolvedAchievementDefinition
 from judge.templatetags import languages_to_flags
 from judge.feedback import compare_select_results
+from judge.tests.test_common import create_collection, create_user, TestPaths, create_select_problem, create_group, \
+    create_superuser
 
 
 class LanguagesTest(TestCase):
@@ -148,7 +148,7 @@ class LanguagesTest(TestCase):
         curr_path = os.path.dirname(__file__)
         client = Client()
 
-        zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
+        zip_proc_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.PROC_OK)
         collection = create_collection('Colleccion de prueba XYZ')
         user = create_user('5555', 'pepe')
         problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
@@ -174,7 +174,7 @@ class LanguagesTest(TestCase):
         curr_path = os.path.dirname(__file__)
         client = Client()
 
-        zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
+        zip_trigger_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.TRIGGER_OK)
         collection = create_collection('Colleccion de prueba XYZ')
         user = create_user('5555', 'pepe')
         problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
@@ -199,7 +199,6 @@ class LanguagesTest(TestCase):
         """Test to check language in feedback"""
         client = Client()
         collection = create_collection('Colleccion de prueba XYZ')
-        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         create_user('5555', 'pedro')
         client.login(username='pedro', password='5555')
 
@@ -209,9 +208,8 @@ class LanguagesTest(TestCase):
                      'rows': [['b', 2], ['a', 1]]}
         obtained2 = {'header': [['Algo', "<class 'cx_Oracle.NUMBER'>"], ['name', "<class 'cx_Oracle.STRING'>"],
                                 ['name', "<class 'cx_Oracle.STRING'>"]],
-                    'rows': [[1, 'a', 'a'], [2, 'b', 'b']]}
+                     'rows': [[1, 'a', 'a'], [2, 'b', 'b']]}
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
 
@@ -228,7 +226,6 @@ class LanguagesTest(TestCase):
         self.assertIn("Expected name: Algo", compare_select_results(expected, obtained1, False)[1])
         self.assertIn("Generated name by your SQL code: name",
                       compare_select_results(expected, obtained1, False)[1])
-
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
 
@@ -368,8 +365,8 @@ class LanguagesTest(TestCase):
 
     def test_get_achievement_name(self):
         """Test to check the correct language value of achievement name"""
-        achievement_definition = AchievementDefinition(name={"es":'Nombre',"en":'Name'},
-                                                    description={"es":'Descripción',"en":'Description'})
+        achievement_definition = AchievementDefinition(name={"es": 'Nombre', "en": 'Name'},
+                                                       description={"es": 'Descripción', "en": 'Description'})
         activate('en')
         self.assertEqual(achievement_definition.get_name(), "Name")
         activate('ru')
@@ -377,11 +374,10 @@ class LanguagesTest(TestCase):
         activate('es')
         self.assertEqual(achievement_definition.get_name(), "Nombre")
 
-
     def test_get_achievement_description(self):
         """Test to check the correct language value of achievement description"""
-        achievement_definition = AchievementDefinition(name={"es":'Nombre',"en":'Name'},
-                                                    description={"es":'Descripción',"en":'Description'})
+        achievement_definition = AchievementDefinition(name={"es": 'Nombre', "en": 'Name'},
+                                                       description={"es": 'Descripción', "en": 'Description'})
         activate('en')
         self.assertEqual(achievement_definition.get_description(), "Description")
         activate('ru')
@@ -392,14 +388,14 @@ class LanguagesTest(TestCase):
     def test_achievement_language(self):
         """Test to check the correct language display of achievements"""
         client = Client()
-        solved_achievement_1 = NumSolvedAchievementDefinition(name={"es":'Nombre1',"en":'Name1'},
-                                                              description={"es":'Descripción1',"en":'Description1'},
+        solved_achievement_1 = NumSolvedAchievementDefinition(name={"es": 'Nombre1', "en": 'Name1'},
+                                                              description={"es": 'Descripción1', "en": 'Description1'},
                                                               num_problems=1)
-        solved_achievement_2 = NumSolvedAchievementDefinition(name={"es":'Nombre2',"en":'Name2'},
-                                                              description={"es":'Descripción2',"en":'Description2'},
+        solved_achievement_2 = NumSolvedAchievementDefinition(name={"es": 'Nombre2', "en": 'Name2'},
+                                                              description={"es": 'Descripción2', "en": 'Description2'},
                                                               num_problems=2)
-        solved_achievement_3 = NumSolvedAchievementDefinition(name={"es":'Nombre3'},
-                                                              description={"es":'Descripción3'},
+        solved_achievement_3 = NumSolvedAchievementDefinition(name={"es": 'Nombre3'},
+                                                              description={"es": 'Descripción3'},
                                                               num_problems=3)
         solved_achievement_1.save()
         solved_achievement_2.save()

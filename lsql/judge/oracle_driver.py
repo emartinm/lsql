@@ -118,12 +118,12 @@ def table_from_cursor(cursor):
     """
     max_rows = int(os.environ['ORACLE_MAX_ROWS'])
     max_cols = int(os.environ['ORACLE_MAX_COLS'])
-    table = dict()
+    table = {}
 
     if cursor.description is None:
         # It's the result of an SQL statement that do not return results (CREATE VIEW, for example)
-        table['header'] = list()
-        table['rows'] = list()
+        table['header'] = []
+        table['rows'] = []
         return table  # return empty table (no columns, no rows)
 
     if len(cursor.description) > max_cols:
@@ -156,7 +156,7 @@ def get_all_tables(conn):
             logger.debug('Too many tables in user DB')
             raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
         tb_names = [e[0] for e in tables]
-        db_dict = dict()
+        db_dict = {}
         for table_name in tb_names:
             # https://docs.oracle.com/database/121/SQLRF/sql_elements008.htm#SQLRF51129
             # Quoted names should be embedded with "..." in order to work. We try
@@ -569,7 +569,7 @@ class OracleExecutor:
             state = OracleStatusCode.EXECUTE_INSERT
             execute_sql_script(conn, insertion)
 
-            pre = dict()
+            pre = {}
             if pre_db:
                 state = OracleStatusCode.GET_ALL_TABLES
                 pre = get_all_tables(conn)
@@ -678,7 +678,7 @@ class OracleExecutor:
                 if len(errors['rows']) > 0:
                     raise ExecutorException(OracleStatusCode.COMPILATION_ERROR, message=errors, statement=stmt)
 
-                results = dict()
+                results = {}
                 tests = [s.strip() for s in tests.split('\n') if len(s.strip()) > 0]
                 for stmt in tests:
                     func_call = f'SELECT {stmt} FROM DUAL'

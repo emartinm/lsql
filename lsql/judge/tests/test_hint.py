@@ -2,7 +2,6 @@
 """
 Tests for hints
 """
-from datetime import datetime
 import os
 
 from django.test import TestCase, Client
@@ -10,24 +9,10 @@ from django.urls import reverse
 from django.core.exceptions import ValidationError
 
 from judge.types import VerdictCode
-from judge.tests.test_views import create_user, create_collection, create_select_problem, create_submission
+from judge.tests.test_common import create_user, create_collection, \
+    create_select_problem, create_hint, create_submission, create_used_hint
 from judge.models import SelectProblem, DMLProblem, FunctionProblem, \
-    ProcProblem, TriggerProblem, DiscriminantProblem, Hint, UsedHint
-
-
-def create_hint(problem, id_hint, num_submissions):
-    """ Creates and stores a Hint of a Problem """
-    description = f'descripcion de la pista {id_hint}'
-    hint = Hint(text_md=description, problem=problem, num_submit=num_submissions)
-    hint.save()
-    return hint
-
-
-def create_used_hint(hint, user):
-    """ Creates and stores a used Hint of a Problem """
-    used_hint = UsedHint(user=user, request_date=datetime(2020, 3, 5), hint_definition=hint)
-    used_hint.save()
-    return used_hint
+    ProcProblem, TriggerProblem, DiscriminantProblem, Hint
 
 
 class HintTest(TestCase):

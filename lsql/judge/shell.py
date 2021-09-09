@@ -123,7 +123,7 @@ def rejudge(verdict_code, filename='rejudge.txt', tests=False,
         client = Client()
         client.login(username=username, password=passwd)
 
-        changes = dict()
+        changes = {}
         with open(filename, 'w', encoding='utf8') as report:
             for sub in subs:
                 submit_url = reverse('judge:submit', args=[sub.problem.pk])

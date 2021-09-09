@@ -32,7 +32,7 @@ def submissions_by_day(start=None, end=None, verdict_code=None):
                     subs.values_list('creation_date', flat=True)))
     if not days:
         # No submissions
-        return list()
+        return []
 
     first = days[0] if start is None else start
     last = days[-1] if end is None else end
@@ -71,7 +71,7 @@ def participation_per_group():
         Users are considered "participating" if they have sent one submission, and only non-staff and active users
         are counted.
     """
-    participating = dict()
+    participating = {}
     for group in Group.objects.all():
         users = group.user_set.filter(is_staff=False, is_active=True)
         participating_count = Submission.objects.filter(user__in=users).order_by('user').distinct('user').count()

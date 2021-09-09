@@ -14,7 +14,8 @@ from judge.models import NumSolvedCollectionAchievementDefinition, PodiumAchieve
     NumSolvedAchievementDefinition, AchievementDefinition, ObtainedAchievement, Submission, \
     NumSolvedTypeAchievementDefinition, NumSubmissionsProblemsAchievementDefinition
 from judge.types import VerdictCode, ProblemType
-from judge.tests.test_views import create_user, create_superuser, create_group, create_collection, create_select_problem
+from judge.tests.test_common import create_user, create_superuser, create_group, create_collection, \
+    create_select_problem
 from judge.views import first_day_of_course
 
 

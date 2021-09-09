@@ -7,33 +7,12 @@ import os
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from judge.tests.test_parse import ParseTest
-from judge.models import FunctionProblem, ProcProblem, TriggerProblem, DiscriminantProblem, \
+from judge.models import FunctionProblem, ProcProblem, TriggerProblem, \
     NumSubmissionsProblemsAchievementDefinition, ObtainedAchievement, NumSolvedTypeAchievementDefinition, \
     SelectProblem
-from judge.tests.test_views import create_collection, create_user, create_select_problem, create_dml_problem
+from judge.tests.test_common import create_collection, create_user, create_select_problem, create_dml_problem, \
+    create_discriminant_problem, TestPaths
 from judge.types import VerdictCode, ProblemType
-
-
-def create_discriminant_problem(important_order, collection, name='Ejemplo'):
-    """Creates and stores a Discriminant DB Problem"""
-    if not important_order:
-        create = 'CREATE TABLE test_table_1 (n NUMBER);'
-        insert = "INSERT INTO test_table_1 VALUES (1997);"
-        incorrect = 'SELECT * FROM test_table_1;'
-        correct = 'SELECT * FROM test_table_1 WHERE n > 1000;'
-    else:
-        create = 'CREATE TABLE test_table_1 (x NUMBER, n NUMBER);'
-        insert = "INSERT INTO test_table_1 VALUES (1997, 1997);\
-                  INSERT INTO test_table_1  VALUES (1994, 1994);"
-        correct = 'SELECT * FROM test_table_1 ORDER BY n ASC'
-        incorrect = 'SELECT * FROM test_table_1 ORDER BY x ASC'
-    problem = DiscriminantProblem(title_md=name, text_md='texto largo', create_sql=create, insert_sql=insert,
-                                  correct_query=correct, incorrect_query=incorrect, check_order=important_order,
-                                  collection=collection)
-    problem.clean()
-    problem.save()
-    return problem
 
 
 class SubmitTest(TestCase):
@@ -43,9 +22,9 @@ class SubmitTest(TestCase):
         """Submitting code for a function/procedure/trigger with a compile error does resturn a
         OracleStatusCode.COMPILATION_ERROR"""
         curr_path = os.path.dirname(__file__)
-        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTION_OK)
-        zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
-        zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
+        zip_function_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.FUNCTION_OK)
+        zip_proc_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.PROC_OK)
+        zip_trigger_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.TRIGGER_OK)
 
         client = Client()
         collection = create_collection('Colleccion de prueba AAA')
@@ -131,9 +110,9 @@ class SubmitTest(TestCase):
         """Accepted submissions to function/procedure/trigger problem"""
 
         curr_path = os.path.dirname(__file__)
-        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTION_OK)
-        zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
-        zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
+        zip_function_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.FUNCTION_OK)
+        zip_proc_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.PROC_OK)
+        zip_trigger_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.TRIGGER_OK)
 
         client = Client()
         collection = create_collection('Colleccion de prueba AAA')
@@ -278,7 +257,7 @@ class SubmitTest(TestCase):
         # The user makes another submission and obtain two achievements
         ach_type.save()
         curr_path = os.path.dirname(__file__)
-        zip_select_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.SELECT_OK)
+        zip_select_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.SELECT_OK)
         collection = create_collection('Coleccion 1')
         select = SelectProblem(zipfile=zip_select_path, collection=collection)
         select.clean()

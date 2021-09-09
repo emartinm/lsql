@@ -11,61 +11,21 @@ from zipfile import ZipFile
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
-from judge.models import Collection, Problem, SelectProblem, DMLProblem, FunctionProblem, \
+from judge.models import Problem, SelectProblem, DMLProblem, FunctionProblem, \
     ProcProblem, TriggerProblem, DiscriminantProblem
 from judge.parse import get_language_from_json
 from judge.exceptions import ZipFileParsingException
-
 from judge.parse import get_problem_type_from_zip
+from judge.tests.test_common import create_collection, TestPaths
 
 
 class ParseTest(TestCase):
     """Tests for module parse"""
-    ZIP_FOLDER = 'zip_files'
-
-    MANY_PROBLEMS_ZIP_NAME = 'problems.zip'
-
-    NO_JSON = 'no_json.zip'
-    JSON_DECODE_ERROR = 'select_json_decode_error.zip'
-    WRONG_TYPE = 'select_json_invalid_type.zip'
-    NO_TYPE = 'no_type.zip'
-
-    SELECT_OK = 'select_ok.zip'
-    DML_OK = 'dml_ok.zip'
-    FUNCTION_OK = 'function_ok.zip'
-    PROC_OK = 'proc_ok.zip'
-    TRIGGER_OK = 'trigger_ok.zip'
-    DISCRIMINANT_OK = 'discriminant_ok.zip'
-
-    SELECT_MISSING_FILES = 'select_missing_files.zip'
-    SELECT_EMPTY_TITLE = 'select_empty_title.zip'
-    SELECT_TEXT_DECODE = 'select_text_decode.zip'
-
-    DML_MISSING_FILES = 'dml_missing_files.zip'
-    DML_BAD_NUM_STMT = 'dml_bad_num_stmt.zip'
-    DML_TEXT_DECODE = 'dml_text_decode.zip'
-
-    FUNCTION_MISSING_FILES = 'function_missing_files.zip'
-    FUNCTION_EMPTY_TITLE = 'function_empty_title.zip'
-    FUNCTION_TEXT_DECODE = 'function_text_decode.zip'
-
-    PROC_MISSING_FILES = 'proc_missing_files.zip'
-    PROC_EMPTY_TITLE = 'proc_empty_title.zip'
-    PROC_TEXT_DECODE = 'proc_text_decode.zip'
-
-    TRIGGER_MISSING_FILES = 'trigger_missing_files.zip'
-    TRIGGER_EMPTY_TITLE = 'trigger_empty_title.zip'
-    TRIGGER_TEXT_DECODE = 'trigger_text_decode.zip'
-    TRIGGER_BAD_INSERT = 'trigger_bad_insert.zip'
-
-    DISCRIMINANT_MISSING_FILES = 'discriminant_missing_files.zip'
-    DISCRIMINANT_BAD_STMT = 'discriminant_bad_stmt.zip'
-    DISCRIMINANT_TEXT_DECODE = 'discriminant_text_decode.zip'
 
     def test_no_json(self):
         """Loading problem details form a ZIP without JSON file"""
         curr_path = os.path.dirname(__file__)
-        zip_path = os.path.join(curr_path, self.ZIP_FOLDER, self.NO_JSON)
+        zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.NO_JSON)
 
         select_problem = SelectProblem(zipfile=zip_path)
         dml_problem = DMLProblem(zipfile=zip_path)
@@ -81,7 +41,7 @@ class ParseTest(TestCase):
     def test_no_type(self):
         """Loading problem details form a ZIP with a JSON file without type field"""
         curr_path = os.path.dirname(__file__)
-        zip_path = os.path.join(curr_path, self.ZIP_FOLDER, self.NO_TYPE)
+        zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.NO_TYPE)
 
         select_problem = SelectProblem(zipfile=zip_path)
         dml_problem = DMLProblem(zipfile=zip_path)
@@ -97,11 +57,11 @@ class ParseTest(TestCase):
     def test_zip_other_type(self):
         """Loading a problem data from a ZIP of a different type must raise a ValidationError"""
         curr_path = os.path.dirname(__file__)
-        zip_select_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_OK)
-        zip_dml_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DML_OK)
-        zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTION_OK)
-        zip_proc_path = os.path.join(curr_path, self.ZIP_FOLDER, self.PROC_OK)
-        zip_trigger_path = os.path.join(curr_path, self.ZIP_FOLDER, self.TRIGGER_OK)
+        zip_select_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.SELECT_OK)
+        zip_dml_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.DML_OK)
+        zip_function_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.FUNCTION_OK)
+        zip_proc_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.PROC_OK)
+        zip_trigger_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.TRIGGER_OK)
 
         select_problem = SelectProblem(zipfile=zip_dml_path)
         dml_problem = DMLProblem(zipfile=zip_function_path)
@@ -117,12 +77,12 @@ class ParseTest(TestCase):
     def test_individual_zip(self):
         """Load problem data from valid ZIP"""
         curr_path = os.path.dirname(__file__)
-        zip_select_path = os.path.join(curr_path, self.ZIP_FOLDER, self.SELECT_OK)
-        zip_dml_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DML_OK)
-        zip_function_path = os.path.join(curr_path, self.ZIP_FOLDER, self.FUNCTION_OK)
-        zip_proc_path = os.path.join(curr_path, self.ZIP_FOLDER, self.PROC_OK)
-        zip_trigger_path = os.path.join(curr_path, self.ZIP_FOLDER, self.TRIGGER_OK)
-        zip_discriminant_path = os.path.join(curr_path, self.ZIP_FOLDER, self.DISCRIMINANT_OK)
+        zip_select_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.SELECT_OK)
+        zip_dml_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.DML_OK)
+        zip_function_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.FUNCTION_OK)
+        zip_proc_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.PROC_OK)
+        zip_trigger_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.TRIGGER_OK)
+        zip_discriminant_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.DISCRIMINANT_OK)
 
         select_problem = SelectProblem(zipfile=zip_select_path)
         dml_problem = DMLProblem(zipfile=zip_dml_path)
@@ -141,13 +101,10 @@ class ParseTest(TestCase):
             self.assertEqual(problem.language, 'es')
 
     def test_load_many_problems(self):
-        """Test for loading a ZIP containing several problems"""
+        """ Test for loading a ZIP containing several problems """
         curr_path = os.path.dirname(__file__)
-        zip_path = os.path.join(curr_path, self.ZIP_FOLDER, self.MANY_PROBLEMS_ZIP_NAME)
-        collection = Collection(name_md='Colección', position=8, description_md='Colección de pruebas',
-                                author=None)
-        collection.clean()
-        collection.save()
+        zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.MANY_PROBLEMS_ZIP_NAME)
+        collection = create_collection(name='Collection')
         collection.zipfile = zip_path
         collection.clean()
         collection.save()
@@ -162,40 +119,41 @@ class ParseTest(TestCase):
         curr_path = os.path.dirname(__file__)
 
         # Select problems
-        for filename in [self.SELECT_MISSING_FILES, self.SELECT_EMPTY_TITLE, self.SELECT_TEXT_DECODE]:
-            zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
+        for filename in [TestPaths.SELECT_MISSING_FILES, TestPaths.SELECT_EMPTY_TITLE, TestPaths.SELECT_TEXT_DECODE]:
+            zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, filename)
             problem = SelectProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)
 
         # DML problems
-        for filename in [self.DML_MISSING_FILES, self.DML_BAD_NUM_STMT, self.DML_TEXT_DECODE]:
-            zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
+        for filename in [TestPaths.DML_MISSING_FILES, TestPaths.DML_BAD_NUM_STMT, TestPaths.DML_TEXT_DECODE]:
+            zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, filename)
             problem = DMLProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)
 
         # Function problems
-        for filename in [self.FUNCTION_MISSING_FILES, self.FUNCTION_EMPTY_TITLE, self.FUNCTION_TEXT_DECODE]:
-            zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
+        for filename in [TestPaths.FUNCTION_MISSING_FILES, TestPaths.FUNCTION_EMPTY_TITLE,
+                         TestPaths.FUNCTION_TEXT_DECODE]:
+            zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, filename)
             problem = FunctionProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)
 
         # Procedure problems
-        for filename in [self.PROC_MISSING_FILES, self.PROC_EMPTY_TITLE, self.PROC_TEXT_DECODE]:
-            zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
+        for filename in [TestPaths.PROC_MISSING_FILES, TestPaths.PROC_EMPTY_TITLE, TestPaths.PROC_TEXT_DECODE]:
+            zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, filename)
             problem = ProcProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)
 
         # Trigger problems
-        for filename in [self.TRIGGER_MISSING_FILES, self.TRIGGER_EMPTY_TITLE, self.TRIGGER_TEXT_DECODE,
-                         self.TRIGGER_BAD_INSERT]:
-            zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
+        for filename in [TestPaths.TRIGGER_MISSING_FILES, TestPaths.TRIGGER_EMPTY_TITLE, TestPaths.TRIGGER_TEXT_DECODE,
+                         TestPaths.TRIGGER_BAD_INSERT]:
+            zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, filename)
             problem = TriggerProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)
 
         # Discriminant problems
-        for filename in [self.DISCRIMINANT_MISSING_FILES, self.DISCRIMINANT_BAD_STMT,
-                         self.DISCRIMINANT_TEXT_DECODE]:
-            zip_path = os.path.join(curr_path, self.ZIP_FOLDER, filename)
+        for filename in [TestPaths.DISCRIMINANT_MISSING_FILES, TestPaths.DISCRIMINANT_BAD_STMT,
+                         TestPaths.DISCRIMINANT_TEXT_DECODE]:
+            zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, filename)
             problem = DiscriminantProblem(zipfile=zip_path)
             self.assertRaises(ValidationError, problem.clean)
 
@@ -211,17 +169,17 @@ class ParseTest(TestCase):
     def test_bad_json(self):
         """ Errors when decoding JSON or missing type """
         curr_path = os.path.dirname(__file__)
-        zip_path = os.path.join(curr_path, self.ZIP_FOLDER, self.JSON_DECODE_ERROR)
+        zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.JSON_DECODE_ERROR)
         problem = SelectProblem(zipfile=zip_path)
         with self.assertRaises(ValidationError) as ctxt:
             problem.clean()
         self.assertIn('Error when opening problem.json: Expecting value', str(ctxt.exception))
 
-        zip_path = os.path.join(curr_path, self.ZIP_FOLDER, self.NO_TYPE)
+        zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.NO_TYPE)
         self.assertIsNone(get_problem_type_from_zip(zip_path))
 
-        zip_path = os.path.join(curr_path, self.ZIP_FOLDER, self.WRONG_TYPE)
-        problem = SelectProblem(zipfile=zip_path)
+        zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.WRONG_TYPE)
+        SelectProblem(zipfile=zip_path)
         with self.assertRaises(ZipFileParsingException) as ctxt:
             get_problem_type_from_zip(zip_path)
         self.assertIn('Problem type is not defined in', str(ctxt.exception))

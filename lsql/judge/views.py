@@ -110,8 +110,10 @@ def show_result(request, collection_id):
         If the user is standard, then it receives the following GET parameter:
           * group = Group ID (optional). If not set, use the first group of the user
     """
-    # TODO: students should not access ranking of a hidden collection --> Forbidden
     collection = get_object_or_404(Collection, pk=collection_id)
+    if not request.user.is_staff and not collection.visible:
+        # Students cannot access ranking of a hidden collection
+        return HttpResponseForbidden("Forbidden")
     result_staff_form = ResultStaffForm(request.GET)
     result_student_form = ResultStudentForm(request.GET)
 
@@ -156,9 +158,11 @@ def show_result(request, collection_id):
 
 @login_required
 def show_results(request):
-    """ Shows the links to enter the ranking of each collection """
-    # TODO: hide non-visible collections for students
-    cols = Collection.objects.all().order_by('position', '-creation_date')
+    """ Shows the links to enter the ranking of each collection. Hides non-visible collections for students """
+    if request.user.is_staff:
+        cols = Collection.objects.all().order_by('position', '-creation_date')
+    else:
+        cols = Collection.objects.filter(visible=True).order_by('position', '-creation_date')
     return render(request, 'result.html', {'results': cols})
 
 
@@ -200,8 +204,10 @@ def show_collections(request):
 @login_required
 def show_collection(request, collection_id):
     """ Shows a collection """
-    # TODO: students should not access hidden collections -> Forbidden
     collection = get_object_or_404(Collection, pk=collection_id)
+    if not request.user.is_staff and not collection.visible:
+        # Students cannot access hidden collections
+        return HttpResponseForbidden("Forbidden")
     # New attribute to store the list of problems and include the number of submission in each problem
     collection.problem_list = collection.problems()
     for problem in collection.problem_list:
@@ -213,8 +219,10 @@ def show_collection(request, collection_id):
 @login_required
 def show_problem(request, problem_id):
     """ Shows a problem statement page """
-    # TODO: students should not access problems from hidden collections -> Forbidden
-    get_object_or_404(Problem, pk=problem_id)
+    problem = get_object_or_404(Problem, pk=problem_id)
+    if not request.user.is_staff and not problem.collection.visible:
+        # Students cannot access problem in hidden collections
+        return HttpResponseForbidden("Forbidden")
     # Look for problem pk in all the Problem classes
     problem = get_subclass_problem(problem_id)
     # Stores the flag in an attribute so that the template can use it
@@ -283,7 +291,7 @@ def show_achievements(request, user_id):
 @login_required
 def show_hints(request):
     """ Used hints page """
-    dic = dict()
+    dic = {}
     hints = UsedHint.objects.filter(user=request.user.pk).order_by('request_date')
     for hint in hints:
         if hint.hint_definition.problem.pk in dic:
@@ -331,7 +339,7 @@ def extend_dictionary_with_des(data, problem, code):
     if problem.problem_type() in [ProblemType.SELECT, ProblemType.DML]:
         messages_raw = problem.get_des_messages_solution(code)
         # Extends the snippet to mark the position of the error and also extract line and column
-        messages = list()
+        messages = []
         for (error_code, msg, snippet) in messages_raw:
             if snippet and problem.problem_type() == ProblemType.SELECT:
                 len_last_line = len(snippet.strip().split('\n')[-1])
@@ -425,7 +433,7 @@ def password_change_done(request):
 def test_error_500(request):
     """ Generates a server internal error, only for testing error reporting in deployment """
     if request.user and request.user.is_staff:
-        return HttpResponse(list()[55])  # list index out of range, error 500
+        return HttpResponse([][55])  # list index out of range, error 500
     return HttpResponseNotFound()
 
 
@@ -459,7 +467,7 @@ def download_ranking(request, collection_id):
     end = datetime(end.year, end.month, end.day, 23, 59, 59)
     start = datetime(start.year, start.month, start.day, 0, 0, 0)
 
-    sheet_rows = list()
+    sheet_rows = []
     # Sheet header: collection name, dates and group in first 4 rows
     sheet_rows.append([gettext('Colección'), collection.name_md])
     sheet_rows.append([gettext('Grupo'), str(group)])
@@ -469,8 +477,8 @@ def download_ranking(request, collection_id):
 
     # Table header [Pos., User, Exercises..., Score, Solved] in row 6
     sheet_rows.append([gettext("Pos."), gettext("Usuario")] +
-                       [problem.title_md for problem in collection.problems()] +
-                       [gettext("Puntuación."), gettext("Resueltos")])
+                      [problem.title_md for problem in collection.problems()] +
+                      [gettext("Puntuación."), gettext("Resueltos")])
     # Ranking row by row
     for user in collection.ranking(start, end, group):
         sheet_rows.append([user.pos, user.username] +

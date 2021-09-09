@@ -36,7 +36,7 @@ def header_to_str(header):
     :param header: Something like [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]]
     :return: (str) Pretty version like "(ID: NUMBER, NOMBRE: STRING)"
     """
-    columns = list()
+    columns = []
     for name, oracle_type in header:
         columns.append("{}: {}".format(name, pretty_type(oracle_type)))
     str_header = ", ".join(columns)

@@ -8,103 +8,15 @@ from datetime import datetime
 import os
 
 from django.test import TestCase, Client
-import django.contrib.auth
 from django.urls import reverse
-from django.contrib.auth.models import Group
 
-from judge.models import Collection, SelectProblem, Submission, FunctionProblem, DMLProblem, ProcProblem, \
-    TriggerProblem
+from judge.models import SelectProblem, Submission, FunctionProblem, DMLProblem, ProcProblem, TriggerProblem
 from judge.types import VerdictCode
 import judge.tests.test_oracle
-from judge.tests.test_parse import ParseTest
 from judge.views import first_day_of_course
 from judge.feedback import filter_expected_db
-
-
-def create_select_problem(collection, name='Ejemplo'):
-    """ Creates and stores a Select Problem """
-    create = 'CREATE TABLE test (n NUMBER);'
-    insert = "INSERT INTO test VALUES (901)"
-    solution = 'SELECT * FROM test'
-    problem = SelectProblem(title_md=name, text_md='texto largo',
-                            create_sql=create, insert_sql=insert, collection=collection,
-                            solution=solution)
-    problem.clean()
-    problem.save()
-    return problem
-
-
-def create_dml_problem(collection, name='Ejemplo'):
-    """Creates and stores a DML Problem accepting between 2 and 3 SQL sentences"""
-    create = 'CREATE TABLE test (n NUMBER);'
-    insert = "INSERT INTO test VALUES (901)"
-    solution = 'INSERT INTO test VALUES (25); INSERT INTO test VALUES (50); INSERT INTO test VALUES (75);'
-    problem = DMLProblem(title_md=name, text_md='texto largo',
-                         create_sql=create, insert_sql=insert, collection=collection,
-                         solution=solution, min_stmt=2, max_stmt=3)
-    problem.clean()
-    problem.save()
-    return problem
-
-
-def create_dml_complete_problem(collection, name='Ejemplo'):
-    """Creates and stores a DML Problem with an INSERT, a DELETE, a DROP and CREATE"""
-    create = 'CREATE TABLE test_table_1 (n NUMBER);\
-             CREATE TABLE test_table_2 (n NUMBER);\
-             CREATE TABLE test_table_3 (n NUMBER);'
-    insert = "INSERT INTO test_table_1 VALUES (1997);\
-             INSERT INTO test_table_2 VALUES (14);\
-             INSERT INTO test_table_3 VALUES (17);\
-             INSERT INTO test_table_3 VALUES (83)"
-    solution = 'INSERT INTO test_table_1 VALUES (312);\
-               DELETE FROM test_table_3 WHERE n = 83;\
-               CREATE TABLE new (n NUMBER);\
-               DROP TABLE test_table_2;'
-    problem = DMLProblem(title_md=name, text_md='texto largo',
-                         create_sql=create, insert_sql=insert, collection=collection,
-                         solution=solution, min_stmt=2, max_stmt=10)
-    problem.clean()
-    problem.save()
-    return problem
-
-
-def create_collection(name='Prueba', visibility=True, author=None):
-    """Creates and stores a collection"""
-    collection = Collection(name_md=name, description_md='texto explicativo', visible=visibility, author=author)
-    collection.clean()
-    collection.save()
-    return collection
-
-
-def create_user(passwd, username='usuario'):
-    """Creates and stores a user"""
-    user = django.contrib.auth.get_user_model().objects.create_user(
-        username=username,
-        email='email@ucm.es',
-        password=passwd)
-    return user
-
-
-def create_superuser(passwd, username='staff'):
-    """Creates and stores a super user"""
-    user = django.contrib.auth.get_user_model().objects.create_superuser(
-        username=username,
-        password=passwd)
-    return user
-
-
-def create_group(name='nombre'):
-    """Creates and stores a group"""
-    group = Group.objects.create(name=name)
-    return group
-
-
-def create_submission(problem, user, verdict, code='nada'):
-    """Creates and stores a submission"""
-    sub = Submission(code=code, verdict_code=verdict, user=user, problem=problem)
-    sub.clean()
-    sub.save()
-    return sub
+from judge.tests.test_common import create_user, create_superuser, create_group, create_collection, \
+    create_select_problem, create_submission, create_dml_problem, create_dml_complete_problem, TestPaths
 
 
 class ViewsTest(TestCase):
@@ -332,11 +244,11 @@ class ViewsTest(TestCase):
     def test_show_problems(self):
         """Shows a problem of each type"""
         curr_path = os.path.dirname(__file__)
-        zip_select_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.SELECT_OK)
-        zip_dml_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.DML_OK)
-        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTION_OK)
-        zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
-        zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
+        zip_select_path = os.path.join(curr_path,  TestPaths.ZIP_FOLDER,  TestPaths.SELECT_OK)
+        zip_dml_path = os.path.join(curr_path,  TestPaths.ZIP_FOLDER,  TestPaths.DML_OK)
+        zip_function_path = os.path.join(curr_path,  TestPaths.ZIP_FOLDER,  TestPaths.FUNCTION_OK)
+        zip_proc_path = os.path.join(curr_path,  TestPaths.ZIP_FOLDER,  TestPaths.PROC_OK)
+        zip_trigger_path = os.path.join(curr_path,  TestPaths.ZIP_FOLDER,  TestPaths.TRIGGER_OK)
 
         collection = create_collection('Colleccion de prueba XYZ')
         user = create_user('5555', 'pepe')
@@ -361,11 +273,11 @@ class ViewsTest(TestCase):
     def test_download(self):
         """Download the script of a problem (CREATE + INSERT)"""
         curr_path = os.path.dirname(__file__)
-        zip_select_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.SELECT_OK)
-        zip_dml_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.DML_OK)
-        zip_function_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.FUNCTION_OK)
-        zip_proc_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.PROC_OK)
-        zip_trigger_path = os.path.join(curr_path, ParseTest.ZIP_FOLDER, ParseTest.TRIGGER_OK)
+        zip_select_path = os.path.join(curr_path,  TestPaths.ZIP_FOLDER,  TestPaths.SELECT_OK)
+        zip_dml_path = os.path.join(curr_path,  TestPaths.ZIP_FOLDER,  TestPaths.DML_OK)
+        zip_function_path = os.path.join(curr_path,  TestPaths.ZIP_FOLDER,  TestPaths.FUNCTION_OK)
+        zip_proc_path = os.path.join(curr_path,  TestPaths.ZIP_FOLDER,  TestPaths.PROC_OK)
+        zip_trigger_path = os.path.join(curr_path,  TestPaths.ZIP_FOLDER,  TestPaths.TRIGGER_OK)
 
         collection = create_collection('Colleccion de prueba AAA')
         user = create_user('54522', 'antonio')
@@ -916,76 +828,3 @@ class ViewsTest(TestCase):
         response = client.get(stats_url, follow=True)
         self.assertEqual(response.redirect_chain,
                          [(login_redirect_stats_url, 302)])
-
-    def test_visibility(self):
-        """ Collection list is properly shown depending on visibility and user role """
-        user_staff = create_superuser('0000', username='staff')
-        create_user('5555', 'pepe')
-        create_collection('Visible collection', visibility=True, author=user_staff)
-        create_collection('Not visible collection', visibility=False, author=user_staff)
-
-        collections_url = reverse('judge:collections')
-        client = Client()
-
-        client.login(username='pepe', password='5555')
-        response = client.get(collections_url, follow=True)
-        self.assertIn('Visible collection', response.content.decode('utf-8'))
-        self.assertNotIn('Not visible collection', response.content.decode('utf-8'))
-        client.logout()
-
-        client.login(username='staff', password='0000')
-        response = client.get(collections_url, follow=True)
-        self.assertIn('Visible collection', response.content.decode('utf-8'))
-        self.assertIn('Not visible collection', response.content.decode('utf-8'))
-        client.logout()
-
-    def test_visibility_group(self):
-        """ Collections are properly shown when filtered by groups """
-        profe1 = create_superuser('0000', username='profe1')
-        profe2 = create_superuser('0000', username='profe2')
-        create_user('0000', 'pepe')
-        group1 = Group.objects.create(name='g1')
-        group2 = Group.objects.create(name='g2')
-        group1.user_set.add(profe1)
-        group2.user_set.add(profe1)
-        group2.user_set.add(profe2)
-
-        col1 = create_collection('Col1', visibility=True, author=profe1)
-        col2 = create_collection('Col2', visibility=False, author=profe1)
-        col3 = create_collection('Col3', visibility=True, author=profe2)
-
-        collections_url = reverse('judge:collections')
-        client = Client()
-
-        # Teachers can view all collections from authors in the group
-        client.login(username='profe1', password='0000')
-
-        response = client.get(collections_url + '?group=500', follow=True)  # Group does not exist
-        self.assertEqual(response.status_code, 404)
-
-        response = client.get(collections_url + '?group=dolphin', follow=True)  # Invalid group
-        self.assertEqual(response.status_code, 404)
-
-        response = client.get(collections_url + f'?group={group1.pk}', follow=True)
-        self.assertIn(col1.name_html, response.content.decode('utf-8'))
-        self.assertIn(col2.name_html, response.content.decode('utf-8'))
-        self.assertNotIn(col3.name_html, response.content.decode('utf-8'))
-
-        response = client.get(collections_url + f'?group={group2.pk}', follow=True)
-        self.assertIn(col1.name_html, response.content.decode('utf-8'))
-        self.assertIn(col2.name_html, response.content.decode('utf-8'))
-        self.assertIn(col3.name_html, response.content.decode('utf-8'))
-        client.logout()
-
-        # Students can only view visible collections from authors in the group
-        client.login(username='pepe', password='0000')
-        response = client.get(collections_url + f'?group={group1.pk}', follow=True)
-        self.assertIn(col1.name_html, response.content.decode('utf-8'))
-        self.assertNotIn(col2.name_html, response.content.decode('utf-8'))
-        self.assertNotIn(col3.name_html, response.content.decode('utf-8'))
-
-        response = client.get(collections_url + f'?group={group2.pk}', follow=True)
-        self.assertIn(col1.name_html, response.content.decode('utf-8'))
-        self.assertNotIn(col2.name_html, response.content.decode('utf-8'))
-        self.assertIn(col3.name_html, response.content.decode('utf-8'))
-        client.logout()

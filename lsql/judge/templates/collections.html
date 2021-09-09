@@ -42,7 +42,7 @@
           <i class="bi bi-check-circle-fill icon-hidden" aria-hidden="true"></i>
           {% endif %}
           {% if not c.visible %}
-          <span class="hidden">[Hidden]</span> <a href="{% url 'judge:collection' c.id %}" class="hidden">{{ c.name_html|safe }}</a>
+          <span class="hidden">[{% translate "Oculto" %}]</span> <a href="{% url 'judge:collection' c.id %}" class="hidden">{{ c.name_html|safe }}</a>
           {% else %}
           <a href="{% url 'judge:collection' c.id %}">{{ c.name_html|safe }}</a>
           {% endif %}

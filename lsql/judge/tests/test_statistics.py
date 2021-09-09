@@ -7,7 +7,7 @@ import pytz
 
 from django.test import TestCase
 
-from judge.tests.test_views import create_select_problem, create_collection, create_user, create_group
+from judge.tests.test_common import create_select_problem, create_collection, create_user, create_group
 from judge.types import VerdictCode
 from judge.models import Submission
 from judge.statistics import submissions_by_day, submission_count, participation_per_group

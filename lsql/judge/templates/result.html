@@ -12,9 +12,11 @@
     {% for c in results %}
     <tr>
       <td>
-        <a title="{{c.name_html|safe}}" href="{% url 'judge:result' c.id %}">
-            {{ c.name_html|safe }}
-        </a>
+        {% if not c.visible %}
+          <span class="hidden">[{% translate "Oculto" %}]</span> <a href="{% url 'judge:result' c.id %}" class="hidden">{{ c.name_html|safe }}</a>
+          {% else %}
+          <a href="{% url 'judge:result' c.id %}">{{ c.name_html|safe }}</a>
+          {% endif %}
       </td>
     </tr>
     {% endfor %}

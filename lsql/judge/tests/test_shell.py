@@ -16,7 +16,7 @@ from judge.types import VerdictCode
 from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Collection, Problem, \
     Submission
 from judge.shell import create_users_from_csv, adapt_db_result_to_list, rejudge
-from judge.tests.test_views import create_select_problem, create_collection, create_user
+from judge.tests.test_common import create_select_problem, create_collection, create_user
 
 
 class ShellTest(TestCase):
@@ -94,18 +94,18 @@ class ShellTest(TestCase):
 
         # Problems with dictionaries or already with [dict]
         problems = [
-            SelectProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
-                          author=None, expected_result=dict()),
-            DMLProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
-                       author=None, expected_result=dict()),
-            FunctionProblem(title_html="titulo", text_html="enunciado", initial_db=dict(),
-                            collection=collection, author=None, expected_result=dict()),
-            ProcProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
-                        author=None, expected_result=dict()),
-            TriggerProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
-                           author=None, expected_result=dict()),
-            SelectProblem(title_html="titulo", text_html="enunciado", initial_db=[dict()], collection=collection,
-                          author=None, expected_result=[dict()]),  # already has the right representation
+            SelectProblem(title_html="titulo", text_html="enunciado", initial_db={}, collection=collection,
+                          author=None, expected_result={}),
+            DMLProblem(title_html="titulo", text_html="enunciado", initial_db={}, collection=collection,
+                       author=None, expected_result={}),
+            FunctionProblem(title_html="titulo", text_html="enunciado", initial_db={},
+                            collection=collection, author=None, expected_result={}),
+            ProcProblem(title_html="titulo", text_html="enunciado", initial_db={}, collection=collection,
+                        author=None, expected_result={}),
+            TriggerProblem(title_html="titulo", text_html="enunciado", initial_db={}, collection=collection,
+                           author=None, expected_result={}),
+            SelectProblem(title_html="titulo", text_html="enunciado", initial_db=[{}], collection=collection,
+                          author=None, expected_result=[{}]),  # already has the right representation
         ]
 
         for prob in problems:
@@ -123,18 +123,18 @@ class ShellTest(TestCase):
 
         # Problems with wrong types in initial_db or expected_result
         wrong_problems = [
-            SelectProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
+            SelectProblem(title_html="titulo", text_html="enunciado", initial_db={}, collection=collection,
                           author=None, expected_result=3),
             DMLProblem(title_html="titulo", text_html="enunciado", initial_db=6, collection=collection,
-                       author=None, expected_result=dict()),
+                       author=None, expected_result={}),
             FunctionProblem(title_html="titulo", text_html="enunciado", initial_db=[],
-                            collection=collection, author=None, expected_result=dict()),
-            ProcProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
+                            collection=collection, author=None, expected_result={}),
+            ProcProblem(title_html="titulo", text_html="enunciado", initial_db={}, collection=collection,
                         author=None, expected_result=[3]),
-            TriggerProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
+            TriggerProblem(title_html="titulo", text_html="enunciado", initial_db={}, collection=collection,
                            author=None, expected_result=[]),
-            TriggerProblem(title_html="titulo", text_html="enunciado", initial_db=dict(), collection=collection,
-                           author=None, expected_result=[dict(), dict(), False]),
+            TriggerProblem(title_html="titulo", text_html="enunciado", initial_db={}, collection=collection,
+                           author=None, expected_result=[{}, {}, False]),
         ]
 
         # Tries every wrong program individually (removing it after checking the exception)
@@ -162,7 +162,7 @@ class ShellTest(TestCase):
         file_desc, filename = mkstemp('_rejudge')
         os.close(file_desc)  # To avoid problems when removing the file in Windows
         rejudge(VerdictCode.IE, filename, tests=True)
-        with open(filename, 'r') as summary_file:
+        with open(filename, 'r', encoding='utf-8') as summary_file:
             summary = summary_file.read()
             self.assertIn('IE --> AC', summary)
             self.assertIn('IE --> WA', summary)

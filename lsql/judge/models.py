@@ -41,7 +41,7 @@ def markdown_to_html(markdown_text, remove_initial_p=False):
 def load_many_problems(file, collection):
     """Given a ZIP file containing several ZIP files (each one a problem),
        insert the problems into collection"""
-    problems = list()
+    problems = []
     try:
         with ZipFile(file) as zfile:
             for filename in zfile.infolist():
@@ -335,7 +335,7 @@ class SelectProblem(Problem):
         """ Return a list [DES_messages] **for every test data base**. A DES_messages object is a
             list of pairs (statement, [DES message]) or None"""
         des = DesExecutor.get()
-        des_messages = list()
+        des_messages = []
         for insert in self.insert_sql_list():
             des_messages.append(des.get_des_messages_select(self.create_sql, insert, self.solution))
         return des_messages
@@ -346,7 +346,7 @@ class SelectProblem(Problem):
         # Checks DES only with the first DB
         des_messages = des.get_des_messages_select(self.create_sql, self.insert_sql_list()[0], code)
         if des_messages is None:
-            return list()
+            return []
         messages = [(msg_type, msg, snippet) for _, msgs in des_messages
                     for msg_type, msg, snippet in msgs if msgs]
         return messages
@@ -406,7 +406,7 @@ class DMLProblem(Problem):
         """ Return a list [DES_messages] **for every test data base**. A DES_messages object is a
             list of pairs (statement, [DES message]) or None"""
         des = DesExecutor.get()
-        des_messages = list()
+        des_messages = []
         for insert in self.insert_sql_list():
             des_messages.append(des.get_des_messages_dml(self.create_sql, insert, self.solution))
         return des_messages
@@ -417,7 +417,7 @@ class DMLProblem(Problem):
         # Checks DES only with the first DB
         des_messages = des.get_des_messages_dml(self.create_sql, self.insert_sql_list()[0], code)
         if des_messages is None:
-            return list()
+            return []
         # Uses the whole statement as snippet because:
         # A) DES doesn't seem to provide detailed snippets for DML errors
         # B) DML problems can have several statements, so messages without context are difficult to understand
