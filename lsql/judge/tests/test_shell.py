@@ -23,8 +23,8 @@ class ShellTest(TestCase):
     """Tests for module parse"""
     FILE_FOLDER = 'csv_files'
     CSV_OK_TEST = 'test_ok.csv'
-    CSV_EMPTY_FIELDS = ['csv_empty_document.csv', 'csv_empty_first.csv', 'csv_empty_name.csv', 'csv_empty_email.csv',
-                        'csv_empty_last.csv']
+    CSV_BAD_FORMAT = ['csv_empty_document.csv', 'csv_empty_first.csv', 'csv_empty_name.csv', 'csv_empty_email.csv',
+                      'csv_empty_last.csv', 'csv_non_ucm_email.csv']
 
     def test_valid_csv(self):
         """Valid CSV file with 3 users"""
@@ -76,16 +76,16 @@ class ShellTest(TestCase):
         self.assertEqual(len(froilan.groups.all()), 1)
         self.assertEqual(froilan.groups.all()[0], new_group)
 
-    def test_empty_fields(self):
+    def test_bad_csv_format(self):
         """CSV files where some fields are empty"""
         curr_path = os.path.dirname(__file__)
-        for filename in self.CSV_EMPTY_FIELDS:
+        for filename in self.CSV_BAD_FORMAT:
             # Delete existing users and groups
             get_user_model().objects.all().delete()
             Group.objects.all().delete()
             path = os.path.join(curr_path, self.FILE_FOLDER, filename)
             with self.assertRaises(AssertionError):
-                create_users_from_csv(path, f"Test-{filename}")
+                create_users_from_csv(path, f"Test-{filename}", dry=True)
 
     def test_adapt_db_expected_list(self):
         """Test for adapting dictionaries in initial_db and expected_result to unitary lists """

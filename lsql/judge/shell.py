@@ -56,6 +56,8 @@ def create_users_from_list(dict_list, group: Group, dry: bool):
     assert group  # Group is set
     for user_dict in dict_list:
         email = user_dict['CORREO']
+        assert email
+        assert email.split('@')[1] == 'ucm.es'  # We want official UCM emails
         username = email.split('@')[0]
         password = user_dict['DOCUMENTO']
         if ',' in user_dict['NOMBRE COMPLETO']:
