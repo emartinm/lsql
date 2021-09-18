@@ -10,6 +10,7 @@
         <th scope="col">{% translate 'Grupo' %}</th>
         <th scope="col">{% translate 'Usuarios totales' %}</th>
         <th scope="col">{% translate 'Usuarios con al menos 1 envío (correcto)' %}</th>
+        <th scope="col">{% translate 'Envíos totales' %}</th>
         <th scope="col">{% translate 'Envíos por usuario (media/desv. tip.)' %}</th>
         <th scope="col">{% translate 'Envíos por usuario (cuartiles)' %}</th>
     </tr>
@@ -20,6 +21,7 @@
         <td><span class="remark">{{ group }}</span></td>
         <td>{{ data.all }}</td>
         <td>{{ data.participating }} ({{ data.acc }})</td>
+        <td>{{ data.total }}</td>
         <td>{{ data.avg|floatformat }} / {{ data.stdev|floatformat }}</td>
         <td>{{ data.quantiles }}</td>
     </tr>

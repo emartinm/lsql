@@ -63,6 +63,7 @@ def participation_per_group():
                 'participating': int,  # number of participating users
                 'acc': int,            # no. users with at least one AC submission
                 'all': int             # total no. users
+                'total': int           # total number of submissions,
                 'avg': float           # avg. submission per participating user
                 'stdev': float         # stdev of submissions per participating user
                 'quantiles': float     # cut points 0%-25%-50%-75%-100% of submissions per participating user
@@ -74,6 +75,9 @@ def participation_per_group():
     participating = {}
     for group in Group.objects.all():
         users = group.user_set.filter(is_staff=False, is_active=True)
+        if len(users) == 0:
+            # Do not compute statistics for groups without students (non-staff active accounts)
+            continue
         participating_count = Submission.objects.filter(user__in=users).order_by('user').distinct('user').count()
         acc_count = (Submission.objects.filter(verdict_code=VerdictCode.AC, user__in=users).order_by('user')
                      .distinct('user').count())
@@ -83,9 +87,11 @@ def participation_per_group():
         participating[group.name] = {
             'participating': participating_count,
             'all': users.count(),
+            'total': sum(list_num_subs),
             'acc': acc_count,
-            'avg': mean(list_num_subs),
-            'stdev': stdev(list_num_subs),
-            'quantiles': ' - '.join(map(str, [min(list_num_subs)] + quantiles(list_num_subs) + [max(list_num_subs)])),
+            'avg': mean(list_num_subs) if list_num_subs else float('nan'),
+            'stdev': stdev(list_num_subs) if len(list_num_subs) >= 2 else float('nan'),
+            'quantiles': ' - '.join(map(str, [min(list_num_subs)] + quantiles(list_num_subs, n=4, method='inclusive') +
+                                        [max(list_num_subs)])) if len(list_num_subs) >= 5 else "N/A",
         }
     return participating

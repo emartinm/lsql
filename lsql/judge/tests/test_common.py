@@ -70,6 +70,7 @@ def create_used_hint(hint, user):
     used_hint.save()
     return used_hint
 
+
 def create_discriminant_problem(important_order, collection, name='Ejemplo'):
     """Creates and stores a Discriminant DB Problem"""
     if not important_order:
@@ -89,6 +90,7 @@ def create_discriminant_problem(important_order, collection, name='Ejemplo'):
     problem.clean()
     problem.save()
     return problem
+
 
 def create_select_problem(collection, name='Ejemplo'):
     """ Creates and stores a Select Problem """
