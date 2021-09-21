@@ -7,7 +7,7 @@ Unit tests for the validation of statements using DES
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
-from judge.des_driver import parse_tapi_cmd, DesExecutor
+from judge.des_driver import parse_tapi_cmd, DesExecutor, parse_tapi_commands
 from judge.types import DesMessageType
 from judge.models import SelectProblem, DMLProblem
 from judge.exceptions import DESException
@@ -287,3 +287,34 @@ $eot
         self.assertIn("Error code: 0", exception)
         self.assertIn("Primary key violation", exception)
         self.assertIn("t(pepe,13)", exception)
+
+    def test_cannot_parse_des_output(self):
+        """ Test that DES output that cannot be parsed generated an empty list of messages """
+        output1 = """$success
+1                                          
+1                                          
+1                                          
+1                                          
+Exception: Impossible type conversion: cast('Numero_de_Aficionados',number(float))
+
+"""
+        output2 = """$success
+$success
+$success
+1                                          
+1                                          
+1                                          
+1                                          
+1                                          
+1                                          
+1                                          
+1                                          
+1                                          
+1                                          
+$error
+0
+Type mismatch Club.Nombre:string(varchar(40)) vs. string(varchar(20)).
+
+"""
+        self.assertEqual(parse_tapi_commands(output1, 6, 0), [[]]*6)
+        self.assertEqual(parse_tapi_commands(output2, 14, 0), [[]] * 14)

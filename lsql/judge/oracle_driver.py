@@ -89,7 +89,8 @@ def line_col_from_offset(code: str, offset: int):
     """
     line = 0
     last_line_init = 0
-    for i in range(offset):
+    for i in range(min(offset, len(code))):
+        # If the syntax error is at the end, the offset from Oracle is > length of code
         if code[i] == '\n':
             last_line_init = i+1
             line += 1

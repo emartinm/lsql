@@ -86,11 +86,16 @@ def parse_tapi_commands(output: str, num_commands: int, pos: int) -> list:
     """ Parses the output of several DES TAPI commands whose output start from position 'pos'.
         Returns a list of lists, with the messages for each TAPI command.
     """
-    msg_list = []
-    for _ in range(num_commands):
-        pos, msgs = parse_tapi_cmd(output, pos)
-        msg_list.append(msgs)
-    return msg_list
+    try:
+        msg_list = []
+        for _ in range(num_commands):
+            pos, msgs = parse_tapi_cmd(output, pos)
+            msg_list.append(msgs)
+        return msg_list
+    except Exception as excp:  # pylint: disable=broad-except
+        # If DES output cannot be parsed, return a list of empty messages
+        logger.error('Error when parsing DES output <<%s>>\nException: %s', output[pos:], excp)
+        return [[]] * num_commands
 
 
 class DesExecutor:
