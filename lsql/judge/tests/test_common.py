@@ -24,6 +24,7 @@ class TestPaths:  # pylint: disable=too-few-public-methods
     NO_TYPE = 'no_type.zip'
 
     SELECT_OK = 'select_ok.zip'
+    SELECT_LARGE = 'select_very_large.zip'
     DML_OK = 'dml_ok.zip'
     FUNCTION_OK = 'function_ok.zip'
     PROC_OK = 'proc_ok.zip'

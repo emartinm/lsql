@@ -14,14 +14,56 @@ import random
 import os
 import re
 import json
+from typing import Optional
 import cx_Oracle
 from logzero import logger
 import sqlparse
+
 
 from django.core.serializers.json import DjangoJSONEncoder
 
 from .exceptions import ExecutorException
 from .types import OracleStatusCode
+
+
+def create_insert_all(statements: str) -> Optional[str]:
+    """ Given 0 or more "INSERT INTO" statements, returns one "INSERT ALL" to insert all the
+        rows in a single statement. One "INSERT ALL" requires about 1/6 of the time of a sequence
+        of individual "INSERT INTO". *INSERT ALL statement is only valid in Oracle*
+
+        If no INSERT appears in statements returns None
+
+        Example:
+
+        INSERT INTO t VALUES (1,2);
+        INSERT INTO t2(id, age) VALUES (3,4);
+            ==>
+        INSERT ALL
+            INTO t VALUES(1, 2)
+            INTO t2(id, age) VALUES(3, 4)
+        SELECT 1 FROM DUAL;
+    """
+    stmts = sqlparse.parse(statements)
+    if not stmts:
+        return None
+    insert_all = "INSERT ALL\n"
+    for stmt in stmts:
+        assert stmt.get_type() == 'INSERT'
+        parts = ['    INTO'] + [fragment.value for fragment in stmt.get_sublists()] + ['\n']
+        insert_code = ' '.join(parts)
+        insert_all += insert_code
+    insert_all += 'SELECT 1 FROM DUAL\n'  # statements sent to cx_Oracle cannot have ending ';'
+    logger.debug('About to *INSERTING ALL*:\n %s', insert_all)
+    return insert_all
+
+
+def execute_insert_all(insert: str, conn):
+    """ From a sequence of 0 or more INSERT statements, translates them into INSERT ALL and
+        executes the generated statement"""
+    insert_all = create_insert_all(insert)
+    if insert_all is not None:
+        with conn.cursor() as cursor:
+            cursor.execute(insert_all)
 
 
 def replace_rest_stmt_blanks(statements):
@@ -495,7 +537,7 @@ class OracleExecutor:
             execute_sql_script(conn, creation)
 
             state = OracleStatusCode.EXECUTE_INSERT
-            execute_sql_script(conn, insertion)
+            execute_insert_all(insertion, conn)
 
             state = OracleStatusCode.EXECUTE_USER_CODE
             result = execute_select_statement(conn, select)
@@ -568,7 +610,7 @@ class OracleExecutor:
             execute_sql_script(conn, creation)
 
             state = OracleStatusCode.EXECUTE_INSERT
-            execute_sql_script(conn, insertion)
+            execute_insert_all(insertion, conn)
 
             pre = {}
             if pre_db:
@@ -657,7 +699,7 @@ class OracleExecutor:
             execute_sql_script(conn, creation)
 
             state = OracleStatusCode.EXECUTE_INSERT
-            execute_sql_script(conn, insertion)
+            execute_insert_all(insertion, conn)
 
             state = OracleStatusCode.GET_ALL_TABLES
             db = get_all_tables(conn)
@@ -753,7 +795,7 @@ class OracleExecutor:
             execute_sql_script(conn, creation)
 
             state = OracleStatusCode.EXECUTE_INSERT
-            execute_sql_script(conn, insertion)
+            execute_insert_all(insertion, conn)
 
             db = None
             if pre_db:
@@ -849,7 +891,7 @@ class OracleExecutor:
             execute_sql_script(conn, creation)
 
             state = OracleStatusCode.EXECUTE_INSERT
-            execute_sql_script(conn, insertion)
+            execute_insert_all(insertion, conn)
 
             db = None
             if pre_db:
@@ -944,7 +986,7 @@ class OracleExecutor:
             execute_sql_script(conn, creation)
 
             state = OracleStatusCode.EXECUTE_INSERT
-            execute_sql_script(conn, insertion_base)
+            execute_insert_all(insertion_base, conn)
 
             state = OracleStatusCode.EXECUTE_USER_CODE
             execute_sql_script(conn, insertion_user)

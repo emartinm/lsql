@@ -183,3 +183,12 @@ class ParseTest(TestCase):
         with self.assertRaises(ZipFileParsingException) as ctxt:
             get_problem_type_from_zip(zip_path)
         self.assertIn('Problem type is not defined in', str(ctxt.exception))
+
+    def test_select_large(self):
+        """ Test that a problem with many INSERT is loaded successfully """
+        curr_path = os.path.dirname(__file__)
+        zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.SELECT_LARGE)
+        problem = SelectProblem(zipfile=zip_path)
+        problem.clean()
+        self.assertEqual(len(problem.expected_result), 1)
+        self.assertEqual(len(problem.expected_result[0]['rows']), 895)
