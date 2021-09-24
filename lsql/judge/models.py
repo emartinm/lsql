@@ -344,7 +344,7 @@ class SelectProblem(Problem):
         """ Return a flat list of DES messages obtained for the user code """
         des = DesExecutor.get()
         # Checks DES only with the first DB
-        des_messages = des.get_des_messages_select(self.create_sql, self.insert_sql_list()[0], code)
+        des_messages = des.get_des_messages_select(self.create_sql, '', code)  # INSERT are not needed
         if des_messages is None:
             return []
         messages = [(msg_type, msg, snippet) for _, msgs in des_messages
@@ -415,7 +415,7 @@ class DMLProblem(Problem):
         """ Return a flat list of DES messages obtained for the user code """
         des = DesExecutor.get()
         # Checks DES only with the first DB
-        des_messages = des.get_des_messages_dml(self.create_sql, self.insert_sql_list()[0], code)
+        des_messages = des.get_des_messages_dml(self.create_sql, '', code)  # INSERT are not needed for DES
         if des_messages is None:
             return []
         # Uses the whole statement as snippet because:

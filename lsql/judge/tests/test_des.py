@@ -82,7 +82,6 @@ $eot
             parse_tapi_cmd(output, 0)
         self.assertIn('Unable to parse DES output: <$erroro>', str(ctx.exception))
 
-
     def test_parsing_des_output(self):
         """ Test the different kinds of error messages in DES output """
         output = """$error
@@ -135,8 +134,8 @@ $eot
     def test_validate_correct_problem(self):
         """ Test to validate with DES a correct SelectProblem """
         problem = SelectProblem(create_sql='CREATE TABLE t(age int)',
-                          insert_sql='',
-                          solution='SELECT * FROM t')
+                                insert_sql='',
+                                solution='SELECT * FROM t')
         self.assertIsNone(problem.validate_des())
 
     def test_validate_wrong_problem(self):
@@ -243,27 +242,21 @@ $eot
                              insert_sql="INSERT INTO t VALUES ('pepe', 3); INSERT INTO t VALUES ('ana', 13);",
                              solution="INSERT INTO t VALUES ('eva', 18)")
 
-        code = ["INSERT INTO t VALUES('pepe', 48)",     # Primary key error
-                "INSERT INTO t VALUES ('eva', 18)",     # OK
+        code = ["INSERT INTO t VALUES ('eva', 18)",  # OK
                 "UPDATE t SET age = 0 WHERE age = -9",  # No tuple met the condition
-                "DELETE FROM t WHERE age = 10"]         # No tuple met the condition
+                "DELETE FROM t WHERE age = 10"]  # No tuple met the condition
         msgs = problem.get_des_messages_solution(";\n".join(code))
-        self.assertEqual(len(msgs), 3)
-
-        # Message for INSERT (pepe, 48)
-        self.assertEqual(msgs[0][0], DesMessageType.ERROR)
-        self.assertIn('Primary key violation', msgs[0][1])
-        self.assertEqual(code[0], msgs[0][2])  # The statement is the snippet
+        self.assertEqual(len(msgs), 2)
 
         # Message for UPDATE
-        self.assertEqual(msgs[1][0], DesMessageType.WARNING)
-        self.assertIn("No tuple met the 'where' condition for updating", msgs[1][1])
-        self.assertEqual(code[2], msgs[1][2])  # The statement is the snippet
+        self.assertEqual(msgs[0][0], DesMessageType.WARNING)
+        self.assertIn("No tuple met the 'where' condition for updating", msgs[0][1])
+        self.assertEqual(code[1], msgs[0][2])  # The statement is the snippet
 
         # Message for DELETE
-        self.assertEqual(msgs[2][0], DesMessageType.WARNING)
-        self.assertIn("No tuple met the 'where' condition for deleting", msgs[2][1])
-        self.assertEqual(code[3], msgs[2][2])  # The statement is the snippet
+        self.assertEqual(msgs[1][0], DesMessageType.WARNING)
+        self.assertIn("No tuple met the 'where' condition for deleting", msgs[1][1])
+        self.assertEqual(code[2], msgs[1][2])  # The statement is the snippet
 
     def test_des_dml_timeout(self):
         """ When DES timeouts DMLProblem.get_des_messages_solution returns [] """
@@ -316,5 +309,5 @@ $error
 Type mismatch Club.Nombre:string(varchar(40)) vs. string(varchar(20)).
 
 """
-        self.assertEqual(parse_tapi_commands(output1, 6, 0), [[]]*6)
+        self.assertEqual(parse_tapi_commands(output1, 6, 0), [[]] * 6)
         self.assertEqual(parse_tapi_commands(output2, 14, 0), [[]] * 14)
