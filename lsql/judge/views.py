@@ -133,6 +133,8 @@ def show_result(request, collection_id):
         # Error 404 with all the validation errors as HTML
         return HttpResponseNotFound(str(result_student_form.errors))
 
+    # Show only groups with students
+    available_groups = [g for g in available_groups if len(g.user_set.filter(is_staff=False)) > 0]
     if not available_groups:
         return render(request, 'generic_error_message.html',
                       {'error': [_('¡Lo sentimos! No existe ningún grupo para ver la clasificación')]})
@@ -439,12 +441,10 @@ def test_error_500(request):
 
 def cell_ranking(problem):
     """ Generates the text inside a ranking cell """
+    cell_str = f"{problem['correct_submissions']}/{problem['total_submissions']}"
     if problem['correct_submissions'] > 0:
-        return "{}/{} ({})".format(problem['correct_submissions'],
-                                   problem['total_submissions'],
-                                   problem['first_correct_submission'])
-    return "{}/{}".format(problem['correct_submissions'],
-                          problem['total_submissions'])
+        cell_str += f" ({problem['first_correct_submission']})"
+    return cell_str
 
 
 @staff_member_required

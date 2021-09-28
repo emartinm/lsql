@@ -5,6 +5,8 @@ Copyright Enrique Martín <emartinm@ucm.es> 2021
 More Unit tests checking views behavior
 """
 
+from http import HTTPStatus
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import Group
@@ -42,13 +44,13 @@ class ViewsTest2(TestCase):
         self.assertNotIn(hidden_col.name_html, response.content.decode('utf-8'))
 
         response = client.get(visible_col_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(hidden_col_url, follow=True)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         response = client.get(hidden_problem_url, follow=True)
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(client.get(visible_ranking_url, follow=True).status_code, 200)
-        self.assertEqual(client.get(hidden_ranking_url, follow=True).status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertEqual(client.get(visible_ranking_url, follow=True).status_code, HTTPStatus.OK)
+        self.assertEqual(client.get(hidden_ranking_url, follow=True).status_code, HTTPStatus.FORBIDDEN)
         client.logout()
 
         # Visibility checks for teachers
@@ -61,13 +63,13 @@ class ViewsTest2(TestCase):
         self.assertIn(hidden_col.name_html, response.content.decode('utf-8'))
 
         response = client.get(visible_col_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(hidden_col_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(hidden_problem_url, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(client.get(visible_ranking_url, follow=True).status_code, 200)
-        self.assertEqual(client.get(hidden_ranking_url, follow=True).status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(client.get(visible_ranking_url, follow=True).status_code, HTTPStatus.OK)
+        self.assertEqual(client.get(hidden_ranking_url, follow=True).status_code, HTTPStatus.OK)
         client.logout()
 
     def test_visibility_group(self):
@@ -92,10 +94,10 @@ class ViewsTest2(TestCase):
         client.login(username='profe1', password='0000')
 
         response = client.get(collections_url + '?group=500', follow=True)  # Group does not exist
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         response = client.get(collections_url + '?group=dolphin', follow=True)  # Invalid group
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         response = client.get(collections_url + f'?group={group1.pk}', follow=True)
         self.assertIn(col1.name_html, response.content.decode('utf-8'))

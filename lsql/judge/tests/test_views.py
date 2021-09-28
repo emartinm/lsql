@@ -6,6 +6,7 @@ Unit tests for the feedback module by simulation connections
 """
 from datetime import datetime
 import os
+from http import HTTPStatus
 
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -121,22 +122,22 @@ class ViewsTest(TestCase):
 
         # OK and one collection with title
         response = client.get(collections_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(collection.name_html, response.content.decode('utf-8'))
 
         # OK and one problem in collection
         response = client.get(collection_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(problem.title_html, response.content.decode('utf-8'))
 
         # OK and title in problem page
         response = client.get(problem_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(problem.title_html, response.content.decode('utf-8'))
 
         # NotFound
         response = client.get(no_problem_url, follow=True)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # JSON with AC
         response = client.post(submit_url, {'code': problem.solution}, follow=True)
@@ -177,7 +178,7 @@ class ViewsTest(TestCase):
 
         # problem_id is not numeric
         response = client.get(submissions_url, {'problem_id': 'problem', 'user_id': 'user'}, follow=True)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertIn('Introduzca un número entero', response.content.decode('utf-8'))
 
         # Submission contains user code
@@ -186,14 +187,14 @@ class ViewsTest(TestCase):
 
         # status_code OK
         response = client.get(pass_done_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         # Only submission from the same user
         client.logout()
         client.login(username='ana', password='1234')
         # Submission contains user code
         response = client.get(submission_url, follow=True)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         response = client.get(submissions_url, {'problem_id': problem_dml.pk, 'user_id': user.id}, follow=True)
         self.assertIn('Forbidden', response.content.decode('utf-8'))
         client.logout()
@@ -205,7 +206,7 @@ class ViewsTest(TestCase):
             'start': first_day_of_course(datetime(2020, 9, 1)).strftime('%Y-%m-%d'),
             'end': datetime.today().strftime('%Y-%m-%d')},
                               follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.content.decode('utf-8').count(problem_dml.title_html), 1)
         client.logout()
 
@@ -223,21 +224,21 @@ class ViewsTest(TestCase):
         # The same user can access submission details
         client.login(username='pepe', password='5555')
         response = client.get(submission_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('select *** from *** where *** and more', response.content.decode('utf-8'))
         client.logout()
 
         # A teacher can access submission details from a different user
         client.login(username='mr_teacher', password='aaaa')
         response = client.get(submission_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('select *** from *** where *** and more', response.content.decode('utf-8'))
         client.logout()
 
         # Non-teacher user cannot access submission details from a different user
         client.login(username='ana', password='1234')
         response = client.get(submission_url, follow=True)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertIn('Forbidden', response.content.decode('utf-8'))
         client.logout()
 
@@ -267,7 +268,7 @@ class ViewsTest(TestCase):
             problem.save()
             problem_url = reverse('judge:problem', args=[problem.pk])
             response = client.get(problem_url, follow=True)
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, HTTPStatus.OK)
             self.assertIn(problem.title_html, response.content.decode('utf-8'))
 
     def test_download(self):
@@ -308,7 +309,7 @@ class ViewsTest(TestCase):
             )
             self.assertEqual(response.content.decode('UTF-8'), script)
 
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_show_result_classification_date(self):
         """ test to show the classification with dates """
@@ -378,7 +379,7 @@ class ViewsTest(TestCase):
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': end}, follow=True)
         self.assertIn(user_2.username, response.content.decode('utf-8'))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(user_2.username, response.content.decode('utf-8'))
         self.assertIn(user_1.username, response.content.decode('utf-8'))
         for fragment in ['1/3 (3)', '3', '1', '1/2 (1)']:
@@ -399,7 +400,7 @@ class ViewsTest(TestCase):
                       response.content.decode('utf-8'))
         response = client.get(classification_url, {
             'group': group_a.id, 'start': good_start_date, 'end': end}, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': wrong_end_date}, follow=True)
         self.assertIn("¡Error! La fecha final no puede ser mayor que la fecha de hoy.",
@@ -444,38 +445,38 @@ class ViewsTest(TestCase):
         client = Client()
         client.login(username='pepe', password='12345')
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertIn('Forbidden', response.content.decode('utf-8'))
         response = client.get(classification_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('1A', response.content.decode('utf-8'))
         client.logout()
 
         client.login(username='ana', password='12345')
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('1B', response.content.decode('utf-8'))
         client.logout()
 
         client.login(username='iker', password='12345')
         response = client.get(classification_url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, {'group': group_b.id, 'start': start, 'end': end}, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, {'group': group_a.id, 'end': end}, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, {'group': group_b.id, 'start': start}, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('1B', response.content.decode('utf-8'))
         client.logout()
 
@@ -519,46 +520,42 @@ class ViewsTest(TestCase):
         # use the teacher to view the two groups
         client.login(username=teacher.username, password='12345')
         classification_url = reverse('judge:result', args=[collection.pk])
-        # I see group b where there is only the teacher
-        # the table is empty because there is only the teacher
+        # Group b is forbidden because it has no students
         response = client.get(classification_url, {
             'group': group_b.id, 'start': start, 'end': end}, follow=True)
-        html = response.content.decode('utf-8')
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn(user_2.username, html)
-        self.assertNotIn(user_1.username, html)
-
-        # I find that there are two exercises in the collection
-        self.assertIn(select_problem.title_html, html)
-        self.assertIn(dml_problem.title_html, html)
-        self.assertIn(select_problem_2.title_html, html)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # I look at the group to where the students are
         response = client.get(classification_url,
                               {'group': group_a.id, 'start': start, 'end': end}, follow=True)
-        self.assertIn(user_1.username, response.content.decode('utf-8'))
-        self.assertIn(user_2.username, response.content.decode('utf-8'))
+        html = response.content.decode('utf-8')
+        # There are two exercises in the collection and two users
+        self.assertIn(select_problem.title_html, html)
+        self.assertIn(dml_problem.title_html, html)
+        self.assertIn(select_problem_2.title_html, html)
+        self.assertIn(user_1.username, html)
+        self.assertIn(user_2.username, html)
 
         # I am connected to a non-existent group
         response = client.get(classification_url,
                               {'group': 999, 'start': start, 'end': end}, follow=True)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # I connect to a non-numeric group
         response = client.get(classification_url,
                               {'group': '1A', 'start': start, 'end': end}, follow=True)
         msg = 'Introduzca un número entero'
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertIn(msg, response.content.decode('utf-8'))
         client.logout()
 
         # I connect to pepe at 1b
         client.login(username=user_1.username, password='12345')
         response = client.get(classification_url, {'group': 'patato'}, follow=True)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertIn('Introduzca un número entero', response.content.decode('utf_8'))
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         Submission.objects.create(problem=select_problem, code='  ', verdict_code=VerdictCode.WA, user=user_1)
         Submission.objects.create(problem=select_problem, code='  ', verdict_code=VerdictCode.WA, user=user_1)
@@ -615,7 +612,7 @@ class ViewsTest(TestCase):
 
         response = client.get(result_url, follow=True)
         title = 'Colecciones'
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(collection.name_html, response.content.decode('utf-8'))
         self.assertIn(collection_2.name_html, response.content.decode('utf-8'))
         self.assertIn(title, response.content.decode('utf-8'))
@@ -625,7 +622,7 @@ class ViewsTest(TestCase):
         teacher = create_superuser('12345', 'teacher')
         client.login(username=teacher.username, password='12345')
         response = client.get(result_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_results_no_groups(self):
         """ The system does not crash if there are not groups defined """
@@ -642,13 +639,13 @@ class ViewsTest(TestCase):
         client.login(username=user.username, password='123456')
         for url in [result_url, classification_url]:
             response = client.get(url, follow=True)
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, HTTPStatus.OK)
         client.logout()
 
         client.login(username=teacher.username, password='12345')
         for url in [result_url, classification_url]:
             response = client.get(url, follow=True)
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_download_submission(self):
         """ Test to download code of submission """
@@ -712,13 +709,13 @@ class ViewsTest(TestCase):
 
         # Unauthenticated users obtain the login page
         response = client.get(error_500_rul, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("Entrar", response.content.decode('utf_8'))
 
         # Students obtain 404
         client.login(username='tamara', password='2222')
         response = client.get(error_500_rul, follow=True)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         client.logout()
 
         # Staff raises exception (will generate error 500)
@@ -785,7 +782,7 @@ class ViewsTest(TestCase):
 
         problem_url = reverse('judge:problem', args=[dml_problem.pk])
         response = client.get(problem_url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         content = response.content.decode('utf-8')
         self.assertIn('TEST_TABLE_1 (Tabla modificada)', content)
         self.assertIn('TEST_TABLE_2 (Tabla eliminada)', content)

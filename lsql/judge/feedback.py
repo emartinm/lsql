@@ -23,7 +23,7 @@ def pretty_type(type_str):
     """
     match = re.match(__ORACLE_TYPE_PATTERN_VERSION_8, type_str)
     if match:
-        return match.group(1)
+        return match.group(1) if not match.group(1).startswith('DB_TYPE_') else match.group(1)[8:]
     match = re.match(__ORACLE_TYPE_PATTERN_VERSION_7, type_str)
     if match:
         return match.group(1)
@@ -38,7 +38,7 @@ def header_to_str(header):
     """
     columns = []
     for name, oracle_type in header:
-        columns.append("{}: {}".format(name, pretty_type(oracle_type)))
+        columns.append(f'{name}: {pretty_type(oracle_type)}')
     str_header = ", ".join(columns)
     return "(" + str_header + ")"
 

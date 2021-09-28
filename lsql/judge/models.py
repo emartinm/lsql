@@ -50,9 +50,9 @@ def load_many_problems(file, collection):
                     problem.clean()
                     problems.append(problem)
     except ZipFileParsingException as excp:
-        raise ZipFileParsingException('{}: {}'.format(filename.filename, excp)) from excp
+        raise ZipFileParsingException(f'{filename.filename}: {excp}') from excp
     except Exception as excp:
-        raise ZipFileParsingException("{}: {}".format(type(excp), excp)) from excp
+        raise ZipFileParsingException(f'{type(excp)}: {excp}') from excp
     collection.problems_from_zip = problems
 
 

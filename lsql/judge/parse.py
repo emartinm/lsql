@@ -32,7 +32,7 @@ def extract_json(file, problem_type):
     """
     with ZipFile(file) as zfile:
         if __JSON_NAME not in zfile.namelist():
-            raise ZipFileParsingException('Falta el fichero {}'.format(__JSON_NAME))
+            raise ZipFileParsingException(f'Falta el fichero {__JSON_NAME}')
 
         with zfile.open(__JSON_NAME, 'r') as jsonfile:
             try:
@@ -147,7 +147,7 @@ def load_select_problem(problem, file) -> None:
     except ZipFileParsingException:
         raise
     except Exception as excp:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp)) from excp
+        raise ZipFileParsingException(f'{state}: {type(excp)} - {excp}') from excp
 
 
 def load_dml_problem(problem, file):
@@ -199,7 +199,7 @@ def load_dml_problem(problem, file):
     except ZipFileParsingException:
         raise
     except Exception as excp:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp)) from excp
+        raise ZipFileParsingException(f'{state}: {type(excp)} - {excp}') from excp
 
 
 def load_function_problem(problem, file):
@@ -255,7 +255,7 @@ def load_function_problem(problem, file):
     except ZipFileParsingException:
         raise
     except Exception as excp:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp)) from None
+        raise ZipFileParsingException(f'{state}: {type(excp)} - {excp}') from None
 
 
 def load_proc_problem(problem, file):
@@ -310,7 +310,7 @@ def load_proc_problem(problem, file):
     except ZipFileParsingException:
         raise
     except Exception as excp:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp)) from excp
+        raise ZipFileParsingException(f'{state}: {type(excp)} - {excp}') from excp
 
 
 def load_trigger_problem(problem, file):
@@ -365,7 +365,7 @@ def load_trigger_problem(problem, file):
     except ZipFileParsingException:
         raise
     except Exception as excp:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp)) from excp
+        raise ZipFileParsingException(f'{state}: {type(excp)} - {excp}') from excp
 
 
 def load_discriminant_problem(problem, file):
@@ -422,4 +422,4 @@ def load_discriminant_problem(problem, file):
     except ZipFileParsingException:
         raise
     except Exception as excp:
-        raise ZipFileParsingException("{}: {} - {}".format(state, type(excp), excp)) from excp
+        raise ZipFileParsingException(f'{state}: {type(excp)} - {excp}') from excp

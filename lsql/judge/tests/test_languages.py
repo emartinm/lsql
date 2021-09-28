@@ -3,6 +3,7 @@
 Tests for languages
 """
 import os
+from http import HTTPStatus
 from bs4 import BeautifulSoup
 
 from django.test import TestCase, Client
@@ -47,7 +48,7 @@ class LanguagesTest(TestCase):
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
         url = reverse('judge:login')
         response = client.get(url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('Inicio de sesión', response.content.decode('utf-8'))
         self.assertIn('Es la parte de tu e-mail que precede a', response.content.decode('utf-8'))
         self.assertIn('Contraseña', response.content.decode('utf-8'))
@@ -75,7 +76,7 @@ class LanguagesTest(TestCase):
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
         url = reverse('judge:collections')
         response = client.get(url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('Ejercicios', response.content.decode('utf-8'))
         self.assertIn('Mis envíos', response.content.decode('utf-8'))
         self.assertIn('Clasificación', response.content.decode('utf-8'))
@@ -108,7 +109,7 @@ class LanguagesTest(TestCase):
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
         url = reverse('judge:password_change')
         response = client.get(url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('Inicio de sesión', response.content.decode('utf-8'))
         self.assertIn('Contraseña actual', response.content.decode('utf-8'))
         self.assertIn('Nueva contraseña', response.content.decode('utf-8'))
@@ -137,7 +138,7 @@ class LanguagesTest(TestCase):
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
         url = reverse('judge:submissions')
         response = client.get(url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('Mis envíos', response.content.decode('utf-8'))
         self.assertIn('Fecha', response.content.decode('utf-8'))
         self.assertIn('Problema', response.content.decode('utf-8'))
@@ -165,7 +166,7 @@ class LanguagesTest(TestCase):
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
         url = reverse('judge:problem', args=[problem.pk])
         response = client.get(url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('Llamada a procedimiento', response.content.decode('utf-8'))
         self.assertIn('Resultado esperado', response.content.decode('utf-8'))
 
@@ -191,7 +192,7 @@ class LanguagesTest(TestCase):
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
         url = reverse('judge:problem', args=[problem.pk])
         response = client.get(url, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('Sentencias ejecutadas', response.content.decode('utf-8'))
         self.assertIn('Resultado esperado', response.content.decode('utf-8'))
 

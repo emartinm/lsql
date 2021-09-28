@@ -124,8 +124,9 @@ class DesExecutor:
             create_statements = clean_sql(create)
             insert_statements = clean_sql(insert)
             for stmt in create_statements + insert_statements:
-                input_stream.write("/tapi {}\n".format(stmt.strip().replace('\n', '')))
-            input_stream.write("/tapi /mparse\n{}\n$eot\n".format(query))
+                flat_stmt = stmt.strip().replace('\n', '')
+                input_stream.write(f"/tapi {flat_stmt}\n")
+            input_stream.write(f"/tapi /mparse\n{query}\n$eot\n")
             input_stream.write("/exit\n")
 
         des_path = os.environ['DES_BIN']
@@ -156,11 +157,12 @@ class DesExecutor:
             create_statements = clean_sql(create)
             insert_statements = clean_sql(insert)
             for stmt in create_statements + insert_statements:
-                input_stream.write("/tapi {}\n".format(stmt.strip().replace('\n', '')))
+                flat_stmt = stmt.strip().replace('\n', '')
+                input_stream.write(f"/tapi {flat_stmt}\n")
             dml_statements = clean_sql(dml)
             for stmt in dml_statements:
                 flat_stmt = stmt.replace("\n", " ").strip()
-                input_stream.write("/tapi {}\n".format(flat_stmt))
+                input_stream.write(f"/tapi {flat_stmt}\n")
             input_stream.write("/exit\n")
 
         des_path = os.environ['DES_BIN']

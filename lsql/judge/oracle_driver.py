@@ -205,9 +205,9 @@ def get_all_tables(conn):
             # Quoted names should be embedded with "..." in order to work. We try
             # both versions for table names, ignoring possible exceptions.
             try:
-                cursor.execute("SELECT * FROM {}".format(table_name))  # Direct name
+                cursor.execute(f"SELECT * FROM {table_name}")  # Direct name
             except cx_Oracle.DatabaseError:
-                cursor.execute('SELECT * FROM "{}"'.format(table_name))  # Quoted name
+                cursor.execute(f'SELECT * FROM "{table_name}"')  # Quoted name
             table = table_from_cursor(cursor)
             db_dict[table_name] = table
 
