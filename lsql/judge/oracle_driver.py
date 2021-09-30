@@ -43,7 +43,7 @@ def create_insert_all(statements: str) -> Optional[str]:
             INTO t2(id, age) VALUES(3, 4)
         SELECT 1 FROM DUAL;
     """
-    stmts = sqlparse.parse(statements)
+    stmts = sqlparse.parse(sqlparse.format(statements, strip_comments=True))  # Removes comments before parsing
     if not stmts:
         return None
     insert_all = "INSERT ALL\n"
