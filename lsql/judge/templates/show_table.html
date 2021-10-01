@@ -5,14 +5,16 @@
 {% random_id 15 as id %}
 {% if name %}
 <div class="d-flex">
-    <h3><div class="tableName">{{name}}</div></h3>
-    <button class="btn btn-primary btn-sm mt-1 m-1" data-bs-toggle="collapse" data-bs-target="#table-{{ id }}">+</button>
+    <h3 class="tableName">
+        {{name}}
+        <button id="btn-{{id}}" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#table-{{ id }}">+</button>
+    </h3>
 </div>
 {% endif %}
 {% if mark_rows %}
 <table class="table">
 {% else %}
-<table class="table table-striped">
+<table class="table table-striped table-hover w-auto">
 {% endif %}
     <thead class="table-dark">
         <tr>
@@ -39,6 +41,20 @@
         {% endfor %}
     </tbody>
 </table>
+<script>
+$('#table-{{ id }}').on('shown.bs.collapse', function () {
+   $('#btn-{{ id }}').text("-");
+   $('#btn-{{ id }}').removeClass("btn-primary");
+   $('#btn-{{ id }}').addClass("btn-secondary");
+});
+
+$('#table-{{ id }}').on('hidden.bs.collapse', function () {
+   $('#btn-{{ id }}').text("+");
+   $('#btn-{{ id }}').removeClass("btn-secondary");
+   $('#btn-{{ id }}').addClass("btn-primary");
+});
+</script>
+
 
 
 

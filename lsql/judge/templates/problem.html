@@ -94,7 +94,7 @@ General template for a problem. Provides the following blocks:
 
 {% block initial_db %}
 {% if problem.initial_db.0 %}
-<h2>
+<h2 class="statement">
   {% translate "Base de datos" %}
 
   <a href="{% url 'judge:create_insert' problem.id %}" download="create_insert.sql" >
@@ -113,12 +113,12 @@ General template for a problem. Provides the following blocks:
 {% endblock %}
 
 {% block expected_result %}
-<h2>{% translate "Resultado esperado" %}</h2>
+<h2 class="statement">{% translate "Resultado esperado" %}</h2>
 {% include 'show_table.html' with table=problem.expected_result.0 name=None %}
 {% endblock %}
 
 {% block solution %}
-<h2>{% translate "Solución" %}</h2>
+<h2 class="statement">{% translate "Solución" %}</h2>
   <script src="{% static 'judge/js/submit.js' %}"></script>
   <form onchange="javascript:load_submission_code(event);" class="mb-3">
 	<div class="custom-file">
