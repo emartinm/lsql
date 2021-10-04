@@ -819,7 +819,7 @@ class OracleExecutor:
                 if len(errors['rows']) > 0:
                     raise ExecutorException(OracleStatusCode.COMPILATION_ERROR, message=errors, statement=stmt)
 
-                stmt = f"BEGIN {proc_call.strip()}; END;"
+                stmt = proc_call.strip()  # Must include "DECLARE ... BEGIN .. END;", can contain several calls
                 cursor.execute(stmt)
 
             state = OracleStatusCode.GET_ALL_TABLES

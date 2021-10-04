@@ -103,7 +103,7 @@ class ParseTest(TestCase):
     def test_load_many_problems(self):
         """ Test for loading a ZIP containing several problems """
         curr_path = os.path.dirname(__file__)
-        zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.MANY_PROBLEMS_ZIP_NAME)
+        zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.MANY_PROBLEMS_ZIP)
         collection = create_collection(name='Collection')
         collection.zipfile = zip_path
         collection.clean()
@@ -113,6 +113,18 @@ class ParseTest(TestCase):
         with ZipFile(zip_path) as zfile:
             files_in_zip = len(zfile.namelist())
         self.assertEqual(Problem.objects.filter(collection=collection).count(), files_in_zip)
+
+    def test_load_many_problems_error(self):
+        """ Test for loading a ZIP containing several problems where the second cannot be parsed """
+        with self.assertRaises(ValidationError) as ctx:
+            curr_path = os.path.dirname(__file__)
+            zip_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.MANY_PROBLEMS_ZIP_BAD)
+            collection = create_collection(name='Collection')
+            collection.zipfile = zip_path
+            collection.clean()
+            collection.save()
+        self.assertEqual(type(ctx.exception.message), ZipFileParsingException)
+        self.assertIn("02_select_missing_files.zip", str(ctx.exception.message))
 
     def test_zip_errors(self):
         """ValidationError when loading ZIP in all problem types"""

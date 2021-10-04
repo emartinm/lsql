@@ -16,7 +16,8 @@ class TestPaths:  # pylint: disable=too-few-public-methods
     """ Class only to store paths for testing files """
     ZIP_FOLDER = 'zip_files'
 
-    MANY_PROBLEMS_ZIP_NAME = 'problems.zip'
+    MANY_PROBLEMS_ZIP = 'problems.zip'
+    MANY_PROBLEMS_ZIP_BAD = 'problems_bad.zip'
 
     NO_JSON = 'no_json.zip'
     JSON_DECODE_ERROR = 'select_json_decode_error.zip'

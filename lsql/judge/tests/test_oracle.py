@@ -350,7 +350,9 @@ class OracleTest(TestCase):
                 SELECT COUNT(*) INTO num_equipos FROM Club;
                 INSERT INTO CLUB VALUES ('22222222X', 'A', 'B', num_equipos + x);
             END;"""
-        call = "inserta(4)"
+        call = """BEGIN
+  inserta(4);
+END;"""
 
         # Time-limit
         tle = """

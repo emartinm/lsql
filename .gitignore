@@ -2,8 +2,10 @@ venv
 .env
 .idea
 *.pyc
-config.sh
+config*.sh
+pip_install*.sh
 postgres/
 lsql/problem_zips
 lsql/.coverage
 lsql/allstaticfiles/
+des/
