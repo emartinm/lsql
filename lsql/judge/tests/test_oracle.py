@@ -9,7 +9,7 @@ import time
 
 from django.test import TestCase
 
-from judge.oracle_driver import OracleExecutor, clean_sql, line_col_from_offset
+from judge.oracle_driver import OracleExecutor, clean_sql, line_col_from_offset, create_insert_all
 from judge.models import SelectProblem, Collection, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, \
     DiscriminantProblem
 from judge.types import VerdictCode, OracleStatusCode
@@ -637,3 +637,19 @@ WHERE num_socios > 0
         self.assertEqual(line_col_from_offset(code, 27), (2, 0))
         self.assertEqual(line_col_from_offset(code, 33), (2, 6))
         self.assertEqual(line_col_from_offset(code, 71), (3, 23))
+
+    def test_invalid_insert_all(self):
+        """ Throws ValueError when generating a SELECT ALL statement if the insert SQL
+            code contains something different from INSERT """
+        inserts = [
+            'INSERT INTO tabla VALUES (1, 2, 3);\nCOMMIT;\nINSERT INTO tabla VALUES (1, 2, 3);',
+            'COMMIT;\nINSERT INTO tabla VALUES (1, 2, 3);\nINSERT INTO tabla VALUES (1, 2, 3);',
+            'INSERT INTO tabla VALUES (1, 2, 3);\nINSERT INTO tabla VALUES (1, 2, 3);\nCOMMIT;',
+            'INSERT INTO tabla VALUES (1, 2, 3);\nSELECT * FROM tabla;',
+            'INSERT INTO tabla VALUES (1, 2, 3);\nCREATE TABLE tabla(id INTEGER);',
+            'INSERT INTO tabla VALUES (1, 2, 3);\nsomething is very bad',
+            'something is very bad INSERT; INTO tabla VALUES (1,2);',
+        ]
+        for insert in inserts:
+            with self.assertRaises(ValueError):
+                create_insert_all(insert)

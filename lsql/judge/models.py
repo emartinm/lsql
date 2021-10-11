@@ -43,17 +43,21 @@ def load_many_problems(file, collection):
     """Given a ZIP file containing several ZIP files (each one a problem),
        insert the problems into collection"""
     problems = []
+    inner_zipfile = None
     try:
         with ZipFile(file) as zfile:
             for filename in zfile.infolist():
                 with zfile.open(filename) as curr_file:
+                    inner_zipfile = filename
                     problem = load_problem_from_file(curr_file)
                     problem.clean()
                     problems.append(problem)
+                    inner_zipfile = None
     except ZipFileParsingException as excp:
         raise ZipFileParsingException(f'{filename.filename}: {excp}') from excp
     except Exception as excp:
-        raise ZipFileParsingException(f'{type(excp)}: {excp}') from excp
+        raise ZipFileParsingException(f'{"" if inner_zipfile is None else inner_zipfile} -> '
+                                      f'{type(excp)}: {excp}') from excp
     collection.problems_from_zip = problems
 
 

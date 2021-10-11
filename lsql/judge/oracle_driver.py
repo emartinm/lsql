@@ -47,7 +47,8 @@ def create_insert_all(statements: str) -> Optional[str]:
         return None
     insert_all = "INSERT ALL\n"
     for stmt in stmts:
-        assert stmt.get_type() == 'INSERT'
+        if stmt.get_type() != 'INSERT':
+            raise ValueError(f'Invalid INSERT statement: {stmt}')
         parts = ['    INTO'] + [fragment.value for fragment in stmt.get_sublists()] + ['\n']
         insert_code = ' '.join(parts)
         insert_all += insert_code
