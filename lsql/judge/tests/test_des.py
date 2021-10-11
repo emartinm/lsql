@@ -80,7 +80,7 @@ $eot
 """
         with self.assertRaises(DESException) as ctx:
             parse_tapi_cmd(output, 0)
-        self.assertIn('Unable to parse DES output: <$erroro>', str(ctx.exception))
+        self.assertIn('<$erroro>', str(ctx.exception))
 
     def test_parsing_des_output(self):
         """ Test the different kinds of error messages in DES output """
@@ -309,5 +309,7 @@ $error
 Type mismatch Club.Nombre:string(varchar(40)) vs. string(varchar(20)).
 
 """
-        self.assertEqual(parse_tapi_commands(output1, 6, 0), [[]] * 6)
-        self.assertEqual(parse_tapi_commands(output2, 14, 0), [[]] * 14)
+        with self.assertRaises(DESException):
+            self.assertEqual(parse_tapi_commands(output1, 6, 0), [[]] * 6)
+        with self.assertRaises(DESException):
+            self.assertEqual(parse_tapi_commands(output2, 14, 0), [[]] * 14)

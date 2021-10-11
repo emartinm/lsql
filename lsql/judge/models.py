@@ -12,6 +12,7 @@ from model_utils.managers import InheritanceManager
 import django.utils.timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.mail import mail_admins
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinLengthValidator
@@ -346,6 +347,8 @@ class SelectProblem(Problem):
         # Checks DES only with the first DB
         des_messages = des.get_des_messages_select(self.create_sql, '', code)  # INSERT are not needed
         if des_messages is None:
+            mail_admins(f"Unable to obtain DES output of SELECT problem PK {self.pk}",
+                        f"CREATE: {self.create_sql}\n\n  code: {code}\n", fail_silently=True)
             return []
         messages = [(msg_type, msg, snippet) for _, msgs in des_messages
                     for msg_type, msg, snippet in msgs if msgs]
@@ -417,6 +420,8 @@ class DMLProblem(Problem):
         # Checks DES only with the first DB
         des_messages = des.get_des_messages_dml(self.create_sql, '', code)  # INSERT are not needed for DES
         if des_messages is None:
+            mail_admins(f"Unable to obtain DES output of DML problem PK {self.pk}",
+                        f"CREATE: {self.create_sql}\n\n  code: {code}\n", fail_silently=True)
             return []
         # Uses the whole statement as snippet because:
         # A) DES doesn't seem to provide detailed snippets for DML errors

@@ -375,6 +375,7 @@ def submit(request, problem_id):
         try:
             # AC or WA
             code = submit_form.cleaned_data['code']
+            logger.debug('Checking submission to problem PK=%s. Code: %s', problem_id, code)
             data['verdict'], data['feedback'] = problem.judge(code, OracleExecutor.get())
             data['title'] = data['verdict'].label
             data['message'] = data['verdict'].message()

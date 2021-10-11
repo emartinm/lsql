@@ -8,7 +8,6 @@ Class to connect to Oracle and execute the different types of problems
 # Needs to use cx_Oracle
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/kike/xDownload/instantclient_19_6
 
-import time
 import string
 import random
 import os
@@ -53,7 +52,6 @@ def create_insert_all(statements: str) -> Optional[str]:
         insert_code = ' '.join(parts)
         insert_all += insert_code
     insert_all += 'SELECT 1 FROM DUAL\n'  # statements sent to cx_Oracle cannot have ending ';'
-    logger.debug('About to *INSERTING ALL*:\n %s', insert_all)
     return insert_all
 
 
@@ -223,7 +221,6 @@ def execute_select_statement(conn, statement):
              exception if 'statement' contains more than one SQL statement, and a
              cx_Oracle.DatabaseError if the execution of the statements is not correct
     """
-    init = time.time()
     statements = clean_sql(statement)
     if len(statements) != 1:
         logger.debug('User %s - <<%s>> contains more than one SQL statement',
@@ -233,8 +230,6 @@ def execute_select_statement(conn, statement):
 
     with conn.cursor() as cursor:
         cursor.execute(statements[0])
-        logger.debug('User %s - SQL select statement <<%s>> executed in %s seconds',
-                     conn.username, statement, time.time() - init)
         table = table_from_cursor(cursor)
     return table
 
@@ -248,13 +243,10 @@ def execute_dml_statements(conn, dml, min_stmt=0, max_stmt=float("inf")):
     :param dml: String containing DML statements
     :return: None
     """
-    init = time.time()
     statements = clean_sql(dml, min_stmt, max_stmt)
     with conn.cursor() as cursor:
         for stmt in statements:
             cursor.execute(stmt)
-            logger.debug('User %s - SQL DML statement <<%s>> executed in %s seconds',
-                         conn.username, stmt, time.time() - init)
         conn.commit()
 
 
@@ -266,16 +258,12 @@ def execute_sql_script(conn, script):
     :return: None. It raises a cx_Oracle.DatabaseError if the execution of any of the
              statements is not correct.
     """
-    init = time.time()
     statements = clean_sql(script)
     if len(statements) > 0:
         with conn.cursor() as cursor:
             for statement in statements:
-                logger.debug('Executing SQL statement <<%s>>', statement)
                 cursor.execute(statement)
             conn.commit()
-            logger.debug('User %s - SQL script <<%s>> executed in %s seconds',
-                         conn.username, statements, time.time() - init)
 
 
 def get_compilation_errors(conn):
@@ -433,9 +421,7 @@ class OracleExecutor:
 
         with connection.cursor() as cursor:
             cursor.execute(create_script)
-            logger.debug('User %s - Created user %s', connection.username, user_name)
             cursor.execute(grant_script)
-        logger.debug('User %s - Granted privileges to user %s', connection.username, user_name)
         return user_name, user_passwd
 
     def remove_dangling_users(self, age_seconds=60):
@@ -493,12 +479,8 @@ class OracleExecutor:
         :return: None
         """
         with connection.cursor() as cursor:
-            cursor.execute(self.__USER_CONNECTIONS, username=user_name)
-            active_connections = cursor.fetchall()
-            logger.debug('User %s has %s active connections', user_name, len(active_connections))
             drop_script = self.__DROP_USER_SCRIPT.format(user_name)
             cursor.execute(drop_script)
-        logger.debug('User %s - Dropped user %s', connection.username, user_name)
 
     def create_connection(self, user, passwd):
         """
@@ -618,11 +600,8 @@ class OracleExecutor:
                 pre = get_all_tables(conn)
 
             state = OracleStatusCode.EXECUTE_USER_CODE
-            init = time.time()
             statements = clean_sql(dml, min_stmt, max_stmt)
             if not statements:
-                logger.debug('User %s - <<%s>> contains unexpected number of statements [%s - %s]',
-                             conn.username, statements, min_stmt, max_stmt)
                 raise ExecutorException(OracleStatusCode.NUMBER_STATEMENTS,
                                         f'The SQL code must have between {min_stmt} and {max_stmt} statements:'
                                         f'<<dml>>')
@@ -630,9 +609,6 @@ class OracleExecutor:
                 for stmt in statements:
                     cursor.execute(stmt)
                 conn.commit()
-
-            logger.debug('User %s - SQL DML statements <<%s>> executed in %s seconds',
-                         conn.username, statements, time.time() - init)
 
             state = OracleStatusCode.GET_ALL_TABLES
             post = get_all_tables(conn)
@@ -705,7 +681,6 @@ class OracleExecutor:
             db = get_all_tables(conn)
 
             state = OracleStatusCode.EXECUTE_USER_CODE
-            init = time.time()
 
             # sqlparse does not consider the whole CREATE FUNCTION as a single statement, so we cannot check
             # the minimum and maximum number of statements in this kind of problems :-(
@@ -728,9 +703,6 @@ class OracleExecutor:
                     cursor.execute(func_call)
                     row = cursor.fetchone()
                     results[stmt] = row[0]
-
-            logger.debug('User %s - Function creation and testing executed in %s seconds',
-                         conn.username, time.time() - init)
 
             state = OracleStatusCode.CLOSE_USER_CONNECTION
             conn.close()
@@ -803,7 +775,6 @@ class OracleExecutor:
                 db = get_all_tables(conn)
 
             state = OracleStatusCode.EXECUTE_USER_CODE
-            init = time.time()
 
             # sqlparse does not consider the whole CREATE PROCEDURE as a single statement, so we cannot check
             # the minimum and maximum number of statements in this kind of problems :-(
@@ -824,9 +795,6 @@ class OracleExecutor:
 
             state = OracleStatusCode.GET_ALL_TABLES
             post = get_all_tables(conn)
-
-            logger.debug('User %s - Procedure creation and testing executed in %s seconds',
-                         conn.username, time.time() - init)
 
             state = OracleStatusCode.CLOSE_USER_CONNECTION
             conn.close()
@@ -899,7 +867,6 @@ class OracleExecutor:
                 db = get_all_tables(conn)
 
             state = OracleStatusCode.EXECUTE_USER_CODE
-            init = time.time()
 
             # sqlparse does not consider the whole CREATE TRIGGER as a single statement, so we cannot check
             # the minimum and maximum number of statements in this kind of problems :-(
@@ -914,9 +881,6 @@ class OracleExecutor:
 
             state = OracleStatusCode.GET_ALL_TABLES
             post = get_all_tables(conn)
-
-            logger.debug('User %s - Procedure creation and testing executed in %s seconds',
-                         conn.username, time.time() - init)
 
             state = OracleStatusCode.CLOSE_USER_CONNECTION
             conn.close()
