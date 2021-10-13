@@ -120,13 +120,14 @@ $eot
         for _, msg in msgs:
             self.assertEqual(msg, [])
 
-    def test_des_timeout(self):
-        """ DES require too much time to process SQL query, so it is aborted and returns None """
-        msgs = DesExecutor.get().get_des_messages_select(self.__CREATE_TIMEOUT, '', self.__QUERY_TIMEOUT)
-        self.assertIsNone(msgs)
+    def test_des_timeout_select(self):
+        """ DES require too much time to process SQL query, so it is aborted and raises DESException """
+        with self.assertRaises(DESException) as ctx:
+            DesExecutor.get().get_des_messages_select(self.__CREATE_TIMEOUT, '', self.__QUERY_TIMEOUT)
+        self.assertIn("Error or timeout when invoking DES. Status code: 124", str(ctx.exception))
 
-    def test_des_timeout_problem(self):
-        """ DES require too much time to process SQL query, so it is aborted and returns no messages """
+    def test_des_timeout_problem_select(self):
+        """ DES require too much time to process SQL query, so it is aborted and returns [] """
         problem = SelectProblem(create_sql=self.__CREATE_TIMEOUT, solution='SELECT * FROM Persona')
         msgs = problem.get_des_messages_solution(self.__QUERY_TIMEOUT)
         self.assertEqual(msgs, [])
@@ -232,8 +233,9 @@ $eot
         """ Timeout when checking a DML program with DES """
         insert = ''
         dml = f'INSERT INTO Persona ({self.__QUERY_TIMEOUT});'
-        msgs = DesExecutor.get().get_des_messages_dml(self.__CREATE_TIMEOUT, insert, dml)
-        self.assertIsNone(msgs)
+        with self.assertRaises(DESException) as ctx:
+            DesExecutor.get().get_des_messages_dml(self.__CREATE_TIMEOUT, insert, dml)
+        self.assertIn("Error or timeout when invoking DES. Status code: 124", str(ctx.exception))
 
     def test_des_dml_messages(self):
         """ Check that get_des_messages_solution() returns the correct messages """
@@ -265,8 +267,8 @@ $eot
                              insert_sql='',
                              solution=f"INSERT INTO t ({self.__QUERY_TIMEOUT})")
         code = f"INSERT INTO t ({self.__QUERY_TIMEOUT})"
-        messages = problem.get_des_messages_solution(code)
-        self.assertEqual(messages, [])
+        msgs = problem.get_des_messages_solution(code)
+        self.assertEqual(msgs, [])
 
     def test_validate_dml(self):
         """ Checks that validating a DMLProblem with errors returns some DES messages """
