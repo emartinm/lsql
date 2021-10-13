@@ -177,8 +177,8 @@ class DesExecutor:
         except (DESException, Exception) as excp:  # pylint: disable=broad-except
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)
             excp_msg = str(excp)
-            logger.error('------\nUnable to obtain DES output of SELECT problem\n%s\n\n%s\n\n%s\n\nException: '
-                         '%s\n------', create, insert, query, excp_msg)
+            logger.error('Unable to obtain DES output of SELECT problem: %s\n------\n\n%s\n\n%s\n\n%s\n------',
+                         excp_msg, create, insert, query)
             raise DESException(excp) from excp
 
     def get_des_messages_dml(self, create, insert, dml):
@@ -207,6 +207,6 @@ class DesExecutor:
         except (DESException, Exception) as excp:  # pylint: disable=broad-except
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)
             excp_msg = str(excp)
-            logger.error('------\nUnable to obtain DES output of DML problem\n%s\n\n%s\n\n%s\n\nException: '
-                         '%s\n------', create, insert, dml, excp_msg)
+            logger.error('Unable to obtain DES output of DML problem: %s\n------\n\n%s\n\n%s\n\n%s\n------',
+                         excp_msg, create, insert, dml)
             raise DESException(excp) from excp

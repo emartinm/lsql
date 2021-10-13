@@ -82,7 +82,7 @@ def send_des_error_email(excp: Exception, problem_id: int, problem_type: str, cr
     methods = {'SELECT': 'get_des_messages_select',
                'DML': 'get_des_messages_dml'}
     method = methods[problem_type]
-    subject = f'Unable to obtain DES output of SELECT problem PK {problem_id}: {excp}"'
+    subject = f'Unable to obtain DES output of SELECT problem PK {problem_id}: {excp}'
     msg = f"""Exception {excp}
     
 {create}
