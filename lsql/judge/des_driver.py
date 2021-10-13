@@ -155,8 +155,8 @@ class DesExecutor:
 
     def get_des_messages_select(self, create, insert, query):
         """ Invokes DES to obtain all the messages related to the query (error, warning and info).
-            Returns a list of tuples (msg_type, text, query_fragment), or None if there is some error when
-            executing DES (or timeouts)
+            Returns a list of tuples (msg_type, text, query_fragment), or throws a DESException
+            if there is some error when executing DES (or timeouts)
         """
         try:
             _, path = tempfile.mkstemp(prefix=self.__FILE_PREFIX, text=True)
@@ -176,14 +176,15 @@ class DesExecutor:
             return zip(create_statements + insert_statements + [query], msgs)
         except (DESException, Exception) as excp:  # pylint: disable=broad-except
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)
+            excp_msg = str(excp)
             logger.error('------\nUnable to obtain DES output of SELECT problem\n%s\n\n%s\n\n%s\n\nException: '
-                         '%s\n------', create, insert, query, excp)
-            return None
+                         '%s\n------', create, insert, query, excp_msg)
+            raise DESException(excp) from excp
 
     def get_des_messages_dml(self, create, insert, dml):
         """ Invokes DES to obtain all the messages related to the DML statements (error, warning and info
-            messages). Returns a list of tuples (msg_type, text, query_fragment), or None if there is
-            some error when executing DES (or timeouts)
+            messages). Returns a list of tuples (msg_type, text, query_fragment), or throws a DESException
+            if there is some error when executing DES (or timeouts)
         """
         try:
             _, path = tempfile.mkstemp(prefix=self.__FILE_PREFIX, text=True)
@@ -205,6 +206,7 @@ class DesExecutor:
             return zip(create_statements + insert_statements + dml_statements, msgs)
         except (DESException, Exception) as excp:  # pylint: disable=broad-except
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)
+            excp_msg = str(excp)
             logger.error('------\nUnable to obtain DES output of DML problem\n%s\n\n%s\n\n%s\n\nException: '
-                         '%s\n------', create, insert, dml, excp)
-            return None
+                         '%s\n------', create, insert, dml, excp_msg)
+            raise DESException(excp) from excp

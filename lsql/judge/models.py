@@ -26,7 +26,7 @@ from .des_driver import DesExecutor
 from .types import VerdictCode, ProblemType, DesMessageType
 from .parse import load_select_problem, load_dml_problem, load_function_problem, load_proc_problem, \
     load_trigger_problem, load_discriminant_problem, get_problem_type_from_zip
-from .exceptions import ZipFileParsingException
+from .exceptions import ZipFileParsingException, DESException
 
 
 def markdown_to_html(markdown_text, remove_initial_p=False):
@@ -75,6 +75,32 @@ def load_problem_from_file(file):
     problem = prob_class()
     load_fun(problem, file)
     return problem
+
+
+def send_des_error_email(excp: Exception, problem_id: int, problem_type: str, create: str, code: str) -> None:
+    """ Sends an e-mail to admins with the information of the detected DES error """
+    methods = {'SELECT': 'get_des_messages_select',
+               'DML': 'get_des_messages_dml'}
+    method = methods[problem_type]
+    subject = f'Unable to obtain DES output of SELECT problem PK {problem_id}: {excp}"'
+    msg = f"""Exception {excp}
+    
+{create}
+
+
+{code}
+----------------------------
+----------------------------
+Code to replay this error:
+
+from judge.des_driver import DesExecutor
+des = DesExecutor.get()
+des.{method}('''{create}''', '', '''{code}''')
+----------------------------
+----------------------------
+"""
+    print('enviando: ', subject, msg)
+    mail_admins(subject, msg, fail_silently=True)
 
 
 class Collection(models.Model):
@@ -349,10 +375,10 @@ class SelectProblem(Problem):
         """ Return a flat list of DES messages obtained for the user code """
         des = DesExecutor.get()
         # Checks DES only with the first DB
-        des_messages = des.get_des_messages_select(self.create_sql, '', code)  # INSERT are not needed
-        if des_messages is None:
-            mail_admins(f"Unable to obtain DES output of SELECT problem PK {self.pk}",
-                        f"CREATE: {self.create_sql}\n\n  code: {code}\n", fail_silently=True)
+        try:
+            des_messages = des.get_des_messages_select(self.create_sql, '', code)  # INSERT are not needed
+        except DESException as excp:
+            send_des_error_email(excp, self.pk, 'SELECT', str(self.create_sql), code)
             return []
         messages = [(msg_type, msg, snippet) for _, msgs in des_messages
                     for msg_type, msg, snippet in msgs if msgs]
@@ -422,10 +448,10 @@ class DMLProblem(Problem):
         """ Return a flat list of DES messages obtained for the user code """
         des = DesExecutor.get()
         # Checks DES only with the first DB
-        des_messages = des.get_des_messages_dml(self.create_sql, '', code)  # INSERT are not needed for DES
-        if des_messages is None:
-            mail_admins(f"Unable to obtain DES output of DML problem PK {self.pk}",
-                        f"CREATE: {self.create_sql}\n\n  code: {code}\n", fail_silently=True)
+        try:
+            des_messages = des.get_des_messages_dml(self.create_sql, '', code)  # INSERT are not needed for DES
+        except DESException as excp:
+            send_des_error_email(excp, self.pk, 'DML', str(self.create_sql), code)
             return []
         # Uses the whole statement as snippet because:
         # A) DES doesn't seem to provide detailed snippets for DML errors
