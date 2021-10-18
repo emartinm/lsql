@@ -141,7 +141,7 @@ def execute_des_script(path):
         init = time.time()
         output = subprocess.check_output(f"timeout {des_timeout}s {des_path} < {path}", shell=True).decode('utf8')
         end = time.time()
-        logger.debug(f'DES execution time (seconds): {end-init}')
+        logger.debug('DES execution time (seconds): %s', end-init)
         return output[output.find('DES-SQL> ') + len('DES-SQL> '):]  # Removes banner from output
     except subprocess.CalledProcessError as error:
         end = time.time()
