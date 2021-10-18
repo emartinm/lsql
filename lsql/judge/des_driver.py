@@ -10,6 +10,8 @@ Need the environment variable DES_BIN pointing to DES binary
 import os
 import subprocess
 import tempfile
+import time
+
 from logzero import logger
 
 from .oracle_driver import clean_sql
@@ -134,11 +136,17 @@ def execute_des_script(path):
     """ Runs DES with the content of the file 'path' as input, and returns the standard output.
         Raises DESException if timeouts or other execution error """
     des_path = os.environ['DES_BIN']
+    des_timeout = os.environ.get('DES_TIMEOUT', 10)  # in seconds, default 10s
     try:
-        output = subprocess.check_output(f"timeout 10s {des_path} < {path}", shell=True).decode('utf8')
+        init = time.time()
+        output = subprocess.check_output(f"timeout {des_timeout}s {des_path} < {path}", shell=True).decode('utf8')
+        end = time.time()
+        logger.debug(f'DES execution time (seconds): {end-init}')
         return output[output.find('DES-SQL> ') + len('DES-SQL> '):]  # Removes banner from output
     except subprocess.CalledProcessError as error:
-        raise DESException(f'Error or timeout when invoking DES. Status code: {error.returncode}.') from error
+        end = time.time()
+        raise DESException(f'Error or timeout when invoking DES. Status code: {error.returncode}. '
+                           f'Execution time (seconds): {end-init}') from error
 
 
 class DesExecutor:

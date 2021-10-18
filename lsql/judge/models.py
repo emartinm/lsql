@@ -329,7 +329,7 @@ class SelectProblem(Problem):
                                                    self.solution, output_db=True)
                 self.expected_result.append(res['result'])
                 self.initial_db.append(res['db'])
-            self.validate_des(DesMessageType.ERROR)  # Check the solution with DES
+            # self.validate_des(DesMessageType.ERROR)  # DES validation of new problems is disabled
         except Exception as excp:
             raise ValidationError(excp) from excp
 
