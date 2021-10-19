@@ -247,7 +247,7 @@ class OracleTest(TestCase):
                 golesLocal('117-99')
                 """
 
-        # Funcion definition is syntactically incorrect
+        # Function definition is syntactically incorrect
         compile_error = """
             CREATE OR REPLACE FUNCTION golesLocal(resultado VARCHAR2) RETURN NUMBER IS
                 posGuion NUMBER;
@@ -271,7 +271,7 @@ class OracleTest(TestCase):
             BEGIN
                 RETURN resultado; 
             END;"""
-        # Retuns 2x the expected value
+        # Returns 2x the expected value
         wrong_answer = """
             CREATE OR REPLACE FUNCTION golesLocal(resultado VARCHAR2) RETURN NUMBER IS
                 posGuion NUMBER;
@@ -280,6 +280,16 @@ class OracleTest(TestCase):
                 posGuion := INSTR(resultado, '-');
                 golesStr := SUBSTR(resultado, 0, posGuion - 1);
                 RETURN TO_NUMBER(golesStr) * 2; -- Doubled 
+            END;"""
+        # Returns the correct value as VARCHAR instead of INTEGER
+        wrong_answer2 = """
+            CREATE OR REPLACE FUNCTION golesLocal(resultado VARCHAR2) RETURN VARCHAR IS
+                posGuion NUMBER;
+                golesStr VARCHAR2(3);
+            BEGIN
+                posGuion := INSTR(resultado, '-');
+                golesStr := SUBSTR(resultado, 0, posGuion - 1);
+                RETURN golesStr; -- VARCHAR 
             END;"""
         # Waits for 11 seconds
         tle = """
@@ -328,6 +338,8 @@ class OracleTest(TestCase):
 
         # Incorrect solution
         self.assertEqual(problem.judge(wrong_answer, oracle)[0], VerdictCode.WA)
+        self.assertEqual(problem.judge(wrong_answer2, oracle)[0], VerdictCode.WA)
+
 
     def test_proc(self):
         """Tests for ProcProblem.judge()"""

@@ -224,17 +224,27 @@ def compare_db_results(expected_db, obtained_db):
 def compare_function_results(expected, obtained):
     """
     Given an expected DB and an obtained DB, returns a verdict of the comparison and its HTML feedback
-    :param expected: dict {call: result}
-    :param obtained: dict {call: result}
+    :param expected: dict {call: (result, type)}
+    :param obtained: dict {call: (result, type)}
     :return: (VerdictCode, str)
     """
     verdict = VerdictCode.AC
     feedback = ''
     for call in expected:
-        if expected[call] != obtained[call]:
+        if expected[call][1] != obtained[call][1]:
+            # Types are different
+            verdict = VerdictCode.WA
+            feedback = render_to_string('feedback_wa_function_type.html',
+                                        {'call': call,
+                                         'expected_type': pretty_type(expected[call][1]),
+                                         'obtained_type': pretty_type(obtained[call][1])})
+            break
+        if expected[call][0] != obtained[call][0]:
             verdict = VerdictCode.WA
             feedback = render_to_string('feedback_wa_function.html',
-                                        {'call': call, 'expected': expected[call], 'obtained': obtained[call]})
+                                        {'call': call,
+                                         'expected': expected[call][0],
+                                         'obtained': obtained[call][0]})
             break
     return verdict, feedback
 

@@ -177,9 +177,16 @@ class FeedbackTest(TestCase):
 
     def test_compare_function(self):
         """Tests for compare_function_results"""
-        expected = {'fun(1)': 3, 'fun(2)': 56}
-        obtained1 = {'fun(1)': 3, 'fun(2)': 5}
-        obtained2 = {'fun(1)': 33, 'fun(2)': 56}
+        expected = {'fun(1)': (3, '<cx_Oracle.DbType DB_TYPE_NUMBER>'),
+                    'fun(2)': (56, '<cx_Oracle.DbType DB_TYPE_NUMBER>')}
+        obtained1 = {'fun(1)': (3, '<cx_Oracle.DbType DB_TYPE_NUMBER>'),
+                     'fun(2)': (5, '<cx_Oracle.DbType DB_TYPE_NUMBER>')}
+        obtained2 = {'fun(1)': (33, '<cx_Oracle.DbType DB_TYPE_NUMBER>'),
+                     'fun(2)': (56, '<cx_Oracle.DbType DB_TYPE_NUMBER>')}
+        obtained3 = {'fun(1)': (3, '<cx_Oracle.DbType DB_TYPE_NUMBER>'),
+                     'fun(2)': (56, '<cx_Oracle.DbType DB_TYPE_VARCHAR>')}
+        obtained4 = {'fun(1)': (3, '<cx_Oracle.DbType DB_TYPE_VARCHAR>'),
+                     'fun(2)': (56, '<cx_Oracle.DbType DB_TYPE_NUMBER>')}
 
         # Identical
         self.assertEqual(compare_function_results(expected, expected)[0], VerdictCode.AC)
@@ -187,6 +194,10 @@ class FeedbackTest(TestCase):
         self.assertEqual(compare_function_results(expected, obtained2)[0], VerdictCode.WA)
         # Wrong result in second call
         self.assertEqual(compare_function_results(expected, obtained1)[0], VerdictCode.WA)
+        # Wrong type in second call
+        self.assertEqual(compare_function_results(expected, obtained3)[0], VerdictCode.WA)
+        # Wrong type in first call
+        self.assertEqual(compare_function_results(expected, obtained4)[0], VerdictCode.WA)
 
     def test_discriminant_feedback(self):
         """Test for compare discriminant type problems feedback"""

@@ -1,0 +1,16 @@
+{% extends "feedback_wa.html" %}
+{% load i18n %}
+{% block feedback %}
+<p>{% translate "La función no genera un valor del tipo esperado en la llamada" %} <code>{{call}}</code>:
+    <ul>
+        <li>
+           <strong>{% translate "Tipo esperado:" %}</strong>
+            <code>{{expected_type}}</code>
+        </li>
+            <li>
+           <strong>{% translate "Tipo obtenido:" %}</strong>
+            <code>{{obtained_type}}</code>
+        </li>
+    </ul>
+</p>
+{% endblock feedback %}

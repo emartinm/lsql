@@ -355,6 +355,13 @@ def extend_dictionary_with_des(data, problem, code):
         data['des'] = render_to_string('feedback_des.html', {'des_msgs': messages}).strip()
 
 
+def first_message_from_errordict(errordict):
+    """ Returns the first error message from an ErrorDict as a string 'key: message' """
+    key = list(errordict.keys())[0]
+    line = errordict[key][0]
+    return f'{key}: {line}'
+
+
 @login_required
 @require_POST
 # pylint does not understand the dynamic attributes in VerdictCode (TextChoices), so we need to disable
@@ -401,7 +408,7 @@ def submit(request, problem_id):
                 data['verdict'] = VerdictCode.VE
                 data['title'] = VerdictCode.VE.label
                 data['message'] = VerdictCode.VE.message(problem)
-                data['feedback'] = excp.message
+                data['feedback'] = ''  # Feedback not needed
             elif excp.error_code == OracleStatusCode.COMPILATION_ERROR:
                 data['verdict'] = VerdictCode.WA
                 data['title'] = VerdictCode.WA.label
@@ -410,9 +417,9 @@ def submit(request, problem_id):
     else:
         data['verdict'] = VerdictCode.VE
         data['title'] = VerdictCode.VE.label
-        data['message'] = VerdictCode.VE.message()
+        data['message'] = first_message_from_errordict(submit_form.errors)
 
-    submission = Submission(code=code, verdict_code=data['verdict'], verdict_message=data['message'],
+    submission = Submission(code=code[:5000], verdict_code=data['verdict'], verdict_message=data['message'],
                             user=request.user, problem=general_problem)
     submission.save()
 

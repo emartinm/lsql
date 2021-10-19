@@ -164,7 +164,6 @@ class SubmitTest(TestCase):
         stmt = 'holis'
         response = client.post(submit_url_dml, {'code': stmt}, follow=True)
         self.assertEqual(response.json()['verdict'], VerdictCode.VE)
-        self.assertIn('tu solución no está vacía', response.json()['message'])
 
     def test_select_no_output(self):
         """Test that SQL statements that produce no results generate WA in a SELECT problem because

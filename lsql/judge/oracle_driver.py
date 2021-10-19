@@ -658,7 +658,7 @@ class OracleExecutor:
         :param insertion: (str) Statements to insert data into tables
 
         :return: {'pre': DB, 'results': dict} dictionary containing the initial state of the DB and a dictionary
-                 {call: result} with the different calls and its expected result
+                 {call: (result, type)} with the different calls, the result and the type of the result
         """
         conn, gestor, user, stmt = None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
@@ -702,8 +702,9 @@ class OracleExecutor:
                 for stmt in tests:
                     func_call = f'SELECT {stmt} FROM DUAL'
                     cursor.execute(func_call)
+                    res_type = str(cursor.description[0][1])
                     row = cursor.fetchone()
-                    results[stmt] = row[0]
+                    results[stmt] = (row[0], res_type)
 
             state = OracleStatusCode.CLOSE_USER_CONNECTION
             conn.close()
