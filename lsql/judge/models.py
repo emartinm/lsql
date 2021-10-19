@@ -509,7 +509,7 @@ class FunctionProblem(Problem):
     def result_as_table(self):
         """Transforms the dict with the expected result in a dict representing a table that can be shown
         in the templates (i.e., we add a suitable header and create rows)"""
-        rows = [[call, result] for call, result in self.expected_result[0].items()]
+        rows = [[call, result[0]] for call, result in self.expected_result[0].items()]
         return {'rows': rows, 'header': [('Llamada', None), ('Resultado', None)]}
 
     def judge(self, code, executor):
