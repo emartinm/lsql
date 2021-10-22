@@ -246,16 +246,19 @@ $eot
 
         code = ["INSERT INTO t VALUES ('eva', 18)",  # OK
                 "UPDATE t SET age = 0 WHERE age = -9",  # No tuple met the condition
-                "DELETE FROM t WHERE age = 10"]  # No tuple met the condition
+                "DELETE FROM t WHERE age = 10",  # No tuple met the condition
+                "DELETE FROM t WHERE age = 13",  # OK, deletes 'ana'
+                "UPDATE t SET age = 0 WHERE age > 3",  # OK, updates remaining row
+                ]
         msgs = problem.get_des_messages_solution(";\n".join(code))
         self.assertEqual(len(msgs), 2)
 
-        # Message for UPDATE
+        # Message for first UPDATE
         self.assertEqual(msgs[0][0], DesMessageType.WARNING)
         self.assertIn("No tuple met the 'where' condition for updating", msgs[0][1])
         self.assertEqual(code[1], msgs[0][2])  # The statement is the snippet
 
-        # Message for DELETE
+        # Message for first DELETE
         self.assertEqual(msgs[1][0], DesMessageType.WARNING)
         self.assertIn("No tuple met the 'where' condition for deleting", msgs[1][1])
         self.assertEqual(code[2], msgs[1][2])  # The statement is the snippet

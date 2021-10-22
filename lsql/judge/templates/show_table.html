@@ -35,7 +35,11 @@
                 <tr>
             {% endif %}
             {% for elem in row %}
+                {% if elem is None %}
+                <td class="null">NULL</td>
+                {% else %}
                 <td>{{elem}}</td>
+                {% endif %}
             {% endfor %}
             </tr>
         {% endfor %}

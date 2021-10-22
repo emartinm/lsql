@@ -449,7 +449,8 @@ class DMLProblem(Problem):
         des = DesExecutor.get()
         # Checks DES only with the first DB
         try:
-            des_messages = des.get_des_messages_dml(self.create_sql, '', code)  # INSERT are not needed for DES
+            des_messages = des.get_des_messages_dml(self.create_sql, self.insert_sql_list()[0], code)
+            # Needed because DES generate "No tuple met the 'where' condition for updating" if omitted
         except DESException as excp:
             send_des_error_email(excp, self.pk, 'DML', str(self.create_sql), code)
             return []
