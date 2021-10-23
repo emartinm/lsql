@@ -2,7 +2,8 @@
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
-Parse problem and set of collections from a ZIP file
+Parse problem and set of collections from a ZIP file.
+Uses utf-8-sig as encoding for reading files inside ZIPs because Windows editors can insert a BOM
 """
 from zipfile import ZipFile
 import json
@@ -75,7 +76,7 @@ def extract_hints_from_file(problem, zfile):
     hint_separation = "@@@new hint@@@"
     hints = []
     with zfile.open('hints.md', 'r') as hints_file:
-        hints_str = hints_file.read().decode(encoding='utf-8')
+        hints_str = hints_file.read().decode(encoding='utf-8-sig')
 
     hints_list = hints_str.split(hint_separation)
     for hint in hints_list:
@@ -125,21 +126,21 @@ def load_select_problem(problem, file) -> None:
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode(encoding='utf-8')
+                problem.text_md = text_file.read().decode(encoding='utf-8-sig')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode(encoding='utf-8')
+                create_str = create_file.read().decode(encoding='utf-8-sig')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode(encoding='utf-8')
+                insert_str = insert_file.read().decode(encoding='utf-8-sig')
                 problem.insert_sql = insert_str
 
             state = 'Reading solution.sql file'
             with zfile.open('solution.sql', 'r') as solution_file:
-                problem.solution = solution_file.read().decode(encoding='utf-8')
+                problem.solution = solution_file.read().decode(encoding='utf-8-sig')
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
@@ -177,21 +178,21 @@ def load_dml_problem(problem, file):
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode(encoding='utf-8')
+                problem.text_md = text_file.read().decode(encoding='utf-8-sig')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode(encoding='utf-8')
+                create_str = create_file.read().decode(encoding='utf-8-sig')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode(encoding='utf-8')
+                insert_str = insert_file.read().decode(encoding='utf-8-sig')
                 problem.insert_sql = insert_str
 
             state = 'Reading solution.sql file'
             with zfile.open('solution.sql', 'r') as solution_file:
-                problem.solution = solution_file.read().decode(encoding='utf-8')
+                problem.solution = solution_file.read().decode(encoding='utf-8-sig')
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
@@ -229,25 +230,25 @@ def load_function_problem(problem, file):
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode(encoding='utf-8')
+                problem.text_md = text_file.read().decode(encoding='utf-8-sig')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode(encoding='utf-8')
+                create_str = create_file.read().decode(encoding='utf-8-sig')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode(encoding='utf-8')
+                insert_str = insert_file.read().decode(encoding='utf-8-sig')
                 problem.insert_sql = insert_str
 
             state = 'Reading solution.sql file'
             with zfile.open('solution.sql', 'r') as solution_file:
-                problem.solution = solution_file.read().decode(encoding='utf-8')
+                problem.solution = solution_file.read().decode(encoding='utf-8-sig')
 
             state = 'Leyendo fichero tests.sql'
             with zfile.open('tests.sql', 'r') as tests_file:
-                problem.calls = tests_file.read().decode(encoding='utf-8')
+                problem.calls = tests_file.read().decode(encoding='utf-8-sig')
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
@@ -284,25 +285,25 @@ def load_proc_problem(problem, file):
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode(encoding='utf-8')
+                problem.text_md = text_file.read().decode(encoding='utf-8-sig')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode(encoding='utf-8')
+                create_str = create_file.read().decode(encoding='utf-8-sig')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode(encoding='utf-8')
+                insert_str = insert_file.read().decode(encoding='utf-8-sig')
                 problem.insert_sql = insert_str
 
             state = 'Reading solution.sql file'
             with zfile.open('solution.sql', 'r') as solution_file:
-                problem.solution = solution_file.read().decode(encoding='utf-8')
+                problem.solution = solution_file.read().decode(encoding='utf-8-sig')
 
             state = 'Leyendo fichero tests.sql'
             with zfile.open('tests.sql', 'r') as tests_file:
-                problem.proc_call = tests_file.read().decode(encoding='utf-8').strip()
+                problem.proc_call = tests_file.read().decode(encoding='utf-8-sig').strip()
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
@@ -339,25 +340,25 @@ def load_trigger_problem(problem, file):
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode(encoding='utf-8')
+                problem.text_md = text_file.read().decode(encoding='utf-8-sig')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode(encoding='utf-8')
+                create_str = create_file.read().decode(encoding='utf-8-sig')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode(encoding='utf-8')
+                insert_str = insert_file.read().decode(encoding='utf-8-sig')
                 problem.insert_sql = insert_str
 
             state = 'Reading solution.sql file'
             with zfile.open('solution.sql', 'r') as solution_file:
-                problem.solution = solution_file.read().decode(encoding='utf-8')
+                problem.solution = solution_file.read().decode(encoding='utf-8-sig')
 
             state = 'Leyendo fichero tests.sql'
             with zfile.open('tests.sql', 'r') as tests_file:
-                problem.tests = tests_file.read().decode(encoding='utf-8').strip()
+                problem.tests = tests_file.read().decode(encoding='utf-8-sig').strip()
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
@@ -396,25 +397,25 @@ def load_discriminant_problem(problem, file):
 
             state = 'Reading text.md file'
             with zfile.open('text.md', 'r') as text_file:
-                problem.text_md = text_file.read().decode(encoding='utf-8')
+                problem.text_md = text_file.read().decode(encoding='utf-8-sig')
 
             state = 'Reading create.sql file'
             with zfile.open('create.sql', 'r') as create_file:
-                create_str = create_file.read().decode(encoding='utf-8')
+                create_str = create_file.read().decode(encoding='utf-8-sig')
                 problem.create_sql = create_str
 
             state = 'Reading insert.sql file'
             with zfile.open('insert.sql', 'r') as insert_file:
-                insert_str = insert_file.read().decode(encoding='utf-8')
+                insert_str = insert_file.read().decode(encoding='utf-8-sig')
                 problem.insert_sql = insert_str
 
             state = 'Reading incorrect_query.sql file'
             with zfile.open('incorrect_query.sql', 'r') as incorrect_file:
-                problem.incorrect_query = incorrect_file.read().decode(encoding='utf-8')
+                problem.incorrect_query = incorrect_file.read().decode(encoding='utf-8-sig')
 
             state = 'Reading correct_query.sql file'
             with zfile.open('correct_query.sql', 'r') as correct_file:
-                problem.correct_query = correct_file.read().decode(encoding='utf-8')
+                problem.correct_query = correct_file.read().decode(encoding='utf-8-sig')
 
             if 'hints.md' in zfile.namelist():
                 state = 'Reading hints.md file'
