@@ -99,7 +99,6 @@ des.{method}('''{create}''', '', '''{code}''')
 ----------------------------
 ----------------------------
 """
-    print('enviando: ', subject, msg)
     mail_admins(subject, msg, fail_silently=True)
 
 

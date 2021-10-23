@@ -14,6 +14,8 @@ import time
 
 from logzero import logger
 
+from django.core.mail import mail_admins
+
 from .oracle_driver import clean_sql
 from .exceptions import DESException
 from .types import DesMessageType
@@ -149,6 +151,44 @@ def execute_des_script(path):
                            f'Execution time (seconds): {end-init}') from error
 
 
+def filter_unrecognized_start_of_input(msgs, create, insert, code):
+    """ Replaces DES error messages 'Unrecognized start of input' with empty messages, as they
+        indicate that DES couldn't handle the SQL and do not provide any information to the user.
+        If some message of this type is found, sends an email to admin
+    """
+    filtered_msgs = []
+    unrecognized_input_found = False
+    for msg_group in msgs:
+        inner_msgs = []
+        for error_type, error_text, snippet in msg_group:
+            if error_type == DesMessageType.ERROR and error_text == 'Unrecognized start of input.':
+                unrecognized_input_found = True
+            else:
+                inner_msgs.append((error_type, error_text, snippet))
+        filtered_msgs.append(inner_msgs)
+
+    if unrecognized_input_found:
+        logger.debug('DES error "Unrecognized start of input" found in\n\n%s\n\n%s\n\n%s\n------------',
+                     create, insert, code)
+        send_des_unrecognize_input_email(create, insert, code)
+    return filtered_msgs
+
+
+def send_des_unrecognize_input_email(create: str, insert: str, code: str) -> None:
+    """ Sends an e-mail to admins with the information of the 'Unrecognized start of input' DES error """
+    subject = 'DES error "Unrecognized start of input"'
+    body = f"""Code to reproduce the error
+----------------------------
+{create}
+
+{insert}
+
+{code}
+----------------------------
+"""
+    mail_admins(subject, body, fail_silently=True)
+
+
 class DesExecutor:
     """ Class to connect to DES using the TAPI interface """
     __FILE_PREFIX = "des_checker_"
@@ -181,6 +221,8 @@ class DesExecutor:
             num_commands = len(create_statements) + len(insert_statements) + 1
             msgs = parse_tapi_commands(output, num_commands, pos=0)
             assert len(msgs) == num_commands
+            # Remove and log DES errors <Unrecognized start of input>
+            msgs = filter_unrecognized_start_of_input(msgs, create, insert, query)
             return zip(create_statements + insert_statements + [query], msgs)
         except (DESException, Exception) as excp:  # pylint: disable=broad-except
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)
@@ -211,6 +253,8 @@ class DesExecutor:
             num_commands = len(create_statements) + len(insert_statements) + len(dml_statements)
             msgs = parse_tapi_commands(output, num_commands, pos=0)
             assert len(msgs) == num_commands
+            # Remove and log DES errors <Unrecognized start of input>
+            msgs = filter_unrecognized_start_of_input(msgs, create, insert, dml)
             return zip(create_statements + insert_statements + dml_statements, msgs)
         except (DESException, Exception) as excp:  # pylint: disable=broad-except
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)

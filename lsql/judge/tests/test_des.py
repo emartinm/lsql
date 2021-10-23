@@ -7,7 +7,7 @@ Unit tests for the validation of statements using DES
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
-from judge.des_driver import parse_tapi_cmd, DesExecutor, parse_tapi_commands
+from judge.des_driver import parse_tapi_cmd, DesExecutor, parse_tapi_commands, filter_unrecognized_start_of_input
 from judge.types import DesMessageType
 from judge.models import SelectProblem, DMLProblem
 from judge.exceptions import DESException
@@ -318,3 +318,28 @@ Type mismatch Club.Nombre:string(varchar(40)) vs. string(varchar(20)).
             self.assertEqual(parse_tapi_commands(output1, 6, 0), [[]] * 6)
         with self.assertRaises(DESException):
             self.assertEqual(parse_tapi_commands(output2, 14, 0), [[]] * 14)
+
+    def test_removing_unrecognized(self):
+        """ Correctly removes <Unrecognized start of input> DES error messages """
+        msgs = [
+            [],
+            [(DesMessageType.INFO, 'Gol de señor', None)],
+            [(DesMessageType.ERROR, 'Unrecognized start of input.', None)],
+            [(DesMessageType.ERROR, 'cosa very bad', None),
+             (DesMessageType.ERROR, 'Unrecognized start of input.', None)],
+            [(DesMessageType.ERROR, 'Unrecognized start of input.', None),
+             (DesMessageType.ERROR, 'cosa very bad', None)],
+            [(DesMessageType.INFO, 'Unrecognized start of input.', None)],  # Must be kept
+            [(DesMessageType.ERROR, 'Something Unrecognized start of input in', None)],  # Must be kept
+        ]
+        expected_filtered_msgs = [
+            [],
+            [(DesMessageType.INFO, 'Gol de señor', None)],
+            [],
+            [(DesMessageType.ERROR, 'cosa very bad', None)],
+            [(DesMessageType.ERROR, 'cosa very bad', None)],
+            [(DesMessageType.INFO, 'Unrecognized start of input.', None)],
+            [(DesMessageType.ERROR, 'Something Unrecognized start of input in', None)],
+        ]
+        filtered_msgs = filter_unrecognized_start_of_input(msgs, '', '', '')
+        self.assertEqual(expected_filtered_msgs, filtered_msgs)
