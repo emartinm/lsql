@@ -12,9 +12,11 @@ import subprocess
 import tempfile
 import time
 
-from logzero import logger
+from logzero import logger, setup_logger
 
 from django.core.mail import mail_admins
+
+import lsql.settings
 
 from .oracle_driver import clean_sql
 from .exceptions import DESException
@@ -139,8 +141,8 @@ def execute_des_script(path):
         Raises DESException if timeouts or other execution error """
     des_path = os.environ['DES_BIN']
     des_timeout = os.environ.get('DES_TIMEOUT', 10)  # in seconds, default 10s
+    init = time.time()
     try:
-        init = time.time()
         output = subprocess.check_output(f"timeout {des_timeout}s {des_path} < {path}", shell=True).decode('utf8')
         end = time.time()
         logger.debug('DES execution time (seconds): %s', end-init)
@@ -168,8 +170,9 @@ def filter_unrecognized_start_of_input(msgs, create, insert, code):
         filtered_msgs.append(inner_msgs)
 
     if unrecognized_input_found:
-        logger.debug('DES error "Unrecognized start of input" found in\n\n%s\n\n%s\n\n%s\n------------',
-                     create, insert, code)
+        DesExecutor.logger('unrecognized').debug(
+            'DES error "Unrecognized start of input" found in\n\n%s\n\n%s\n\n%s\n------------',
+            create, insert, code)
         send_des_unrecognize_input_email(create, insert, code)
     return filtered_msgs
 
@@ -201,6 +204,13 @@ class DesExecutor:
             cls.__DES = DesExecutor()
         return cls.__DES
 
+    @classmethod
+    def logger(cls, ident):
+        """ Singleton DES loggers for messages that indicate some limitation in DES and must be reported
+            to DES authors """
+        return setup_logger(name=f"DES_logger_{ident}",
+                            logfile=f"{lsql.settings.BASE_DIR}/../log/des_logger_{ident}.log")
+
     def get_des_messages_select(self, create, insert, query):
         """ Invokes DES to obtain all the messages related to the query (error, warning and info).
             Returns a list of tuples (msg_type, text, query_fragment), or throws a DESException
@@ -227,8 +237,9 @@ class DesExecutor:
         except (DESException, Exception) as excp:  # pylint: disable=broad-except
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)
             excp_msg = str(excp)
-            logger.error('Unable to obtain DES output of SELECT problem: %s\n------\n\n%s\n\n%s\n\n%s\n------',
-                         excp_msg, create, insert, query)
+            DesExecutor.logger('unable_output').error(
+                'Unable to obtain DES output of SELECT problem: %s\n------\n\n%s\n\n%s\n\n%s\n------',
+                excp_msg, create, insert, query)
             raise DESException(excp) from excp
 
     def get_des_messages_dml(self, create, insert, dml):
@@ -259,6 +270,7 @@ class DesExecutor:
         except (DESException, Exception) as excp:  # pylint: disable=broad-except
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)
             excp_msg = str(excp)
-            logger.error('Unable to obtain DES output of DML problem: %s\n------\n\n%s\n\n%s\n\n%s\n------',
-                         excp_msg, create, insert, dml)
+            DesExecutor.logger('unable_output').error(
+                'Unable to obtain DES output of DML problem: %s\n------\n\n%s\n\n%s\n\n%s\n------',
+                excp_msg, create, insert, dml)
             raise DESException(excp) from excp
