@@ -156,7 +156,7 @@ class ShellTest(TestCase):
         ]
         for sub in subs:
             sub.save()
-            sub.creation_date = datetime.datetime(2020, 9, 15)  # Sets an older date
+            sub.creation_date = datetime.datetime(2020, 9, 15).astimezone()  # Sets an older date
             sub.save()
 
         file_desc, filename = mkstemp('_rejudge')

@@ -346,15 +346,15 @@ class ViewsTest(TestCase):
         sub1 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
                                          user=user_1, verdict_code=VerdictCode.WA, problem=select_problem)
         sub1.save()
-        Submission.objects.filter(id=sub1.id).update(creation_date=datetime(2021, 3, 5))
+        Submission.objects.filter(id=sub1.id).update(creation_date=datetime(2021, 3, 5).astimezone())
         sub2 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
                                          user=user_1, verdict_code=VerdictCode.WA, problem=select_problem)
         sub2.save()
-        Submission.objects.filter(id=sub2.id).update(creation_date=datetime(2021, 3, 5))
+        Submission.objects.filter(id=sub2.id).update(creation_date=datetime(2021, 3, 5).astimezone())
         sub3 = Submission.objects.create(code=select_problem.solution,
                                          user=user_1, verdict_code=VerdictCode.AC, problem=select_problem)
         sub3.save()
-        Submission.objects.filter(id=sub3.id).update(creation_date=datetime(2021, 3, 7))
+        Submission.objects.filter(id=sub3.id).update(creation_date=datetime(2021, 3, 7).astimezone())
 
         client.logout()
         client.login(username=user_2.username, password='12345')
@@ -362,11 +362,11 @@ class ViewsTest(TestCase):
         sub4 = Submission.objects.create(code=select_problem.solution,
                                          user=user_2, verdict_code=VerdictCode.AC, problem=select_problem)
         sub4.save()
-        Submission.objects.filter(id=sub4.id).update(creation_date=datetime(2021, 3, 7, 17, 45))
+        Submission.objects.filter(id=sub4.id).update(creation_date=datetime(2021, 3, 7, 17, 45).astimezone())
         sub5 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
                                          user=user_2, verdict_code=VerdictCode.WA, problem=select_problem)
         sub5.save()
-        Submission.objects.filter(id=sub5.id).update(creation_date=datetime(2021, 3, 7, 18, 22))
+        Submission.objects.filter(id=sub5.id).update(creation_date=datetime(2021, 3, 7, 18, 22).astimezone())
         response = client.get(submissions_url, {'problem_id': select_problem.pk, 'user_id': user_2.id,
                                                 'start': first_day_of_course(datetime(2020, 9, 1)).strftime('%Y-%m-%d'),
                                                 'end': datetime(2021, 3, 7).strftime('%Y-%m-%d')},
@@ -483,15 +483,22 @@ class ViewsTest(TestCase):
     def test_first_day_of_course(self):
         """Test that given a date returns you on the first day of the academic year"""
         #
-        self.assertEqual(datetime(2020, 9, 1), first_day_of_course(datetime(2020, 10, 2)))
-        self.assertEqual(datetime(2020, 9, 1), first_day_of_course(datetime(2020, 9, 1)))
-        self.assertEqual(datetime(2019, 9, 1, 0, 0), first_day_of_course(datetime(2020, 3, 2)))
-        self.assertEqual(datetime(2020, 9, 1, 0, 0), first_day_of_course(datetime(2021, 7, 25)))
-        self.assertEqual(datetime(2021, 9, 1, 0, 0), first_day_of_course(datetime(2021, 9, 5)))
-        self.assertEqual(datetime(2020, 9, 1, 0, 0), first_day_of_course(datetime(2021, 8, 31)))
-        self.assertEqual(datetime(2023, 9, 1, 0, 0), first_day_of_course(datetime(2024, 2, 29)))
-        self.assertEqual(datetime(2002, 9, 1, 0, 0), first_day_of_course(datetime(2003, 1, 29)))
-        self.assertEqual(datetime(2035, 9, 1, 0, 0), first_day_of_course(datetime(2035, 10, 22)))
+        self.assertEqual(datetime(2020, 9, 1).astimezone(), first_day_of_course(datetime(2020, 10, 2).astimezone()))
+        self.assertEqual(datetime(2020, 9, 1).astimezone(), first_day_of_course(datetime(2020, 9, 1)).astimezone())
+        self.assertEqual(datetime(2019, 9, 1, 0, 0).astimezone(),
+                         first_day_of_course(datetime(2020, 3, 2)).astimezone())
+        self.assertEqual(datetime(2020, 9, 1, 0, 0).astimezone(),
+                         first_day_of_course(datetime(2021, 7, 25)).astimezone())
+        self.assertEqual(datetime(2021, 9, 1, 0, 0).astimezone(),
+                         first_day_of_course(datetime(2021, 9, 5)).astimezone())
+        self.assertEqual(datetime(2020, 9, 1, 0, 0).astimezone(),
+                         first_day_of_course(datetime(2021, 8, 31)).astimezone())
+        self.assertEqual(datetime(2023, 9, 1, 0, 0).astimezone(),
+                         first_day_of_course(datetime(2024, 2, 29)).astimezone())
+        self.assertEqual(datetime(2002, 9, 1, 0, 0).astimezone(),
+                         first_day_of_course(datetime(2003, 1, 29)).astimezone())
+        self.assertEqual(datetime(2035, 9, 1, 0, 0).astimezone(),
+                         first_day_of_course(datetime(2035, 10, 22)).astimezone())
 
     def test_show_result_classification(self):
         """ Ranking is correct """

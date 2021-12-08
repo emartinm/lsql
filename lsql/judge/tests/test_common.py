@@ -68,7 +68,7 @@ def create_hint(problem, id_hint, num_submissions):
 
 def create_used_hint(hint, user):
     """ Creates and stores a used Hint of a Problem """
-    used_hint = UsedHint(user=user, request_date=datetime(2020, 3, 5), hint_definition=hint)
+    used_hint = UsedHint(user=user, request_date=datetime(2020, 3, 5).astimezone(), hint_definition=hint)
     used_hint.save()
     return used_hint
 

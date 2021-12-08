@@ -55,8 +55,8 @@ class RankingTest(TestCase):
     def test_get_podium_achievement(self):
         """Test if get correctly a podium achievement"""
         client = Client()
-        podium_achievement = PodiumAchievementDefinition(name={"es":"Top 1"},
-                                                         description={"es":'Se el primero'},
+        podium_achievement = PodiumAchievementDefinition(name={"es": "Top 1"},
+                                                         description={"es": 'Se el primero'},
                                                          num_problems=1,
                                                          position=1)
         podium_achievement.save()
@@ -226,10 +226,10 @@ class RankingTest(TestCase):
         sub_2 = Submission(code='nada', verdict_code=VerdictCode.AC, user=user, problem=problem_2)
         sub_1.save()
         sub_2.save()
-        Submission.objects.filter(id=sub_1.id).update(creation_date=datetime(2006, 3, 5))
+        Submission.objects.filter(id=sub_1.id).update(creation_date=datetime(2006, 3, 5).astimezone())
         # sub_1_u = submission 1 updated
         sub_1_u = Submission.objects.get(id=sub_1.id)
-        Submission.objects.filter(id=sub_2.id).update(creation_date=datetime(2020, 3, 5))
+        Submission.objects.filter(id=sub_2.id).update(creation_date=datetime(2020, 3, 5).astimezone())
         sub_2_u = Submission.objects.get(id=sub_2.id)
 
         # Test NumSolvedAchievementDefinition
@@ -340,13 +340,13 @@ class RankingTest(TestCase):
         select_problem_2 = create_select_problem(collection, 'SelectProblem2')
         sub1 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
                                          user=user, verdict_code=VerdictCode.WA, problem=select_problem)
-        Submission.objects.filter(id=sub1.id).update(creation_date=datetime(2021, 3, 1))
+        Submission.objects.filter(id=sub1.id).update(creation_date=datetime(2021, 3, 1).astimezone())
         sub2 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
                                          user=user, verdict_code=VerdictCode.AC, problem=select_problem_2)
-        Submission.objects.filter(id=sub2.id).update(creation_date=datetime(2021, 3, 2))
+        Submission.objects.filter(id=sub2.id).update(creation_date=datetime(2021, 3, 2).astimezone())
         sub3 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
                                          user=user, verdict_code=VerdictCode.RE, problem=select_problem_2)
-        Submission.objects.filter(id=sub3.id).update(creation_date=datetime(2021, 3, 4))
+        Submission.objects.filter(id=sub3.id).update(creation_date=datetime(2021, 3, 4).astimezone())
 
         client.login(username=teacher.username, password='1111')
         url = reverse('judge:download_ranking', args=[collection.pk])

@@ -57,9 +57,9 @@ def get_subclass_problem(problem_id):
 
 def first_day_of_course(init_course: datetime) -> datetime:
     """ Returns the first day of the academic year """
-    first_day = datetime(init_course.year, 9, 1)
+    first_day = datetime(init_course.year, 9, 1).astimezone()
     if 1 <= init_course.month < 9:
-        first_day = datetime(init_course.year - 1, 9, 1)
+        first_day = datetime(init_course.year - 1, 9, 1).astimezone()
     return first_day
 
 
@@ -145,11 +145,13 @@ def show_result(request, collection_id):
         return HttpResponseForbidden("Forbidden")
 
     # Set start and end if they were not provided
-    start = first_day_of_course(datetime.today()) if start is None else start
+    start = first_day_of_course(datetime.today()) if start is None else \
+        datetime(year=start.year, month=start.month, day=start.day)
+    start = start.astimezone()
     end = datetime.today() if end is None else end
     # Extends 'end' to 23:59:59 to cover today's latest submissions. Otherwise, ranking is not
     # updated until next day (as plain dates have time 00:00:00)
-    end = datetime(end.year, end.month, end.day, 23, 59, 59)
+    end = datetime(end.year, end.month, end.day, 23, 59, 59).astimezone()
 
     ranking = collection.ranking(start, end, group)
     return render(request, 'results.html', {'collection': collection, 'groups': available_groups,
@@ -257,16 +259,18 @@ def show_submissions(request):
         user = get_object_or_404(get_user_model(), id=user_id) if user_id is not None else request.user
         if not request.user.is_staff and user != request.user:
             return HttpResponseForbidden("Forbidden")
-        start = form.cleaned_data.get('start') if form.cleaned_data.get('start') is not None \
+        start_form = form.cleaned_data.get('start')
+        start = datetime(start_form.year, start_form.month, start_form.day) if start_form is not None \
             else datetime(1950, 1, 1)  # Very old date as default start
-        end = form.cleaned_data.get('end') if form.cleaned_data.get('end') is not None \
+        end_form = form.cleaned_data.get('end')
+        end = datetime(end_form.year, end_form.month, end_form.day) if end_form is not None \
             else datetime.today()
         if problem is not None:
-            subs = Submission.objects.filter(user=user, problem=problem.id,
-                                             creation_date__range=[start, end + timedelta(days=1)]).order_by('-pk')
+            subs = Submission.objects.filter(user=user, problem=problem.id, creation_date__range=[
+                start.astimezone(), end.astimezone() + timedelta(days=1)]).order_by('-pk')
         else:
-            subs = Submission.objects.filter(user=user,
-                                             creation_date__range=[start, end + timedelta(days=1)]).order_by('-pk')
+            subs = Submission.objects.filter(user=user, creation_date__range=[
+                start.astimezone(), end.astimezone() + timedelta(days=1)]).order_by('-pk')
     else:
         return HttpResponseNotFound(str(form.errors))
     return render(request, 'submissions.html', {'submissions': subs, 'user': user})
@@ -472,21 +476,22 @@ def download_ranking(request, collection_id):
     end = result_form.cleaned_data.get('end')
     # Extends 'end' to 23:59:59 to cover today's latest submissions. Otherwise, ranking is not
     # updated until next day (as plain dates have time 00:00:00)
-    end = datetime(end.year, end.month, end.day, 23, 59, 59)
-    start = datetime(start.year, start.month, start.day, 0, 0, 0)
+    end = datetime(end.year, end.month, end.day, 23, 59, 59).astimezone()
+    start = datetime(start.year, start.month, start.day, 0, 0, 0).astimezone()
 
-    sheet_rows = []
-    # Sheet header: collection name, dates and group in first 4 rows
-    sheet_rows.append([gettext('Colección'), collection.name_md])
-    sheet_rows.append([gettext('Grupo'), str(group)])
-    sheet_rows.append([gettext('Desde'), str(start)])
-    sheet_rows.append([gettext('Hasta'), str(end)])
-    sheet_rows.append([])
+    sheet_rows = [
+        # Sheet header: collection name, dates and group in first 4 rows
+        [gettext('Colección'), collection.name_md],
+        [gettext('Grupo'), str(group)],
+        [gettext('Desde'), str(start)],
+        [gettext('Hasta'), str(end)],
+        [],
+        # Table header [Pos., User, Exercises..., Score, Solved] in row 6
+        [gettext("Pos."), gettext("Usuario")] +
+        [problem.title_md for problem in collection.problems()] +
+        [gettext("Puntuación."), gettext("Resueltos")]
+    ]
 
-    # Table header [Pos., User, Exercises..., Score, Solved] in row 6
-    sheet_rows.append([gettext("Pos."), gettext("Usuario")] +
-                      [problem.title_md for problem in collection.problems()] +
-                      [gettext("Puntuación."), gettext("Resueltos")])
     # Ranking row by row
     for user in collection.ranking(start, end, group):
         sheet_rows.append([user.pos, user.username] +

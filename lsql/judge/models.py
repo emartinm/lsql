@@ -9,7 +9,7 @@ import markdown
 from lxml import html
 from model_utils.managers import InheritanceManager
 
-import django.utils.timezone
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
@@ -722,7 +722,7 @@ class AchievementDefinition(models.Model):
 class ObtainedAchievement(models.Model):
     """Store info about an obtained achievement"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    obtained_date = models.DateTimeField(default=django.utils.timezone.now)
+    obtained_date = models.DateTimeField(default=timezone.now)
     achievement_definition = models.ForeignKey(AchievementDefinition, on_delete=models.CASCADE)
 
     class Meta:

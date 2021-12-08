@@ -107,7 +107,7 @@ def adapt_db_result_to_list():
 
 
 def rejudge(verdict_code, filename='rejudge.txt', tests=False,
-            start=datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc),
+            start=datetime.datetime(1970, 1, 1).astimezone(),
             end=timezone.now()):
     """ Judges again all the submission in the period [start, end] with some verdict_code. For each submission,
         submit the code, compares the verdict, and stores detailed information in the 'filename'.

@@ -131,7 +131,7 @@ class SubmitTest(TestCase):
             self.assertEqual(response.json()['verdict'], VerdictCode.AC)
 
     def test_validation_error(self):
-        """Test messages obtained in submission that do not containt the correct number of statements"""
+        """Test messages obtained in submission that do not contain the correct number of statements"""
         client = Client()
         collection = create_collection('Colleccion de prueba XYZ')
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
