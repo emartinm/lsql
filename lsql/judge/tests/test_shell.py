@@ -7,16 +7,18 @@ Unit tests for the shell module
 import datetime
 import os
 from tempfile import mkstemp
+import csv
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
 from judge.types import VerdictCode
-from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Collection, Problem, \
-    Submission
-from judge.shell import create_users_from_csv, adapt_db_result_to_list, rejudge
-from judge.tests.test_common import create_select_problem, create_collection, create_user
+from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Collection, \
+    Problem, Submission
+from judge.shell import create_users_from_csv, adapt_db_result_to_list, rejudge, extended_submissions, \
+    submissions_per_user
+from judge.tests.test_common import create_select_problem, create_collection, create_user, create_dml_problem
 
 
 class ShellTest(TestCase):
@@ -168,4 +170,73 @@ class ShellTest(TestCase):
             self.assertIn('IE --> WA', summary)
             self.assertIn('IE --> RE', summary)
             self.assertNotIn('IE --> IE', summary)
+        os.remove(filename)
+
+    def test_submission_info_csv(self):
+        """ Test the CSV with extended submission information and the aggregated information """
+        collection1 = create_collection("test collection1")
+        collection2 = create_collection("test collection2")
+        problem1 = create_select_problem(collection1, "Problem1")
+        problem2 = create_dml_problem(collection2, "Problem2")
+        user1 = create_user(passwd='1111', username='user1', email='user1@ucm.es')
+        user2 = create_user(passwd='1111', username='user2', email='user2@ucm.es')
+        subs = [
+            Submission(code='', verdict_code=VerdictCode.WA, user=user1, problem=problem1),
+            Submission(code='', verdict_code=VerdictCode.RE, user=user2, problem=problem1),
+            Submission(code='', verdict_code=VerdictCode.AC, user=user1, problem=problem2),
+        ]
+        for sub in subs:
+            sub.save()
+
+        file_desc, filename = mkstemp('_rejudge.csv')
+        os.close(file_desc)  # To avoid problems when removing the file in Windows
+
+        # Test extended
+        extended_submissions(filename)
+        with open(filename, 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            rows = list(reader)
+            # Submission 1
+            self.assertEqual(rows[0]['verdict'], 'WA')
+            self.assertEqual(rows[0]['user'], 'user1@ucm.es')
+            self.assertEqual(rows[0]['problem_name'], 'Problem1')
+            self.assertEqual(rows[0]['collection_name'], 'test collection1')
+            self.assertEqual(rows[0]['problem_type'], 'ProblemType.SELECT')
+            # Submission 2
+            self.assertEqual(rows[1]['verdict'], 'RE')
+            self.assertEqual(rows[1]['user'], 'user2@ucm.es')
+            self.assertEqual(rows[1]['problem_name'], 'Problem1')
+            self.assertEqual(rows[1]['collection_name'], 'test collection1')
+            self.assertEqual(rows[1]['problem_type'], 'ProblemType.SELECT')
+            # Submission 2
+            self.assertEqual(rows[2]['verdict'], 'AC')
+            self.assertEqual(rows[2]['user'], 'user1@ucm.es')
+            self.assertEqual(rows[2]['problem_name'], 'Problem2')
+            self.assertEqual(rows[2]['collection_name'], 'test collection2')
+            self.assertEqual(rows[2]['problem_type'], 'ProblemType.DML')
+
+        submissions_per_user(filename)
+        with open(filename, 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            rows = list(reader)
+            # user1
+            self.assertEqual(rows[0]['username'], 'user1@ucm.es')
+            self.assertEqual(rows[0]['total_envios'], '2')
+            self.assertEqual(rows[0]['envios_AC'], '1')
+            self.assertEqual(rows[0]['envios_RE'], '0')
+            self.assertEqual(rows[0]['envios_WA'], '1')
+            self.assertEqual(rows[0]['problemas_intentados'], '2')
+            self.assertEqual(rows[0]['ProblemType.SELECT'], '1')
+            self.assertEqual(rows[0]['ProblemType.DML'], '1')
+            self.assertEqual(rows[0]['ProblemType.PROC'], '0')
+            # user2
+            self.assertEqual(rows[1]['username'], 'user2@ucm.es')
+            self.assertEqual(rows[1]['total_envios'], '1')
+            self.assertEqual(rows[1]['envios_AC'], '0')
+            self.assertEqual(rows[1]['envios_RE'], '1')
+            self.assertEqual(rows[1]['envios_WA'], '0')
+            self.assertEqual(rows[1]['problemas_intentados'], '1')
+            self.assertEqual(rows[1]['ProblemType.SELECT'], '1')
+            self.assertEqual(rows[1]['ProblemType.DML'], '0')
+            self.assertEqual(rows[1]['ProblemType.PROC'], '0')
         os.remove(filename)

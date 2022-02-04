@@ -224,7 +224,6 @@ class DesExecutor:
                 input_stream.write(des_input)
 
             output = execute_des_script(path)
-            os.remove(path)
 
             create_statements = clean_sql(create)
             insert_statements = clean_sql(insert)
@@ -241,6 +240,9 @@ class DesExecutor:
                 'Unable to obtain DES output of SELECT problem: %s\n------\n\n%s\n\n%s\n\n%s\n------',
                 excp_msg, create, insert, query)
             raise DESException(excp) from excp
+        finally:
+            # Removes DES script file
+            os.remove(path)
 
     def get_des_messages_dml(self, create, insert, dml):
         """ Invokes DES to obtain all the messages related to the DML statements (error, warning and info
@@ -255,7 +257,6 @@ class DesExecutor:
                 input_stream.write(des_input)
 
             output = execute_des_script(path)
-            os.remove(path)
 
             create_statements = clean_sql(create)
             insert_statements = clean_sql(insert)
@@ -274,3 +275,6 @@ class DesExecutor:
                 'Unable to obtain DES output of DML problem: %s\n------\n\n%s\n\n%s\n\n%s\n------',
                 excp_msg, create, insert, dml)
             raise DESException(excp) from excp
+        finally:
+            # Removes DES script file
+            os.remove(path)

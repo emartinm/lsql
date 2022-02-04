@@ -149,11 +149,11 @@ def create_collection(name='Prueba', visibility=True, author=None):
     return collection
 
 
-def create_user(passwd, username='usuario'):
+def create_user(passwd, username='usuario', email='email@ucm.es'):
     """Creates and stores a user"""
     user = django.contrib.auth.get_user_model().objects.create_user(
         username=username,
-        email='email@ucm.es',
+        email=email,
         password=passwd)
     return user
 
