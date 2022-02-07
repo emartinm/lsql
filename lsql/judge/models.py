@@ -120,6 +120,7 @@ class Collection(models.Model):
         try:
             if self.zipfile:
                 load_many_problems(self.zipfile, self)
+                self.zipfile.close()  # Avoids ResourceWarning in Django storage.py
                 self.zipfile = None  # Avoids storing the file in the filesystem
 
             super().clean()
@@ -318,6 +319,7 @@ class SelectProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_select_problem(self, self.zipfile)
+                self.zipfile.close()  # Avoids ResourceWarning in Django storage.py
                 self.zipfile = None  # Avoids storing the file in the filesystem
             super().clean()
             self.expected_result = []
@@ -413,6 +415,7 @@ class DMLProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_dml_problem(self, self.zipfile)
+                self.zipfile.close()  # Avoids ResourceWarning in Django storage.py
                 self.zipfile = None  # Avoids storing the file in the filesystem
 
             super().clean()
@@ -493,6 +496,7 @@ class FunctionProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_function_problem(self, self.zipfile)
+                self.zipfile.close()  # Avoids ResourceWarning in Django storage.py
                 self.zipfile = None  # Avoids storing the file in the filesystem
 
             super().clean()
@@ -541,6 +545,7 @@ class ProcProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_proc_problem(self, self.zipfile)
+                self.zipfile.close()  # Avoids ResourceWarning in Django storage.py
                 self.zipfile = None  # Avoid saving the file to the filesystem
 
             super().clean()
@@ -581,6 +586,7 @@ class TriggerProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_trigger_problem(self, self.zipfile)
+                self.zipfile.close()  # Avoids ResourceWarning in Django storage.py
                 self.zipfile = None  # Avoids storing the file in the filesystem
 
             super().clean()
@@ -621,6 +627,7 @@ class DiscriminantProblem(Problem):
             if self.zipfile:
                 # Replaces the fields with the information from the file
                 load_discriminant_problem(self, self.zipfile)
+                self.zipfile.close()  # Avoids ResourceWarning in Django storage.py
                 self.zipfile = None  # Avoids storing the file in the filesystem
 
             super().clean()

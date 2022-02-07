@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'dbbackup',  # django-dbbackup
+    # 'dbbackup',  # django-dbbackup
 ]
 
 MIDDLEWARE = [
@@ -84,7 +84,7 @@ DATABASES = {
     #     'ENGINE': 'django.db.backends.sqlite3',
     #     'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     # }
-    'default': {  # Takes default values if there are no envirnoment variables
+    'default': {  # Takes default values if there are no environment variables
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('PG_DB', 'postgres'),
         'USER': os.environ.get('PG_USER', 'postgres'),
@@ -123,7 +123,7 @@ TIME_ZONE = 'Europe/Madrid'
 
 USE_I18N = True
 
-USE_L10N = True
+# USE_L10N = True  # Default behavior, will be deprecated in Django 5
 
 USE_TZ = True
 
@@ -141,10 +141,10 @@ LOGIN_URL = '/sql/login/'
 LOGIN_REDIRECT_URL = '/sql/'
 
 # Configuration of django-dbbackup
-DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
-DBBACKUP_STORAGE_OPTIONS = {'location': f"{os.environ.get('HOME')}/lsql_backups/"}
-DBBACKUP_CLEANUP_KEEP = 16  # 2 months with 2 backups per week
-DBBACKUP_CLEANUP_KEEP_MEDIA = 16
+# DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+# DBBACKUP_STORAGE_OPTIONS = {'location': f"{os.environ.get('HOME')}/lsql_backups/"}
+# DBBACKUP_CLEANUP_KEEP = 16  # 2 months with 2 backups per week
+# DBBACKUP_CLEANUP_KEEP_MEDIA = 16
 
 
 LANGUAGES = (

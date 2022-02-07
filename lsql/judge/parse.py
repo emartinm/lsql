@@ -33,7 +33,7 @@ def extract_json(file, problem_type):
     """
     with ZipFile(file) as zfile:
         if __JSON_NAME not in zfile.namelist():
-            raise ZipFileParsingException(f'Falta el fichero {__JSON_NAME}')
+            raise ZipFileParsingException(f'Missing file {__JSON_NAME}')
 
         with zfile.open(__JSON_NAME, 'r') as jsonfile:
             try:

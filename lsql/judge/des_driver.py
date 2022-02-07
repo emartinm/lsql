@@ -22,6 +22,11 @@ from .oracle_driver import clean_sql
 from .exceptions import DESException
 from .types import DesMessageType
 
+UNRECOGNIZED_LOGGER = setup_logger(name="DES_logger_unrecognized",
+                                   logfile=f"{lsql.settings.BASE_DIR}/../log/des_logger_unrecognized.log")
+UNABLE_OUTPUT_LOGGER = setup_logger(name="DES_logger_unable_output",
+                                    logfile=f"{lsql.settings.BASE_DIR}/../log/des_logger_unable_output.log")
+
 
 def str_to_des_message_type(code_str) -> DesMessageType:
     """ Translates a string with an integer to a DesMessageType """
@@ -170,7 +175,7 @@ def filter_unrecognized_start_of_input(msgs, create, insert, code):
         filtered_msgs.append(inner_msgs)
 
     if unrecognized_input_found:
-        DesExecutor.logger('unrecognized').debug(
+        UNRECOGNIZED_LOGGER.debug(
             'DES error "Unrecognized start of input" found in\n\n%s\n\n%s\n\n%s\n------------',
             create, insert, code)
         send_des_unrecognize_input_email(create, insert, code)
@@ -204,13 +209,6 @@ class DesExecutor:
             cls.__DES = DesExecutor()
         return cls.__DES
 
-    @classmethod
-    def logger(cls, ident):
-        """ Singleton DES loggers for messages that indicate some limitation in DES and must be reported
-            to DES authors """
-        return setup_logger(name=f"DES_logger_{ident}",
-                            logfile=f"{lsql.settings.BASE_DIR}/../log/des_logger_{ident}.log")
-
     def get_des_messages_select(self, create, insert, query):
         """ Invokes DES to obtain all the messages related to the query (error, warning and info).
             Returns a list of tuples (msg_type, text, query_fragment), or throws a DESException
@@ -236,7 +234,7 @@ class DesExecutor:
         except (DESException, Exception) as excp:  # pylint: disable=broad-except
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)
             excp_msg = str(excp)
-            DesExecutor.logger('unable_output').error(
+            UNABLE_OUTPUT_LOGGER.error(
                 'Unable to obtain DES output of SELECT problem: %s\n------\n\n%s\n\n%s\n\n%s\n------',
                 excp_msg, create, insert, query)
             raise DESException(excp) from excp
@@ -271,7 +269,7 @@ class DesExecutor:
         except (DESException, Exception) as excp:  # pylint: disable=broad-except
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)
             excp_msg = str(excp)
-            DesExecutor.logger('unable_output').error(
+            UNABLE_OUTPUT_LOGGER.error(
                 'Unable to obtain DES output of DML problem: %s\n------\n\n%s\n\n%s\n\n%s\n------',
                 excp_msg, create, insert, dml)
             raise DESException(excp) from excp

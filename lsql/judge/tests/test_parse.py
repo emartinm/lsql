@@ -122,7 +122,6 @@ class ParseTest(TestCase):
             collection = create_collection(name='Collection')
             collection.zipfile = zip_path
             collection.clean()
-            collection.save()
         self.assertEqual(type(ctx.exception.message), ZipFileParsingException)
         self.assertIn("02_select_missing_files.zip", str(ctx.exception.message))
 
