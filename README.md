@@ -1,27 +1,29 @@
 
-# lsql (Learn SQL) ![build status](https://api.travis-ci.org/emartinm/lsql.svg?branch=master) [![codecov](https://codecov.io/gh/emartinm/lsql/branch/master/graph/badge.svg)](https://codecov.io/gh/emartinm/lsql)
+# Learn SQL ![build status](https://api.travis-ci.org/emartinm/lsql.svg?branch=master) [![codecov](https://codecov.io/gh/emartinm/lsql/branch/master/graph/badge.svg)](https://codecov.io/gh/emartinm/lsql)
 
+**Automatic judge for database learning**
 
-Aplicación web para el aprendizaje de las bases de datos
+LearnSQL has been developed as an open source project under MIT license. 
+Its development and evaluation has been supported by the teaching innovation 
+projects of the Complutense University of Madrid INNOVA-Docencia 2020-21/18 
+(Spanish title: *"Juez automático para el aprendizaje de bases de datos"*) 
+and 2021-22/387 (Spanish title: *"Evaluación del impacto sobre el aprendizaje
+de bases de datos del juez automático LearnSQL"*). 
 
-## Equipo de diseño y desarrollo
+In the development of the automatic judge have also participated students of 
+the Faculty of Computer Science of the Complutense University of Madrid, who 
+have made improvements in their Final Degree Project. 
 
-El juez ha sido desarrollado como proyecto de código abierto bajo licencia MIT. 
-Ha sido desarrollado dentro
-de la convocatoria 2020-21 de *Proyectos de Innovación Innova-Docencia* de la 
-Universidad Complutense de Madrid, concretamente en el proyecto número 18 titulado 
-**"Juez automático para el aprendizaje de bases de datos"**. En el desarrollo del juez también han participado 
-estudiantes de la Fac. de Informática de la Universidad Complutense de Madrid, que han realizado mejoras dentro de su 
-Trabajo Fin de Grado. 
-
-El equipo completo de diseño y desarrollo es el siguiente:
+The complete team involved in its design, development and evaluation is:
 - IKER BURGOA
 - PABLO CERRO
-- JESUS CORREAS
+- JESÚS CORREAS
+- LUIS GARMENDIA
 - TAMARA HUERTAS
-- DANIEL IBAÑEZ
-- ENRIQUE MARTIN
+- DANIEL IBÁÑEZ
+- ENRIQUE MARTÍN
 - MANUEL MONTENEGRO
-- ADRIAN RIESCO
-- RUBEN RUBIO
-- IVAN RUIZ
+- ADRIÁN RIESCO
+- RUBÉN RUBIO
+- IVÁN RUIZ
+- FERNANDO SÁENZ
