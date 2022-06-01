@@ -117,6 +117,7 @@ def rejudge(verdict_code, filename='rejudge.txt', tests=False,
     """
     username = 'rejudge_user_test_983'
     passwd = '1111'
+    user = None
 
     try:
         subs = Submission.objects.filter(verdict_code=verdict_code, creation_date__gte=start, creation_date__lte=end)
@@ -152,7 +153,8 @@ def rejudge(verdict_code, filename='rejudge.txt', tests=False,
             report.write(f'\n\nSummary of changes in verdicts (see {filename} for details):')
             report.write(str(changes))
     finally:
-        user.delete()
+        if user is not None:
+            user.delete()
 
 
 def extended_submissions(filename: str) -> None:
