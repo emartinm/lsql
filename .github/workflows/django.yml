@@ -46,15 +46,15 @@ jobs:
           ORACLE_PASSWORD: travis
 
           # Forward Oracle port
-          ports:
-            - 1521:1521
+        ports:
+          - 1521:1521
 
-          # Provide healthcheck script options for startup
-          options: >-
-            --health-cmd healthcheck.sh
-            --health-interval 10s
-            --health-timeout 5s
-            --health-retries 10
+        # Provide healthcheck script options for startup
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
     - uses: actions/checkout@v3
