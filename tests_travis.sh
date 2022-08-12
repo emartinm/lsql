@@ -8,12 +8,12 @@ python manage.py collectstatic
 
 # Run tests and show a report with lines not covered in stdout
 coverage erase
-# coverage run manage.py test || exit -1  # Exits promptly if fails
-coverage run manage.py test judge.tests.test_des || exit -1  # Exits promptly if fails
+# coverage run manage.py test || exit 255  # Exits promptly if fails
+coverage run manage.py test judge.tests.test_tags
 coverage report -m
 
 # Generates XML report for codecov, failing if coverage is less than 100%
-coverage xml --fail-under 100 || exit -2  # Exits promptly if fails
+coverage xml --fail-under 100 || exit 255  # Exits promptly if fails
 
 # Upload coverage using bash uploader (obsolescent)
 # curl -fLso codecov https://codecov.io/bash
