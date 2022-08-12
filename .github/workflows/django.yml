@@ -55,6 +55,14 @@ jobs:
       run : |
         ./travis_des.sh
 
+    - name: Set env variable
+      run: |
+        echo ${{ env.LD_LIBRARY_PATH }}
+        echo "LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}:/tmp/instantclient" >> $GITHUB_ENV
+    - name: Use env variable
+      run: |
+        echo ${{ env.LD_LIBRARY_PATH }}
+
     - name: Django tests
       run: |
         cd lsql
