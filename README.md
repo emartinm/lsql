@@ -1,5 +1,8 @@
 
-# Learn SQL ![build status](https://api.travis-ci.org/emartinm/lsql.svg?branch=master) [![codecov](https://codecov.io/gh/emartinm/lsql/branch/master/graph/badge.svg)](https://codecov.io/gh/emartinm/lsql)
+# Learn SQL 
+![build status](https://github.com/emartinm/lsql/actions/workflows/django.yml/badge.svg)
+![Pylint status](https://github.com/emartinm/lsql/actions/workflows/pylint.yml/badge.svg)
+[![codecov](https://codecov.io/gh/emartinm/lsql/branch/master/graph/badge.svg)](https://codecov.io/gh/emartinm/lsql)
 
 **Automatic judge for database learning**
 
