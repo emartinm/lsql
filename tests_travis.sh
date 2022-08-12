@@ -8,26 +8,27 @@ python manage.py collectstatic
 
 # Run tests and show a report with lines not covered in stdout
 coverage erase
-coverage run manage.py test || exit -1  # Exits promptly if fails
+# coverage run manage.py test || exit -1  # Exits promptly if fails
+coverage run manage.py test judge.tests.test_des || exit -1  # Exits promptly if fails
 coverage report -m
 
 # Generates XML report for codecov, failing if coverage is less than 100%
 coverage xml --fail-under 100 || exit -2  # Exits promptly if fails
 
 # Upload coverage using bash uploader (obsolescent)
-curl -fLso codecov https://codecov.io/bash
-VERSION=$(grep -o 'VERSION=\"[0-9\.]*\"' codecov | cut -d'"' -f2);
-wget "https://raw.githubusercontent.com/codecov/codecov-bash/${VERSION}/SHA256SUM"
-shasum -a 256 -c SHA256SUM --ignore-missing
-SUM_OK=$?
+# curl -fLso codecov https://codecov.io/bash
+# VERSION=$(grep -o 'VERSION=\"[0-9\.]*\"' codecov | cut -d'"' -f2);
+# wget "https://raw.githubusercontent.com/codecov/codecov-bash/${VERSION}/SHA256SUM"
+# shasum -a 256 -c SHA256SUM --ignore-missing
+# SUM_OK=$?
 
-if [ $SUM_OK -eq 0 ]; then
-  bash codecov
-else
-   echo "'codecov' uploader does not match expected checksum!"
-   echo "*IGNORING codecov EXECUTION*"
-   echo
-fi
+# if [ $SUM_OK -eq 0 ]; then
+#   bash codecov
+# else
+#    echo "'codecov' uploader does not match expected checksum!"
+#    echo "*IGNORING codecov EXECUTION*"
+#    echo
+# fi
 
 # New uploader, currently beta (does not work with lsql yet)
 # Submits coverage report to Codecov, checking first the checksum of the uploader
