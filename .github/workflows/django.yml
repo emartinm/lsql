@@ -91,7 +91,7 @@ jobs:
     - name: Django tests
       run: |
         cd lsql
-        python manage.py test judge.tests.test_des
+        python manage.py test judge.tests.test_views
       env:
         ORACLE_HOME: /u01/app/oracle/product/11.2.0/xe
         ORACLE_SID: XE
