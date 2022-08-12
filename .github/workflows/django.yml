@@ -24,12 +24,12 @@ jobs:
           # POSTGRES_DB: postgres_db
           # required
           POSTGRES_PASSWORD: travis
-          POSTGRES_PORT: 90009 #5432
+          POSTGRES_PORT: 9009 #5432
           # optional (defaults to `postgres`)
           POSTGRES_USER: postgres
         ports:
           # maps tcp port 5433 on service container to the host
-          - 90009:90009
+          - 9009:9009
         # set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -57,7 +57,7 @@ jobs:
 
       # queries database with postgres client
     - name: Query database
-      run: psql -h localhost -p 90009 -d postgres -U postgres -c 'SELECT 1;'
+      run: psql -h localhost -p 9009 -d postgres -U postgres -c 'SELECT 1;'
       env:
         # postgress password is required; alternatively, you can run:
         # `PGPASSWORD=postgres_password psql ...`
