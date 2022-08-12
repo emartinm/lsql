@@ -448,8 +448,7 @@ def test_error_500(request):
     """ Generates a server internal error, only for testing error reporting in deployment """
     if request.user and request.user.is_staff:
         div = (5 + 5) - (5 * 2)
-        test = sum([i for i in range(10)])
-        return HttpResponse(8 / 0)  # ZeroDivisionError, error 500
+        return HttpResponse(8 / div)  # ZeroDivisionError, error 500
     return HttpResponseNotFound()
 
 
