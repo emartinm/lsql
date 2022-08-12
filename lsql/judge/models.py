@@ -187,7 +187,7 @@ class Collection(models.Model):
         # Computes num. solved and score from problem statistics
         for _, user in users_dict.items():
             user.num_solved = len([True for info in user.results.values() if info['first_correct_submission'] > 0])
-            user.score = sum([info['first_correct_submission'] for info in user.results.values()])
+            user.score = sum(info['first_correct_submission'] for info in user.results.values())
 
         # Sorts users by descending number of solved problems and then ascending by score.
         ranking = sorted(users_dict.values(), key=lambda user: (-1 * user.num_solved, user.score))

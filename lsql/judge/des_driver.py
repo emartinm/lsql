@@ -40,7 +40,7 @@ def get_block(output, pos, sep):
     sep_pos = []
     for separator in sep:
         sep_pos.append(output.find(separator, pos))
-    first_separator = min([s for s in sep_pos if s >= 0])  # Position of the first separator found (discarding -1)
+    first_separator = min(s for s in sep_pos if s >= 0)  # Position of the first separator found (discarding -1)
     current_block = output[pos:first_separator]
     return current_block, first_separator
 

@@ -371,8 +371,8 @@ class ViewsTest(TestCase):
                                                 'start': first_day_of_course(datetime(2020, 9, 1)).strftime('%Y-%m-%d'),
                                                 'end': datetime(2021, 3, 7).strftime('%Y-%m-%d')},
                               follow=True)
-        self.assertIn('7 de Marzo de 2021 a las 17:45', response.content.decode('utf-8'))
-        self.assertIn('7 de Marzo de 2021 a las 18:22', response.content.decode('utf-8'))
+        self.assertIn('7 de marzo de 2021 a las 17:45', response.content.decode('utf-8'))
+        self.assertIn('7 de marzo de 2021 a las 18:22', response.content.decode('utf-8'))
         client.logout()
 
         client.login(username=teacher.username, password='12345')
@@ -727,7 +727,7 @@ class ViewsTest(TestCase):
 
         # Staff raises exception (will generate error 500)
         client.login(username='teacher', password='1111')
-        with self.assertRaises(IndexError, msg='list index out of range'):
+        with self.assertRaises(ZeroDivisionError, msg='division by zero'):
             client.get(error_500_rul, follow=True)
         client.logout()
 

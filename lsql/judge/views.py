@@ -447,7 +447,8 @@ def password_change_done(request):
 def test_error_500(request):
     """ Generates a server internal error, only for testing error reporting in deployment """
     if request.user and request.user.is_staff:
-        return HttpResponse([][55])  # list index out of range, error 500
+        div = (5 + 5) - (5 * 2)
+        return HttpResponse(8 / div)  # ZeroDivisionError, error 500
     return HttpResponseNotFound()
 
 
