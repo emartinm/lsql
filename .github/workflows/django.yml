@@ -90,10 +90,8 @@ jobs:
 
     - name: Django tests
       run: |
-        cd lsql
-        python manage.py test judge.tests.test_views
+        ./tests_travis.sh
       env:
-        ORACLE_HOME: /u01/app/oracle/product/11.2.0/xe
         ORACLE_SID: XE
         ORACLE_MAX_GESTOR_CONNECTIONS: 20
         ORACLE_GESTOR_POOL_TIMEOUT_MS: 20000
@@ -111,8 +109,6 @@ jobs:
         PG_SERVER: localhost
         PG_PORT: 5432
         PG_DB: postgres
-        PGVER: 12
-        PGPORT: 5432
         DJANGO_DEVELOPMENT: true
         DES_BIN: ~/des/des_start
         DES_TIMEOUT: 5
