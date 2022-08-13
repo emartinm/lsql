@@ -1,4 +1,4 @@
-name: Django unit tests and coverage
+name: Unit tests & full coverage
 
 on:
   push:
