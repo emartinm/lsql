@@ -1,4 +1,4 @@
-name: Unit tests % full coverage
+name: Unit tests & full coverage
 
 on:
   push:
