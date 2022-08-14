@@ -9,7 +9,7 @@ python manage.py collectstatic
 # Run tests and show a report with lines not covered in stdout
 coverage erase
 # coverage run manage.py test || exit 255  # Exits promptly if fails
-coverage run manage.py judge.tests.test_tags || exit 255  # Exits promptly if fails
+coverage run manage.py test judge.tests.test_tags || exit 255  # Exits promptly if fails
 coverage report -m
 
 # Generates XML report for codecov
