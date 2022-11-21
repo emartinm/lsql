@@ -20,7 +20,7 @@ psycopg2-binary==2.9.5
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.6
 pyexcel-ods3==0.6.1
-pylint==2.15.5
+pylint==2.15.6
 pylint-django==2.5.3
 pylint-plugin-utils==0.7
 pytz==2022.6
