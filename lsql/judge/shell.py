@@ -167,7 +167,6 @@ def extended_submissions(filename: str) -> None:
                                           'problem_type', ])
         writer.writeheader()
         ptype_cache = {}
-        sub_num = 0
         for sub in subs:
             sub_dict = {'creation_date': sub.creation_date,
                         'verdict': sub.verdict_code,
@@ -183,8 +182,6 @@ def extended_submissions(filename: str) -> None:
             if ptype is None:
                 ptype = str(Problem.objects.filter(pk=sub.problem.pk).select_subclasses()[0].problem_type())
             sub_dict['problem_type'] = ptype
-            sub_num += 1
-            print(sub_num)
             writer.writerow(sub_dict)
 
 
@@ -204,7 +201,6 @@ def submissions_per_user(filename: str) -> None:
     users = get_user_model().objects.filter(is_staff=False, is_active=True)
     dict_list = []
     for user in users:
-        print(user.email)
         user_info = Submission.objects.filter(user=user).aggregate(
             total_envios=Count('pk'),
             envios_AC=Count('pk', filter=Q(verdict_code='AC')),

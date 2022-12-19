@@ -180,11 +180,10 @@ class ShellTest(TestCase):
         problem2 = create_dml_problem(collection2, "Problem2")
         user1 = create_user(passwd='1111', username='user1', email='user1@ucm.es')
         user2 = create_user(passwd='1111', username='user2', email='user2@ucm.es')
-        subs = [
-            Submission(code='', verdict_code=VerdictCode.WA, user=user1, problem=problem1),
-            Submission(code='', verdict_code=VerdictCode.RE, user=user2, problem=problem1),
-            Submission(code='', verdict_code=VerdictCode.AC, user=user1, problem=problem2),
-        ]
+        sub1 = Submission(code='', verdict_code=VerdictCode.WA, user=user1, problem=problem1)
+        sub2 = Submission(code='', verdict_code=VerdictCode.RE, user=user2, problem=problem1)
+        sub3 = Submission(code='', verdict_code=VerdictCode.AC, user=user1, problem=problem2)
+        subs = [sub1, sub2, sub3]
         for sub in subs:
             sub.save()
 
@@ -196,29 +195,26 @@ class ShellTest(TestCase):
         with open(filename, 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             rows = list(reader)
-            # Submission 1
-            self.assertEqual(rows[0]['verdict'], 'WA')
-            self.assertEqual(rows[0]['user'], 'user1@ucm.es')
-            self.assertEqual(rows[0]['problem_name'], 'Problem1')
-            self.assertEqual(rows[0]['collection_name'], 'test collection1')
-            self.assertEqual(rows[0]['problem_type'], 'ProblemType.SELECT')
-            # Submission 2
-            self.assertEqual(rows[1]['verdict'], 'RE')
-            self.assertEqual(rows[1]['user'], 'user2@ucm.es')
-            self.assertEqual(rows[1]['problem_name'], 'Problem1')
-            self.assertEqual(rows[1]['collection_name'], 'test collection1')
-            self.assertEqual(rows[1]['problem_type'], 'ProblemType.SELECT')
-            # Submission 2
-            self.assertEqual(rows[2]['verdict'], 'AC')
-            self.assertEqual(rows[2]['user'], 'user1@ucm.es')
-            self.assertEqual(rows[2]['problem_name'], 'Problem2')
-            self.assertEqual(rows[2]['collection_name'], 'test collection2')
-            self.assertEqual(rows[2]['problem_type'], 'ProblemType.DML')
+            self.assertEqual(len(rows), 3)
+            #####
+            # Sometimes this test fails (nondeterministically) in GitHub Actions,
+            # never locally. Temporary printing the rows from the CSV file to
+            # help finding the bug
+            print(rows)
+            #####
+            # Check submission information in the CSV
+            for i, row in enumerate(rows):
+                self.assertEqual(row['verdict'], subs[i].verdict_code)
+                self.assertEqual(row['user'], subs[i].user.email)
+                self.assertEqual(row['problem_name'], subs[i].problem.title_html)
+                self.assertEqual(row['collection_name'], subs[i].problem.collection.name_html)
+                self.assertEqual(row['problem_type'], str(subs[i].problem.problem_type()))
 
         submissions_per_user(filename)
         with open(filename, 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             rows = list(reader)
+            self.assertEqual(len(rows), 2)
             # user1
             self.assertEqual(rows[0]['username'], 'user1@ucm.es')
             self.assertEqual(rows[0]['total_envios'], '2')
