@@ -7,7 +7,7 @@ dill==0.3.6
 Django==4.1.4
 django-model-utils==4.3.1
 gunicorn==20.1.0
-isort==5.11.3
+isort==5.11.4
 lazy-object-proxy==1.8.0
 lml==0.1.0
 logzero==1.7.0
