@@ -160,7 +160,7 @@ def rejudge(verdict_code, filename='rejudge.txt', tests=False,
 def extended_submissions(filename: str) -> None:
     """ Generates a CSV file with all students' submissions extended with some information about
         the user, the problem and the collection """
-    subs = Submission.objects.filter(user__is_staff=False, user__is_active=True)
+    subs = Submission.objects.filter(user__is_staff=False, user__is_active=True).order_by('creation_date')
     with open(filename, 'w', encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, ['creation_date', 'verdict', 'user', 'first_name', 'last_name',
                                           'problem_id', 'problem_name', 'collection_id', 'collection_name',
