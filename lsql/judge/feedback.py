@@ -77,7 +77,7 @@ def feedback_headers(expected, obtained, initial_db=None):
         if name_expected.upper() != name_obtained.upper():
             expected_r = _('Nombre esperado: {name}').format(name=name_expected)
             obtained_r = _('Nombre generado por tu código SQL: {name}').format(name=name_obtained)
-            comment = _('nombre de la {number}ª columna').format(number=(i+1))
+            comment = _('nombre de la {number}ª columna').format(number=i+1)
             return render_to_string('feedback_wa_headers.html',
                                     {'expected': expected_r,
                                      'comment': comment,

@@ -163,15 +163,13 @@ class OracleTest(TestCase):
             connect by level <= {int(os.environ['ORACLE_MAX_ROWS'])+1};
             """
         # Create a table with ORACLE_MAX_COLS + 1 columns
-        too_many_cols = "CREATE TABLE Test( "
-        for i in range(int(os.environ['ORACLE_MAX_COLS'])):
-            too_many_cols += f"col{i} NUMBER, "
-        too_many_cols += "col_end NUMBER);"
+        cols = (f"col{i} NUMBER" for i in range(int(os.environ['ORACLE_MAX_COLS']) + 1))
+        too_many_cols = "CREATE TABLE Test( " + ", ".join(cols) + ");"
 
         # Creates ORACLE_MAX_TABLES + 1 tables
         too_many_tables = ""
-        for i in range(int(os.environ['ORACLE_MAX_TABLES'])+1):
-            too_many_tables += f"CREATE TABLE table{i}(n NUMBER);"
+        too_many_tables = "; ".join(f"CREATE TABLE table{i}(n NUMBER)"
+                                    for i in range(int(os.environ['ORACLE_MAX_TABLES'])+1))
 
         oracle = OracleExecutor.get()
         problem = DMLProblem(title_md='Test DML', text_md='bla bla bla',
