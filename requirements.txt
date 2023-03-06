@@ -1,5 +1,5 @@
 asgiref==3.6.0
-astroid==2.14.2
+astroid==2.15.0
 beautifulsoup4==4.11.2
 coverage==7.2.1
 cx-Oracle==8.3.0
@@ -15,12 +15,12 @@ lxml==4.9.2
 Markdown==3.4.1
 mccabe==0.7.0
 multiset==3.0.1
-platformdirs==3.0.0
+platformdirs==3.1.0
 psycopg2-binary==2.9.5
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.6
 pyexcel-ods3==0.6.1
-pylint==2.16.2
+pylint==2.16.3
 pylint-django==2.5.3
 pylint-plugin-utils==0.7
 pytz==2022.7.1
@@ -31,4 +31,4 @@ toml==0.10.2
 tomli==2.0.1
 tomlkit==0.11.6
 typing_extensions==4.5.0
-wrapt==1.14.1
+wrapt==1.15.0
