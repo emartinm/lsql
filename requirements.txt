@@ -25,7 +25,7 @@ pylint-django==2.5.3
 pylint-plugin-utils==0.7
 pytz==2023.3
 six==1.16.0
-soupsieve==2.4
+soupsieve==2.4.1
 sqlparse==0.4.3
 toml==0.10.2
 tomli==2.0.1
