@@ -1,7 +1,7 @@
 asgiref==3.7.2
 astroid==2.15.5
 beautifulsoup4==4.12.2
-coverage==7.2.6
+coverage==7.2.7
 cx-Oracle==8.3.0
 dill==0.3.6
 Django==4.2.1
