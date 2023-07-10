@@ -1,5 +1,5 @@
 asgiref==3.7.2
-astroid==2.15.5
+astroid==2.15.6
 beautifulsoup4==4.12.2
 coverage==7.2.7
 cx-Oracle==8.3.0
