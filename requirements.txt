@@ -4,7 +4,7 @@ beautifulsoup4==4.12.2
 coverage==7.3.2
 cx-Oracle==8.3.0
 dill==0.3.7
-Django==4.2.5
+Django==4.2.6
 django-model-utils==4.3.1
 gunicorn==21.2.0
 isort==5.12.0
