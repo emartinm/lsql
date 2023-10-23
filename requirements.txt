@@ -1,5 +1,5 @@
 asgiref==3.7.2
-astroid==2.15.8
+astroid==3.0.1
 beautifulsoup4==4.12.2
 coverage==7.3.2
 cx-Oracle==8.3.0
@@ -21,7 +21,7 @@ psycopg2-binary==2.9.9
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.6
 pyexcel-ods3==0.6.1
-pylint==2.17.7
+pylint==3.0.2
 pylint-django==2.5.4
 pylint-plugin-utils==0.8.2
 pytz==2023.3.post1
