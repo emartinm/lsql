@@ -30,6 +30,6 @@ soupsieve==2.5
 sqlparse==0.4.4
 toml==0.10.2
 tomli==2.0.1
-tomlkit==0.12.1
+tomlkit==0.12.2
 typing_extensions==4.8.0
 wrapt==1.15.0
