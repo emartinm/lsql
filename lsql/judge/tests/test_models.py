@@ -146,12 +146,12 @@ class ModelsTest(TestCase):
 
         html = problem.judge("SELECT Sede, Nombre FROM Club WHERE CIF = '11111111X' and Nombre ='Madrid';", oracle)[1]
         soup = BeautifulSoup(html, 'html.parser')
-        # Dont show db if code is correct
+        # Don't show db if code is correct
         self.assertIsNone(soup.find(id="bd"))
 
         html = problem.judge("SELECT Sede, Nombre FROM Club WHERE CIF = '11111117X';", oracle)[1]
         soup = BeautifulSoup(html, 'html.parser')
-        # Dont show db if code is wrong in the first db
+        # Don't show db if code is wrong in the first db
         self.assertIsNone(soup.find(id="bd"))
 
         html = problem.judge("SELECT Sede, Nombre FROM Club;", oracle)[1]
@@ -159,7 +159,7 @@ class ModelsTest(TestCase):
         # Show second db if code is correct in the first db but not in the second db
         self.assertEqual(soup.find(id="bd").find('p').find('strong').string,
                          "Base de datos utilizada para la ejecución de tu código SQL:")
-        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[0].string, "CIF")
+        self.assertEqual(soup.find(id="bd").find('thead').find('th').string, "CIF")
         self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[1].string, "NOMBRE")
         self.assertEqual(len(soup.find(id="bd").find_all('thead')), 2)
         self.assertEqual(soup.find(id="bd").find_all('thead')[1].find_all('th')[0].string, "NIF")
