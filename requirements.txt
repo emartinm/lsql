@@ -4,14 +4,14 @@ beautifulsoup4==4.12.2
 coverage==7.4.0
 cx-Oracle==8.3.0
 dill==0.3.7
-Django==4.2.7
+Django==5.0.1
 django-model-utils==4.3.1
 gunicorn==21.2.0
 isort==5.13.2
 lazy-object-proxy==1.10.0
 lml==0.1.0
 logzero==1.7.0
-lxml==5.0.0
+lxml==5.1.0
 Markdown==3.5.1
 mccabe==0.7.0
 multiset==3.0.2
