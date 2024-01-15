@@ -12,7 +12,7 @@ lazy-object-proxy==1.10.0
 lml==0.1.0
 logzero==1.7.0
 lxml==5.1.0
-Markdown==3.5.1
+Markdown==3.5.2
 mccabe==0.7.0
 multiset==3.0.2
 packaging==23.2
