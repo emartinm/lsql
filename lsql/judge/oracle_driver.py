@@ -24,6 +24,41 @@ from django.core.serializers.json import DjangoJSONEncoder
 from .exceptions import ExecutorException
 from .types import OracleStatusCode
 
+typenames_map = {
+    # Based on https://python-oracledb.readthedocs.io/en/latest/user_guide/appendix_a.html
+    #          https://python-oracledb.readthedocs.io/en/latest/api_manual/module.html#dbtypes
+    oracledb.DB_TYPE_BFILE: 'BFILE',
+    oracledb.DB_TYPE_BINARY_DOUBLE: 'DOUBLE',
+    oracledb.DB_TYPE_BINARY_FLOAT: 'FLOAT',
+    oracledb.DB_TYPE_BINARY_INTEGER: 'INTEGER',
+    oracledb.DB_TYPE_BLOB: 'BLOB',
+    oracledb.DB_TYPE_BOOLEAN: 'BOOLEAN',
+    oracledb.DB_TYPE_CHAR: 'CHAR',
+    oracledb.DB_TYPE_CLOB: 'CLOB',
+    oracledb.DB_TYPE_CURSOR: 'CURSOR',
+    oracledb.DB_TYPE_DATE: 'DATE',
+    oracledb.DB_TYPE_INTERVAL_DS: 'INTERVAL DAY TO SECOND',
+    oracledb.DB_TYPE_INTERVAL_YM: 'INTERVAL YEAR TO MONTH',
+    oracledb.DB_TYPE_JSON: 'JSON',
+    oracledb.DB_TYPE_LONG: 'LONG',
+    oracledb.DB_TYPE_LONG_RAW: 'LONG RAW',
+    oracledb.DB_TYPE_LONG_NVARCHAR: 'STRING',  # not a database type
+    oracledb.DB_TYPE_NCHAR: 'NCHAR',
+    oracledb.DB_TYPE_NCLOB: 'NCLOB',
+    oracledb.DB_TYPE_NUMBER: 'NUMBER',
+    oracledb.DB_TYPE_NVARCHAR: 'NVARCHAR',
+    oracledb.DB_TYPE_OBJECT: 'OBJECT',
+    oracledb.DB_TYPE_RAW: 'RAW',
+    oracledb.DB_TYPE_ROWID: 'ROWID',
+    oracledb.DB_TYPE_TIMESTAMP: 'TIMESTAMP',
+    oracledb.DB_TYPE_TIMESTAMP_LTZ: 'TIMESTAMP WITH LOCAL TIME ZONE',
+    oracledb.DB_TYPE_TIMESTAMP_TZ: 'TIMESTAMP WITH TIME ZONE',
+    oracledb.DB_TYPE_UNKNOWN: 'UNKNOWN',
+    oracledb.DB_TYPE_UROWID: 'UROWID',
+    oracledb.DB_TYPE_VARCHAR: 'VARCHAR',
+    oracledb.DB_TYPE_XMLTYPE: 'XMLTYPE',
+}
+
 
 def create_insert_all(statements: str) -> Optional[str]:
     """ Given 0 or more "INSERT INTO" statements, returns one "INSERT ALL" to insert all the
@@ -149,6 +184,21 @@ def uniform_dict(dictionary):
     return json.loads(string_rep)
 
 
+def get_sql_type_name(typename) -> str:
+    """
+    Get a simplified str representing an oracledb SQL data type
+    :param typename: object representing the Oracle datatype as in
+    https://python-oracledb.readthedocs.io/en/latest/user_guide/appendix_a.html#supported-oracle-database-data-types
+    :return: simplified str representing the typename
+    """
+    regex = r"<DbType DB_TYPE_(\w*)>"
+    m = re.search(regex, str(typename))
+    mini_name = 'ERROR_OBTAINING_TYPE'
+    if len(m.groups()) >= 1:
+        mini_name = m.groups()[0]
+    return typenames_map.get(typename, mini_name)
+
+
 def table_from_cursor(cursor):
     """
     Takes a cursor that has executed a SELECT statement and returns all the results
@@ -171,7 +221,7 @@ def table_from_cursor(cursor):
     if len(cursor.description) > max_cols:
         logger.debug('TLE caused by too many columns in cursor')
         raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
-    table['header'] = [[e[0], str(e[1])] for e in cursor.description]
+    table['header'] = [[e[0], get_sql_type_name(e[1])] for e in cursor.description]
 
     batch = cursor.fetchmany(numRows=max_rows)  # Takes MAX rows
     if cursor.fetchone():  # There are more rows
