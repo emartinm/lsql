@@ -1,8 +1,9 @@
 asgiref==3.7.2
 astroid==3.0.2
 beautifulsoup4==4.12.3
+cffi==1.16.0
 coverage==7.4.1
-cx-Oracle==8.3.0
+cryptography==42.0.2
 dill==0.3.8
 Django==5.0.1
 django-model-utils==4.3.1
@@ -15,9 +16,11 @@ lxml==5.1.0
 Markdown==3.5.2
 mccabe==0.7.0
 multiset==3.0.2
+oracledb==2.0.1
 packaging==23.2
 platformdirs==4.1.0
 psycopg2-binary==2.9.9
+pycparser==2.21
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.6
 pyexcel-ods3==0.6.1
