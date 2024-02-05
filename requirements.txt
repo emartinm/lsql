@@ -27,7 +27,7 @@ pyexcel-ods3==0.6.1
 pylint==3.0.3
 pylint-django==2.5.5
 pylint-plugin-utils==0.8.2
-pytz==2023.3.post1
+pytz==2024.1
 six==1.16.0
 soupsieve==2.5
 sqlparse==0.4.4
