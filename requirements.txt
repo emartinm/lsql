@@ -18,7 +18,7 @@ mccabe==0.7.0
 multiset==3.0.2
 oracledb==2.0.1
 packaging==23.2
-platformdirs==4.1.0
+platformdirs==4.2.0
 psycopg2-binary==2.9.9
 pycparser==2.21
 pyexcel-ezodf==0.3.4
