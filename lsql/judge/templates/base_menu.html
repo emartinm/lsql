@@ -23,8 +23,10 @@
             {% if request.user.is_staff %}
             <a class="dropdown-item" href="{% url 'judge:statistics_submissions' %}">{% translate "Estadísticas del juez" %}</a>
             {% endif %}
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="{% url 'judge:logout' %}">{% translate "Cerrar sesión" %}</a>
+            <form class="px-3 py-1" method="post" action="{% url 'judge:logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary">{% translate "Cerrar sesión" %}</button>
+            </form>
           </ul>
         </li>
 {% endblock %}

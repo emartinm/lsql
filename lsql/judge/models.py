@@ -115,6 +115,9 @@ class Collection(models.Model):
     # (Dirty) trick to load problems from a ZIP fil by editing a collection using the standard admin interface of Django
     zipfile = models.FileField(upload_to='problem_zips/', default=None, blank=True, null=True)
 
+    class Meta:
+        ordering = ["name_html", "-creation_date"]
+
     def clean(self):
         """ Loads and overwrite data from the ZIP file (if it is set) and creates HTML from markdown """
         try:
