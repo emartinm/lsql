@@ -23,15 +23,15 @@ class LanguagesTest(TestCase):
 
     def test_languages_to_flags_templatetag(self):
         """Test to check if css classes for flags are correctly generated"""
-        self.assertEqual(languages_to_flags.language_to_flag("en"), "flag-icon flag-icon-us")
-        self.assertEqual(languages_to_flags.language_to_flag("es"), "flag-icon flag-icon-es")
+        self.assertEqual(languages_to_flags.language_to_flag("en"), "fi fi-us")
+        self.assertEqual(languages_to_flags.language_to_flag("es"), "fi fi-es")
 
     def test_collection_flags_templatetag(self):
         """Test to check if css classes for flags are correctly generated"""
-        self.assertIn("flag-icon flag-icon-us", languages_to_flags.collection_flags({"en"}))
-        self.assertIn("flag-icon flag-icon-us", languages_to_flags.collection_flags({"es", "en"}))
-        self.assertIn("flag-icon flag-icon-es", languages_to_flags.collection_flags({"es", "en"}))
-        self.assertNotIn("flag-icon flag-icon-us", languages_to_flags.collection_flags({"es"}))
+        self.assertIn("fi fi-us", languages_to_flags.collection_flags({"en"}))
+        self.assertIn("fi fi-us", languages_to_flags.collection_flags({"es", "en"}))
+        self.assertIn("fi fi-es", languages_to_flags.collection_flags({"es", "en"}))
+        self.assertNotIn("fi fi-us", languages_to_flags.collection_flags({"es"}))
 
     def test_login_language(self):
         """Test to check if language in login page displays correctly"""
@@ -251,16 +251,16 @@ class LanguagesTest(TestCase):
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:login')
         response = client.get(url, follow=True)
-        self.assertIn('flag-icon-us', response.content.decode('utf-8'))
-        self.assertNotIn('flag-icon-es', response.content.decode('utf-8'))
+        self.assertIn('fi-us', response.content.decode('utf-8'))
+        self.assertNotIn('fi-es', response.content.decode('utf-8'))
         self.assertIn('value="en" selected', response.content.decode('utf-8'))
         self.assertNotIn('value="es" selected', response.content.decode('utf-8'))
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
         url = reverse('judge:login')
         response = client.get(url, follow=True)
-        self.assertIn('flag-icon-es', response.content.decode('utf-8'))
-        self.assertNotIn('flag-icon-us', response.content.decode('utf-8'))
+        self.assertIn('fi-es', response.content.decode('utf-8'))
+        self.assertNotIn('fi-us', response.content.decode('utf-8'))
         self.assertIn('value="es" selected', response.content.decode('utf-8'))
         self.assertNotIn('value="en" selected', response.content.decode('utf-8'))
 
@@ -323,7 +323,7 @@ class LanguagesTest(TestCase):
         html = client.get(collections_url, follow=True).content.decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
 
-        self.assertEqual(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"}), [])
+        self.assertEqual(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"fi"}), [])
 
         problem3 = SelectProblem(title_md='Dates', text_md='Example with dates', language="en",
                                  create_sql=create, insert_sql=insert, collection=collection,
@@ -338,13 +338,13 @@ class LanguagesTest(TestCase):
         html = client.get(collections_url, follow=True).content.decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
 
-        self.assertEqual(len(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})), 2)
+        self.assertEqual(len(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"fi"})), 2)
 
-        flags = soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})[0]['class']
-        flags.extend(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})[1]['class'])
+        flags = soup.find_all("div", {"class": "flags"})[0].find_all("span", {"fi"})[0]['class']
+        flags.extend(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"fi"})[1]['class'])
 
-        self.assertIn("flag-icon-us", flags)
-        self.assertIn("flag-icon-es", flags)
+        self.assertIn("fi-us", flags)
+        self.assertIn("fi-es", flags)
 
     def test_help_page_language(self):
         """Test to check help page language"""
