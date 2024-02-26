@@ -1,5 +1,5 @@
 asgiref==3.7.2
-astroid==3.0.3
+astroid==3.1.0
 beautifulsoup4==4.12.3
 cffi==1.16.0
 coverage==7.4.1
