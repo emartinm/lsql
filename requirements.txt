@@ -24,7 +24,7 @@ pycparser==2.21
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.6
 pyexcel-ods3==0.6.1
-pylint==3.0.3
+pylint==3.1.0
 pylint-django==2.5.5
 pylint-plugin-utils==0.8.2
 pytz==2024.1
