@@ -16,7 +16,7 @@ lxml==5.1.0
 Markdown==3.6
 mccabe==0.7.0
 multiset==3.0.2
-oracledb==2.1.0
+oracledb==2.1.1
 packaging==24.0
 platformdirs==4.2.0
 psycopg2-binary==2.9.9
