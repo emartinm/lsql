@@ -1,4 +1,4 @@
-asgiref==3.7.2
+asgiref==3.8.1
 astroid==3.1.0
 beautifulsoup4==4.12.3
 cffi==1.16.0
