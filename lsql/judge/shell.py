@@ -8,6 +8,7 @@ For example: create a group of users from a CSV list of students
 
 import csv
 import datetime
+import secrets
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -55,11 +56,14 @@ def create_users_from_list(dict_list, group: Group, dry: bool):
     Dictionaries have the following keys:
       FOTOGRAFÍA,NOMBRE COMPLETO,DOCUMENTO,ASIGNATURA,MAT.,CONV.,OBSERVACIÓN,CORREO,TELÉFONO
     """
-    assert group  # Group is set
+    if not group:
+        raise AssertionError  # Group is set
     for user_dict in dict_list:
         email = user_dict['CORREO']
-        assert email
-        assert email.split('@')[1] == 'ucm.es'  # We want official UCM emails
+        if not email:
+            raise AssertionError
+        if not email.split('@')[1] == 'ucm.es':
+            raise AssertionError  # We want official UCM emails
         username = email.split('@')[0]
         password = user_dict['DOCUMENTO']
         if ',' in user_dict['NOMBRE COMPLETO']:
@@ -70,10 +74,14 @@ def create_users_from_list(dict_list, group: Group, dry: bool):
             last_name = '_'
 
         # Safety checks
-        assert username
-        assert password
-        assert first_name
-        assert last_name
+        if not username:
+            raise AssertionError
+        if not password:
+            raise AssertionError
+        if not first_name:
+            raise AssertionError
+        if not last_name:
+            raise AssertionError
 
         if not dry:
             user = get_user_model().objects.create_user(username, email, password)
@@ -115,8 +123,8 @@ def rejudge(verdict_code, filename='rejudge.txt', tests=False,
         submit the code, compares the verdict, and stores detailed information in the 'filename'.
         Use tests=False for Django tests, tests=True for normal use
     """
-    username = 'rejudge_user_test_983'
-    passwd = '1111'
+    username = f'rejudge_user_test_{secrets.token_hex(nbytes=8)}'
+    passwd = secrets.token_hex(nbytes=16)
     user = None
 
     try:

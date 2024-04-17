@@ -9,11 +9,11 @@ Class to connect to Oracle and execute the different types of problems
 # Requires Oracle Client 19 (LTS) to connect to Oracle Database 11.2 or later in oracledb "thick mode"
 
 import string
-import random
 import os
 import re
 import json
 from typing import Optional
+import secrets
 import oracledb
 from logzero import logger
 import sqlparse
@@ -143,17 +143,13 @@ def clean_sql(code: str, min_stmt: int = None, max_stmt: int = None):
     return statements
 
 
-def random_str(alphabet, size=8):
+def random_str(size=8):
     """
-    Creates a random string of 'n' letters from 'alphabet'
-    :param alphabet: Candidate letters
+    Creates a random string of 2*n hexadecimal letters from
     :param size: Length of the generated random string
-    :return: Random string of 'n' letters from 'alphabet'
+    :return: Random string of 2*n hexadecimal letters
     """
-    ret = ''
-    for _ in range(size):
-        ret += random.choice(alphabet)
-    return ret
+    return secrets.token_hex(size)
 
 
 def line_col_from_offset(code: str, offset: int):
@@ -251,12 +247,13 @@ def get_all_tables(conn):
         db_dict = {}
         for table_name in tb_names:
             # https://docs.oracle.com/database/121/SQLRF/sql_elements008.htm#SQLRF51129
-            # Quoted names should be embedded with "..." in order to work. We try
-            # both versions for table names, ignoring possible exceptions.
-            try:
-                cursor.execute(f"SELECT * FROM {table_name}")  # Direct name
-            except oracledb.DatabaseError:
-                cursor.execute(f'SELECT * FROM "{table_name}"')  # Quoted name
+            # Quoted names should be embedded with "..." in order to work.
+            # We try quoted versions, as USER_TABLES contain case sensitive names
+            # NOTE: table names cannot be bound to parameters, so we use f-strings and trust its content
+            # as they come directly from the schema
+            # https://python-oracledb.readthedocs.io/en/latest/user_guide/bind.html#binding-column-and-table-names
+            cursor.execute(f'SELECT * FROM "{table_name}"')  # nosec B608
+            # Quoted name, succeeds even with unquoted names
             table = table_from_cursor(cursor)
             db_dict[table_name] = table
 
@@ -461,8 +458,8 @@ class OracleExecutor:
         :param connection: Connection with privileges for creating users
         :return: A pair (username, password) of the created user
         """
-        user_name = self.__USER_PREFIX + random_str(self.__ALPHABET)
-        user_passwd = random_str(self.__ALPHABET)
+        user_name = f'{self.__USER_PREFIX}{random_str(8)}'
+        user_passwd = random_str(8)
         create_script = self.__CREATE_USER_SCRIPT.format(
             user_name,
             user_passwd,
@@ -735,7 +732,7 @@ class OracleExecutor:
             state = OracleStatusCode.EXECUTE_USER_CODE
 
             # sqlparse does not consider the whole CREATE FUNCTION as a single statement, so we cannot check
-            # the minimum and maximum number of statements in this kind of problems :-(
+            # the minimum and maximum number of statements in this kind of problem :-(
 
             with conn.cursor() as cursor:
                 stmt = func_creation
@@ -752,6 +749,7 @@ class OracleExecutor:
                 tests = [s.strip() for s in tests.split('\n') if len(s.strip()) > 0]
                 for stmt in tests:
                     func_call = f'SELECT {stmt} FROM DUAL'
+                    # Function calls cannot be bound by parameters
                     cursor.execute(func_call)
                     res_type = str(cursor.description[0][1])
                     row = cursor.fetchone()

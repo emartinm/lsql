@@ -150,7 +150,7 @@ class ShellTest(TestCase):
         """ Test that rejudge correctly detects submission whose verdict changes """
         collection = create_collection("test collection")
         problem = create_select_problem(collection, "example")
-        user = create_user(passwd='1111', username='user_Test')
+        user = create_user(passwd='1111', username='user_Test')  # nosec B106
         subs = [
             Submission(code=problem.solution, verdict_code=VerdictCode.IE, user=user, problem=problem),  # IE->AC
             Submission(code='SELECT * FROM dual', verdict_code=VerdictCode.IE, user=user, problem=problem),  # IE->WA
@@ -178,8 +178,8 @@ class ShellTest(TestCase):
         collection2 = create_collection("test collection2")
         problem1 = create_select_problem(collection1, "Problem1")
         problem2 = create_dml_problem(collection2, "Problem2")
-        user1 = create_user(passwd='1111', username='user1', email='user1@ucm.es')
-        user2 = create_user(passwd='1111', username='user2', email='user2@ucm.es')
+        user1 = create_user(passwd='1111', username='user1', email='user1@ucm.es')  # nosec B106
+        user2 = create_user(passwd='1111', username='user2', email='user2@ucm.es')  # nosec B106
         sub1 = Submission(code='', verdict_code=VerdictCode.WA, user=user1, problem=problem1)
         sub2 = Submission(code='', verdict_code=VerdictCode.RE, user=user2, problem=problem1)
         sub3 = Submission(code='', verdict_code=VerdictCode.AC, user=user1, problem=problem2)

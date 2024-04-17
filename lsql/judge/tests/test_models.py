@@ -47,8 +47,9 @@ class ModelsTest(TestCase):
         problem3 = SelectProblem(title_md='Dates', text_md='Example with dates',
                                  create_sql=create, insert_sql=insert, collection=collection,
                                  solution=solution)
-        user1 = user_model.objects.create_user(username='usuario1', email='algo@ucm.es', password='1234')
-        user2 = user_model.objects.create_user(username='usuario2', email='algodistinto@ucm.es', password='1234')
+        user1 = user_model.objects.create_user(username='usuario1', email='algo@ucm.es', password='1234')  # nosec B106
+        user2 = user_model.objects.create_user(username='usuario2', email='algodistinto@ucm.es',
+                                               password='1234')  # nosec B106
         problem1.clean()
         problem1.save()
         problem2.clean()
@@ -198,10 +199,12 @@ class ModelsTest(TestCase):
         problem2 = SelectProblem(title_md='Dates', text_md='Example with dates',
                                  create_sql=create, insert_sql=insert, collection=collection,
                                  solution=solution)
-        user1 = user_model.objects.create_user(username='usuario1', email='algo@ucm.es', password='1234')
-        user2 = user_model.objects.create_user(username='usuario2', email='algodistinto@ucm.es', password='1234')
-        user3 = user_model.objects.create_user(username='usuario3', email='algo2@ucm.es', password='1234')
-        user4 = user_model.objects.create_user(username='usuario4', email='algo3@ucm.es', password='1234')
+        user1 = user_model.objects.create_user(username='usuario1', email='algo@ucm.es',
+                                               password='1234')   # nosec B106
+        user2 = user_model.objects.create_user(username='usuario2', email='algodistinto@ucm.es',
+                                               password='1234')  # nosec B106
+        user3 = user_model.objects.create_user(username='usuario3', email='algo2@ucm.es', password='1234')  # nosec B106
+        user4 = user_model.objects.create_user(username='usuario4', email='algo3@ucm.es', password='1234')  # nosec B106
 
         problem1.clean()
         problem1.save()
@@ -332,10 +335,12 @@ class ModelsTest(TestCase):
 
     def test_solved_n_position(self):
         """ Test that solved_n_position does not count staff or inactive users """
-        staff_user = get_user_model().objects.create_user('teacher', password='1234', is_staff=True, is_active=True)
+        staff_user = get_user_model().objects.create_user('teacher', password='1234', is_staff=True,
+                                                          is_active=True)  # nosec B106
         inactive_user = get_user_model().objects.create_user('inactive', password='1234', is_staff=False,
-                                                             is_active=False)
-        user = get_user_model().objects.create_user('normal', password='1234', is_staff=False, is_active=True)
+                                                             is_active=False)  # nosec B106
+        user = get_user_model().objects.create_user('normal', password='1234', is_staff=False,
+                                                    is_active=True)  # nosec B106
 
         collection = Collection(name_md='ABC', description_md='blablabla')
         collection.clean()

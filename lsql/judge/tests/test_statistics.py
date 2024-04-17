@@ -92,11 +92,11 @@ class StatisticsTest(TestCase):
     def test_participation(self):
         """ Test the count of participating users in a group """
         group = create_group('Grupo test')
-        user1 = create_user(username='u1', passwd='1111')
-        user2 = create_user(username='u2', passwd='1111')
-        user3 = create_user(username='u3', passwd='1111')
-        user4 = create_user(username='u4', passwd='1111')
-        user5 = create_user(username='u5', passwd='1111')
+        user1 = create_user(username='u1', passwd='1111')  # nosec B106
+        user2 = create_user(username='u2', passwd='1111')  # nosec B106
+        user3 = create_user(username='u3', passwd='1111')  # nosec B106
+        user4 = create_user(username='u4', passwd='1111')  # nosec B106
+        user5 = create_user(username='u5', passwd='1111')  # nosec B106
         collection = create_collection('Test for statistics')
         problem = create_select_problem(collection, 'Dummy for statistics')
 
@@ -137,8 +137,8 @@ class StatisticsTest(TestCase):
         create_group('empty_group')  # Should not appear in results
         only_staff_group = create_group('only_staff_group')  # Should not appear in results
         group = create_group('standard_group')
-        users = [create_user(username=name, passwd='1111') for name in ['u1', 'u2', 'u3', 'u4', 'u5']]
-        staff_user = create_superuser(username='staff_user', passwd='1111')
+        users = [create_user(username=name, passwd='1111') for name in ['u1', 'u2', 'u3', 'u4', 'u5']]  # nosec B106
+        staff_user = create_superuser(username='staff_user', passwd='1111')  # nosec B106
         collection = create_collection('Test for statistics')
         problem = create_select_problem(collection, 'Dummy for statistics')
 

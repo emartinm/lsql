@@ -59,7 +59,7 @@ class LanguagesTest(TestCase):
         client = Client()
 
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:collections')
@@ -91,7 +91,7 @@ class LanguagesTest(TestCase):
         client = Client()
 
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:password_change')
@@ -125,7 +125,7 @@ class LanguagesTest(TestCase):
         client = Client()
 
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:submissions')
@@ -155,7 +155,7 @@ class LanguagesTest(TestCase):
         problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
         problem.clean()
         problem.save()
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:problem', args=[problem.pk])
@@ -181,7 +181,7 @@ class LanguagesTest(TestCase):
         problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
         problem.clean()
         problem.save()
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:problem', args=[problem.pk])
@@ -201,7 +201,7 @@ class LanguagesTest(TestCase):
         client = Client()
         collection = create_collection('Colleccion de prueba XYZ')
         create_user('5555', 'pedro')
-        client.login(username='pedro', password='5555')
+        client.login(username='pedro', password='5555')  # nosec B106
 
         expected = {'header': [['Algo', "<class 'cx_Oracle.NUMBER'>"], ['name', "<class 'cx_Oracle.STRING'>"]],
                     'rows': [[1, 'a'], [2, 'b']]}
@@ -269,7 +269,7 @@ class LanguagesTest(TestCase):
         client = Client()
         collection = create_collection('Colleccion de prueba XYZ')
         user = create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
         group_a = create_group('1A')
         group_a.user_set.add(user)
 
@@ -300,7 +300,7 @@ class LanguagesTest(TestCase):
         client = Client()
         collection = create_collection('Collection', author=create_superuser('0000', 'teacher1'))
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         create = 'CREATE TABLE mytable (dd DATE);'
         insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'YYYY/MM/DD'))"
@@ -350,7 +350,7 @@ class LanguagesTest(TestCase):
         """Test to check help page language"""
         client = Client()
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         help_url = reverse('judge:help')
@@ -404,7 +404,7 @@ class LanguagesTest(TestCase):
         coll = create_collection('Achievements')
         problem = create_select_problem(coll, 'Select1')
         user = create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
         submit_select_url = reverse('judge:submit', args=[problem.pk])
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
         client.post(submit_select_url, {'code': problem.solution}, follow=True)

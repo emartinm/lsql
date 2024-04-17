@@ -88,8 +88,8 @@ class OracleTest(TestCase):
 
         # Time-limit
         tle = SELECT_TLE
-        too_many_rows = f"select * from dual connect by level <= {int(os.environ['ORACLE_MAX_ROWS'])+1};"
-        too_many_cols = f"select {','.join(['1']*(int(os.environ['ORACLE_MAX_COLS'])+1))} from dual;"
+        too_many_rows = f"select * from dual connect by level <= {int(os.environ['ORACLE_MAX_ROWS']) + 1};"
+        too_many_cols = f"select {','.join(['1'] * (int(os.environ['ORACLE_MAX_COLS']) + 1))} from dual;"
         self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
         self.assert_executor_exception(lambda: problem.judge(too_many_rows, oracle),
                                        OracleStatusCode.TLE_USER_CODE)
@@ -99,8 +99,8 @@ class OracleTest(TestCase):
         # Validation error (only one statement supported)
         self.assert_executor_exception(lambda: problem.judge('', oracle), OracleStatusCode.NUMBER_STATEMENTS)
         self.assert_executor_exception(lambda: problem.judge('SELECT * FROM "Nombre Club"; SELECT * '
-                                                                    'FROM "Nombre Club"',
-                                                                    oracle), OracleStatusCode.NUMBER_STATEMENTS)
+                                                             'FROM "Nombre Club"',
+                                                             oracle), OracleStatusCode.NUMBER_STATEMENTS)
 
         # Runtime error
         self.assert_executor_exception(lambda: problem.judge('SELECT * from "Nombre ClubE"', oracle),
@@ -160,7 +160,7 @@ class OracleTest(TestCase):
         too_many_rows = f"""
             INSERT INTO Club
             SELECT level || '3333X', level || 'a', 'b', 45 from dual 
-            connect by level <= {int(os.environ['ORACLE_MAX_ROWS'])+1};
+            connect by level <= {int(os.environ['ORACLE_MAX_ROWS']) + 1};
             """
         # Create a table with ORACLE_MAX_COLS + 1 columns
         cols = (f"col{i} NUMBER" for i in range(int(os.environ['ORACLE_MAX_COLS']) + 1))
@@ -169,7 +169,7 @@ class OracleTest(TestCase):
         # Creates ORACLE_MAX_TABLES + 1 tables
         too_many_tables = ""
         too_many_tables = "; ".join(f"CREATE TABLE table{i}(n NUMBER)"
-                                    for i in range(int(os.environ['ORACLE_MAX_TABLES'])+1))
+                                    for i in range(int(os.environ['ORACLE_MAX_TABLES']) + 1))
 
         oracle = OracleExecutor.get()
         problem = DMLProblem(title_md='Test DML', text_md='bla bla bla',
@@ -337,7 +337,6 @@ class OracleTest(TestCase):
         # Incorrect solution
         self.assertEqual(problem.judge(wrong_answer, oracle)[0], VerdictCode.WA)
         self.assertEqual(problem.judge(wrong_answer2, oracle)[0], VerdictCode.WA)
-
 
     def test_proc(self):
         """Tests for ProcProblem.judge()"""
@@ -609,8 +608,8 @@ END;"""
         insert = "INSERT INTO test VALUES (TO_DATE('2003/07/09', 'YYYY/MM/DD'))"
         solution = 'SELECT * FROM test'
         select_problem = SelectProblem(title_md='Dates', text_md='Example with dates',
-                                create_sql=create, insert_sql=insert, collection=collection,
-                                solution=solution)
+                                       create_sql=create, insert_sql=insert, collection=collection,
+                                       solution=solution)
         select_problem.clean()
         select_problem.save()
         oracle = OracleExecutor.get()

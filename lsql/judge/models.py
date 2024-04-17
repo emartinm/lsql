@@ -6,7 +6,7 @@ Models to store objects in the DB
 """
 from zipfile import ZipFile
 import markdown
-from lxml import html
+from defusedxml import ElementTree as DET
 from model_utils.managers import InheritanceManager
 
 from django.utils import timezone
@@ -30,11 +30,11 @@ from .exceptions import ZipFileParsingException, DESException
 
 
 def markdown_to_html(markdown_text, remove_initial_p=False):
-    """Converts a markdown string into HTML (posibbly removing initial paragraph <p>....</p>"""
-    html_code = markdown.markdown(markdown_text, output_format='html5').strip()
-    tree = html.fromstring(html_code)
-    if remove_initial_p and tree.tag == 'p':
-        # Removes the surrounding <p></p> in one paragraph html
+    """Converts a markdown string into HTML (possibly removing initial paragraph <p>....</p>) """
+    html_code = markdown.markdown(markdown_text, output_format='html').strip()
+    tree = DET.fromstring(f'<span>{html_code}</span>')
+    if remove_initial_p and tree[0].tag == 'p':
+        # Removes the surrounding <p></p> in one html paragraph
         html_code = html_code[3:-4]
     return html_code
 
@@ -134,7 +134,10 @@ class Collection(models.Model):
 
     def __str__(self):
         """String to show in the Admin"""
-        return html.fromstring(self.name_html).text_content() if self.name_html else self.name_md
+        name_str = self.name_md
+        if self.name_html:
+            name_str = DET.fromstring(f'<p>{self.name_html}</p>').text
+        return name_str
 
     def problems(self):
         """Returns a list of Problem objects in the collection using the inverse FK from Problem to Collection"""

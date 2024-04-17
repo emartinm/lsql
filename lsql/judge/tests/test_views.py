@@ -104,7 +104,7 @@ class ViewsTest(TestCase):
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         problem_dml = create_dml_problem(collection, 'DMLProblem')
         submission = create_submission(problem, user, VerdictCode.AC, 'select *** from *** where *** and more')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         collections_url = reverse('judge:collections')
         collection_url = reverse('judge:collection', args=[collection.pk])
@@ -191,7 +191,7 @@ class ViewsTest(TestCase):
 
         # Only submission from the same user
         client.logout()
-        client.login(username='ana', password='1234')
+        client.login(username='ana', password='1234')  # nosec B106
         # Submission contains user code
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
@@ -200,7 +200,7 @@ class ViewsTest(TestCase):
         client.logout()
         # create a teacher and show submission to user pepe
         teacher = create_superuser('1111', 'teacher')
-        client.login(username=teacher.username, password='1111')
+        client.login(username=teacher.username, password='1111')  # nosec B106
         response = client.get(submissions_url, {
             'problem_id': problem_dml.pk, 'user_id': user.id,
             'start': first_day_of_course(datetime(2020, 9, 1)).strftime('%Y-%m-%d'),
@@ -222,21 +222,21 @@ class ViewsTest(TestCase):
         submission_url = reverse('judge:submission', args=[submission.pk])
 
         # The same user can access submission details
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('select *** from *** where *** and more', response.content.decode('utf-8'))
         client.logout()
 
         # A teacher can access submission details from a different user
-        client.login(username='mr_teacher', password='aaaa')
+        client.login(username='mr_teacher', password='aaaa')  # nosec B106
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('select *** from *** where *** and more', response.content.decode('utf-8'))
         client.logout()
 
         # Non-teacher user cannot access submission details from a different user
-        client.login(username='ana', password='1234')
+        client.login(username='ana', password='1234')  # nosec B106
         response = client.get(submission_url, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         self.assertIn('Forbidden', response.content.decode('utf-8'))
@@ -261,7 +261,7 @@ class ViewsTest(TestCase):
         trigger_problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
 
         client = Client()
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
             problem.clean()
@@ -290,7 +290,7 @@ class ViewsTest(TestCase):
         trigger_problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
 
         client = Client()
-        client.login(username='antonio', password='54522')
+        client.login(username='antonio', password='54522')  # nosec B106
 
         for problem in [select_problem, dml_problem, function_problem, proc_problem, trigger_problem]:
             problem.clean()
@@ -341,7 +341,7 @@ class ViewsTest(TestCase):
         end = datetime(2021, 3, 7).strftime('%Y-%m-%d')
 
         # I connect to a student and in the URL I insert dates
-        client.login(username=user_1.username, password='12345')
+        client.login(username=user_1.username, password='12345')  # nosec B106
         # the first student makes three submissions (1/3 (3))
         sub1 = Submission.objects.create(code='SELECT * FROM test where n = 1000',
                                          user=user_1, verdict_code=VerdictCode.WA, problem=select_problem)
@@ -357,7 +357,7 @@ class ViewsTest(TestCase):
         Submission.objects.filter(id=sub3.id).update(creation_date=datetime(2021, 3, 7).astimezone())
 
         client.logout()
-        client.login(username=user_2.username, password='12345')
+        client.login(username=user_2.username, password='12345')  # nosec B106
         # the second student makes two submissions (1/2 (1))
         sub4 = Submission.objects.create(code=select_problem.solution,
                                          user=user_2, verdict_code=VerdictCode.AC, problem=select_problem)
@@ -375,7 +375,7 @@ class ViewsTest(TestCase):
         self.assertIn('7 de marzo de 2021 a las 18:22', response.content.decode('utf-8'))
         client.logout()
 
-        client.login(username=teacher.username, password='12345')
+        client.login(username=teacher.username, password='12345')  # nosec B106
         response = client.get(classification_url, {
             'group': group_a.id, 'start': start, 'end': end}, follow=True)
         self.assertIn(user_2.username, response.content.decode('utf-8'))
@@ -443,7 +443,7 @@ class ViewsTest(TestCase):
         # Checks access to rankings: 'pepe' only to group A, 'ana' to group A and B,
         # 'iker' also to both groups as staff
         client = Client()
-        client.login(username='pepe', password='12345')
+        client.login(username='pepe', password='12345')  # nosec B106
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
@@ -454,7 +454,7 @@ class ViewsTest(TestCase):
         self.assertIn('1A', response.content.decode('utf-8'))
         client.logout()
 
-        client.login(username='ana', password='12345')
+        client.login(username='ana', password='12345')  # nosec B106
         response = client.get(classification_url, {'group': group_a.id}, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, {'group': group_b.id}, follow=True)
@@ -464,7 +464,7 @@ class ViewsTest(TestCase):
         self.assertIn('1B', response.content.decode('utf-8'))
         client.logout()
 
-        client.login(username='iker', password='12345')
+        client.login(username='iker', password='12345')  # nosec B106
         response = client.get(classification_url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         response = client.get(classification_url, {'group': group_b.id, 'start': start, 'end': end}, follow=True)
@@ -525,7 +525,7 @@ class ViewsTest(TestCase):
         start = first_day_of_course(datetime(2020, 9, 1)).strftime('%Y-%m-%d')
         end = datetime.today().strftime('%Y-%m-%d')
         # use the teacher to view the two groups
-        client.login(username=teacher.username, password='12345')
+        client.login(username=teacher.username, password='12345')  # nosec B106
         classification_url = reverse('judge:result', args=[collection.pk])
         # Group b is forbidden because it has no students
         response = client.get(classification_url, {
@@ -557,7 +557,7 @@ class ViewsTest(TestCase):
         client.logout()
 
         # I connect to pepe at 1b
-        client.login(username=user_1.username, password='12345')
+        client.login(username=user_1.username, password='12345')  # nosec B106
         response = client.get(classification_url, {'group': 'patato'}, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertIn('Introduzca un número entero', response.content.decode('utf_8'))
@@ -577,7 +577,7 @@ class ViewsTest(TestCase):
             self.assertIn(expected, response.content.decode('utf-8'))
 
         client.logout()
-        client.login(username=user_2.username, password='12345')
+        client.login(username=user_2.username, password='12345')  # nosec B106
 
         Submission.objects.create(problem=select_problem, code='  ', verdict_code=VerdictCode.AC, user=user_2)
         Submission.objects.create(problem=select_problem, code='  ', verdict_code=VerdictCode.AC, user=user_2)
@@ -615,7 +615,7 @@ class ViewsTest(TestCase):
         group.user_set.add(user)
         result_url = reverse('judge:results')
         # user with group can view the page results
-        client.login(username=user.username, password='123456')
+        client.login(username=user.username, password='123456')  # nosec B106
 
         response = client.get(result_url, follow=True)
         title = 'Colecciones'
@@ -627,7 +627,7 @@ class ViewsTest(TestCase):
 
         # I connect with a teacher without groups
         teacher = create_superuser('12345', 'teacher')
-        client.login(username=teacher.username, password='12345')
+        client.login(username=teacher.username, password='12345')  # nosec B106
         response = client.get(result_url, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
@@ -643,13 +643,13 @@ class ViewsTest(TestCase):
         result_url = reverse('judge:results')
         classification_url = reverse('judge:result', args=[collection.pk])
 
-        client.login(username=user.username, password='123456')
+        client.login(username=user.username, password='123456')  # nosec B106
         for url in [result_url, classification_url]:
             response = client.get(url, follow=True)
             self.assertEqual(response.status_code, HTTPStatus.OK)
         client.logout()
 
-        client.login(username=teacher.username, password='12345')
+        client.login(username=teacher.username, password='12345')  # nosec B106
         for url in [result_url, classification_url]:
             response = client.get(url, follow=True)
             self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -673,7 +673,7 @@ class ViewsTest(TestCase):
                          [(login_redirect_submission, 302)])
 
         # Download your own code submission
-        client.login(username='tamara', password='2222')
+        client.login(username='tamara', password='2222')  # nosec B106
         url = reverse('judge:download_submission', args=[submission.pk])
         response = client.get(url, follow=True)
         self.assertEqual(
@@ -688,13 +688,13 @@ class ViewsTest(TestCase):
 
         # Download code submission from another user
         client.logout()
-        client.login(username='juan', password='3333')
+        client.login(username='juan', password='3333')  # nosec B106
         response = client.get(url, follow=True)
         self.assertIn('Forbidden', response.content.decode('UTF-8'))
 
         # Superuser download code submission
         client.logout()
-        client.login(username=teacher.username, password='1111')
+        client.login(username=teacher.username, password='1111')  # nosec B106
         url = reverse('judge:download_submission', args=[submission.pk])
         response = client.get(url, follow=True)
         self.assertEqual(
@@ -720,13 +720,13 @@ class ViewsTest(TestCase):
         self.assertIn("Entrar", response.content.decode('utf_8'))
 
         # Students obtain 404
-        client.login(username='tamara', password='2222')
+        client.login(username='tamara', password='2222')  # nosec B106
         response = client.get(error_500_rul, follow=True)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         client.logout()
 
         # Staff raises exception (will generate error 500)
-        client.login(username='teacher', password='1111')
+        client.login(username='teacher', password='1111')  # nosec B106
         with self.assertRaises(ZeroDivisionError, msg='division by zero'):
             client.get(error_500_rul, follow=True)
         client.logout()
@@ -785,7 +785,7 @@ class ViewsTest(TestCase):
         dml_problem = create_dml_complete_problem(collection, 'random')
 
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         problem_url = reverse('judge:problem', args=[dml_problem.pk])
         response = client.get(problem_url, follow=True)
@@ -801,7 +801,7 @@ class ViewsTest(TestCase):
         client = Client()
         help_url = reverse('judge:help')
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
         content = client.get(help_url, follow=True).content.decode('utf-8')
         self.assertIn("Presentación", content)
 
@@ -814,7 +814,7 @@ class ViewsTest(TestCase):
 
         # Staff user
         create_superuser('0000', username='staff')
-        client.login(username='staff', password='0000')
+        client.login(username='staff', password='0000')  # nosec B106
         content = client.get(stats_url, follow=True).content.decode('utf-8')
         self.assertIn("Número de envíos", content)
         self.assertIn("TLE", content)
@@ -822,7 +822,7 @@ class ViewsTest(TestCase):
 
         # Standard user -> redirects to admin login
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
         response = client.get(stats_url, follow=True)
         self.assertEqual(response.redirect_chain,
                          [(login_redirect_stats_url, 302)])

@@ -35,7 +35,7 @@ class ViewsTest2(TestCase):
         client = Client()
 
         # Visibility checks for students
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
         response = client.get(collections_url, follow=True)
         self.assertIn(visible_col.name_html, response.content.decode('utf-8'))
         self.assertNotIn(hidden_col.name_html, response.content.decode('utf-8'))
@@ -54,7 +54,7 @@ class ViewsTest2(TestCase):
         client.logout()
 
         # Visibility checks for teachers
-        client.login(username='staff', password='0000')
+        client.login(username='staff', password='0000')  # nosec B106
         response = client.get(collections_url, follow=True)
         self.assertIn(visible_col.name_html, response.content.decode('utf-8'))
         self.assertIn(hidden_col.name_html, response.content.decode('utf-8'))
@@ -91,7 +91,7 @@ class ViewsTest2(TestCase):
         client = Client()
 
         # Teachers can view all collections from authors in the group
-        client.login(username='profe1', password='0000')
+        client.login(username='profe1', password='0000')  # nosec B106
 
         response = client.get(collections_url + '?group=500', follow=True)  # Group does not exist
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
@@ -111,7 +111,7 @@ class ViewsTest2(TestCase):
         client.logout()
 
         # Students can only view visible collections from authors in the group
-        client.login(username='pepe', password='0000')
+        client.login(username='pepe', password='0000')  # nosec B106
         response = client.get(collections_url + f'?group={group1.pk}', follow=True)
         self.assertIn(col1.name_html, response.content.decode('utf-8'))
         self.assertNotIn(col2.name_html, response.content.decode('utf-8'))

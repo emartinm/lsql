@@ -29,7 +29,7 @@ class SubmitTest(TestCase):
         client = Client()
         collection = create_collection('Colleccion de prueba AAA')
         user = create_user('54522', 'antonio')
-        client.login(username='antonio', password='54522')
+        client.login(username='antonio', password='54522')  # nosec B106
 
         function_problem = FunctionProblem(zipfile=zip_function_path, collection=collection, author=user)
         proc_problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
@@ -117,7 +117,7 @@ class SubmitTest(TestCase):
         client = Client()
         collection = create_collection('Colleccion de prueba AAA')
         user = create_user('54522', 'antonio')
-        client.login(username='antonio', password='54522')
+        client.login(username='antonio', password='54522')  # nosec B106
 
         function_problem = FunctionProblem(zipfile=zip_function_path, collection=collection, author=user)
         proc_problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
@@ -137,7 +137,7 @@ class SubmitTest(TestCase):
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         dml_problem = create_dml_problem(collection, 'DML Problem')
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         submit_url_select = reverse('judge:submit', args=[select_problem.pk])
         submit_url_dml = reverse('judge:submit', args=[dml_problem.pk])
@@ -172,7 +172,7 @@ class SubmitTest(TestCase):
         collection = create_collection('Colleccion de prueba XYZ')
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
         stmts = ["CREATE VIEW my_test(n) AS SELECT n FROM test;",
                  "INSERT INTO test VALUES (89547);",
                  ]
@@ -188,7 +188,7 @@ class SubmitTest(TestCase):
         client = Client()
         collection = create_collection('Colleccion de prueba XYZ')
         create_user('contra', 'moragues')
-        client.login(username='moragues', password='contra')
+        client.login(username='moragues', password='contra')  # nosec B106
         disc_problem = create_discriminant_problem(False, collection)
         submit_discriminant_url = reverse('judge:submit', args=[disc_problem.pk])
 
@@ -241,7 +241,7 @@ class SubmitTest(TestCase):
         ach_type = NumSolvedTypeAchievementDefinition(name={"es": 'Es select'},
                                                       description={"es": 'Resuelve un problema SELECT'},
                                                       num_problems=1, problem_type=ProblemType.SELECT.name)
-        client.login(username='tamara', password='5555')
+        client.login(username='tamara', password='5555')  # nosec B106
         submit_select_url = reverse('judge:submit', args=[select_problem.pk])
 
         # The user submits one solution and obtains the first achievement
