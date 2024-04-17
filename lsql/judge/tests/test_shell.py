@@ -17,7 +17,7 @@ from judge.types import VerdictCode
 from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Collection, \
     Problem, Submission
 from judge.shell import create_users_from_csv, adapt_db_result_to_list, rejudge, extended_submissions, \
-    submissions_per_user
+    submissions_per_user, create_users_from_list
 from judge.tests.test_common import create_select_problem, create_collection, create_user, create_dml_problem
 
 
@@ -27,6 +27,41 @@ class ShellTest(TestCase):
     CSV_OK_TEST = 'test_ok.csv'
     CSV_BAD_FORMAT = ['csv_empty_document.csv', 'csv_empty_first.csv', 'csv_empty_name.csv', 'csv_empty_email.csv',
                       'csv_empty_last.csv', 'csv_non_ucm_email.csv']
+
+    def test_create_users_from_list_bad(self):
+        """ Invocations that must raise AssertionErrors """
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[], group=None, dry=True)
+
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[{'CORREO': '',
+                                               'DOCUMENTO': '58962147S',
+                                               'NOMBRE COMPLETO': 'Calabaza, Manuel'}],
+                                   group='test', dry=True)
+
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[{'CORREO': '@ucm.es',
+                                               'DOCUMENTO': '58962147S',
+                                               'NOMBRE COMPLETO': 'Calabaza, Manuel'}],
+                                   group='test', dry=True)
+
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[{'CORREO': 'pep@ucm.es',
+                                               'DOCUMENTO': '',
+                                               'NOMBRE COMPLETO': 'Calabaza, Manuel'}],
+                                   group='test', dry=True)
+
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[{'CORREO': 'pep@ucm.es',
+                                               'DOCUMENTO': '58962147S',
+                                               'NOMBRE COMPLETO': 'Calabaza,'}],
+                                   group='test', dry=True)
+
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[{'CORREO': 'pep@ucm.es',
+                                               'DOCUMENTO': '58962147S',
+                                               'NOMBRE COMPLETO': ',Manuel'}],
+                                   group='test', dry=True)
 
     def test_valid_csv(self):
         """Valid CSV file with 3 users"""

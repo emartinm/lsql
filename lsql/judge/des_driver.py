@@ -157,8 +157,8 @@ def execute_des_script(path):
         end = time.time()
         raise DESException(f'Timeout when invoking DES. Timeout: {error.timeout}. '
                            f'Execution time (seconds): {end - init}') from error
-    except subprocess.CalledProcessError as error:
-        print('----', error)
+    except subprocess.CalledProcessError as error:  # pragma: no cover
+        # Any severe error when invoking DES
         end = time.time()
         raise DESException(f'Error when invoking DES. Status code: {error.returncode}. '
                            f'Execution time (seconds): {end-init}') from error
@@ -234,7 +234,7 @@ class DesExecutor:
             num_commands = len(create_statements) + len(insert_statements) + 1
             msgs = parse_tapi_commands(output, num_commands, pos=0)
             if not len(msgs) == num_commands:
-                raise AssertionError
+                raise AssertionError  # pragma: no cover
             # Remove and log DES errors <Unrecognized start of input>
             msgs = filter_unrecognized_start_of_input(msgs, create, insert, query)
             return zip(create_statements + insert_statements + [query], msgs)
@@ -270,7 +270,7 @@ class DesExecutor:
             num_commands = len(create_statements) + len(insert_statements) + len(dml_statements)
             msgs = parse_tapi_commands(output, num_commands, pos=0)
             if not len(msgs) == num_commands:
-                raise AssertionError
+                raise AssertionError  # pragma: no cover
             # Remove and log DES errors <Unrecognized start of input>
             msgs = filter_unrecognized_start_of_input(msgs, create, insert, dml)
             return zip(create_statements + insert_statements + dml_statements, msgs)
