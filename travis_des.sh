@@ -1,6 +1,6 @@
 #! /bin/bash
 
-cd
+cd $GITHUB_WORKSPACE
 echo $PWD
 rm -rf ./des/
 rm DESDevelLinux64SICStus.zip
