@@ -106,7 +106,7 @@ jobs:
         PG_PORT: 5432
         PG_DB: postgres
         DJANGO_DEVELOPMENT: true
-        DES_BIN: ~/des/des_start
+        DES_BIN: ${{ github.workspace }}/des/des_start
         DES_TIMEOUT: 5
 
     - name: Upload coverage to Codecov
