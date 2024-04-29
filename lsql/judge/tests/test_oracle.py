@@ -89,8 +89,10 @@ class OracleTest(TestCase):
         # Time-limit
         tle = SELECT_TLE
         # No SQL injection, the value inserted must be an integer
-        too_many_rows = f"select * from dual connect by level <= {int(os.environ['ORACLE_MAX_ROWS']) + 1};"  # nosec B608
-        too_many_cols = f"select {','.join(['1'] * (int(os.environ['ORACLE_MAX_COLS']) + 1))} from dual;"  # nosec B608
+        nrows = int(os.environ['ORACLE_MAX_ROWS']) + 1
+        ncols = int(os.environ['ORACLE_MAX_COLS']) + 1
+        too_many_rows = f"select * from dual connect by level <= {nrows};"  # nosec B608
+        too_many_cols = f"select {','.join(['1'] * ncols)} from dual;"  # nosec B608
         self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
         self.assert_executor_exception(lambda: problem.judge(too_many_rows, oracle),
                                        OracleStatusCode.TLE_USER_CODE)
