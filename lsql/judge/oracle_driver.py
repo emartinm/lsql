@@ -748,8 +748,8 @@ class OracleExecutor:
                 results = {}
                 tests = [s.strip() for s in tests.split('\n') if len(s.strip()) > 0]
                 for stmt in tests:
-                    func_call = f'SELECT {stmt} FROM DUAL'
-                    # Function calls cannot be bound by parameters
+                    # NOTE:# Function calls cannot be bound by parameters, so we use f-strings and trust its content
+                    func_call = f'SELECT {stmt} FROM DUAL'  # nosec B608
                     cursor.execute(func_call)
                     res_type = str(cursor.description[0][1])
                     row = cursor.fetchone()
