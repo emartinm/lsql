@@ -3,12 +3,12 @@ astroid==3.1.0
 bandit==1.7.8
 beautifulsoup4==4.12.3
 cffi==1.16.0
-coverage==7.5.0
-cryptography==42.0.5
+coverage==7.5.1
+cryptography==42.0.6
 defusedxml==0.7.1
 dill==0.3.8
 Django==5.0.4
-django-model-utils==4.5.0
+django-model-utils==4.5.1
 gunicorn==22.0.0
 isort==5.13.2
 lazy-object-proxy==1.10.0
@@ -20,7 +20,7 @@ markdown-it-py==3.0.0
 mccabe==0.7.0
 mdurl==0.1.2
 multiset==3.1.0
-oracledb==2.1.2
+oracledb==2.2.0
 packaging==24.0
 pbr==6.0.0
 platformdirs==4.2.1
@@ -29,7 +29,7 @@ pycparser==2.22
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.6
 pyexcel-ods3==0.6.1
-Pygments==2.17.2
+Pygments==2.18.0
 pylint==3.1.0
 pylint-django==2.5.5
 pylint-plugin-utils==0.8.2
