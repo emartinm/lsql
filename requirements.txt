@@ -8,7 +8,7 @@ cryptography==42.0.5
 defusedxml==0.7.1
 dill==0.3.8
 Django==5.0.4
-django-model-utils==4.5.0
+django-model-utils==4.5.1
 gunicorn==22.0.0
 isort==5.13.2
 lazy-object-proxy==1.10.0
