@@ -1,5 +1,5 @@
 asgiref==3.8.1
-astroid==3.1.0
+astroid==3.2.2
 bandit==1.7.8
 beautifulsoup4==4.12.3
 cffi==1.16.0
@@ -14,7 +14,7 @@ isort==5.13.2
 lazy-object-proxy==1.10.0
 lml==0.1.0
 logzero==1.7.0
-lxml==5.2.1
+lxml==5.2.2
 Markdown==3.6
 markdown-it-py==3.0.0
 mccabe==0.7.0
@@ -23,14 +23,14 @@ multiset==3.1.0
 oracledb==2.2.0
 packaging==24.0
 pbr==6.0.0
-platformdirs==4.2.1
+platformdirs==4.2.2
 psycopg2-binary==2.9.9
 pycparser==2.22
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.6
 pyexcel-ods3==0.6.1
 Pygments==2.18.0
-pylint==3.1.0
+pylint==3.2.2
 pylint-django==2.5.5
 pylint-plugin-utils==0.8.2
 pytz==2024.1
