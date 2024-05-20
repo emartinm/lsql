@@ -14,7 +14,7 @@ isort==5.13.2
 lazy-object-proxy==1.10.0
 lml==0.1.0
 logzero==1.7.0
-lxml==5.2.1
+lxml==5.2.2
 Markdown==3.6
 markdown-it-py==3.0.0
 mccabe==0.7.0
