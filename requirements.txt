@@ -4,7 +4,7 @@ bandit==1.7.8
 beautifulsoup4==4.12.3
 cffi==1.16.0
 coverage==7.5.3
-cryptography==42.0.7
+cryptography==42.0.8
 defusedxml==0.7.1
 dill==0.3.8
 Django==5.0.6
@@ -21,7 +21,7 @@ mccabe==0.7.0
 mdurl==0.1.2
 multiset==3.1.0
 oracledb==2.2.1
-packaging==24.0
+packaging==24.1
 pbr==6.0.0
 platformdirs==4.2.2
 psycopg2-binary==2.9.9
@@ -43,5 +43,5 @@ stevedore==5.2.0
 toml==0.10.2
 tomli==2.0.1
 tomlkit==0.12.5
-typing_extensions==4.12.1
+typing_extensions==4.12.2
 wrapt==1.16.0
