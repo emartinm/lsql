@@ -1,10 +1,10 @@
 asgiref==3.8.1
-astroid==3.2.3
+astroid==3.2.4
 bandit==1.7.9
 beautifulsoup4==4.12.3
 cffi==1.16.0
 coverage==7.6.0
-cryptography==42.0.8
+cryptography==43.0.0
 defusedxml==0.7.1
 dill==0.3.8
 Django==5.0.7
@@ -30,7 +30,7 @@ pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.6
 pyexcel-ods3==0.6.1
 Pygments==2.18.0
-pylint==3.2.5
+pylint==3.2.6
 pylint-django==2.5.5
 pylint-plugin-utils==0.8.2
 pytz==2024.1
@@ -38,7 +38,7 @@ PyYAML==6.0.1
 rich==13.7.1
 six==1.16.0
 soupsieve==2.5
-sqlparse==0.5.0
+sqlparse==0.5.1
 stevedore==5.2.0
 toml==0.10.2
 tomli==2.0.1
