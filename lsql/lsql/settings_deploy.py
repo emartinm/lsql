@@ -5,6 +5,7 @@ Can define new settings or override previous settings in settings_shared
 """
 
 import os
+import sentry_sdk
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -35,12 +36,13 @@ SESSION_COOKIE_SECURE = True
 # AntiCSRF cookies are only sent through HTTPS
 CSRF_COOKIE_SECURE = True
 
-# For error reporting, sending e-mail for internal error (500)
-ADMINS = [('Enrique Martín', 'emartinm@ucm.es')]
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_SUBJECT_PREFIX = 'Error en learn.fdi.ucm.es: '
-EMAIL_HOST_USER = os.environ.get('REPORT_EMAIL_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('REPORT_EMAIL_PASS')
-SERVER_EMAIL = EMAIL_HOST_USER
+
+# Sentry for error log
+sentry_sdk.init(
+    dsn=os.environ.get('SENTRY_DSN', ''),
+    # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
