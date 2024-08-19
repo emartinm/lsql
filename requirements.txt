@@ -44,7 +44,7 @@ sqlparse==0.5.1
 stevedore==5.2.0
 toml==0.10.2
 tomli==2.0.1
-tomlkit==0.13.0
+tomlkit==0.13.2
 typing_extensions==4.12.2
 urllib3==2.2.2
 wrapt==1.16.0
