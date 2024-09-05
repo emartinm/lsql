@@ -73,7 +73,8 @@ def check_if_get_achievement(user, verdict):
 
     # If the verdict != AC (correct) only can get a NumSubmissionsProblemsAchievementDefinition
     else:
-        for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():
+        # pylint false positive E1133
+        for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():  # pylint: disable=E1133
             if ach.check_and_save(user):
                 obtained_achievements.append(ach)
 
