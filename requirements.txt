@@ -34,7 +34,7 @@ Pygments==2.18.0
 pylint==3.2.7
 pylint-django==2.5.5
 pylint-plugin-utils==0.8.2
-pytz==2024.1
+pytz==2024.2
 PyYAML==6.0.2
 rich==13.8.1
 sentry-sdk==2.14.0
