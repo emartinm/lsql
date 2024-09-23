@@ -332,7 +332,7 @@ class SelectProblem(Problem):
             self.initial_db = []
             executor = OracleExecutor.get()
             for insert_sql in self.insert_sql_list():
-                res = executor.execute_select_test(self.create_sql, insert_sql,
+                res = executor.execute_select_test((self.create_sql, insert_sql),
                                                    self.solution, output_db=True)
                 self.expected_result.append(res['result'])
                 self.initial_db.append(res['db'])
@@ -345,7 +345,7 @@ class SelectProblem(Problem):
 
     def judge(self, code, executor):
         first_insert_sql = self.insert_sql_list()[0]
-        oracle_result = executor.execute_select_test(self.create_sql, first_insert_sql, code, output_db=False)
+        oracle_result = executor.execute_select_test((self.create_sql, first_insert_sql), code, output_db=False)
         # Check first code with first db
         verdict, feedback = compare_select_results(self.expected_result[0], oracle_result['result'], self.check_order)
         if verdict != VerdictCode.AC:
@@ -354,7 +354,8 @@ class SelectProblem(Problem):
         insert_sql_extra_list = self.insert_sql_list()[1:]
         initial_db_count = 1
         for insert_sql_extra in insert_sql_extra_list:
-            oracle_result_extra = executor.execute_select_test(self.create_sql, insert_sql_extra, code, output_db=False)
+            oracle_result_extra = executor.execute_select_test((self.create_sql, insert_sql_extra), code,
+                                                               output_db=False)
             # Check secondary results
             verdict_extra, feedback_extra = compare_select_results(self.expected_result[initial_db_count],
                                                                    oracle_result_extra['result'],
@@ -426,7 +427,7 @@ class DMLProblem(Problem):
 
             super().clean()
             executor = OracleExecutor.get()
-            res = executor.execute_dml_test(self.create_sql, self.insert_sql, self.solution, pre_db=True)
+            res = executor.execute_dml_test((self.create_sql, self.insert_sql), self.solution, pre_db=True)
             self.expected_result = [res['post']]
             self.initial_db = [res['pre']]
         except Exception as excp:
@@ -436,7 +437,7 @@ class DMLProblem(Problem):
         return 'problem_dml.html'
 
     def judge(self, code, executor):
-        oracle_result = executor.execute_dml_test(self.create_sql, self.insert_sql, code, pre_db=False,
+        oracle_result = executor.execute_dml_test((self.create_sql, self.insert_sql), code, pre_db=False,
                                                   min_stmt=self.min_stmt, max_stmt=self.max_stmt)
         return compare_db_results(self.expected_result[0], oracle_result['post'])
 
@@ -507,7 +508,7 @@ class FunctionProblem(Problem):
 
             super().clean()
             executor = OracleExecutor.get()
-            res = executor.execute_function_test(self.create_sql, self.insert_sql, self.solution, self.calls)
+            res = executor.execute_function_test((self.create_sql, self.insert_sql), self.solution, self.calls)
             self.expected_result = [res['results']]
             self.initial_db = [res['db']]
         except Exception as excp:
@@ -523,7 +524,7 @@ class FunctionProblem(Problem):
         return {'rows': rows, 'header': [('Llamada', None), ('Resultado', None)]}
 
     def judge(self, code, executor):
-        oracle_result = executor.execute_function_test(self.create_sql, self.insert_sql, code, self.calls)
+        oracle_result = executor.execute_function_test((self.create_sql, self.insert_sql), code, self.calls)
         return compare_function_results(self.expected_result[0], oracle_result['results'])
 
     def problem_type(self):
@@ -556,7 +557,7 @@ class ProcProblem(Problem):
 
             super().clean()
             executor = OracleExecutor.get()
-            res = executor.execute_proc_test(self.create_sql, self.insert_sql, self.solution, self.proc_call,
+            res = executor.execute_proc_test((self.create_sql, self.insert_sql), self.solution, self.proc_call,
                                              pre_db=True)
             self.expected_result = [res['post']]
             self.initial_db = [res['pre']]
@@ -564,7 +565,8 @@ class ProcProblem(Problem):
             raise ValidationError(excp) from excp
 
     def judge(self, code, executor):
-        oracle_result = executor.execute_proc_test(self.create_sql, self.insert_sql, code, self.proc_call, pre_db=False)
+        oracle_result = executor.execute_proc_test((self.create_sql, self.insert_sql), code, self.proc_call,
+                                                   pre_db=False)
         return compare_db_results(self.expected_result[0], oracle_result['post'])
 
     def problem_type(self):
@@ -597,15 +599,15 @@ class TriggerProblem(Problem):
 
             super().clean()
             executor = OracleExecutor.get()
-            res = executor.execute_trigger_test(self.create_sql, self.insert_sql,
-                                                self.solution, self.tests, pre_db=True)
+            res = executor.execute_trigger_test((self.create_sql, self.insert_sql),
+                                                 self.solution, self.tests, pre_db=True)
             self.expected_result = [res['post']]
             self.initial_db = [res['pre']]
         except Exception as excp:
             raise ValidationError(excp) from excp
 
     def judge(self, code, executor):
-        oracle_result = executor.execute_trigger_test(self.create_sql, self.insert_sql, code, self.tests,
+        oracle_result = executor.execute_trigger_test((self.create_sql, self.insert_sql), code, self.tests,
                                                       pre_db=False)
         return compare_db_results(self.expected_result[0], oracle_result['post'])
 
@@ -642,7 +644,7 @@ class DiscriminantProblem(Problem):
             self.initial_db = []
             # In this case (this type of problem) there are only one database
             for insert_sql in self.insert_sql_list():
-                res = executor.execute_select_test(self.create_sql, insert_sql,
+                res = executor.execute_select_test((self.create_sql, insert_sql),
                                                    self.incorrect_query, output_db=True)
                 self.expected_result.append(res['result'])
                 self.initial_db.append(res['db'])
@@ -651,8 +653,8 @@ class DiscriminantProblem(Problem):
 
     def judge(self, code, executor):
         insert_sql = self.insert_sql_list()[0]  # In this type of problem there is only one database
-        result = executor.execute_discriminant_test(self.create_sql, insert_sql, code, self.correct_query,
-                                                    self.incorrect_query)
+        result = executor.execute_discriminant_test((self.create_sql, insert_sql), code,
+                                                    (self.correct_query, self.incorrect_query))
         incorrect_result = result["result_incorrect"]
         correct_result = result["result_correct"]
         return compare_discriminant_db(incorrect_result, correct_result, self.check_order)

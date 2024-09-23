@@ -1,5 +1,5 @@
 asgiref==3.8.1
-astroid==3.2.4
+astroid==3.3.3
 bandit==1.7.9
 beautifulsoup4==4.12.3
 certifi==2024.8.30
@@ -31,7 +31,7 @@ pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.6
 pyexcel-ods3==0.6.1
 Pygments==2.18.0
-pylint==3.2.7
+pylint==3.3.0
 pylint-django==2.5.5
 pylint-plugin-utils==0.8.2
 pytz==2024.2

@@ -541,17 +541,18 @@ class OracleExecutor:
         connection = oracledb.connect(user=user, password=passwd, dsn=self.dsn_tns)
         return connection
 
-    def execute_select_test(self, creation, insertion, select, output_db=False):
+    def execute_select_test(self, init_db, select, output_db=False):
         """
         Using a new fresh user, creates a set of tables ('creation) and inserts some data.
         Then, executes a correct SELECT statement and also a SELECT statement to test
         :param output_db:
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion: (str) Statements to insert data into tables
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
         :param select: (str) One SELECT statement to execute
         :return: {"result": result, "db": db}. result is a dictionary representing the statement result, and db is a
                  dictionary representing all the tables. In case of error, throws a ExecutorException
         """
+        creation, insertion = init_db
         conn, gestor, result, user, db = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
@@ -613,18 +614,19 @@ class OracleExecutor:
             if gestor:
                 self.connection_pool.release(gestor)
 
-    def execute_dml_test(self, creation, insertion, dml, pre_db=True, min_stmt=0, max_stmt=float("inf")):
+    def execute_dml_test(self, init_db, dml, *, pre_db=True, min_stmt=0, max_stmt=float("inf")):
         """
         Using a new fresh user, creates a set of tables ('creation) and inserts some data.
         Then, executes some DML statements
         :param max_stmt:
         :param min_stmt:
         :param pre_db:
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion: (str) Statements to insert data into tables
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
         :param dml: (str) DML statements to execute (insert, delete, update)
         :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before and after executing dml
         """
+        creation, insertion = init_db
         conn, gestor, user, post, stmt = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
@@ -696,18 +698,19 @@ class OracleExecutor:
             if gestor:
                 self.connection_pool.release(gestor)
 
-    def execute_function_test(self, creation, insertion, func_creation, tests):
+    def execute_function_test(self, init_db, func_creation, tests):
         """
         Using a new fresh user, creates a set of tables ('creation) and inserts some data.
         Then, executes some DML statements
         :param tests: (str) function calls separated by new lines
         :param func_creation:
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion: (str) Statements to insert data into tables
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
 
         :return: {'pre': DB, 'results': dict} dictionary containing the initial state of the DB and a dictionary
                  {call: (result, type)} with the different calls, the result and the type of the result
         """
+        creation, insertion = init_db
         conn, gestor, user, stmt = None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
@@ -789,19 +792,20 @@ class OracleExecutor:
             if gestor:
                 self.connection_pool.release(gestor)
 
-    def execute_proc_test(self, creation, insertion, proc_creation, proc_call, pre_db=True):
+    def execute_proc_test(self, init_db, proc_creation, proc_call, pre_db=True):
         """
         Using a new fresh user, creates a set of tables ('creation) and inserts some data.
         Then, creates a PROCEDURE defined in proc_creation and invokes the call in proc_call
         :param pre_db:
         :param proc_call:
         :param proc_creation:
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion: (str) Statements to insert data into tables
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
 
-        :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before defining the procedure and
+        :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before defining the procedure
                    and after invoking the procedure
         """
+        creation, insertion = init_db
         conn, gestor, user, post, stmt = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
@@ -881,19 +885,20 @@ class OracleExecutor:
             if gestor:
                 self.connection_pool.release(gestor)
 
-    def execute_trigger_test(self, creation, insertion, trigger_definition, tests, pre_db=True):
+    def execute_trigger_test(self, init_db, trigger_definition, tests, pre_db=True):
         """
         Using a new fresh user, creates a set of tables ('creation) and inserts some data.
         Then, creates a PROCEDURE defined in proc_creation and invokes the call in proc_call
         :param pre_db:
         :param tests: (str) 1 or more DML statements that should invoke the trigger
         :param trigger_definition:
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion: (str) Statements to insert data into tables
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
 
-        :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before defining the trigger and
+        :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before defining the trigger
                    and after executing the tests
         """
+        creation, insertion = init_db
         conn, gestor, user, post, stmt = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
@@ -971,20 +976,22 @@ class OracleExecutor:
             if gestor:
                 self.connection_pool.release(gestor)
 
-    def execute_discriminant_test(self, creation, insertion_base, insertion_user, select_correct, select_incorrect):
+    def execute_discriminant_test(self, init_db, insertion_user, select_stmts):
         """
         Using a new fresh user, creates a set of tables (creation) and inserts some data: the base INSERT sentences
         and also the INSERT sentences from the user. Then, executes a correct and wrong SELECT statements, returning
         both results in a dictionary
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion_base: (str) Statements to insert data into tables from the program definition
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
         :param insertion_user: (str) Statements to insert data into tables from the user submission
-        :param select_correct: (str) One SELECT statement to execute that returns correct results
-        :param select_incorrect: (str) One SELECT statement to execute that returns incorreect results
+        :param select_stmts: (str, str) Pair (correct, incorrect) SQL statements to run in the DB. The first one
+                                        should return correct results, and the second one incorrect results
         :return: {"result_correct": result, "result_wrong": result}. 'result' is a dictionary representing the
                  statement result of a query (in this case, select_correct and select_incorrect)
                  In case of error, throws a ExecutorException
         """
+        creation, insertion_base = init_db
+        select_correct, select_incorrect = select_stmts
         conn, gestor, result_correct, result_incorrect, user = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
