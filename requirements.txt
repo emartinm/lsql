@@ -43,7 +43,7 @@ soupsieve==2.6
 sqlparse==0.5.1
 stevedore==5.3.0
 toml==0.10.2
-tomli==2.0.1
+tomli==2.0.2
 tomlkit==0.13.2
 typing_extensions==4.12.2
 urllib3==2.2.3
