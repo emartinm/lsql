@@ -1,5 +1,5 @@
 asgiref==3.8.1
-astroid==3.3.4
+astroid==3.3.5
 bandit==1.7.10
 beautifulsoup4==4.12.3
 certifi==2024.8.30
@@ -36,14 +36,14 @@ pylint-django==2.5.5
 pylint-plugin-utils==0.8.2
 pytz==2024.2
 PyYAML==6.0.2
-rich==13.8.1
+rich==13.9.2
 sentry-sdk==2.15.0
 six==1.16.0
 soupsieve==2.6
 sqlparse==0.5.1
 stevedore==5.3.0
 toml==0.10.2
-tomli==2.0.1
+tomli==2.0.2
 tomlkit==0.13.2
 typing_extensions==4.12.2
 urllib3==2.2.3
