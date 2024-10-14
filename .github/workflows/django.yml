@@ -67,7 +67,10 @@ jobs:
         python-version: '3.10'
 
     - name: Install libaio1 (libaio1t64 in Ubuntu 24.04)
-      run: sudo apt update; sudo apt install libaio1t64; sudo ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
+      run: |
+        sudo apt update
+        sudo apt install libaio1t64
+        sudo ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
 
     - name: Install pip Dependencies
       run: |
@@ -76,11 +79,11 @@ jobs:
 
     - name: Installing DES into home
       run : |
-        ./travis_des.sh
+        ./install_des.sh
 
     - name: Installing Oracle Instant Client
       run: |
-        ./travis_oracle_instant_client.sh
+        ./install_oracle_instant_client.sh
 
     - name: Set LD_LIBRARY_PATH variable for InstantClient
       run: |
@@ -89,7 +92,7 @@ jobs:
 
     - name: Execute Django tests and coverage
       run: |
-        ./tests_travis.sh
+        ./tests_ci.sh
       env:
         ORACLE_SID: XE
         ORACLE_MAX_GESTOR_CONNECTIONS: 20
