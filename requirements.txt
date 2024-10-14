@@ -32,7 +32,7 @@ pyexcel-io==0.6.6
 pyexcel-ods3==0.6.1
 Pygments==2.18.0
 pylint==3.3.1
-pylint-django==2.5.5
+pylint-django==2.6.1
 pylint-plugin-utils==0.8.2
 pytz==2024.2
 PyYAML==6.0.2
