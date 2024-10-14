@@ -66,8 +66,8 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install xmllint
-      run: sudo apt install libaio1
+    - name: Install libaio1
+      run: lsb_release -a; sudo apt update; sudo apt install libaio1
 
     - name: Install pip Dependencies
       run: |
