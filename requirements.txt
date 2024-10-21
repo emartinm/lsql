@@ -25,7 +25,7 @@ oracledb==2.4.1
 packaging==24.1
 pbr==6.1.0
 platformdirs==4.3.6
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10
 pycparser==2.22
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.6
