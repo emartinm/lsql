@@ -28,7 +28,7 @@ platformdirs==4.3.6
 psycopg2-binary==2.9.10
 pycparser==2.22
 pyexcel-ezodf==0.3.4
-pyexcel-io==0.6.6
+pyexcel-io==0.6.7
 pyexcel-ods3==0.6.1
 Pygments==2.18.0
 pylint==3.3.1
