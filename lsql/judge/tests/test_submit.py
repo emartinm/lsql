@@ -6,7 +6,6 @@ import os
 
 from django.test import TestCase, Client
 from django.urls import reverse
-
 from judge.models import FunctionProblem, ProcProblem, TriggerProblem, \
     NumSubmissionsProblemsAchievementDefinition, ObtainedAchievement, NumSolvedTypeAchievementDefinition, \
     SelectProblem
@@ -229,9 +228,9 @@ class SubmitTest(TestCase):
         select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         user = create_user('5555', 'tamara')
         ach_submission = NumSubmissionsProblemsAchievementDefinition(name={"es": 'Un envio'},
-                                                                      description={
-                                                                          "es": 'Envia una solucion para un problema'},
-                                                                      num_problems=1, num_submissions=1)
+                                                                     description={
+                                                                         "es": 'Envia una solucion para un problema'},
+                                                                     num_problems=1, num_submissions=1)
         ach_submission.save()
         ach_submissions = NumSubmissionsProblemsAchievementDefinition(name={"es": 'Tres envios'},
                                                                       description={
@@ -247,7 +246,7 @@ class SubmitTest(TestCase):
         # The user submits one solution and obtains the first achievement
         response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
         obtained_achieve = ObtainedAchievement.objects.filter(user=user)
-        self.assertIn( obtained_achieve[0].achievement_definition.name['es'], response.json()['achievements'])
+        self.assertIn(obtained_achieve[0].achievement_definition.name['es'], response.json()['achievements'])
 
         # The user submits a new solution and does not receive any achievement
         response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
@@ -264,8 +263,8 @@ class SubmitTest(TestCase):
         submit_url = reverse('judge:submit', args=[select.pk])
         response = client.post(submit_url, {'code': select.solution}, follow=True)
         obtained_achieve = ObtainedAchievement.objects.filter(user=user)
-        self.assertIn( obtained_achieve[1].achievement_definition.name['es'], response.json()['achievements'])
-        self.assertIn( obtained_achieve[2].achievement_definition.name['es'], response.json()['achievements'])
+        self.assertIn(obtained_achieve[1].achievement_definition.name['es'], response.json()['achievements'])
+        self.assertIn(obtained_achieve[2].achievement_definition.name['es'], response.json()['achievements'])
 
         # The user submits a new solution and does not receive any achievement
         response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short

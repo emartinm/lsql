@@ -5,28 +5,28 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 Models to store objects in the DB
 """
 from zipfile import ZipFile
-import markdown
-from lxml import html
-from model_utils.managers import InheritanceManager
 
-from django.utils import timezone
+import markdown
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
-from django.db import models
-from django.conf import settings
-from django.core.validators import MinLengthValidator
-from django.db.models import JSONField, Subquery
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core.validators import MinLengthValidator
+from django.db import models
+from django.db.models import JSONField, Subquery, Min
+from django.utils import timezone
 from django.utils import translation
+from lxml import html
+from model_utils.managers import InheritanceManager
 
+from .des_driver import DesExecutor
+from .exceptions import ZipFileParsingException, DESException
 from .feedback import compare_select_results, compare_db_results, compare_function_results, compare_discriminant_db
 from .oracle_driver import OracleExecutor
-from .des_driver import DesExecutor
-from .types import VerdictCode, ProblemType, DesMessageType
 from .parse import load_select_problem, load_dml_problem, load_function_problem, load_proc_problem, \
     load_trigger_problem, load_discriminant_problem, get_problem_type_from_zip
-from .exceptions import ZipFileParsingException, DESException
+from .types import VerdictCode, ProblemType, DesMessageType
 
 
 def markdown_to_html(markdown_text, remove_initial_p=False):
@@ -665,7 +665,7 @@ class Submission(models.Model):
         default=VerdictCode.AC
     )
     verdict_message = models.CharField(max_length=5000, null=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_index=True)
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -698,7 +698,7 @@ class AchievementDefinition(models.Model):
         raise NotImplementedError
 
     def check_user(self, usr):
-        """Check if an user have the achievement"""
+        """Check if a user have the achievement"""
         achievements_of_user = ObtainedAchievement.objects.filter(user=usr, achievement_definition=self).count()
         return achievements_of_user > 0
 
@@ -746,18 +746,23 @@ class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
         verbose_name_plural = 'AchievementDef_NumSolved'
 
     def check_and_save(self, user):
-        """Return if an user is deserving for get an achievement, if it is, save that"""
+        """Return if a user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             corrects = Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).distinct("problem").count()
             if corrects >= self.num_problems:
                 # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
                 # Subquery return a list of creation_date of the problems that user have VerdictCode.AC
-                order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
-                    Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).
-                    order_by('problem', 'creation_date').distinct('problem').values('creation_date'))).\
-                    order_by('creation_date').values_list('creation_date', flat=True)
+                # order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
+                #    Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).
+                #    order_by('problem', 'creation_date').distinct('problem').values('creation_date'))).\
+                #    order_by('creation_date').values_list('creation_date', flat=True)
+                first_ac_submissions = (Submission.objects.filter(verdict_code=VerdictCode.AC, user=user)
+                                        .values('problem')
+                                        .annotate(first_ac_submission=Min('creation_date'))
+                                        .order_by('first_ac_submission'))
                 new_achievement = ObtainedAchievement(user=user,
-                                                      obtained_date=order_problem_creation_date[self.num_problems-1],
+                                                      obtained_date=first_ac_submissions[self.num_problems - 1][
+                                                          'first_ac_submission'],
                                                       achievement_definition=self)
                 new_achievement.save()
                 return True
@@ -774,18 +779,22 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
         verbose_name_plural = 'AchievementDef_Podium'
 
     def check_and_save(self, user):
-        """Return if an user is deserving for get an achievement, if it is, save that"""
+        """Return if a user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
             # Subquery return a list of creation_date of the problems that user have VerdictCode.AC
-            order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
-                Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).
-                order_by('problem', 'creation_date').distinct('problem').values('creation_date'))). \
-                order_by('creation_date')
+            # order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
+            #     Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).
+            #     order_by('problem', 'creation_date').distinct('problem').values('creation_date'))). \
+            #     order_by('creation_date')
+            first_ac_submissions = (Submission.objects.filter(verdict_code=VerdictCode.AC, user=user)
+                                    .values('problem')
+                                    .annotate(first_ac_submission=Min('creation_date'))
+                                    .order_by('first_ac_submission'))
             total = 0
-            if order_problem_creation_date.count() >= self.num_problems:
-                for sub in order_problem_creation_date:
-                    prob = Problem.objects.get(pk=sub.problem.pk)
+            if len(first_ac_submissions) >= self.num_problems:
+                for sub in first_ac_submissions:
+                    prob = Problem.objects.get(pk=sub['problem'])
                     user_pos = prob.solved_position(user)
                     if user_pos is not None and user_pos <= self.position:
                         total = total + 1
@@ -807,7 +816,7 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
         verbose_name_plural = 'AchievementDef_NumSolvedCollection'
 
     def check_and_save(self, user):
-        """Return if an user is deserving for get an achievement, if it is, save that"""
+        """Return if a user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             corrects = Submission.objects.filter(verdict_code=VerdictCode.AC, user=user,
                                                  problem__collection=self.collection).distinct("problem").count()
@@ -842,7 +851,7 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
         verbose_name_plural = 'AchievementDef_NumSolvedType'
 
     def check_and_save(self, user):
-        """Return if an user is deserving for get an achievement, if it is, save that"""
+        """Return if a user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             count = 0
             # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
@@ -874,7 +883,7 @@ class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.
         verbose_name_plural = 'AchievementDef_NumSubmissions'
 
     def check_and_save(self, user):
-        """Return if an user is deserving for get an achievement, if it is, save that"""
+        """Return if a user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             total_submissions = Submission.objects.filter(user=user).count()
             if total_submissions >= self.num_submissions:
@@ -886,7 +895,7 @@ class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.
                         Submission.objects.filter(user=user).order_by('problem', 'creation_date').distinct('problem').
                         values('creation_date'))).order_by('creation_date').values_list('creation_date', flat=True)
                     new_achi = ObtainedAchievement(user=user,
-                                                   obtained_date=order_problem_creation_date[self.num_problems-1],
+                                                   obtained_date=order_problem_creation_date[self.num_problems - 1],
                                                    achievement_definition=self)
                     new_achi.save()
                     return True
@@ -908,7 +917,7 @@ class Hint(models.Model):
         text_html = markdown_to_html(self.text_md, remove_initial_p=True)
         return text_html
 
-    def __str__(self): # pragma: no cover
+    def __str__(self):  # pragma: no cover
         """ String representation of Hint object """
         return f'Hint #{self.pk} - problem {self.problem}'
 
@@ -923,6 +932,6 @@ class UsedHint(models.Model):
         """ Changes the name displayed in the admin interface"""
         verbose_name_plural = 'Hint_Used'
 
-    def __str__(self): # pragma: no cover
+    def __str__(self):  # pragma: no cover
         """ String representation of used Hint object """
         return f'UsedHint (PK {self.pk})'
