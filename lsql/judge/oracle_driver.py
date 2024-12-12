@@ -5,16 +5,16 @@ Copyright Enrique Martín <emartinm@ucm.es> 2020
 Class to connect to Oracle and execute the different types of problems
 """
 
-# Needs to use cx_Oracle
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/kike/xDownload/instantclient_19_6
+
+# Requires Oracle Client 19 (LTS) to connect to Oracle Database 11.2 or later in oracledb "thick mode"
 
 import string
-import random
 import os
 import re
 import json
 from typing import Optional
-import cx_Oracle
+import secrets
+import oracledb
 from logzero import logger
 import sqlparse
 
@@ -23,6 +23,41 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 from .exceptions import ExecutorException
 from .types import OracleStatusCode
+
+typenames_map = {
+    # Based on https://python-oracledb.readthedocs.io/en/latest/user_guide/appendix_a.html
+    #          https://python-oracledb.readthedocs.io/en/latest/api_manual/module.html#dbtypes
+    oracledb.DB_TYPE_BFILE: 'BFILE',
+    oracledb.DB_TYPE_BINARY_DOUBLE: 'DOUBLE',
+    oracledb.DB_TYPE_BINARY_FLOAT: 'FLOAT',
+    oracledb.DB_TYPE_BINARY_INTEGER: 'INTEGER',
+    oracledb.DB_TYPE_BLOB: 'BLOB',
+    oracledb.DB_TYPE_BOOLEAN: 'BOOLEAN',
+    oracledb.DB_TYPE_CHAR: 'CHAR',
+    oracledb.DB_TYPE_CLOB: 'CLOB',
+    oracledb.DB_TYPE_CURSOR: 'CURSOR',
+    oracledb.DB_TYPE_DATE: 'DATE',
+    oracledb.DB_TYPE_INTERVAL_DS: 'INTERVAL DAY TO SECOND',
+    oracledb.DB_TYPE_INTERVAL_YM: 'INTERVAL YEAR TO MONTH',
+    oracledb.DB_TYPE_JSON: 'JSON',
+    oracledb.DB_TYPE_LONG: 'LONG',
+    oracledb.DB_TYPE_LONG_RAW: 'LONG RAW',
+    oracledb.DB_TYPE_LONG_NVARCHAR: 'STRING',  # not a database type
+    oracledb.DB_TYPE_NCHAR: 'NCHAR',
+    oracledb.DB_TYPE_NCLOB: 'NCLOB',
+    oracledb.DB_TYPE_NUMBER: 'NUMBER',
+    oracledb.DB_TYPE_NVARCHAR: 'NVARCHAR',
+    oracledb.DB_TYPE_OBJECT: 'OBJECT',
+    oracledb.DB_TYPE_RAW: 'RAW',
+    oracledb.DB_TYPE_ROWID: 'ROWID',
+    oracledb.DB_TYPE_TIMESTAMP: 'TIMESTAMP',
+    oracledb.DB_TYPE_TIMESTAMP_LTZ: 'TIMESTAMP WITH LOCAL TIME ZONE',
+    oracledb.DB_TYPE_TIMESTAMP_TZ: 'TIMESTAMP WITH TIME ZONE',
+    oracledb.DB_TYPE_UNKNOWN: 'UNKNOWN',
+    oracledb.DB_TYPE_UROWID: 'UROWID',
+    oracledb.DB_TYPE_VARCHAR: 'VARCHAR',
+    oracledb.DB_TYPE_XMLTYPE: 'XMLTYPE',
+}
 
 
 def create_insert_all(statements: str) -> Optional[str]:
@@ -108,17 +143,13 @@ def clean_sql(code: str, min_stmt: int = None, max_stmt: int = None):
     return statements
 
 
-def random_str(alphabet, size=8):
+def random_str(size=8):
     """
-    Creates a random string of 'n' letters from 'alphabet'
-    :param alphabet: Candidate letters
+    Creates a random string of 2*n hexadecimal letters from
     :param size: Length of the generated random string
-    :return: Random string of 'n' letters from 'alphabet'
+    :return: Random string of 2*n hexadecimal letters
     """
-    ret = ''
-    for _ in range(size):
-        ret += random.choice(alphabet)
-    return ret
+    return secrets.token_hex(size)
 
 
 def line_col_from_offset(code: str, offset: int):
@@ -149,6 +180,21 @@ def uniform_dict(dictionary):
     return json.loads(string_rep)
 
 
+def get_sql_type_name(typename) -> str:
+    """
+    Get a simplified str representing an oracledb SQL data type
+    :param typename: object representing the Oracle datatype as in
+    https://python-oracledb.readthedocs.io/en/latest/user_guide/appendix_a.html#supported-oracle-database-data-types
+    :return: simplified str representing the typename
+    """
+    regex = r"<DbType DB_TYPE_(\w*)>"
+    m = re.search(regex, str(typename))
+    mini_name = 'ERROR_OBTAINING_TYPE'
+    if len(m.groups()) >= 1:
+        mini_name = m.groups()[0]
+    return typenames_map.get(typename, mini_name)
+
+
 def table_from_cursor(cursor):
     """
     Takes a cursor that has executed a SELECT statement and returns all the results
@@ -171,7 +217,7 @@ def table_from_cursor(cursor):
     if len(cursor.description) > max_cols:
         logger.debug('TLE caused by too many columns in cursor')
         raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
-    table['header'] = [[e[0], str(e[1])] for e in cursor.description]
+    table['header'] = [[e[0], get_sql_type_name(e[1])] for e in cursor.description]
 
     batch = cursor.fetchmany(numRows=max_rows)  # Takes MAX rows
     if cursor.fetchone():  # There are more rows
@@ -201,12 +247,13 @@ def get_all_tables(conn):
         db_dict = {}
         for table_name in tb_names:
             # https://docs.oracle.com/database/121/SQLRF/sql_elements008.htm#SQLRF51129
-            # Quoted names should be embedded with "..." in order to work. We try
-            # both versions for table names, ignoring possible exceptions.
-            try:
-                cursor.execute(f"SELECT * FROM {table_name}")  # Direct name
-            except cx_Oracle.DatabaseError:
-                cursor.execute(f'SELECT * FROM "{table_name}"')  # Quoted name
+            # Quoted names should be embedded with "..." in order to work.
+            # We try quoted versions, as USER_TABLES contain case sensitive names
+            # NOTE: table names cannot be bound to parameters, so we use f-strings and trust its content
+            # as they come directly from the schema
+            # https://python-oracledb.readthedocs.io/en/latest/user_guide/bind.html#binding-column-and-table-names
+            cursor.execute(f'SELECT * FROM "{table_name}"')  # nosec B608
+            # Quoted name, succeeds even with unquoted names
             table = table_from_cursor(cursor)
             db_dict[table_name] = table
 
@@ -280,7 +327,7 @@ def get_compilation_errors(conn):
         return table_from_cursor(cursor)
 
 
-def offset_from_oracle_exception(excp: cx_Oracle.DatabaseError) -> int:
+def offset_from_oracle_exception(excp: oracledb.DatabaseError) -> int:
     """Extracts the offset from a DataBaseError"""
     # pylint: disable = no-member
     # Locally disabled member checks because pylint thinks oracle_error is str
@@ -326,7 +373,7 @@ def is_tle_exception(error_msg):
 
 def build_dsn_tns():
     """Build a Data Source Name from values in the environment"""
-    dsn_tns = cx_Oracle.makedsn(
+    dsn_tns = oracledb.makedsn(
         os.environ['ORACLE_SERVER'],
         int(os.environ['ORACLE_PORT']),
         os.environ['ORACLE_SID'])
@@ -376,16 +423,17 @@ class OracleExecutor:
         possible to create the pool
         """
         self.dsn_tns = build_dsn_tns()
-        self.connection_pool = cx_Oracle.SessionPool(
-            os.environ['ORACLE_USER'],
-            os.environ['ORACLE_PASS'],
-            self.dsn_tns,
-            threaded=True,
-            encoding='UTF-8', nencoding='UTF-8',
-            min=1,
+        oracledb.init_oracle_client()  # To enable "thick mode"
+        self.connection_pool = oracledb.create_pool(
+            user=os.environ['ORACLE_USER'],
+            password=os.environ['ORACLE_PASS'],
+            dsn=self.dsn_tns,
+            # encoding='UTF-8', nencoding='UTF-8',
+            # min=1,
+            min=int(os.environ['ORACLE_MAX_GESTOR_CONNECTIONS']),
             max=int(os.environ['ORACLE_MAX_GESTOR_CONNECTIONS']),
-            getmode=cx_Oracle.SPOOL_ATTRVAL_TIMEDWAIT,
-            waitTimeout=int(os.environ['ORACLE_GESTOR_POOL_TIMEOUT_MS'])
+            getmode=oracledb.POOL_GETMODE_TIMEDWAIT,
+            wait_timeout=int(os.environ['ORACLE_GESTOR_POOL_TIMEOUT_MS'])
         )
         self.version = None
         logger.debug('Created an OracleExecutor to %s with a pool of %s connections with a timeout of %s ms',
@@ -410,8 +458,8 @@ class OracleExecutor:
         :param connection: Connection with privileges for creating users
         :return: A pair (username, password) of the created user
         """
-        user_name = self.__USER_PREFIX + random_str(self.__ALPHABET)
-        user_passwd = random_str(self.__ALPHABET)
+        user_name = f'{self.__USER_PREFIX}{random_str(8)}'
+        user_passwd = random_str(8)
         create_script = self.__CREATE_USER_SCRIPT.format(
             user_name,
             user_passwd,
@@ -445,7 +493,7 @@ class OracleExecutor:
                     for connection in connections:  # pragma: no cover
                         cursor.execute(self.__KILL_SESSION.format(connection[0], connection[1]))
                     self.drop_user(user[0], gestor)
-        except cx_Oracle.DatabaseError as excp:  # pragma: no cover
+        except oracledb.DatabaseError as excp:  # pragma: no cover
             logger.error('Unable to remove dangling users. Reason: %s', excp)
         finally:
             if gestor is not None:
@@ -465,7 +513,7 @@ class OracleExecutor:
                 cursor.execute(self.__NUM_DANGLING_USERS, age_seconds=age_seconds)
                 row = cursor.fetchone()
                 num = row[0]
-        except cx_Oracle.DatabaseError as excp:  # pragma: no cover
+        except oracledb.DatabaseError as excp:  # pragma: no cover
             logger.error('Unable to get number of dangling users. Reason: %s', excp)
         finally:
             if gestor is not None:
@@ -490,20 +538,21 @@ class OracleExecutor:
         :param passwd: Password of the Oracle user
         :return: Oracle connection
         """
-        connection = cx_Oracle.connect(user, passwd, self.dsn_tns, encoding='UTF-8', nencoding='UTF-8')
+        connection = oracledb.connect(user=user, password=passwd, dsn=self.dsn_tns)
         return connection
 
-    def execute_select_test(self, creation, insertion, select, output_db=False):
+    def execute_select_test(self, init_db, select, output_db=False):
         """
         Using a new fresh user, creates a set of tables ('creation) and inserts some data.
         Then, executes a correct SELECT statement and also a SELECT statement to test
         :param output_db:
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion: (str) Statements to insert data into tables
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
         :param select: (str) One SELECT statement to execute
         :return: {"result": result, "db": db}. result is a dictionary representing the statement result, and db is a
                  dictionary representing all the tables. In case of error, throws a ExecutorException
         """
+        creation, insertion = init_db
         conn, gestor, result, user, db = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
@@ -541,7 +590,7 @@ class OracleExecutor:
             self.connection_pool.release(gestor)
             gestor = None
             return {"result": result, "db": db}
-        except cx_Oracle.DatabaseError as excp:
+        except oracledb.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing SELECT statements: %s - %s - %s', state, excp, select)
             if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
@@ -560,23 +609,24 @@ class OracleExecutor:
                     # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
-                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                except oracledb.DatabaseError as drop_except:  # pragma: no cover
                     logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
-    def execute_dml_test(self, creation, insertion, dml, pre_db=True, min_stmt=0, max_stmt=float("inf")):
+    def execute_dml_test(self, init_db, dml, *, pre_db=True, min_stmt=0, max_stmt=float("inf")):
         """
         Using a new fresh user, creates a set of tables ('creation) and inserts some data.
         Then, executes some DML statements
         :param max_stmt:
         :param min_stmt:
         :param pre_db:
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion: (str) Statements to insert data into tables
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
         :param dml: (str) DML statements to execute (insert, delete, update)
         :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before and after executing dml
         """
+        creation, insertion = init_db
         conn, gestor, user, post, stmt = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
@@ -627,7 +677,7 @@ class OracleExecutor:
             gestor = None
 
             return {'pre': pre, 'post': post}
-        except cx_Oracle.DatabaseError as excp:
+        except oracledb.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing DML statements: %s - %s - %s', state, excp, stmt)
             if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
@@ -643,23 +693,24 @@ class OracleExecutor:
                     # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
-                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                except oracledb.DatabaseError as drop_except:  # pragma: no cover
                     logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
-    def execute_function_test(self, creation, insertion, func_creation, tests):
+    def execute_function_test(self, init_db, func_creation, tests):
         """
         Using a new fresh user, creates a set of tables ('creation) and inserts some data.
         Then, executes some DML statements
         :param tests: (str) function calls separated by new lines
         :param func_creation:
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion: (str) Statements to insert data into tables
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
 
         :return: {'pre': DB, 'results': dict} dictionary containing the initial state of the DB and a dictionary
                  {call: (result, type)} with the different calls, the result and the type of the result
         """
+        creation, insertion = init_db
         conn, gestor, user, stmt = None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
@@ -684,7 +735,7 @@ class OracleExecutor:
             state = OracleStatusCode.EXECUTE_USER_CODE
 
             # sqlparse does not consider the whole CREATE FUNCTION as a single statement, so we cannot check
-            # the minimum and maximum number of statements in this kind of problems :-(
+            # the minimum and maximum number of statements in this kind of problem :-(
 
             with conn.cursor() as cursor:
                 stmt = func_creation
@@ -700,7 +751,8 @@ class OracleExecutor:
                 results = {}
                 tests = [s.strip() for s in tests.split('\n') if len(s.strip()) > 0]
                 for stmt in tests:
-                    func_call = f'SELECT {stmt} FROM DUAL'
+                    # NOTE:# Function calls cannot be bound by parameters, so we use f-strings and trust its content
+                    func_call = f'SELECT {stmt} FROM DUAL'  # nosec B608
                     cursor.execute(func_call)
                     res_type = str(cursor.description[0][1])
                     row = cursor.fetchone()
@@ -719,7 +771,7 @@ class OracleExecutor:
             gestor = None
 
             return {'db': db, 'results': results}
-        except cx_Oracle.DatabaseError as excp:
+        except oracledb.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing function statements: %s - %s - %s', state, excp, stmt)
             if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
@@ -735,24 +787,25 @@ class OracleExecutor:
                     # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
-                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                except oracledb.DatabaseError as drop_except:  # pragma: no cover
                     logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
-    def execute_proc_test(self, creation, insertion, proc_creation, proc_call, pre_db=True):
+    def execute_proc_test(self, init_db, proc_creation, proc_call, pre_db=True):
         """
         Using a new fresh user, creates a set of tables ('creation) and inserts some data.
         Then, creates a PROCEDURE defined in proc_creation and invokes the call in proc_call
         :param pre_db:
         :param proc_call:
         :param proc_creation:
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion: (str) Statements to insert data into tables
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
 
-        :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before defining the procedure and
+        :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before defining the procedure
                    and after invoking the procedure
         """
+        creation, insertion = init_db
         conn, gestor, user, post, stmt = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
@@ -811,7 +864,7 @@ class OracleExecutor:
             gestor = None
 
             return {'pre': db, 'post': post}
-        except cx_Oracle.DatabaseError as excp:
+        except oracledb.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing procedure creation and call: %s - %s - %s', state, excp, stmt)
             if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
@@ -827,24 +880,25 @@ class OracleExecutor:
                     # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
-                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                except oracledb.DatabaseError as drop_except:  # pragma: no cover
                     logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
-    def execute_trigger_test(self, creation, insertion, trigger_definition, tests, pre_db=True):
+    def execute_trigger_test(self, init_db, trigger_definition, tests, pre_db=True):
         """
         Using a new fresh user, creates a set of tables ('creation) and inserts some data.
         Then, creates a PROCEDURE defined in proc_creation and invokes the call in proc_call
         :param pre_db:
         :param tests: (str) 1 or more DML statements that should invoke the trigger
         :param trigger_definition:
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion: (str) Statements to insert data into tables
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
 
-        :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before defining the trigger and
+        :return: {'pre': DB, 'post': DB} dictionary containing the state of the DB before defining the trigger
                    and after executing the tests
         """
+        creation, insertion = init_db
         conn, gestor, user, post, stmt = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
@@ -897,7 +951,7 @@ class OracleExecutor:
             gestor = None
 
             return {'pre': db, 'post': post}
-        except cx_Oracle.DatabaseError as excp:
+        except oracledb.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing trigger creation and call: %s - %s - %s', state, excp, stmt)
             if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
@@ -917,25 +971,27 @@ class OracleExecutor:
                     # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
-                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                except oracledb.DatabaseError as drop_except:  # pragma: no cover
                     logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
-    def execute_discriminant_test(self, creation, insertion_base, insertion_user, select_correct, select_incorrect):
+    def execute_discriminant_test(self, init_db, insertion_user, select_stmts):
         """
         Using a new fresh user, creates a set of tables (creation) and inserts some data: the base INSERT sentences
         and also the INSERT sentences from the user. Then, executes a correct and wrong SELECT statements, returning
         both results in a dictionary
-        :param creation: (str) Statements to create the tables and other structures
-        :param insertion_base: (str) Statements to insert data into tables from the program definition
+        :param init_db: (str, str) Pair of statements (create, insert) to create the tables and inserting
+                                   initial data into tables from the program definition
         :param insertion_user: (str) Statements to insert data into tables from the user submission
-        :param select_correct: (str) One SELECT statement to execute that returns correct results
-        :param select_incorrect: (str) One SELECT statement to execute that returns incorreect results
+        :param select_stmts: (str, str) Pair (correct, incorrect) SQL statements to run in the DB. The first one
+                                        should return correct results, and the second one incorrect results
         :return: {"result_correct": result, "result_wrong": result}. 'result' is a dictionary representing the
                  statement result of a query (in this case, select_correct and select_incorrect)
                  In case of error, throws a ExecutorException
         """
+        creation, insertion_base = init_db
+        select_correct, select_incorrect = select_stmts
         conn, gestor, result_correct, result_incorrect, user = None, None, None, None, None
         state = OracleStatusCode.GET_ADMIN_CONNECTION
         try:
@@ -975,7 +1031,7 @@ class OracleExecutor:
             self.connection_pool.release(gestor)
             gestor = None
             return {"result_correct": result_correct, "result_incorrect": result_incorrect}
-        except cx_Oracle.DatabaseError as excp:
+        except oracledb.DatabaseError as excp:
             error_msg = str(excp)
             logger.info('Error when testing DISCRIMINANT problem: %s - %s - %s - %s - %s', state, excp, insertion_user,
                         select_correct, select_incorrect)
@@ -997,7 +1053,7 @@ class OracleExecutor:
                     # "is currently connected". This looks like a bug or undocumented behavior of cx_Oracle
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
-                except cx_Oracle.DatabaseError as drop_except:  # pragma: no cover
+                except oracledb.DatabaseError as drop_except:  # pragma: no cover
                     logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)

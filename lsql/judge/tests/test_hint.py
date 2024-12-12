@@ -45,7 +45,7 @@ class HintTest(TestCase):
         create_submission(problem, user, VerdictCode.WA, 'select *** from')
 
         hint_url = reverse('judge:hint', args=[problem.pk])
-        client.login(username='tamara', password='2222')
+        client.login(username='tamara', password='2222')  # nosec B106
 
         # JSON with the first hint
         response = client.post(hint_url, follow=True)
@@ -88,7 +88,7 @@ class HintTest(TestCase):
         hint2 = create_hint(problem, 2, 5)
         create_used_hint(hint1, user)
         create_used_hint(hint2, user)
-        client.login(username='tamara', password='2222')
+        client.login(username='tamara', password='2222')  # nosec B106
         msg = 'No hay más pistas disponibles para este ejercicio.'
         hint_url = reverse('judge:hint', args=[problem.pk])
         response = client.post(hint_url, follow=True)
@@ -100,7 +100,7 @@ class HintTest(TestCase):
         user = create_user('2222', 'tamara')
         collection = create_collection('Colleccion de prueba TTT')
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        client.login(username='tamara', password='2222')
+        client.login(username='tamara', password='2222')  # nosec B106
         hint = create_hint(problem, 1, 1)
         create_used_hint(hint, user)
         problem_url = reverse('judge:problem', args=[problem.pk])
@@ -114,7 +114,7 @@ class HintTest(TestCase):
         collection = create_collection('Colleccion de prueba TTT')
         problem = create_select_problem(collection, 'SelectProblem ABC DEF')
         problem_3 = create_select_problem(collection, 'SelectProblem 3 DEF ABC')
-        client.login(username='tamara', password='2222')
+        client.login(username='tamara', password='2222')  # nosec B106
         hint = create_hint(problem, 1, 1)
         hint2 = create_hint(problem, 2, 1)
         hint3 = create_hint(problem_3, 3, 1)

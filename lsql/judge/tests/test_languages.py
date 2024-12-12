@@ -23,15 +23,15 @@ class LanguagesTest(TestCase):
 
     def test_languages_to_flags_templatetag(self):
         """Test to check if css classes for flags are correctly generated"""
-        self.assertEqual(languages_to_flags.language_to_flag("en"), "flag-icon flag-icon-us")
-        self.assertEqual(languages_to_flags.language_to_flag("es"), "flag-icon flag-icon-es")
+        self.assertEqual(languages_to_flags.language_to_flag("en"), "fi fi-us")
+        self.assertEqual(languages_to_flags.language_to_flag("es"), "fi fi-es")
 
     def test_collection_flags_templatetag(self):
         """Test to check if css classes for flags are correctly generated"""
-        self.assertIn("flag-icon flag-icon-us", languages_to_flags.collection_flags({"en"}))
-        self.assertIn("flag-icon flag-icon-us", languages_to_flags.collection_flags({"es", "en"}))
-        self.assertIn("flag-icon flag-icon-es", languages_to_flags.collection_flags({"es", "en"}))
-        self.assertNotIn("flag-icon flag-icon-us", languages_to_flags.collection_flags({"es"}))
+        self.assertIn("fi fi-us", languages_to_flags.collection_flags({"en"}))
+        self.assertIn("fi fi-us", languages_to_flags.collection_flags({"es", "en"}))
+        self.assertIn("fi fi-es", languages_to_flags.collection_flags({"es", "en"}))
+        self.assertNotIn("fi fi-us", languages_to_flags.collection_flags({"es"}))
 
     def test_login_language(self):
         """Test to check if language in login page displays correctly"""
@@ -59,7 +59,7 @@ class LanguagesTest(TestCase):
         client = Client()
 
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:collections')
@@ -91,7 +91,7 @@ class LanguagesTest(TestCase):
         client = Client()
 
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:password_change')
@@ -125,7 +125,7 @@ class LanguagesTest(TestCase):
         client = Client()
 
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:submissions')
@@ -155,7 +155,7 @@ class LanguagesTest(TestCase):
         problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
         problem.clean()
         problem.save()
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:problem', args=[problem.pk])
@@ -181,7 +181,7 @@ class LanguagesTest(TestCase):
         problem = TriggerProblem(zipfile=zip_trigger_path, collection=collection, author=user)
         problem.clean()
         problem.save()
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:problem', args=[problem.pk])
@@ -201,7 +201,7 @@ class LanguagesTest(TestCase):
         client = Client()
         collection = create_collection('Colleccion de prueba XYZ')
         create_user('5555', 'pedro')
-        client.login(username='pedro', password='5555')
+        client.login(username='pedro', password='5555')  # nosec B106
 
         expected = {'header': [['Algo', "<class 'cx_Oracle.NUMBER'>"], ['name', "<class 'cx_Oracle.STRING'>"]],
                     'rows': [[1, 'a'], [2, 'b']]}
@@ -251,16 +251,16 @@ class LanguagesTest(TestCase):
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         url = reverse('judge:login')
         response = client.get(url, follow=True)
-        self.assertIn('flag-icon-us', response.content.decode('utf-8'))
-        self.assertNotIn('flag-icon-es', response.content.decode('utf-8'))
+        self.assertIn('fi-us', response.content.decode('utf-8'))
+        self.assertNotIn('fi-es', response.content.decode('utf-8'))
         self.assertIn('value="en" selected', response.content.decode('utf-8'))
         self.assertNotIn('value="es" selected', response.content.decode('utf-8'))
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'es'})
         url = reverse('judge:login')
         response = client.get(url, follow=True)
-        self.assertIn('flag-icon-es', response.content.decode('utf-8'))
-        self.assertNotIn('flag-icon-us', response.content.decode('utf-8'))
+        self.assertIn('fi-es', response.content.decode('utf-8'))
+        self.assertNotIn('fi-us', response.content.decode('utf-8'))
         self.assertIn('value="es" selected', response.content.decode('utf-8'))
         self.assertNotIn('value="en" selected', response.content.decode('utf-8'))
 
@@ -269,7 +269,7 @@ class LanguagesTest(TestCase):
         client = Client()
         collection = create_collection('Colleccion de prueba XYZ')
         user = create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
         group_a = create_group('1A')
         group_a.user_set.add(user)
 
@@ -300,7 +300,7 @@ class LanguagesTest(TestCase):
         client = Client()
         collection = create_collection('Collection', author=create_superuser('0000', 'teacher1'))
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         create = 'CREATE TABLE mytable (dd DATE);'
         insert = "INSERT INTO mytable VALUES (TO_DATE('2020/01/31', 'YYYY/MM/DD'))"
@@ -323,7 +323,7 @@ class LanguagesTest(TestCase):
         html = client.get(collections_url, follow=True).content.decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
 
-        self.assertEqual(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"}), [])
+        self.assertEqual(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"fi"}), [])
 
         problem3 = SelectProblem(title_md='Dates', text_md='Example with dates', language="en",
                                  create_sql=create, insert_sql=insert, collection=collection,
@@ -338,19 +338,19 @@ class LanguagesTest(TestCase):
         html = client.get(collections_url, follow=True).content.decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
 
-        self.assertEqual(len(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})), 2)
+        self.assertEqual(len(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"fi"})), 2)
 
-        flags = soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})[0]['class']
-        flags.extend(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"flag-icon"})[1]['class'])
+        flags = soup.find_all("div", {"class": "flags"})[0].find_all("span", {"fi"})[0]['class']
+        flags.extend(soup.find_all("div", {"class": "flags"})[0].find_all("span", {"fi"})[1]['class'])
 
-        self.assertIn("flag-icon-us", flags)
-        self.assertIn("flag-icon-es", flags)
+        self.assertIn("fi-us", flags)
+        self.assertIn("fi-es", flags)
 
     def test_help_page_language(self):
         """Test to check help page language"""
         client = Client()
         create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
 
         client.cookies.load({settings.LANGUAGE_COOKIE_NAME: 'en'})
         help_url = reverse('judge:help')
@@ -404,7 +404,7 @@ class LanguagesTest(TestCase):
         coll = create_collection('Achievements')
         problem = create_select_problem(coll, 'Select1')
         user = create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')
+        client.login(username='pepe', password='5555')  # nosec B106
         submit_select_url = reverse('judge:submit', args=[problem.pk])
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
         client.post(submit_select_url, {'code': problem.solution}, follow=True)

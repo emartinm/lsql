@@ -8,7 +8,7 @@ more errors and warnings in SELECT queries and DML problems
 Need the environment variable DES_BIN pointing to DES binary
 """
 import os
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 import time
 
@@ -145,16 +145,22 @@ def execute_des_script(path):
     """ Runs DES with the content of the file 'path' as input, and returns the standard output.
         Raises DESException if timeouts or other execution error """
     des_path = os.environ['DES_BIN']
-    des_timeout = os.environ.get('DES_TIMEOUT', 10)  # in seconds, default 10s
+    des_timeout = int(os.environ.get('DES_TIMEOUT', 10))  # in seconds, default 10s
     init = time.time()
     try:
-        output = subprocess.check_output(f"timeout {des_timeout}s {des_path} < {path}", shell=True).decode('utf8')
+        with open(path, 'r', encoding='utf8') as finput:
+            output = subprocess.check_output(des_path, stdin=finput, timeout=des_timeout).decode('utf8')  # nosec B603
         end = time.time()
         logger.debug('DES execution time (seconds): %s', end-init)
         return output[output.find('DES-SQL> ') + len('DES-SQL> '):]  # Removes banner from output
-    except subprocess.CalledProcessError as error:
+    except subprocess.TimeoutExpired as error:
         end = time.time()
-        raise DESException(f'Error or timeout when invoking DES. Status code: {error.returncode}. '
+        raise DESException(f'Timeout when invoking DES. Timeout: {error.timeout}. '
+                           f'Execution time (seconds): {end - init}') from error
+    except subprocess.CalledProcessError as error:  # pragma: no cover
+        # Any severe error when invoking DES
+        end = time.time()
+        raise DESException(f'Error when invoking DES. Status code: {error.returncode}. '
                            f'Execution time (seconds): {end-init}') from error
 
 
@@ -227,7 +233,8 @@ class DesExecutor:
             insert_statements = clean_sql(insert)
             num_commands = len(create_statements) + len(insert_statements) + 1
             msgs = parse_tapi_commands(output, num_commands, pos=0)
-            assert len(msgs) == num_commands
+            if not len(msgs) == num_commands:
+                raise AssertionError  # pragma: no cover
             # Remove and log DES errors <Unrecognized start of input>
             msgs = filter_unrecognized_start_of_input(msgs, create, insert, query)
             return zip(create_statements + insert_statements + [query], msgs)
@@ -262,7 +269,8 @@ class DesExecutor:
 
             num_commands = len(create_statements) + len(insert_statements) + len(dml_statements)
             msgs = parse_tapi_commands(output, num_commands, pos=0)
-            assert len(msgs) == num_commands
+            if not len(msgs) == num_commands:
+                raise AssertionError  # pragma: no cover
             # Remove and log DES errors <Unrecognized start of input>
             msgs = filter_unrecognized_start_of_input(msgs, create, insert, dml)
             return zip(create_statements + insert_statements + dml_statements, msgs)

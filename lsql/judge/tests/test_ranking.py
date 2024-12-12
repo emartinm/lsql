@@ -63,7 +63,7 @@ class RankingTest(TestCase):
         coll = create_collection('Test Podium')
         problem = create_select_problem(coll, 'Select 1')
         user = create_user('passwordmichu', 'michu')
-        client.login(username='michu', password='passwordmichu')
+        client.login(username='michu', password='passwordmichu')  # nosec B106
         submit_select_url = reverse('judge:submit', args=[problem.pk])
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
         achievements_url = reverse('judge:achievements', args=[user.pk])
@@ -84,7 +84,7 @@ class RankingTest(TestCase):
         coll = create_collection('Test Solved')
         problem = create_select_problem(coll, 'Select 1')
         user = create_user('passwordmichu', 'michu')
-        client.login(username='michu', password='passwordmichu')
+        client.login(username='michu', password='passwordmichu')  # nosec B106
         submit_select_url = reverse('judge:submit', args=[problem.pk])
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
@@ -103,7 +103,7 @@ class RankingTest(TestCase):
         coll_achievement.save()
         problem = create_select_problem(coll, 'Select 1')
         user = create_user('passwordmichu', 'michu')
-        client.login(username='michu', password='passwordmichu')
+        client.login(username='michu', password='passwordmichu')  # nosec B106
         submit_select_url = reverse('judge:submit', args=[problem.pk])
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
         achievements_url = reverse('judge:achievements', args=[user.pk])
@@ -114,7 +114,7 @@ class RankingTest(TestCase):
         """ Test if we can see the number of achievements that have a user at ranking """
         client = Client()
         user = create_user('passwordmichu', 'michu')
-        client.login(username='michu', password='passwordmichu')
+        client.login(username='michu', password='passwordmichu')  # nosec B106
         coll = create_collection('Coleccion de cartas')
         problem = create_select_problem(coll, 'Problema')
         create_an_achievement_of_each(coll)
@@ -130,7 +130,7 @@ class RankingTest(TestCase):
         """Test for check signals"""
         client = Client()
         create_user('passwordmichu', 'michu')
-        client.login(username='michu', password='passwordmichu')
+        client.login(username='michu', password='passwordmichu')  # nosec B106
         coll = create_collection('Coleccion de cartas')
         problem = create_select_problem(coll, 'Problema')
         submit_select_url = reverse('judge:submit', args=[problem.pk])
@@ -144,7 +144,7 @@ class RankingTest(TestCase):
         client = Client()
         user_michu = create_user('passwordmichu', 'michu')
         create_user('passwordimmobile', 'immobile')
-        client.login(username='immobile', password='passwordimmobile')
+        client.login(username='immobile', password='passwordimmobile')  # nosec B106
         # Create the Collection for the achievement NumSolvedCollectionAchievementDefinition and Problem
         coll = create_collection('Coleccion de cartas')
         # Create PodiumAchievementDefinition
@@ -181,7 +181,7 @@ class RankingTest(TestCase):
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
         client.logout()
         # Login with "michu" and submit correct answer. All the checks will be with this user
-        client.login(username='michu', password='passwordmichu')
+        client.login(username='michu', password='passwordmichu')  # nosec B106
         client.post(submit_select_url, {'code': problem.solution}, follow=True)
         # Whit this definitions our user "michu" don't have any achievement
         self.assertEqual(ObtainedAchievement.objects.filter(user=user_michu).count(), 0)
@@ -211,7 +211,7 @@ class RankingTest(TestCase):
         """Test if check_and_save of AchievementDefinition raise a NotImplementedError"""
         client = Client()
         user = create_user('passwordmichu', 'michu')
-        client.login(username='michu', password='passwordmichu')
+        client.login(username='michu', password='passwordmichu')  # nosec B106
         achievement_definition = AchievementDefinition(name={"es":'nombre'}, description={"es":'descripcion'})
         with self.assertRaises(NotImplementedError):
             achievement_definition.check_and_save(user)
@@ -309,7 +309,7 @@ class RankingTest(TestCase):
                                     description={"es":'Envia una solucion para un problema'},
                                     num_problems=1, num_submissions=1)
         ach_submissions.save()
-        client.login(username='mazepin', password='passwordmazepin')
+        client.login(username='mazepin', password='passwordmazepin')  # nosec B106
         submit_select_url = reverse('judge:submit', args=[problem.pk])
         client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
         self.assertEqual(ObtainedAchievement.objects.filter(user=user).count(), 1)
@@ -348,7 +348,7 @@ class RankingTest(TestCase):
                                          user=user, verdict_code=VerdictCode.RE, problem=select_problem_2)
         Submission.objects.filter(id=sub3.id).update(creation_date=datetime(2021, 3, 4).astimezone())
 
-        client.login(username=teacher.username, password='1111')
+        client.login(username=teacher.username, password='1111')  # nosec B106
         url = reverse('judge:download_ranking', args=[collection.pk])
         response = client.get(url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
 
@@ -399,6 +399,6 @@ class RankingTest(TestCase):
 
         # Students cannot download ranking
         client.logout()
-        client.login(username=user.username, password='2222')
+        client.login(username=user.username, password='2222')  # nosec B106
         response = client.get(url, {'group': group_a.id, 'start': start, 'end': end}, follow=True)
         self.assertIn('pero no está autorizado a acceder a esta página', response.content.decode('utf-8'))

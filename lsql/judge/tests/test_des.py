@@ -124,7 +124,7 @@ $eot
         """ DES require too much time to process SQL query, so it is aborted and raises DESException """
         with self.assertRaises(DESException) as ctx:
             DesExecutor.get().get_des_messages_select(self.__CREATE_TIMEOUT, '', self.__QUERY_TIMEOUT)
-        self.assertIn("Error or timeout when invoking DES. Status code: 124", str(ctx.exception))
+        self.assertIn("Timeout when invoking DES", str(ctx.exception))
 
     def test_des_timeout_problem_select(self):
         """ DES require too much time to process SQL query, so it is aborted and returns [] """
@@ -235,7 +235,7 @@ $eot
         dml = f'INSERT INTO Persona ({self.__QUERY_TIMEOUT});'
         with self.assertRaises(DESException) as ctx:
             DesExecutor.get().get_des_messages_dml(self.__CREATE_TIMEOUT, insert, dml)
-        self.assertIn("Error or timeout when invoking DES. Status code: 124", str(ctx.exception))
+        self.assertIn("Timeout when invoking DES", str(ctx.exception))
 
     def test_des_dml_messages(self):
         """ Check that get_des_messages_solution() returns the correct messages """

@@ -17,7 +17,7 @@ from judge.types import VerdictCode
 from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Collection, \
     Problem, Submission
 from judge.shell import create_users_from_csv, adapt_db_result_to_list, rejudge, extended_submissions, \
-    submissions_per_user
+    submissions_per_user, create_users_from_list
 from judge.tests.test_common import create_select_problem, create_collection, create_user, create_dml_problem
 
 
@@ -27,6 +27,41 @@ class ShellTest(TestCase):
     CSV_OK_TEST = 'test_ok.csv'
     CSV_BAD_FORMAT = ['csv_empty_document.csv', 'csv_empty_first.csv', 'csv_empty_name.csv', 'csv_empty_email.csv',
                       'csv_empty_last.csv', 'csv_non_ucm_email.csv']
+
+    def test_create_users_from_list_bad(self):
+        """ Invocations that must raise AssertionErrors """
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[], group=None, dry=True)
+
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[{'CORREO': '',
+                                               'DOCUMENTO': '58962147S',
+                                               'NOMBRE COMPLETO': 'Calabaza, Manuel'}],
+                                   group='test', dry=True)
+
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[{'CORREO': '@ucm.es',
+                                               'DOCUMENTO': '58962147S',
+                                               'NOMBRE COMPLETO': 'Calabaza, Manuel'}],
+                                   group='test', dry=True)
+
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[{'CORREO': 'pep@ucm.es',
+                                               'DOCUMENTO': '',
+                                               'NOMBRE COMPLETO': 'Calabaza, Manuel'}],
+                                   group='test', dry=True)
+
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[{'CORREO': 'pep@ucm.es',
+                                               'DOCUMENTO': '58962147S',
+                                               'NOMBRE COMPLETO': 'Calabaza,'}],
+                                   group='test', dry=True)
+
+        with self.assertRaises(AssertionError):
+            create_users_from_list(dict_list=[{'CORREO': 'pep@ucm.es',
+                                               'DOCUMENTO': '58962147S',
+                                               'NOMBRE COMPLETO': ',Manuel'}],
+                                   group='test', dry=True)
 
     def test_valid_csv(self):
         """Valid CSV file with 3 users"""
@@ -120,7 +155,8 @@ class ShellTest(TestCase):
             self.assertIs(type(prob.expected_result), list)
             self.assertIs(type(prob.expected_result[0]), dict)
 
-        for prob in Problem.objects.all():
+        for prob in Problem.objects.all():  # pylint: disable=E1133
+            # pylint false positive E1133
             prob.delete()
 
         # Problems with wrong types in initial_db or expected_result
@@ -150,7 +186,7 @@ class ShellTest(TestCase):
         """ Test that rejudge correctly detects submission whose verdict changes """
         collection = create_collection("test collection")
         problem = create_select_problem(collection, "example")
-        user = create_user(passwd='1111', username='user_Test')
+        user = create_user(passwd='1111', username='user_Test')  # nosec B106
         subs = [
             Submission(code=problem.solution, verdict_code=VerdictCode.IE, user=user, problem=problem),  # IE->AC
             Submission(code='SELECT * FROM dual', verdict_code=VerdictCode.IE, user=user, problem=problem),  # IE->WA
@@ -178,8 +214,8 @@ class ShellTest(TestCase):
         collection2 = create_collection("test collection2")
         problem1 = create_select_problem(collection1, "Problem1")
         problem2 = create_dml_problem(collection2, "Problem2")
-        user1 = create_user(passwd='1111', username='user1', email='user1@ucm.es')
-        user2 = create_user(passwd='1111', username='user2', email='user2@ucm.es')
+        user1 = create_user(passwd='1111', username='user1', email='user1@ucm.es')  # nosec B106
+        user2 = create_user(passwd='1111', username='user2', email='user2@ucm.es')  # nosec B106
         sub1 = Submission(code='', verdict_code=VerdictCode.WA, user=user1, problem=problem1)
         sub2 = Submission(code='', verdict_code=VerdictCode.RE, user=user2, problem=problem1)
         sub3 = Submission(code='', verdict_code=VerdictCode.AC, user=user1, problem=problem2)

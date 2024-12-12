@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     # service containers to run with `Django CI`
     services:
@@ -66,6 +66,12 @@ jobs:
       with:
         python-version: '3.10'
 
+    - name: Install libaio1 (libaio1t64 in Ubuntu 24.04)
+      run: |
+        sudo apt update
+        sudo apt install libaio1t64
+        sudo ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
+
     - name: Install pip Dependencies
       run: |
         python -m pip install --upgrade pip
@@ -73,11 +79,11 @@ jobs:
 
     - name: Installing DES into home
       run : |
-        ./travis_des.sh
+        ./install_des.sh
 
     - name: Installing Oracle Instant Client
       run: |
-        ./travis_oracle_instant_client.sh
+        ./install_oracle_instant_client.sh
 
     - name: Set LD_LIBRARY_PATH variable for InstantClient
       run: |
@@ -86,7 +92,7 @@ jobs:
 
     - name: Execute Django tests and coverage
       run: |
-        ./tests_travis.sh
+        ./tests_ci.sh
       env:
         ORACLE_SID: XE
         ORACLE_MAX_GESTOR_CONNECTIONS: 20
@@ -106,10 +112,11 @@ jobs:
         PG_PORT: 5432
         PG_DB: postgres
         DJANGO_DEVELOPMENT: true
-        DES_BIN: ~/des/des_start
+        DES_BIN: ${{ github.workspace }}/des/des_start
         DES_TIMEOUT: 5
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         verbose: true

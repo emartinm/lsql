@@ -14,8 +14,8 @@ register = template.Library()
 def language_to_flag(code):
     """Generates css flag class for the language code"""
     if code.lower() == 'en':
-        return 'flag-icon flag-icon-us'
-    return 'flag-icon flag-icon-' + code.lower()
+        return 'fi fi-us'
+    return 'fi fi-' + code.lower()
 
 @register.simple_tag
 def collection_flags(languages):

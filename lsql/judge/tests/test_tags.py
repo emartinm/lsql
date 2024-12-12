@@ -30,10 +30,10 @@ class TagsTest(TestCase):
         context = Context()
         text = template.render(context)
 
-        regexp = r"[a-zA-Z0-9]{15}"
+        regexp = r"[a-f0-9]{30}"
         matches = re.findall(regexp, text)
         self.assertEqual(len(matches), 5)
         self.assertEqual(matches[0], matches[1])
         self.assertEqual(matches[1], matches[2])
         self.assertEqual(matches[3], matches[4])
-        self.assertNotEqual(matches[0], matches[4])  # This could be equal with very small probability 1/65^15
+        self.assertNotEqual(matches[0], matches[4])  # This could be equal with tiny small probability
