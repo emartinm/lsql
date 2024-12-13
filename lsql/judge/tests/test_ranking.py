@@ -216,7 +216,7 @@ class RankingTest(TestCase):
         with self.assertRaises(NotImplementedError):
             achievement_definition.check_and_save(user)
 
-    def test_obtained_achievements_date(self):
+    def test_obtained_achievements_date(self): # pylint: disable=too-many-statements
         """Test if the dates of the obtained achievements are correct"""
         user = create_user('passwordmichu', 'michu')
         coll = create_collection('Coleccion de cartas')
@@ -226,11 +226,11 @@ class RankingTest(TestCase):
         sub_2 = Submission(code='nada', verdict_code=VerdictCode.AC, user=user, problem=problem_2)
         sub_1.save()
         sub_2.save()
-        Submission.objects.filter(id=sub_1.id).update(creation_date=datetime(2006, 3, 5).astimezone())
-        # sub_1_u = submission 1 updated
+        Submission.objects.filter(id=sub_1.id).update(creation_date=datetime(2006, 1, 1).astimezone())
         sub_1_u = Submission.objects.get(id=sub_1.id)
-        Submission.objects.filter(id=sub_2.id).update(creation_date=datetime(2020, 3, 5).astimezone())
+        Submission.objects.filter(id=sub_2.id).update(creation_date=datetime(2020, 12, 12).astimezone())
         sub_2_u = Submission.objects.get(id=sub_2.id)
+        # sub_1_u, sub_2_u are the submissions 1 updated with the creation dates
 
         # Test NumSolvedAchievementDefinition
         ach_solved = NumSolvedAchievementDefinition(name={"es":'Resolvista'},
@@ -289,14 +289,50 @@ class RankingTest(TestCase):
         ach_submissions = NumSubmissionsProblemsAchievementDefinition(name={"es":'Ya van dos problemas'},
                                                   description={"es":'Realiza un envio en dos problemas'},
                                                   num_problems=2, num_submissions=2)
+        # Created in the second submission
         ach_submissions.save()
         date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
         self.assertEqual(date[0], sub_2_u.creation_date)
+        ObtainedAchievement.objects.all().delete()
+
+        # Created in the first submission
         ach_submissions.num_problems = 1
         ach_submissions.num_submissions = 1
         ach_submissions.save()
         date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
         self.assertEqual(date[0], sub_1_u.creation_date)
+        ObtainedAchievement.objects.all().delete()
+
+        # No created because there are only 2 submissions
+        ach_submissions.num_problems = 2
+        ach_submissions.num_submissions = 3
+        ach_submissions.save()
+        date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
+        self.assertEqual(len(date), 0)
+        ObtainedAchievement.objects.all().delete()
+
+        # No created because there are only 2 problems tried
+        ach_submissions.num_problems = 3
+        ach_submissions.num_submissions = 2
+        ach_submissions.save()
+        date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
+        self.assertEqual(len(date), 0)
+        ObtainedAchievement.objects.all().delete()
+
+        # Created in the second submission
+        ach_submissions.num_problems = 1
+        ach_submissions.num_submissions = 2
+        ach_submissions.save()
+        date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
+        self.assertEqual(date[0], sub_2_u.creation_date)
+        ObtainedAchievement.objects.all().delete()
+
+        # Created in the second submission when tries the second problem
+        ach_submissions.num_problems = 2
+        ach_submissions.num_submissions = 1
+        ach_submissions.save()
+        date = ObtainedAchievement.objects.filter(user=user).values_list('obtained_date', flat=True)
+        self.assertEqual(date[0], sub_2_u.creation_date)
         ObtainedAchievement.objects.all().delete()
 
     def test_incorrect_submit_get_achievement(self):

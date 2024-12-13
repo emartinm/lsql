@@ -10,7 +10,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-class VerdictCode(models.TextChoices):
+class VerdictCode(models.TextChoices):  # pylint: disable=too-many-ancestors
     """Codes representing different judge verdicts"""
     AC = 'AC', _('Aceptado')
     TLE = 'TLE', _('Tiempo limite excedido')
@@ -65,6 +65,9 @@ class ProblemType(IntEnum):
     PROC = 3
     TRIGGER = 4
     DISC = 5
+
+    def __str__(self):
+        return f'ProblemType.{self.name}'
 
 
 @unique

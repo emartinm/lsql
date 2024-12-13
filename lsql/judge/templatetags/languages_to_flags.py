@@ -25,4 +25,3 @@ def collection_flags(languages):
         for lang in languages:
             flags.append(language_to_flag(lang))
     return flags
-    

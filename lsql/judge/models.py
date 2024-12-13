@@ -15,7 +15,7 @@ from django.core.mail import mail_admins
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinLengthValidator
 from django.db import models
-from django.db.models import JSONField, Subquery, Min
+from django.db.models import JSONField, Min
 from django.utils import timezone
 from django.utils import translation
 from model_utils.managers import InheritanceManager
@@ -288,20 +288,27 @@ class Problem(models.Model):
         """User (non-staff and active) who solved third"""
         return self.solved_n_position(3)
 
-    def solved_position(self, user):
-        """Position that user solved the problem (ignoring staff and inactive users). If not solved return None"""
-        if self.solved_by_user(user):
-            active_students = get_user_model().objects.filter(is_staff=False, is_active=True)
-            iterator = 1
-            users_ac = (Submission.objects.
-                        filter(problem=self, user__in=active_students, verdict_code=VerdictCode.AC).
+    @staticmethod
+    def solved_position_problem_user(problem, user):
+        """Position that user solved the problem (ignoring staff and inactive users). If not solved return None
+           static method that does not require to generate or lookup for a Problem
+        """
+        active_students = get_user_model().objects.filter(is_staff=False, is_active=True)
+        pk_users_ac = (Submission.objects.
+                        filter(problem=problem, user__in=active_students, verdict_code=VerdictCode.AC).
                         order_by('pk', 'user').
                         distinct('pk', 'user').
                         values_list('user', flat=True))
-            for users in users_ac:
-                if users == user.pk:
-                    return iterator
-                iterator = iterator + 1
+        for i, user_pk in enumerate(pk_users_ac, 1):
+            if user_pk == user.pk:
+                return i
+
+        return None
+
+    def solved_position(self, user):
+        """Position that user solved the problem (ignoring staff and inactive users). If not solved return None"""
+        if self.solved_by_user(user):
+            return Problem.solved_position_problem_user(self, user)
         return None
 
     def insert_sql_list(self):
@@ -754,16 +761,12 @@ class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
         verbose_name_plural = 'AchievementDef_NumSolved'
 
     def check_and_save(self, user):
-        """Return if a user is deserving for get an achievement, if it is, save that"""
+        """Determine if a user qualifies for an achievement; if they do, save it."""
         if not self.check_user(user):
             corrects = Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).distinct("problem").count()
             if corrects >= self.num_problems:
-                # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
-                # Subquery return a list of creation_date of the problems that user have VerdictCode.AC
-                # order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
-                #    Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).
-                #    order_by('problem', 'creation_date').distinct('problem').values('creation_date'))).\
-                #    order_by('creation_date').values_list('creation_date', flat=True)
+                # First submission of each solved Problem that user have VerdictCode.AC. Ordered by 'creation_date'
+                # List of dictionaries {'problem': problem pk, 'first_ac_submission': date first AC)
                 first_ac_submissions = (Submission.objects.filter(verdict_code=VerdictCode.AC, user=user)
                                         .values('problem')
                                         .annotate(first_ac_submission=Min('creation_date'))
@@ -789,12 +792,8 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
     def check_and_save(self, user):
         """Return if a user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
-            # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
-            # Subquery return a list of creation_date of the problems that user have VerdictCode.AC
-            # order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
-            #     Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).
-            #     order_by('problem', 'creation_date').distinct('problem').values('creation_date'))). \
-            #     order_by('creation_date')
+            # First submission of each solved Problem that user have VerdictCode.AC. Ordered by 'creation_date'
+            # List of dictionaries {'problem': problem pk, 'first_ac_submission': date first AC)
             first_ac_submissions = (Submission.objects.filter(verdict_code=VerdictCode.AC, user=user)
                                     .values('problem')
                                     .annotate(first_ac_submission=Min('creation_date'))
@@ -802,12 +801,11 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
             total = 0
             if len(first_ac_submissions) >= self.num_problems:
                 for sub in first_ac_submissions:
-                    prob = Problem.objects.get(pk=sub['problem'])
-                    user_pos = prob.solved_position(user)
+                    user_pos = Problem.solved_position_problem_user(sub['problem'], user)
                     if user_pos is not None and user_pos <= self.position:
                         total = total + 1
                         if total >= self.num_problems:
-                            new_achievement = ObtainedAchievement(user=user, obtained_date=sub.creation_date,
+                            new_achievement = ObtainedAchievement(user=user, obtained_date=sub['first_ac_submission'],
                                                                   achievement_definition=self)
                             new_achievement.save()
                             return True
@@ -829,15 +827,17 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
             corrects = Submission.objects.filter(verdict_code=VerdictCode.AC, user=user,
                                                  problem__collection=self.collection).distinct("problem").count()
             if corrects >= self.num_problems:
-                # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
-                # Subquery return a list of creation_date of the problems that user have VerdictCode.AC
-                order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
-                    Submission.objects.filter(verdict_code=VerdictCode.AC, user=user,
-                                              problem__collection=self.collection).
-                    order_by('problem', 'creation_date').distinct('problem').values('creation_date')
-                )).order_by('creation_date').values_list('creation_date', flat=True)
+                # First submission of each solved Problem in the collection that user have VerdictCode.AC, ordered
+                # by 'creation_date'
+                # List of dictionaries {'problem': problem pk, 'first_ac_submission': date first AC)
+                first_ac_submissions = (Submission.objects.filter(verdict_code=VerdictCode.AC, user=user,
+                                                                  problem__collection=self.collection)
+                                        .values('problem')
+                                        .annotate(first_ac_submission=Min('creation_date'))
+                                        .order_by('first_ac_submission'))
                 new_achievement = ObtainedAchievement(user=user,
-                                                      obtained_date=order_problem_creation_date[self.num_problems - 1],
+                                                      obtained_date=first_ac_submissions[self.num_problems - 1][
+                                                          'first_ac_submission'],
                                                       achievement_definition=self)
                 new_achievement.save()
                 return True
@@ -862,19 +862,21 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
         """Return if a user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             count = 0
-            # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
-            # Subquery return a list of creation_date of the problems that user have VerdictCode.AC
-            order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
-                Submission.objects.filter(verdict_code=VerdictCode.AC, user=user).
-                order_by('problem', 'creation_date').distinct('problem').values('creation_date')
-            )).order_by('creation_date')
-            for sub in order_problem_creation_date:
-                problem = Problem.objects.filter(pk=sub.problem.pk).select_subclasses()
+            # First submission of each solved Problem that user have VerdictCode.AC, ordered by 'creation_date'
+            # List of dictionaries {'problem': problem pk, 'first_ac_submission': date first AC)
+            first_ac_submissions = (Submission.objects.filter(verdict_code=VerdictCode.AC, user=user)
+                                    .values('problem')
+                                    .annotate(first_ac_submission=Min('creation_date'))
+                                    .order_by('first_ac_submission'))
+
+            for sub in first_ac_submissions:
+                # TODO: improve N+1 queries because of the detection of the problem subclass
+                problem = Problem.objects.filter(pk=sub['problem']).select_subclasses()
                 if problem[0].problem_type().name == self.problem_type:
                     count += 1
                     if count >= self.num_problems:
                         new_achievement = ObtainedAchievement(user=user,
-                                                              obtained_date=sub.creation_date,
+                                                              obtained_date=sub['first_ac_submission'],
                                                               achievement_definition=self)
                         new_achievement.save()
                         return True
@@ -897,15 +899,20 @@ class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.
             if total_submissions >= self.num_submissions:
                 total_prob = Submission.objects.filter(user=user).distinct("problem").count()
                 if total_prob >= self.num_problems:
-                    # First submission of each Problem that user have VerdictCode.AC. Ordered by 'creation_date'
-                    # Subquery return a list of creation_date of the problems that user submitted a solution
-                    order_problem_creation_date = Submission.objects.filter(creation_date__in=Subquery(
-                        Submission.objects.filter(user=user).order_by('problem', 'creation_date').distinct('problem').
-                        values('creation_date'))).order_by('creation_date').values_list('creation_date', flat=True)
-                    new_achi = ObtainedAchievement(user=user,
-                                                   obtained_date=order_problem_creation_date[self.num_problems - 1],
+                    # First submission (any) of each Problem that user have VerdictCode.AC, ordered by 'creation_date'
+                    # List of dictionaries {'problem': problem pk, 'first_ac_submission': date first AC)
+                    date_xth_submission = Submission.objects.filter(user=user).order_by('creation_date')[
+                        self.num_submissions-1].creation_date
+                    date_yth_problem = (Submission.objects.filter(user=user)
+                                            .values('problem')
+                                            .annotate(first_submission=Min('creation_date'))
+                                            .order_by('first_submission'))[self.num_problems-1]['first_submission']
+                    achievement_date = max(date_xth_submission, date_yth_problem)
+                    # The most recent date of xth submission and yht problem
+                    new_achievement = ObtainedAchievement(user=user,
+                                                   obtained_date=achievement_date,
                                                    achievement_definition=self)
-                    new_achi.save()
+                    new_achievement.save()
                     return True
         return False
 
