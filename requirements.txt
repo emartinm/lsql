@@ -2,7 +2,7 @@ asgiref==3.8.1
 astroid==3.3.6
 bandit==1.8.0
 beautifulsoup4==4.12.3
-certifi==2024.8.30
+certifi==2024.12.14
 cffi==1.17.1
 coverage==7.6.9
 cryptography==44.0.0
@@ -21,7 +21,7 @@ markdown-it-py==3.0.0
 mccabe==0.7.0
 mdurl==0.1.2
 multiset==3.2.0
-oracledb==2.5.0
+oracledb==2.5.1
 packaging==24.2
 pbr==6.1.0
 platformdirs==4.3.6
@@ -40,7 +40,7 @@ rich==13.9.4
 sentry-sdk==2.19.2
 six==1.17.0
 soupsieve==2.6
-sqlparse==0.5.2
+sqlparse==0.5.3
 stevedore==5.4.0
 toml==0.10.2
 tomli==2.2.1
