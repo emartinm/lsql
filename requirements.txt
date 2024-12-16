@@ -40,7 +40,7 @@ rich==13.9.4
 sentry-sdk==2.19.2
 six==1.17.0
 soupsieve==2.6
-sqlparse==0.5.2
+sqlparse==0.5.3
 stevedore==5.4.0
 toml==0.10.2
 tomli==2.2.1
