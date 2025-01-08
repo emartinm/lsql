@@ -1,10 +1,10 @@
 asgiref==3.8.1
-astroid==3.3.6
+astroid==3.3.8
 bandit==1.8.0
 beautifulsoup4==4.12.3
 certifi==2024.12.14
 cffi==1.17.1
-coverage==7.6.9
+coverage==7.6.10
 cryptography==44.0.0
 defusedxml==0.7.1
 dill==0.3.9
@@ -30,8 +30,8 @@ pycparser==2.22
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.7
 pyexcel-ods3==0.6.1
-Pygments==2.18.0
-pylint==3.3.2
+Pygments==2.19.0
+pylint==3.3.3
 pylint-django==2.6.1
 pylint-plugin-utils==0.8.2
 pytz==2024.2
@@ -46,5 +46,5 @@ toml==0.10.2
 tomli==2.2.1
 tomlkit==0.13.2
 typing_extensions==4.12.2
-urllib3==2.2.3
+urllib3==2.3.0
 wrapt==1.17.0
