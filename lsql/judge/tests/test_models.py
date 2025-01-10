@@ -132,7 +132,8 @@ class ModelsTest(TestCase):
                     INSERT INTO Club VALUES ('11111112X', 'Madrid', 'B', 80000);
                     INSERT INTO Club VALUES ('11111114X', 'Futbol Club Barcelona', 'B', 80000);
                     INSERT INTO Club VALUES ('11111115X', 'Paris Saint-Germain Football Club', 'C', 1000);
-                    INSERT INTO Persona VALUES ('00000001X', 'Peter Johnoson');'''
+                    INSERT INTO Persona VALUES ('00000001X', 'Peter Johnoson');
+                    INSERT INTO Persona VALUES ('00000002X', 'Juanitos Manolis');'''
         solution = "SELECT Sede, Nombre FROM Club WHERE CIF = '11111111X' and Nombre ='Madrid';"
         oracle = OracleExecutor.get()
         problem = SelectProblem(title_md='Test Multiple db Select', text_md='bla',
@@ -160,26 +161,31 @@ class ModelsTest(TestCase):
         # Show second db if code is correct in the first db but not in the second db
         self.assertEqual(soup.find(id="bd").find('p').find('strong').string,
                          "Base de datos utilizada para la ejecución de tu código SQL:")
-        self.assertEqual(soup.find(id="bd").find('thead').find('th').string, "CIF")
-        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[1].string, "NOMBRE")
-        self.assertEqual(len(soup.find(id="bd").find_all('thead')), 2)
-        self.assertEqual(soup.find(id="bd").find_all('thead')[1].find_all('th')[0].string, "NIF")
-        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[0].string,
-                         "11111112X")
-        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[2].string, "A")
-        self.assertEqual(len(soup.find(id="bd").find_all('tbody')[0].find_all('tr')), 3)
+        tables = soup.find(id="bd").find_all('table')
+        self.assertEqual(len(tables), 2)  # Shows two tables
+        tab_club, tab_persona = tables
+        if len(tables[0].find_all('th')) == 2:
+            tab_persona, tab_club = tables
+        self.assertEqual(tab_club.find('thead').find_all('th')[0].string, "CIF")
+        self.assertEqual(tab_persona.find('thead').find_all('th')[0].string, "NIF")
+        self.assertEqual(len(tab_club.find('tbody').find_all('tr')), 3)
+        self.assertEqual(len(tab_persona.find('tbody').find_all('tr')), 1)
+
 
         html = problem.judge("SELECT Sede, Nombre FROM Club WHERE Nombre ='Madrid';", oracle)[1]
         soup = BeautifulSoup(html, 'html.parser')
         # Show third db if code is correct in the first and second dbs but not in the third db
         self.assertEqual(soup.find(id="bd").find('p').find('strong').string,
                          "Base de datos utilizada para la ejecución de tu código SQL:")
-        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[0].string, "CIF")
-        self.assertEqual(soup.find(id="bd").find_all('thead')[0].find_all('th')[1].string, "NOMBRE")
-        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[0].string,
-                         "11111112X")
-        self.assertEqual(soup.find(id="bd").find_all('tbody')[0].find_all('tr')[1].find_all('td')[2].string, "B")
-        self.assertEqual(len(soup.find(id="bd").find_all('tbody')[0].find_all('tr')), 4)
+        tables = soup.find(id="bd").find_all('table')
+        self.assertEqual(len(tables), 2)  # Shows two tables
+        tab_club, tab_persona = tables
+        if len(tables[0].find_all('th')) == 2:
+            tab_persona, tab_club = tables
+        self.assertEqual(tab_club.find('thead').find_all('th')[0].string, "CIF")
+        self.assertEqual(tab_persona.find('thead').find_all('th')[0].string, "NIF")
+        self.assertEqual(len(tab_club.find('tbody').find_all('tr')), 4)
+        self.assertEqual(len(tab_persona.find('tbody').find_all('tr')), 2)
 
     def test_podium(self):
         """Test the correct performance of the podium"""

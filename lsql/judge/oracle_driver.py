@@ -376,7 +376,7 @@ def build_dsn_tns():
     dsn_tns = oracledb.makedsn(
         os.environ['ORACLE_SERVER'],
         int(os.environ['ORACLE_PORT']),
-        os.environ['ORACLE_SID'])
+        os.environ['ORACLE_SID'])  # SID=free in oracle-free Docker images
     return dsn_tns
 
 
