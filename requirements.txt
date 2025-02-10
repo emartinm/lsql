@@ -1,14 +1,14 @@
 asgiref==3.8.1
 astroid==3.3.8
 bandit==1.8.2
-beautifulsoup4==4.13.0
+beautifulsoup4==4.13.3
 certifi==2025.1.31
 cffi==1.17.1
-coverage==7.6.10
+coverage==7.6.11
 cryptography==44.0.0
 defusedxml==0.7.1
 dill==0.3.9
-Django==5.1.5
+Django==5.1.6
 django-model-utils==5.0.0
 gunicorn==23.0.0
 isort==6.0.0
@@ -23,7 +23,7 @@ mdurl==0.1.2
 multiset==3.2.0
 oracledb==2.5.1
 packaging==24.2
-pbr==6.1.0
+pbr==6.1.1
 platformdirs==4.3.6
 psycopg2-binary==2.9.10
 pycparser==2.22
