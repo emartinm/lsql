@@ -1,7 +1,7 @@
 asgiref==3.8.1
 astroid==3.3.8
 bandit==1.8.2
-beautifulsoup4==4.13.0
+beautifulsoup4==4.13.3
 certifi==2025.1.31
 cffi==1.17.1
 coverage==7.6.10
