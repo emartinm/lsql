@@ -41,7 +41,7 @@ sentry-sdk==2.21.0
 six==1.17.0
 soupsieve==2.6
 sqlparse==0.5.3
-stevedore==5.4.0
+stevedore==5.4.1
 toml==0.10.2
 tomli==2.2.1
 tomlkit==0.13.2
