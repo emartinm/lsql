@@ -17,7 +17,8 @@ from judge.types import VerdictCode
 from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, Collection, \
     Problem, Submission
 from judge.shell import create_users_from_csv, adapt_db_result_to_list, rejudge, extended_submissions, \
-    submissions_per_user, create_users_from_list
+    submissions_per_user, create_users_from_list, is_projection, is_where, is_aggregation, is_order, is_inner_join, \
+    is_outer_join, is_group_by, is_set, is_having, is_nested, is_null, is_exists, is_like, keywords
 from judge.tests.test_common import create_select_problem, create_collection, create_user, create_dml_problem
 
 
@@ -272,3 +273,465 @@ class ShellTest(TestCase):
             self.assertEqual(rows[1]['ProblemType.DML'], '0')
             self.assertEqual(rows[1]['ProblemType.PROC'], '0')
         os.remove(filename)
+
+    def test_is_projection(self):
+        """ Tests for is_projection() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club", "SELECT * FROM Club JOIN Person WHERE 1 = 3 ORDER BY Club.ID",
+                      "SELECT * FROM Club WHERE ID NOT IN (SELECT * FROM Person)",
+                      ]
+        test_true = ["SELECT ID FROM Club", "SELECT Name, ID FROM Club",
+                     "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person", "SELECT COUNT(*) FROM Club",
+                     "SELECT * FROM Club WHERE ID NOT IN (SELECT ID FROM Person)",
+                     "SELECT ID FROM Club WHERE ID NOT IN (SELECT * FROM Person)",
+                     """WITH avg_total_salary AS (
+                                                SELECT AVG(salary) AS average_company_salary
+                                                FROM employees
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees, avg_total_salary;"""
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_projection(sql))
+        for sql in test_true:
+            self.assertTrue(is_projection(sql))
+
+    def test_is_where(self):
+        """ Tests for is_where() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club", "SELECT * FROM Club JOIN Person ON ID1 = ID2 ORDER BY Club.ID",
+                      "SELECT A, B, COUNT(*) FROM Club GROUP BY A, B",
+                      "SELECT COUNT(*) FROM Club",
+                      "SELECT ID, Name FROM Club GROUP BY ID, Name HAVING Name = 'WHERE'",
+                      """WITH avg_total_salary AS (
+                                                 SELECT AVG(salary) AS average_company_salary
+                                                 FROM employees
+                                               )
+                                               SELECT id, first_name, last_name, salary, department, 
+                                                      average_company_salary,
+                                                      salary - average_company_salary  AS salary_difference
+                                               FROM employees, avg_total_salary;"""
+                      ]
+        test_true = ["SELECT * FROM Club Where ID = 0",
+                     "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person WHERE 1 = 4",
+                     "SELECT * FROM Club WHERE ID NOT IN (SELECT ID FROM Person)",
+                     "SELECT ID FROM Club WHERE ID NOT IN (SELECT * FROM Person)",
+                     """WITH avg_total_salary AS (
+                                                SELECT AVG(salary) AS average_company_salary
+                                                FROM employees
+                                                WHERE ID = 4
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees, avg_total_salary;"""
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_where(sql))
+        for sql in test_true:
+            self.assertTrue(is_where(sql))
+
+    def test_is_order(self):
+        """ Tests for is_order() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club",
+                      "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person WHERE 1 = 4",
+                      "SELECT A, B, COUNT(*) FROM Club GROUP BY A, B",
+                      "SELECT COUNT(*) FROM Club",
+                      "SELECT ID, Name FROM Club GROUP BY ID, Name HAVING Name = 'WHERE'",
+                      """WITH avg_total_salary AS (
+                                                 SELECT AVG(salary) AS average_company_salary
+                                                 FROM employees
+                                               )
+                                               SELECT id, first_name, last_name, salary, department, 
+                                                      average_company_salary,
+                                                      salary - average_company_salary  AS salary_difference
+                                               FROM employees, avg_total_salary;"""
+                      ]
+        test_true = ["SELECT * FROM Club JOIN Person ON ID1 = ID2 ORDER BY Club.ID",
+                     "SELECT * FROM Club JOIN Person ON ID1 = ID2 ORDER BY Club.ID ASC",
+                     "SELECT * FROM Club RIGHT JOIN Person ON ID1 = ID2 ORDER BY Club.ID DESC",
+                     """WITH avg_total_salary AS (
+                                                SELECT AVG(salary) AS average_company_salary
+                                                FROM employees
+                                                WHERE ID = 4
+                                                ORDER BY ID ASC
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees, avg_total_salary;"""
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_order(sql))
+        for sql in test_true:
+            self.assertTrue(is_order(sql))
+
+    def test_is_inner_join(self):
+        """ Tests for is_inner_join() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club",
+                      "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person ON A = B WHERE 1 = 4",
+                      "SELECT Club.Name, Person.ID FROM Club LEFT OUTER JOIN ON A = B Person WHERE 1 = 4",
+                      "SELECT * FROM Club RIGHT JOIN Person ON ID1 = ID2 ORDER BY Club.ID DESC",
+                      "SELECT * FROM Club FULL OUTER JOIN Person ON ID1 = ID2 ORDER BY Club.ID DESC",
+                      "SELECT A, B, COUNT(*) FROM Club GROUP BY A, B",
+                      "SELECT COUNT(*) FROM Club",
+                      "SELECT ID, Name FROM Club GROUP BY ID, Name HAVING Name = 'WHERE'",
+                      """WITH avg_total_salary AS (
+                                                 SELECT AVG(salary) AS average_company_salary
+                                                 FROM employees
+                                               )
+                                               SELECT id, first_name, last_name, salary, department, 
+                                                      average_company_salary,
+                                                      salary - average_company_salary  AS salary_difference
+                                               FROM employees LEFT JOIN avg_total_salary;"""
+                      ]
+        test_true = ["SELECT * FROM Club JOIN Person ON ID1 = ID2",
+                     "SELECT * FROM Club INNER JOIN Person ON ID1 = ID2",
+                     "SELECT * FROM Club JOIN Person USING (ID1, ID2)",
+                     "SELECT * FROM Club INNER JOIN Person USING (ID1, ID2)",
+                     "SELECT * FROM Club JOIN Person ON ID1 = ID2 ORDER BY Club.ID ASC",
+                     """WITH avg_total_salary AS (
+                                                SELECT AVG(salary) AS average_company_salary
+                                                FROM employees
+                                                WHERE ID = 4
+                                                ORDER BY ID ASC
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees JOIN avg_total_salary USING A;"""
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_inner_join(sql))
+        for sql in test_true:
+            self.assertTrue(is_inner_join(sql))
+
+    def test_is_outer_join(self):
+        """ Tests for is_outer_join() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club",
+                      "SELECT Club.Name, Person.ID FROM Club JOIN Person ON A = B WHERE 1 = 4",
+                      "SELECT Club.Name, Person.ID FROM Club INNER JOIN Person USING B WHERE 1 = 4",
+                      "SELECT A, B, COUNT(*) FROM Club GROUP BY A, B",
+                      "SELECT COUNT(*) FROM Club",
+                      "SELECT ID, Name FROM Club GROUP BY ID, Name HAVING Name = 'WHERE'",
+                      """WITH avg_total_salary AS (
+                                                 SELECT AVG(salary) AS average_company_salary
+                                                 FROM employees
+                                               )
+                                               SELECT id, first_name, last_name, salary, department, 
+                                                      average_company_salary,
+                                                      salary - average_company_salary  AS salary_difference
+                                               FROM employees JOIN avg_total_salary ON A = B"""
+                      ]
+        test_true = ["SELECT * FROM Club LEFT JOIN Person ON ID1 = ID2",
+                     "SELECT * FROM Club RIGHT JOIN Person ON ID1 = ID2",
+                     "SELECT * FROM Club RIGHT OUTER JOIN Person ON ID1 = ID2",
+                     "SELECT * FROM Club LEFT OUTER JOIN Person ON ID1 = ID2",
+                     "SELECT * FROM Club FULL OUTER JOIN Person ON ID1 = ID2",
+                     """WITH avg_total_salary AS (
+                                                SELECT AVG(salary) AS average_company_salary
+                                                FROM employees
+                                                WHERE ID = 4
+                                                ORDER BY ID ASC
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees LEFT OUTER JOIN avg_total_salary ON A = B"""
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_outer_join(sql))
+        for sql in test_true:
+            self.assertTrue(is_outer_join(sql))
+
+    def test_is_aggregation(self):
+        """ Tests for is_aggregation() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid,
+                      "SELECT * FROM Club", "SELECT * FROM Club JOIN Person ON ID1 = ID2 ORDER BY Club.ID",
+                      "SELECT * FROM Club Where ID = 0",
+                      "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person WHERE 1 = 4",
+                      "SELECT * FROM Club WHERE ID NOT IN (SELECT ID FROM Person)",
+                      "SELECT ID FROM Club WHERE ID NOT IN (SELECT * FROM Person)",
+                      "SELECT * FROM Club WHERE Name = 'AVG(Edad)'",
+                      "SELECT Name AS 'SUM(Gol)' FROM Club",
+                      """WITH avg_total_salary AS (
+                                                 SELECT salary AS average_company_salary
+                                                 FROM employees
+                                               )
+                                               SELECT id, first_name, last_name, salary, department, 
+                                                      average_company_salary,
+                                                      salary - average_company_salary  AS salary_difference
+                                               FROM employees, avg_total_salary;""",
+        ]
+        test_true = ["SELECT COUNT(*) FROM Club",
+                     "SELECT A, B, COUNT(Distinct Name) FROM Club GROUP BY A, B",
+                     "SELECT ID, AVG(Edad) FROM Club WHERE Name Like 'Aaron%'",
+                     "SELECT SUM(Gol) FROM Club WHERE 3 > 6",
+                     "SELECT suM(Gol) FROM Club WHERE 3 > 6",
+                     "SELECT * FROM Club WHERE Name IN (SELECT MIN(Name) FROM Club)",
+                     "SELECT * FROM Club WHERE NOT EXISTS (SELECT ID, MAX(Name) FROM Club)",
+                     """WITH avg_total_salary AS (
+                                                SELECT AVG(salary) AS average_company_salary
+                                                FROM employees
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees, avg_total_salary;""",
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_aggregation(sql))
+        for sql in test_true:
+            self.assertTrue(is_aggregation(sql))
+
+    def test_is_group_by(self):
+        """ Tests for is_group_by() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club",
+                      "SELECT Club.Name, Person.ID FROM Club JOIN Person ON A = B WHERE 1 = 4",
+                      "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person USING B WHERE 1 = 4",
+                      "SELECT COUNT(*) FROM Club",
+                      """WITH avg_total_salary AS (
+                                                 SELECT AVG(salary) AS average_company_salary
+                                                 FROM employees
+                                               )
+                                               SELECT id, first_name, last_name, salary, department, 
+                                                      average_company_salary,
+                                                      salary - average_company_salary  AS salary_difference
+                                               FROM employees JOIN avg_total_salary ON A = B"""
+                      ]
+        test_true = ["SELECT A, B, COUNT(*) FROM Club GROUP BY A, B",
+                     "SELECT ID, Name FROM Club GROUP BY ID, Name HAVING Name = 'WHERE'",
+                     "SELECT ID FROM Club GROUP BY ID",
+                     """WITH avg_total_salary AS (
+                                                SELECT AVG(salary) AS average_company_salary
+                                                FROM employees
+                                                WHERE ID = 4
+                                                GROUP BY P
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees LEFT OUTER JOIN avg_total_salary ON A = B;""",
+                     "SELECT * FROM (SELECT * FROM C GROUP BY ID)"
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_group_by(sql))
+        for sql in test_true:
+            self.assertTrue(is_group_by(sql))
+
+    def test_is_set(self):
+        """ Tests for is_group_by() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club",
+                      "SELECT Club.Name, Person.ID FROM Club JOIN Person ON A = B WHERE 1 = 4",
+                      "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person USING B WHERE 1 = 4",
+                      "SELECT COUNT(*) FROM Club",
+                      "SELECT ID FROM Club GROUP BY ID",
+                      """WITH avg_total_salary AS (
+                                                 SELECT AVG(salary) AS average_company_salary
+                                                 FROM employees
+                                               )
+                                               SELECT id, first_name, last_name, salary, department, 
+                                                      average_company_salary,
+                                                      salary - average_company_salary  AS salary_difference
+                                               FROM employees JOIN avg_total_salary ON A = B"""
+                      ]
+        test_true = ["(SELECT A, B, COUNT(*) FROM Club) UNION (SELECT * FROM Me)",
+                     "(SELECT A, B, COUNT(*) FROM Club) UNION ALL (SELECT * FROM Me)",
+                     "(SELECT A, B, COUNT(*) FROM Club) INTERSECT (SELECT * FROM Me)",
+                     "(SELECT A, B, COUNT(*) FROM Club) INTERSECT ALL (SELECT * FROM Me)",
+                     "(SELECT A, B, COUNT(*) FROM Club) MINUS (SELECT * FROM Me)",
+                     "(SELECT A, B, COUNT(*) FROM Club) MINUS ALL (SELECT * FROM Me)",
+                     "(SELECT A, B, COUNT(*) FROM Club) EXCEPT (SELECT * FROM Me)",
+                     "(SELECT A, B, COUNT(*) FROM Club) EXCEPT ALL (SELECT * FROM Me)",
+                     """WITH avg_total_salary AS (
+                                                (SELECT A, B, COUNT(*) FROM Club) EXCEPT (SELECT * FROM Me)
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees LEFT OUTER JOIN avg_total_salary ON A = B;""",
+                     "SELECT * FROM ((SELECT * FROM C GROUP BY ID) UNION ALL (SELECT * FROM Me))"
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_set(sql))
+        for sql in test_true:
+            self.assertTrue(is_set(sql))
+
+    def test_is_having(self):
+        """ Tests for is_group_by() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club",
+                      "SELECT Club.Name, Person.ID FROM Club JOIN Person ON A = B WHERE 1 = 4",
+                      "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person USING B WHERE 1 = 4",
+                      "SELECT COUNT(*) FROM Club",
+                      "SELECT ID FROM Club GROUP BY ID",
+                      """WITH avg_total_salary AS (
+                                                 SELECT AVG(salary) AS average_company_salary
+                                                 FROM employees
+                                               )
+                                               SELECT id, first_name, last_name, salary, department, 
+                                                      average_company_salary,
+                                                      salary - average_company_salary  AS salary_difference
+                                               FROM employees JOIN avg_total_salary ON A = B""",
+                      "(SELECT A, B, COUNT(*) FROM Club) UNION ALL (SELECT * FROM Me)",
+                      ]
+        test_true = ["SELECT ID FROM Club GROUP BY ID HAVING COUNT(*) > 3",
+                     "SELECT ID FROM Club WHERE ID > 66 GROUP BY ID HAVING SUM(P) > 3",
+                     "SELECT ID FROM Club WHERE ID > 66 GROUP BY ID HAVING SUM(P) > 3 ORDER BY SUM(P)",
+                     """WITH avg_total_salary AS (
+                                                SELECT ID FROM Club WHERE ID > 66 GROUP BY ID HAVING SUM(P) = 3
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees LEFT OUTER JOIN avg_total_salary ON A = B;""",
+                     "SELECT * FROM (SELECT * FROM C GROUP BY P HAVING MAX(A) = 0)"
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_having(sql))
+        for sql in test_true:
+            self.assertTrue(is_having(sql))
+
+    def test_is_nested(self):
+        """ Tests for is_nested() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club",
+                      "SELECT Club.Name, Person.ID FROM Club JOIN Person ON A = B WHERE 1 = 4",
+                      "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person USING B WHERE 1 = 4",
+                      "SELECT COUNT(*) FROM Club",
+                      "SELECT ID FROM Club GROUP BY ID",
+                      "(SELECT A, B, COUNT(*) FROM Club) UNION ALL (SELECT * FROM Me)",
+                      ]
+        test_true = ["SELECT ID, (SELECT MAX(ID) FROM Club) FROM Club",
+                     "SELECT ID, Name FROM Club JOIN (SELECT A, B FROM Club) ON A = B",
+                     "SELECT ID, Name FROM Club JOIN LEFT JOIN P ON A = B WHERE Age > ANY (SELECT Age FROM P)",
+                     """SELECT ID, Name FROM Club JOIN LEFT JOIN P ON A = B GROUP BY ID, Name
+                        HAVING SUM(A) > ALL (SELECT * FROM AG)""",
+                     """WITH avg_total_salary AS (
+                                                SELECT ID FROM Club WHERE ID > 66 GROUP BY ID HAVING SUM(P) = 3
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees LEFT OUTER JOIN avg_total_salary ON A = B;""",
+                     "SELECT * FROM (SELECT * FROM C GROUP BY P HAVING MAX(A) = 0)",
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_nested(sql))
+        for sql in test_true:
+            self.assertTrue(is_nested(sql))
+
+    def test_is_null(self):
+        """ Tests for is_null() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club",
+                      "SELECT Club.Name, Person.ID FROM Club JOIN Person ON A = B WHERE 1 = 4",
+                      "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person USING B WHERE 1 = 4",
+                      "SELECT COUNT(*) FROM Club",
+                      "SELECT ID FROM Club GROUP BY ID",
+                      "(SELECT A, B, COUNT(*) FROM Club) UNION ALL (SELECT * FROM Me)",
+                      ]
+        test_true = ["SELECT ID FROM Club WHERE Name IS NOT NULL",
+                     "SELECT A, COALESCE(B, 45) FROM Club",
+                     "SELECT A, B FROM Club WHERE NVL(A, 3) = 3",
+                     "SELECT A, B FROM Club WHERE NVL2(A, 3) = 3",
+                     """SELECT ID, Name FROM Club JOIN LEFT JOIN P ON A = B GROUP BY ID, Name
+                        HAVING SUM(A) IS NOT NULL""",
+                     "SELECT ID, NULL FROM Club",
+                     """WITH avg_total_salary AS (
+                                                SELECT ID, NVL(B, 55) FROM Club WHERE ID > 66
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees LEFT OUTER JOIN avg_total_salary ON A = B""",
+                     "SELECT * FROM (SELECT * FROM C GROUP BY P HAVING MAX(A) IS NOT NULL)",
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_null(sql))
+        for sql in test_true:
+            self.assertTrue(is_null(sql))
+
+    def test_is_exists(self):
+        """ Tests for is_null() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club",
+                      "SELECT Club.Name, Person.ID FROM Club JOIN Person ON A = B WHERE 1 = 4",
+                      "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person USING B WHERE 1 = 4",
+                      "SELECT COUNT(*) FROM Club",
+                      "SELECT ID FROM Club GROUP BY ID",
+                      "(SELECT A, B, COUNT(*) FROM Club) UNION ALL (SELECT * FROM Me)",
+                      "SELECT ID FROM Club WHERE Name IS NOT NULL",
+                      "SELECT A, COALESCE(B, 45) FROM Club",
+                      ]
+        test_true = ["SELECT A, NVL2(B, 3) FROM Club WHERE EXISTS (SELECT * FROM Club)",
+                     "SELECT A, B FROM Club GROUP BY ID HAVING EXISTS (SELECT * FROM Club)",
+                     """SELECT Nombre FROM Club C1 WHERE NOT EXISTS 
+                          (SELECT * FROM Club C2 WHERE C2.Num_Socios > C1.Num_Socios)""",
+                     """WITH avg_total_salary AS (
+                                                SELECT ID, NVL(B, 55) FROM Club WHERE NOT EXISTS (SELECT * FROM Me) 
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees LEFT OUTER JOIN avg_total_salary ON A = B""",
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_exists(sql))
+        for sql in test_true:
+            self.assertTrue(is_exists(sql))
+
+    def test_is_like(self):
+        """ Tests for is_null() """
+        test_false = ["SELECT * FROM FROM",  # Syntactically invalid
+                      "SELECT * FROM Club",
+                      "SELECT Club.Name, Person.ID FROM Club JOIN Person ON A = B WHERE 1 = 4",
+                      "SELECT Club.Name, Person.ID FROM Club LEFT JOIN Person USING B WHERE 1 = 4",
+                      "SELECT COUNT(*) FROM Club",
+                      "SELECT ID FROM Club GROUP BY ID",
+                      "(SELECT A, B, COUNT(*) FROM Club) UNION ALL (SELECT * FROM Me)",
+                      "SELECT ID FROM Club WHERE Name IS NOT NULL",
+                      "SELECT A, COALESCE(B, 45) FROM Club",
+                      ]
+        test_true = ["SELECT A, NVL2(B, 3) FROM Club WHERE Name LIKE 'Pe%'",
+                     "SELECT A, B FROM Club GROUP BY ID HAVING Name LIKE '%AA_'",
+                     "SELECT Nombre FROM Club C1 WHERE NOT EXISTS (SELECT * FROM Club C2 WHERE Name LIKE 'A%A')",
+                     """WITH avg_total_salary AS (
+                                                SELECT ID, NVL(B, 55) FROM Club WHERE Name Like 'My%'
+
+                                              )
+                                              SELECT id, first_name, last_name, salary, department, 
+                                                     average_company_salary,
+                                                     salary - average_company_salary  AS salary_difference
+                                              FROM employees LEFT OUTER JOIN avg_total_salary ON A = B""",
+                     ]
+        for sql in test_false:
+            self.assertFalse(is_like(sql))
+        for sql in test_true:
+            self.assertTrue(is_like(sql))
+
+    def test_keywords(self):
+        """ Test for generating keyword tags for a SQL query """
+        self.assertEqual(keywords("(SELECT A, B, COUNT(*) FROM Club) UNION ALL (SELECT * FROM Me)"),
+                         {"projection", "aggregation", "set"})
+        self.assertEqual(keywords("SELECT Nombre FROM Club C1 WHERE NOT EXISTS "
+                                  "(SELECT * FROM Club C2 WHERE C2.Num_Socios > C1.Num_Socios)"),
+                         {"projection", "where", "nested", "exists"})
+        self.assertEqual(keywords("""SELECT C.CIF, C.Nombre, NVL(AVG(Cantidad),0) AS PromedioFinanciaciones,
+                                             COUNT(Cantidad) AS TotalFinanciaciones 
+                                      FROM Financia F RIGHT JOIN Club C ON F.CIF_C = C.CIF 
+                                      GROUP BY C.CIF, C.Nombre"""),
+                         {"projection", "outer_join", "aggregation", "group_by", "null"})
+        self.assertEqual(keywords("""select a.NIF as NIF, p.Nombre as NOMBRE,
+                                             NVL(count(e.NIF), 0) as PARTIDOSARBITRADOS 
+                                      from Arbitro a join Persona p on a.NIF = p.NIF left join Enfrenta e on a.NIF=e.NIF
+                                      group by a.NIF, p.Nombre
+                                      ORDER BY a.NIF DESC"""),
+                         {"projection", "order", "inner_join", "outer_join", "aggregation", "group_by", "null"})
