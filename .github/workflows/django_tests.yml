@@ -41,7 +41,8 @@ jobs:
       # Oracle service (label used to access the service container)
       oracle:
         # Docker Hub image (feel free to change the tag "latest" to any other available one)
-        image: gvenzl/oracle-xe:11-slim
+        # image: gvenzl/oracle-xe:11-slim
+        image: gvenzl/oracle-xe:21-slim   # Newer and faster than xe:11
         # Provide passwords and other environment variables to container
         env:
           ORACLE_PASSWORD: travis
