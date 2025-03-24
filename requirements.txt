@@ -24,7 +24,7 @@ multiset==3.2.0
 oracledb==3.0.0
 packaging==24.2
 pbr==6.1.1
-platformdirs==4.3.6
+platformdirs==4.3.7
 psycopg2-binary==2.9.10
 pycparser==2.22
 pyexcel-ezodf==0.3.4
