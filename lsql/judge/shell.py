@@ -6,6 +6,7 @@ Methods for batch processing that can be invoked from the shell (python manage.p
 For example: create a group of users from a CSV list of students
 """
 
+from collections.abc import Callable
 import csv
 import datetime
 import secrets
@@ -255,12 +256,18 @@ def submissions_per_user(filename: str) -> None:
 #
 #######################################################################################
 
-def is_projection(sql: str, dialect: str = "oracle") -> bool:
-    """ Detects if a SQL query projects some columns in the SELECT clause """
+def apply_sql_checker(sql: str, checker: Callable[[sqlglot.expressions.Expression], bool],
+                      dialect: str = "oracle") -> bool:
+    """ Pipeline to parse a SQL expression using sqlglot.parse_one and then invoke a checker from the
+        obtained sqlglot.expressions.Expression """
     try:
         statement = sqlglot.parse_one(sql, dialect=dialect)
     except sqlglot.errors.ParseError:
         return False
+    return checker(statement)
+
+def is_projection(statement: sqlglot.expressions.Expression) -> bool:
+    """ Detects if a SQL query projects some columns in the SELECT clause """
     projection = False  # Some SELECT has a list of columns (may be nested)
     for query in statement.find_all(sqlglot.expressions.Select):
         if isinstance(query, sqlglot.expressions.Select):
@@ -270,135 +277,78 @@ def is_projection(sql: str, dialect: str = "oracle") -> bool:
 
     return projection
 
-def is_where(sql: str, dialect: str = "oracle") -> bool:
+def is_where(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL query has a WHERE clause with some condition """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
-
     return statement.find(sqlglot.expressions.Where) is not None
 
-def is_order(sql: str, dialect: str = "oracle") -> bool:
+def is_order(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL query sorts with ORDER BY """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
-
     return statement.find(sqlglot.expressions.Order) is not None
 
-def is_inner_join(sql: str, dialect: str = "oracle") -> bool:
+def is_inner_join(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL query contains inner joins. CROSS PRODUCTS are considered as inner joins """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
-
     for join in statement.find_all(sqlglot.expressions.Join):
         if join.kind == "INNER" or not join.side:
             return True
     return False
 
-def is_outer_join(sql: str, dialect: str = "oracle") -> bool:
+def is_outer_join(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL query contains outer joins. CROSS PRODUCTS are considered as inner joins """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
-
     for join in statement.find_all(sqlglot.expressions.Join):
         if join.kind == "OUTER" or join.side:
             return True
     return False
 
-def is_aggregation(sql: str, dialect: str = "oracle") -> bool:
+def is_aggregation(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL query has aggregation functions: COUNT, MIN, MAX, SUM, AVG """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
-
     return (statement.find(sqlglot.expressions.Count) is not None or
             statement.find(sqlglot.expressions.Min) is not None or
             statement.find(sqlglot.expressions.Max) is not None or
             statement.find(sqlglot.expressions.Sum) is not None or
             statement.find(sqlglot.expressions.Avg) is not None)
 
-def is_group_by(sql: str, dialect: str = "oracle") -> bool:
+def is_group_by(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL query has a GROUP BY clause """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
-
     return statement.find(sqlglot.expressions.Group) is not None
 
-def is_set(sql: str, dialect: str = "oracle") -> bool:
+def is_set(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL uses set operations:
         UNION, UNION ALL, INTERSECT, INTERSECT ALL, MINUS, MINUS ALL, EXCEPT, EXCEPT ALL
     """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
-
     return (statement.find(sqlglot.expressions.Union) is not None or
             statement.find(sqlglot.expressions.Intersect) is not None or
             statement.find(sqlglot.expressions.Except) is not None)
 
-def is_having(sql: str, dialect: str = "oracle") -> bool:
+def is_having(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL query has a HAVING clause """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
-
     return statement.find(sqlglot.expressions.Having) is not None
 
-def is_nested(sql: str, dialect: str = "oracle") -> bool:
+def is_nested(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL query has nested queries. We consider WITH queries as nested queries """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
-
     for query in statement.find_all(sqlglot.expressions.Select):
         if len(list(query.find_all(sqlglot.expressions.Select))) > 1:
             # find_all returns the whole expression
             return True
     return False
 
-def is_null(sql: str, dialect: str = "oracle") -> bool:
+def is_null(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL query null values, either by comparing with IS NULL/IS NOT NULL or using functions
         like COALESCE, NVL, or NVL2
     """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
     return (statement.find(sqlglot.expressions.Coalesce) is not None or
         statement.find(sqlglot.expressions.Null) is not None or
         statement.find(sqlglot.expressions.Nvl2) is not None)
 
-def is_exists(sql: str, dialect: str = "oracle") -> bool:
+def is_exists(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL query contains an EXISTS operator """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
     return statement.find(sqlglot.expressions.Exists) is not None
 
-def is_like(sql: str, dialect: str = "oracle") -> bool:
+def is_like(statement: sqlglot.expressions.Expression) -> bool:
     """ Detects if a SQL query a LIKE comparator """
-    try:
-        statement = sqlglot.parse_one(sql, dialect=dialect)
-    except sqlglot.errors.ParseError:
-        return False
     return statement.find(sqlglot.expressions.Like) is not None
 
 def keywords(sql: str, dialect: str = "oracle") -> set[str]:
-    """ Generates a set of tags that clasify a SQL query """
+    """ Generates a set of tags that classify a SQL query """
     checkers = [("projection", is_projection),
                 ("where", is_where),
                 ("order", is_order),
@@ -413,8 +363,13 @@ def keywords(sql: str, dialect: str = "oracle") -> set[str]:
                 ("exists", is_exists),
                 ("like", is_like)
                 ]
+    try:
+        statement = sqlglot.parse_one(sql, dialect=dialect)
+    except sqlglot.errors.ParseError:
+        return set()
+    
     tags = set()
     for (tag, checker) in checkers:
-        if checker(sql, dialect):
+        if checker(statement):
             tags.add(tag)
     return tags

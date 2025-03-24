@@ -18,7 +18,7 @@ from judge.models import SelectProblem, DMLProblem, FunctionProblem, ProcProblem
     Problem, Submission
 from judge.shell import create_users_from_csv, adapt_db_result_to_list, rejudge, extended_submissions, \
     submissions_per_user, create_users_from_list, is_projection, is_where, is_aggregation, is_order, is_inner_join, \
-    is_outer_join, is_group_by, is_set, is_having, is_nested, is_null, is_exists, is_like, keywords
+    is_outer_join, is_group_by, is_set, is_having, is_nested, is_null, is_exists, is_like, keywords, apply_sql_checker
 from judge.tests.test_common import create_select_problem, create_collection, create_user, create_dml_problem
 
 
@@ -274,6 +274,9 @@ class ShellTest(TestCase):
             self.assertEqual(rows[1]['ProblemType.PROC'], '0')
         os.remove(filename)
 
+class KeywordTest(TestCase):
+    """ Test cases for labeling SQL expression with keywords """
+
     def test_is_projection(self):
         """ Tests for is_projection() """
         test_false = ["SELECT * FROM FROM",  # Syntactically invalid
@@ -294,9 +297,9 @@ class ShellTest(TestCase):
                                               FROM employees, avg_total_salary;"""
                      ]
         for sql in test_false:
-            self.assertFalse(is_projection(sql))
+            self.assertFalse(apply_sql_checker(sql, is_projection))
         for sql in test_true:
-            self.assertTrue(is_projection(sql))
+            self.assertTrue(apply_sql_checker(sql, is_projection))
 
     def test_is_where(self):
         """ Tests for is_where() """
@@ -329,9 +332,9 @@ class ShellTest(TestCase):
                                               FROM employees, avg_total_salary;"""
                      ]
         for sql in test_false:
-            self.assertFalse(is_where(sql))
+            self.assertFalse(apply_sql_checker(sql, is_where))
         for sql in test_true:
-            self.assertTrue(is_where(sql))
+            self.assertTrue(apply_sql_checker(sql, is_where))
 
     def test_is_order(self):
         """ Tests for is_order() """
@@ -365,9 +368,9 @@ class ShellTest(TestCase):
                                               FROM employees, avg_total_salary;"""
                      ]
         for sql in test_false:
-            self.assertFalse(is_order(sql))
+            self.assertFalse(apply_sql_checker(sql, is_order))
         for sql in test_true:
-            self.assertTrue(is_order(sql))
+            self.assertTrue(apply_sql_checker(sql, is_order))
 
     def test_is_inner_join(self):
         """ Tests for is_inner_join() """
@@ -406,9 +409,9 @@ class ShellTest(TestCase):
                                               FROM employees JOIN avg_total_salary USING A;"""
                      ]
         for sql in test_false:
-            self.assertFalse(is_inner_join(sql))
+            self.assertFalse(apply_sql_checker(sql, is_inner_join))
         for sql in test_true:
-            self.assertTrue(is_inner_join(sql))
+            self.assertTrue(apply_sql_checker(sql, is_inner_join))
 
     def test_is_outer_join(self):
         """ Tests for is_outer_join() """
@@ -445,9 +448,9 @@ class ShellTest(TestCase):
                                               FROM employees LEFT OUTER JOIN avg_total_salary ON A = B"""
                      ]
         for sql in test_false:
-            self.assertFalse(is_outer_join(sql))
+            self.assertFalse(apply_sql_checker(sql, is_outer_join))
         for sql in test_true:
-            self.assertTrue(is_outer_join(sql))
+            self.assertTrue(apply_sql_checker(sql, is_outer_join))
 
     def test_is_aggregation(self):
         """ Tests for is_aggregation() """
@@ -485,9 +488,9 @@ class ShellTest(TestCase):
                                               FROM employees, avg_total_salary;""",
                      ]
         for sql in test_false:
-            self.assertFalse(is_aggregation(sql))
+            self.assertFalse(apply_sql_checker(sql,is_aggregation))
         for sql in test_true:
-            self.assertTrue(is_aggregation(sql))
+            self.assertTrue(apply_sql_checker(sql,is_aggregation))
 
     def test_is_group_by(self):
         """ Tests for is_group_by() """
@@ -521,9 +524,9 @@ class ShellTest(TestCase):
                      "SELECT * FROM (SELECT * FROM C GROUP BY ID)"
                      ]
         for sql in test_false:
-            self.assertFalse(is_group_by(sql))
+            self.assertFalse(apply_sql_checker(sql, is_group_by))
         for sql in test_true:
-            self.assertTrue(is_group_by(sql))
+            self.assertTrue(apply_sql_checker(sql, is_group_by))
 
     def test_is_set(self):
         """ Tests for is_group_by() """
@@ -560,9 +563,9 @@ class ShellTest(TestCase):
                      "SELECT * FROM ((SELECT * FROM C GROUP BY ID) UNION ALL (SELECT * FROM Me))"
                      ]
         for sql in test_false:
-            self.assertFalse(is_set(sql))
+            self.assertFalse(apply_sql_checker(sql, is_set))
         for sql in test_true:
-            self.assertTrue(is_set(sql))
+            self.assertTrue(apply_sql_checker(sql, is_set))
 
     def test_is_having(self):
         """ Tests for is_group_by() """
@@ -595,9 +598,9 @@ class ShellTest(TestCase):
                      "SELECT * FROM (SELECT * FROM C GROUP BY P HAVING MAX(A) = 0)"
                      ]
         for sql in test_false:
-            self.assertFalse(is_having(sql))
+            self.assertFalse(apply_sql_checker(sql,is_having))
         for sql in test_true:
-            self.assertTrue(is_having(sql))
+            self.assertTrue(apply_sql_checker(sql,is_having))
 
     def test_is_nested(self):
         """ Tests for is_nested() """
@@ -624,9 +627,9 @@ class ShellTest(TestCase):
                      "SELECT * FROM (SELECT * FROM C GROUP BY P HAVING MAX(A) = 0)",
                      ]
         for sql in test_false:
-            self.assertFalse(is_nested(sql))
+            self.assertFalse(apply_sql_checker(sql,is_nested))
         for sql in test_true:
-            self.assertTrue(is_nested(sql))
+            self.assertTrue(apply_sql_checker(sql,is_nested))
 
     def test_is_null(self):
         """ Tests for is_null() """
@@ -655,9 +658,9 @@ class ShellTest(TestCase):
                      "SELECT * FROM (SELECT * FROM C GROUP BY P HAVING MAX(A) IS NOT NULL)",
                      ]
         for sql in test_false:
-            self.assertFalse(is_null(sql))
+            self.assertFalse(apply_sql_checker(sql, is_null))
         for sql in test_true:
-            self.assertTrue(is_null(sql))
+            self.assertTrue(apply_sql_checker(sql, is_null))
 
     def test_is_exists(self):
         """ Tests for is_null() """
@@ -684,9 +687,9 @@ class ShellTest(TestCase):
                                               FROM employees LEFT OUTER JOIN avg_total_salary ON A = B""",
                      ]
         for sql in test_false:
-            self.assertFalse(is_exists(sql))
+            self.assertFalse(apply_sql_checker(sql, is_exists))
         for sql in test_true:
-            self.assertTrue(is_exists(sql))
+            self.assertTrue(apply_sql_checker(sql, is_exists))
 
     def test_is_like(self):
         """ Tests for is_null() """
@@ -713,9 +716,9 @@ class ShellTest(TestCase):
                                               FROM employees LEFT OUTER JOIN avg_total_salary ON A = B""",
                      ]
         for sql in test_false:
-            self.assertFalse(is_like(sql))
+            self.assertFalse(apply_sql_checker(sql,is_like))
         for sql in test_true:
-            self.assertTrue(is_like(sql))
+            self.assertTrue(apply_sql_checker(sql,is_like))
 
     def test_keywords(self):
         """ Test for generating keyword tags for a SQL query """
@@ -735,3 +738,21 @@ class ShellTest(TestCase):
                                       group by a.NIF, p.Nombre
                                       ORDER BY a.NIF DESC"""),
                          {"projection", "order", "inner_join", "outer_join", "aggregation", "group_by", "null"})
+        self.assertEqual(keywords("SELECT * FROM FROM WHERE"), set())
+        self.assertEqual(keywords("SELECT * FROM Club"), set())
+        self.assertEqual(keywords("""SELECT P.NIF, P.Nombre
+                                     FROM Jugador J JOIN Persona P ON J.NIF = P.NIF
+                                     WHERE NOT EXISTS ((SELECT CIF -- Todos los patrocinadores
+                                                        FROM Patrocinador
+                                                        WHERE Rama = 'Deportes')
+                                                       MINUS
+                                                       (SELECT CIF -- Todos los patrocinadores del jugador
+                                                        FROM Patrocina P
+                                                        WHERE P.NIF = J.NIF));"""),
+                         {"projection", "where", "inner_join", "set", "nested", "exists"})
+        self.assertEqual(keywords("""SELECT Country
+                                     FROM Club
+                                     WHERE Club.Name LIKE 'A__%' 
+                                     GROUP BY Country
+                                     HAVING COUNT(*) > 3;"""),
+                         {"projection", "where", "aggregation", "group_by", "having", "like"})
