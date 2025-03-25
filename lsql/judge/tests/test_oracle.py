@@ -17,9 +17,9 @@ from judge.exceptions import ExecutorException
 
 SELECT_TLE = '''
         SELECT a, AVG(b), MAX(b), AVG(c), AVG(d)
-        FROM (select 8 AS a, sqrt(8) as b from dual connect by level <= 5000)
+        FROM (select 8 AS a, sqrt(8) as b from dual connect by level <= 15000)
              CROSS JOIN
-             (select 8 as c, sqrt(8) as d from dual connect by level <= 5000)
+             (select 8 as c, sqrt(8) as d from dual connect by level <= 15000)
         GROUP BY a;'''
 
 
@@ -155,9 +155,9 @@ class OracleTest(TestCase):
         tle = '''
             INSERT INTO Club
                 SELECT CIF, MIN(Nombre) AS nombre, MAX(Sede) as sede, AVG(Num_socios) as Num_socios
-                FROM (select '00000000X' AS CIF, 'a' as Nombre from dual connect by level <= 5000)
+                FROM (select '00000000X' AS CIF, 'a' as Nombre from dual connect by level <= 15000)
                      CROSS JOIN
-                     (select 'b' as Sede, 56789 AS Num_Socios from dual connect by level <= 5000)
+                     (select 'b' as Sede, 56789 AS Num_Socios from dual connect by level <= 15000)
                 GROUP BY CIF;'''
         # Creates a table with ORACLE_MAX_ROWS + 1 rows
         # No SQL injection, the value inserted must be an integer
@@ -576,9 +576,9 @@ END;"""
         tle = '''
             INSERT INTO Club
                 SELECT CIF, MIN(Nombre) AS nombre, MAX(Sede) as sede, AVG(Num_socios) as Num_socios
-                FROM (select '00000000X' AS CIF, 'a' as Nombre from dual connect by level <= 5000)
+                FROM (select '00000000X' AS CIF, 'a' as Nombre from dual connect by level <= 15000)
                      CROSS JOIN
-                     (select 'b' as Sede, 56789 AS Num_Socios from dual connect by level <= 5000)
+                     (select 'b' as Sede, 56789 AS Num_Socios from dual connect by level <= 15000)
                 GROUP BY CIF;'''
 
         oracle = OracleExecutor.get()
