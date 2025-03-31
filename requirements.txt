@@ -36,7 +36,7 @@ pylint-django==2.6.1
 pylint-plugin-utils==0.8.2
 pytz==2025.1
 PyYAML==6.0.2
-rich==13.9.4
+rich==14.0.0
 sentry-sdk==2.24.1
 six==1.17.0
 soupsieve==2.6
