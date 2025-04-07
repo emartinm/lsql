@@ -21,7 +21,7 @@ markdown-it-py==3.0.0
 mccabe==0.7.0
 mdurl==0.1.2
 multiset==3.2.0
-oracledb==3.0.0
+oracledb==3.1.0
 packaging==24.2
 pbr==6.1.1
 platformdirs==4.3.7
