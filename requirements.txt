@@ -1,5 +1,5 @@
 asgiref==3.8.1
-astroid==3.3.9
+astroid==3.3.10
 bandit==1.8.3
 beautifulsoup4==4.13.4
 certifi==2025.4.26
@@ -24,7 +24,7 @@ multiset==3.2.0
 oracledb==3.1.0
 packaging==25.0
 pbr==6.1.1
-platformdirs==4.3.7
+platformdirs==4.3.8
 psycopg2-binary==2.9.10
 pycparser==2.22
 pyexcel-ezodf==0.3.4
@@ -40,7 +40,7 @@ rich==14.0.0
 sentry-sdk==2.27.0
 six==1.17.0
 soupsieve==2.7
-sqlglot==26.16.4
+sqlglot==26.17.1
 sqlparse==0.5.3
 stevedore==5.4.1
 toml==0.10.2
