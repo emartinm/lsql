@@ -46,6 +46,6 @@ stevedore==5.4.1
 toml==0.10.2
 tomli==2.2.1
 tomlkit==0.13.3
-typing_extensions==4.13.2
+typing_extensions==4.14.0
 urllib3==2.4.0
 wrapt==1.17.2
