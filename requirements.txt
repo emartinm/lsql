@@ -1,6 +1,6 @@
 asgiref==3.8.1
 astroid==3.3.10
-bandit==1.8.3
+bandit==1.8.5
 beautifulsoup4==4.13.4
 certifi==2025.6.15
 cffi==1.17.1
@@ -8,7 +8,7 @@ coverage==7.9.1
 cryptography==45.0.4
 defusedxml==0.7.1
 dill==0.4.0
-Django==5.1.7
+Django==5.2.3
 django-model-utils==5.0.0
 gunicorn==23.0.0
 isort==6.0.1
@@ -40,7 +40,7 @@ rich==14.0.0
 sentry-sdk==2.30.0
 six==1.17.0
 soupsieve==2.7
-sqlglot==26.28.1
+sqlglot==26.29.0
 sqlparse==0.5.3
 stevedore==5.4.1
 toml==0.10.2
