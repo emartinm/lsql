@@ -16,7 +16,7 @@ lazy-object-proxy==1.11.0
 lml==0.2.0
 logzero==1.7.0
 lxml==5.4.0
-Markdown==3.8
+Markdown==3.8.2
 markdown-it-py==3.0.0
 mccabe==0.7.0
 mdurl==0.1.2
@@ -30,7 +30,7 @@ pycparser==2.22
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.7
 pyexcel-ods3==0.6.1
-Pygments==2.19.1
+Pygments==2.19.2
 pylint==3.3.7
 pylint-django==2.6.1
 pylint-plugin-utils==0.8.2
@@ -40,7 +40,7 @@ rich==14.0.0
 sentry-sdk==2.30.0
 six==1.17.0
 soupsieve==2.7
-sqlglot==26.29.0
+sqlglot==26.30.0
 sqlparse==0.5.3
 stevedore==5.4.1
 toml==0.10.2
