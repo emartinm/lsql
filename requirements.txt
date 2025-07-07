@@ -4,7 +4,7 @@ bandit==1.8.5
 beautifulsoup4==4.13.4
 certifi==2025.6.15
 cffi==1.17.1
-coverage==7.9.1
+coverage==7.9.2
 cryptography==45.0.4
 defusedxml==0.7.1
 dill==0.4.0
