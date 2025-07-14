@@ -1,4 +1,4 @@
-asgiref==3.9.0
+asgiref==3.9.1
 astroid==3.3.10
 bandit==1.8.6
 beautifulsoup4==4.13.4
