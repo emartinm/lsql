@@ -10,6 +10,12 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:  # Agrupa actualizaciones menores y parches en un único pull request semanal
+      minor-and-patch:  # Nombre del grupo para los mensajes
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
