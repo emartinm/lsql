@@ -42,7 +42,7 @@ six==1.17.0
 soupsieve==2.7
 sqlglot==27.6.0
 sqlparse==0.5.3
-stevedore==5.4.1
+stevedore==5.5.0
 toml==0.10.2
 tomli==2.2.1
 tomlkit==0.13.3
