@@ -23,7 +23,7 @@ mdurl==0.1.2
 multiset==3.2.0
 oracledb==3.3.0
 packaging==25.0
-pbr==6.1.1
+pbr==7.0.1
 platformdirs==4.4.0
 psycopg2-binary==2.9.10
 pycparser==2.22
