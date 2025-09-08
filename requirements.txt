@@ -16,7 +16,7 @@ lazy-object-proxy==1.12.0
 lml==0.2.0
 logzero==1.7.0
 lxml==6.0.1
-Markdown==3.8.2
+Markdown==3.9
 markdown-it-py==3.0.0
 mccabe==0.7.0
 mdurl==0.1.2
@@ -37,10 +37,10 @@ pylint-plugin-utils==0.9.0
 pytz==2025.2
 PyYAML==6.0.2
 rich==14.1.0
-sentry-sdk==2.35.2
+sentry-sdk==2.37.0
 six==1.17.0
 soupsieve==2.8
-sqlglot==27.10.0
+sqlglot==27.12.0
 sqlparse==0.5.3
 stevedore==5.5.0
 toml==0.10.2
