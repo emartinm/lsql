@@ -24,13 +24,13 @@ from .models import Problem, Submission
 from .types import ProblemType
 
 
-def create_users_from_csv(csv_filename: str, group_name: str, dry: bool = False):
+def create_users_from_csv(csv_filename: str, group_name: str, dry: bool = True):
     """
     Batch creation of users from a CSV file, each line representing a new user. The username is the
     first part of the email (before @) and the password is the document number. Assigns every new
     user to a new created group with name 'group_name'
 
-    If dry = True does not modify the DB but only show messages of the actions
+    If dry = True then it does not modifies the DB but only shows messages of the actions
 
     Each line has the following fields:
       FOTOGRAFÍA,NOMBRE COMPLETO,DOCUMENTO,ASIGNATURA,MAT.,CONV.,OBSERVACIÓN,CORREO,TELÉFONO
@@ -48,7 +48,7 @@ def create_users_from_csv(csv_filename: str, group_name: str, dry: bool = False)
     print()
 
 
-def create_users_from_list(dict_list, group: Group, dry: bool):
+def create_users_from_list(dict_list, group: Group, dry: bool = True):
     """
     Batch creation of users from a list of dictionaries, each dictionary representing a new user. The username is the
     first part of the email (before @) and the password is the document number.

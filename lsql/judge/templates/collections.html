@@ -4,13 +4,6 @@
 {% load static %}
 {% block contenido %}
 
-<div class="alert alert-success" role="alert">
-{% blocktrans  %}
-¿Has usado LearnSQL a lo largo del curso 2023-24? <a href="https://docs.google.com/forms/d/e/1FAIpQLSeeUnIbi1EKXfFMr7ihp8iI0p6mHP--5mmD3GsiCichqiaFvw/viewform?usp=sf_link">¡Queremos conocer tu opinión!</a>
-Nos ayudará mucho para próximos cursos.
-{% endblocktrans %}
-</div>
-
   <h1>{% translate "Colecciones de problemas" %}
       {% if group_name %}
       {% translate "para" %} "{{ group_name }}"
