@@ -26,7 +26,7 @@ packaging==25.0
 pbr==7.0.1
 platformdirs==4.4.0
 psycopg2-binary==2.9.10
-pycparser==2.22
+pycparser==2.23
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.7
 pyexcel-ods3==0.6.1
@@ -37,10 +37,10 @@ pylint-plugin-utils==0.9.0
 pytz==2025.2
 PyYAML==6.0.2
 rich==14.1.0
-sentry-sdk==2.37.0
+sentry-sdk==2.37.1
 six==1.17.0
 soupsieve==2.8
-sqlglot==27.12.0
+sqlglot==27.14.0
 sqlparse==0.5.3
 stevedore==5.5.0
 toml==0.10.2
