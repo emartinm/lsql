@@ -4,7 +4,7 @@ bandit==1.8.6
 beautifulsoup4==4.13.5
 certifi==2025.8.3
 cffi==2.0.0
-coverage==7.10.6
+coverage==7.10.7
 cryptography==46.0.1
 defusedxml==0.7.1
 dill==0.4.0
@@ -37,10 +37,10 @@ pylint-plugin-utils==0.9.0
 pytz==2025.2
 PyYAML==6.0.2
 rich==14.1.0
-sentry-sdk==2.37.1
+sentry-sdk==2.38.0
 six==1.17.0
 soupsieve==2.8
-sqlglot==27.14.0
+sqlglot==27.16.3
 sqlparse==0.5.3
 stevedore==5.5.0
 toml==0.10.2
