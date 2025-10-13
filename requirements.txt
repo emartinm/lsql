@@ -1,5 +1,5 @@
 asgiref==3.10.0
-astroid==3.3.11
+astroid==4.0.1
 bandit==1.8.6
 beautifulsoup4==4.14.2
 certifi==2025.10.5
