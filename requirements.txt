@@ -5,6 +5,7 @@ certifi==2025.10.5
 cffi==2.0.0
 coverage==7.11.0
 cryptography==46.0.3
+defusedxml==0.7.1
 Django==5.2.7
 django-model-utils==5.0.0
 gunicorn==23.0.0
