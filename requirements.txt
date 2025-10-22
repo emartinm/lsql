@@ -37,6 +37,7 @@ pylint-plugin-utils==0.9.0
 pytz==2025.2
 PyYAML==6.0.3
 rich==14.2.0
+ruff==0.14.0
 sentry-sdk==2.42.0
 six==1.17.0
 soupsieve==2.8
