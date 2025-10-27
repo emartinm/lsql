@@ -28,10 +28,10 @@ Pygments==2.19.2
 pytz==2025.2
 PyYAML==6.0.3
 rich==14.2.0
-ruff==0.14.0
-sentry-sdk==2.42.0
+ruff==0.14.2
+sentry-sdk==2.42.1
 soupsieve==2.8
-sqlglot==27.27.0
+sqlglot==27.28.1
 sqlparse==0.5.3
 stevedore==5.5.0
 typing_extensions==4.15.0
