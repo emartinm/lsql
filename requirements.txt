@@ -6,7 +6,7 @@ cffi==2.0.0
 coverage==7.13.1
 cryptography==46.0.3
 defusedxml==0.7.1
-Django==6.0
+Django==6.0.1
 django-model-utils==5.0.0
 gunicorn==23.0.0
 lazy-object-proxy==1.12.0
@@ -28,8 +28,8 @@ Pygments==2.19.2
 pytz==2025.2
 PyYAML==6.0.3
 rich==14.2.0
-ruff==0.14.10
-sentry-sdk==2.48.0
+ruff==0.14.11
+sentry-sdk==2.49.0
 soupsieve==2.8.1
 sqlglot==28.5.0
 sqlparse==0.5.5
