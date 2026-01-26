@@ -18,7 +18,7 @@ markdown-it-py==4.0.0
 mdurl==0.1.2
 multiset==3.2.0
 oracledb==3.4.1
-packaging==25.0
+packaging==26.0
 psycopg2-binary==2.9.11
 pycparser==3.0
 pyexcel-ezodf==0.3.4
