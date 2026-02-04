@@ -6,7 +6,7 @@ cffi==2.0.0
 coverage==7.13.2
 cryptography==46.0.4
 defusedxml==0.7.1
-Django==6.0.1
+Django==6.0.2
 django-model-utils==5.0.0
 gunicorn==25.0.0
 lazy-object-proxy==1.12.0
