@@ -31,7 +31,7 @@ rich==14.3.3
 ruff==0.15.2
 sentry-sdk==2.53.0
 soupsieve==2.8.3
-sqlglot==28.10.1
+sqlglot==29.0.1
 sqlparse==0.5.5
 stevedore==5.7.0
 typing_extensions==4.15.0
