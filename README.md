@@ -1,7 +1,7 @@
 
 # Learn SQL 
 ![build status](https://github.com/emartinm/lsql/actions/workflows/django_tests.yml/badge.svg)
-![Pylint status](https://github.com/emartinm/lsql/actions/workflows/pylint.yml/badge.svg)
+![Pylint status](https://github.com/emartinm/lsql/actions/workflows/ruff.yml/badge.svg)
 [![codecov](https://codecov.io/gh/emartinm/lsql/branch/master/graph/badge.svg)](https://codecov.io/gh/emartinm/lsql)
 
 **Automatic judge for database learning**
