@@ -9,10 +9,8 @@ General template for a problem. Provides the following blocks:
 {% endcomment %}
 {% load static %}
 {% block contenido %}
-<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/default.min.css">
-<link rel="stylesheet"
-      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/styles/default.min.css">
-<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/default.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/highlight.min.js"></script>
 <script>hljs.highlightAll();</script>
 
 {% block name_text %}
@@ -191,8 +189,7 @@ General template for a problem. Provides the following blocks:
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"
-        integrity="sha512-GZ1RIgZaSc8rnco/8CXfRdCpDxRCphenIiZ2ztLy3XQfCbQUSCuk8IudvNHxkRA3oUg6q0qejgN/qqyG1duv5Q==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/ace-builds@1.43.6/src-min-noconflict/ace.min.js"></script>
 <script>
   // Same font size in the editor as the modal window
   var el = document.getElementById('modal_message');
