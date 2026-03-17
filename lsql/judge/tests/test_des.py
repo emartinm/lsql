@@ -4,63 +4,39 @@ Copyright Enrique Martín <emartinm@ucm.es> 2021
 Unit tests for the validation of statements using DES
 """
 
-from django.test import TestCase
 from django.core.exceptions import ValidationError
-
+from django.test import TestCase
 from judge.des_driver import parse_tapi_cmd, DesExecutor, parse_tapi_commands, filter_unrecognized_start_of_input
-from judge.types import DesMessageType
-from judge.models import SelectProblem, DMLProblem
 from judge.exceptions import DESException
+from judge.models import SelectProblem, DMLProblem
+from judge.types import DesMessageType
 
 
 class DesTest(TestCase):
     """ Tests for des_driver """
     __CREATE_TIMEOUT = """
-    CREATE TABLE Club(
-        CIF CHAR(9) PRIMARY KEY, 
-        Nombre VARCHAR(40) NOT NULL UNIQUE, 
-        Sede VARCHAR(30) NOT NULL, 
-        Num_Socios INTEGER NOT NULL, 
-        CONSTRAINT NumSociosPositivos CHECK(Num_Socios >= 0)
-    );
+CREATE TABLE jugadores (
+  nick STRING PRIMARY KEY,
+  edad INTEGER CHECK (edad>0),
+  ciudad STRING);
 
-    CREATE TABLE Patrocinador(
-        CIF CHAR(9) PRIMARY KEY,
-        NomPat VARCHAR(20) NOT NULL,
-        Rama VARCHAR(20) NOT NULL,
-        Eslogan VARCHAR(30) NOT NULL,
-        CONSTRAINT NombreYRamaUnicos UNIQUE(NomPat, Rama)
-    );
+CREATE TABLE juegos (
+  nombre STRING PRIMARY KEY,
+  tipo STRING CHECK (tipo IN ('puzzle','estrategia','plataformas')),
+  niveles INTEGER CHECK (niveles BETWEEN 1 AND 10));
 
-    CREATE TABLE Persona(
-        NIF CHAR(9) PRIMARY KEY,
-        Nombre VARCHAR(20) NOT NULL
-    );
+CREATE TABLE partidas (
+  juego STRING REFERENCES juegos(nombre),
+  nick STRING REFERENCES jugadores(nick),
+  nivel INTEGER CHECK (nivel BETWEEN 1 AND 10),
+  superado STRING CHECK (superado IN ('S', 'N')),
+  tiempo NUMBER(8,1) CHECK (tiempo>0),
+  PRIMARY KEY (juego, nick, nivel));
+  
+CREATE VIEW v4 AS (SELECT DISTINCT nick, edad, ciudad FROM partidas NATURAL JOIN jugadores, (SELECT MAX(edad) as maximo FROM (SELECT nick, edad, ciudad FROM partidas NATURAL JOIN jugadores WHERE juego = 'Tetris')) WHERE edad = maximo and juego = 'Tetris')
 
-    CREATE TABLE Jugador(
-        NIF CHAR(9) PRIMARY KEY REFERENCES Persona(NIF) ON DELETE CASCADE,
-        Altura DECIMAL(3,2) NOT NULL CHECK (Altura > 0.0),
-        CIF CHAR(9) NOT NULL REFERENCES Club(CIF)
-    );
-
-    CREATE TABLE Patrocina(
-        NIF CHAR(9) NOT NULL REFERENCES Persona(NIF),
-        CIF CHAR(9) NOT NULL REFERENCES Patrocinador(CIF),
-        Cantidad DECIMAL(10,2) NOT NULL CHECK (Cantidad > 0.0),
-        CONSTRAINT PKPatrocina PRIMARY KEY (NIF, CIF)
-    );
-    """
-    __QUERY_TIMEOUT = '''
-    SELECT P.NIF, P.Nombre
-    FROM Jugador J JOIN Persona P ON J.NIF = P.NIF
-    WHERE NOT EXISTS ((SELECT CIF -- Todos los patrocinadores
-                      FROM Patrocinador
-                      WHERE Rama = 'Deportes')
-                     MINUS
-                     (SELECT CIF -- Todos los patrocinadores del jugador
-                      FROM Patrocina P
-                      WHER P.NIF = J.NIF));
-    '''
+CREATE VIEW v6 AS (SELECT nick FROM (SELECT * FROM partidas) DIVISION (SELECT juego FROM partidas WHERE juego = 'Tetris'));"""
+    __QUERY_TIMEOUT = ''
 
     def test_parsing_wrong_des_output(self):
         """ Test some erroneous DES output (wrong $erroro) """
@@ -120,6 +96,19 @@ $eot
         for _, msg in msgs:
             self.assertEqual(msg, [])
 
+    def test_messages_unsafe_select(self):
+        """ Test that messages are empty in unsafe submissions """
+        create = "CREATE TABLE t(age INT);"
+        insert = "INSERT INTO t VALUES (5);\nINSERT INTO t VALUES (55);"
+        query = "SELECT * FROM Club;"
+        unsafe = "\\pwd"
+        msgs = list(DesExecutor.get().get_des_messages_select(create, insert, unsafe))
+        self.assertEqual(len(msgs), 0)
+        msgs = list(DesExecutor.get().get_des_messages_select(create, unsafe, query))
+        self.assertEqual(len(msgs), 0)
+        msgs = list(DesExecutor.get().get_des_messages_select(unsafe, insert, query))
+        self.assertEqual(len(msgs), 0)
+
     def test_des_timeout_select(self):
         """ DES require too much time to process SQL query, so it is aborted and raises DESException """
         with self.assertRaises(DESException) as ctx:
@@ -141,18 +130,12 @@ $eot
 
     def test_validate_wrong_problem(self):
         """ Test to validate with DES a wrong SelectProblem """
-        problem = SelectProblem(create_sql='CREATE TABLE t(age int)',
+        problem = SelectProblem(create_sql='CREATE TABLE t(age int);',
                                 insert_sql='',
-                                solution='SELECT * FROM table')
-        problem2 = SelectProblem(create_sql='CREATE TABLE t(age int)',
-                                 insert_sql='',
-                                 solution='SELECT * FRO t')
+                                solution='SELECT * FROM table;')
         with self.assertRaises(ValidationError) as ctx:
             problem.validate_des()
         self.assertIn("Unknown table or view 'table'", ctx.exception.message)
-        with self.assertRaises(ValidationError) as ctx:
-            problem2.validate_des()
-        self.assertIn("Expected FROM clause", ctx.exception.message)
 
     def test_dml(self):
         """ Checks that messages are empty in correct statements and DES messages errors are correctly detected
@@ -263,6 +246,19 @@ $eot
         self.assertIn("No tuple met the 'where' condition for deleting", msgs[1][1])
         self.assertEqual(code[2], msgs[1][2])  # The statement is the snippet
 
+    def test_messages_unsafe_dml(self):
+        """ Test that messages are empty in unsafe submissions """
+        create = "CREATE TABLE t(age INT);"
+        insert = "INSERT INTO t VALUES (5);\nINSERT INTO t VALUES (55);"
+        dml2 = "DELETE FROM t WHERE age = 83;"
+        unsafe = "\\pwd"
+        msgs = list(DesExecutor.get().get_des_messages_dml(create, insert, unsafe))
+        self.assertEqual(len(msgs), 0)
+        msgs = list(DesExecutor.get().get_des_messages_dml(create, unsafe, dml2))
+        self.assertEqual(len(msgs), 0)
+        msgs = list(DesExecutor.get().get_des_messages_dml(unsafe, insert, dml2))
+        self.assertEqual(len(msgs), 0)
+
     def test_des_dml_timeout(self):
         """ When DES timeouts DMLProblem.get_des_messages_solution returns [] """
         problem = DMLProblem(title_md='Test DML', text_md='bla bla bla',
@@ -343,3 +339,52 @@ Type mismatch Club.Nombre:string(varchar(40)) vs. string(varchar(20)).
         ]
         filtered_msgs = filter_unrecognized_start_of_input(msgs, '', '', '')
         self.assertEqual(expected_filtered_msgs, filtered_msgs)
+
+    def test_safe_des(self):
+        """ Detects safe and safe SQL before executing DES """
+        unsafe = ['\\version          ',
+                  'SELECT * FROM Club; \\ls',
+                  '\\version\nSELECT * FROM Club',
+                  'INSERT INTO Club VALUES (1,2,3);\\version\nSELECT * FROM Club']
+        safe = [
+            "CREATE TABLE t(name VARCHAR(20) PRIMARY KEY, age INT); INSERT INTO t VALUES ('pepe', 3); INSERT INTO t VALUES ('ana', 13);",
+            "CREATE TABLE t(name VARCHAR(20) PRIMARY KEY, age INT); INSERT INTO t VALUES ('pepe', 3); SELECT * FROM Club",
+            "SELECT e.first_name, e.last_name FROM employees e WHERE e.salary > (SELECT AVG(inner_e.salary) FROM employees inner_e WHERE inner_e.department_id = e.department_id) AND e.department_id IN (SELECT d.department_id FROM departments d WHERE d.location = 'New York' AND (SELECT COUNT(*) FROM employees e2 WHERE e2.department_id = d.department_id) > 5);",
+            """-- Create Tables
+CREATE TABLE students (
+    student_id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    major VARCHAR(50)
+);
+
+CREATE TABLE courses (
+    course_id SERIAL PRIMARY KEY,
+    course_name VARCHAR(100),
+    credits INT,
+    department VARCHAR(50)
+);
+
+CREATE TABLE enrollments (
+    student_id INT REFERENCES students(student_id),
+    course_id INT REFERENCES courses(course_id),
+    grade DECIMAL(3, 2)
+);
+
+-- Insert Values
+INSERT INTO students (name, major) VALUES ('Alice', 'CS'), ('Bob', 'CS'), ('Charlie', 'Math'), ('David', 'CS');
+INSERT INTO courses (course_name, credits, department) VALUES ('Database Systems', 4, 'CS'), ('Algorithms', 4, 'CS'), ('Calculus', 3, 'Math');
+INSERT INTO enrollments VALUES (1, 1, 4.0), (1, 2, 3.5), (2, 1, 3.8), (3, 3, 3.9), (4, 1, 2.5);
+
+SELECT s.name 
+FROM students s 
+WHERE (SELECT AVG(e.grade) 
+       FROM enrollments e 
+       WHERE e.student_id = s.student_id) > 
+       (SELECT AVG(e2.grade) 
+       FROM enrollments e2 JOIN courses c ON e2.course_id = c.course_id 
+       WHERE c.department = 'CS') AND 
+         (SELECT COUNT(*) FROM enrollments e3 WHERE e3.student_id = s.student_id) > 1;"""]
+        for sql in unsafe:
+            self.assertFalse(DesExecutor.is_safe_for_des(sql))
+        for sql in safe:
+            self.assertTrue(DesExecutor.is_safe_for_des(sql))

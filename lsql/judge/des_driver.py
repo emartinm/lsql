@@ -12,6 +12,7 @@ import subprocess  # nosec B404
 import tempfile
 import time
 
+import sqlglot
 from logzero import logger, setup_logger
 
 from django.core.mail import mail_admins
@@ -110,24 +111,28 @@ def parse_tapi_commands(output: str, num_commands: int, pos: int) -> list:
 
 def create_des_input_select(create: str, insert: str, query: str) -> str:
     """ Creates an str with the instructions that DES must execute for a SELECT problem """
-    des_input = '/type_casting on\n'
-    # input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
-    des_input += '/sql\n'
+    # This initial configuration has been moved to des.cfg
+    # des_input = '/type_casting on\n'
+    ## input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
+    # des_input += '/sql\n'
+    des_input = ''
     create_statements = clean_sql(create)
     insert_statements = clean_sql(insert)
     for stmt in create_statements + insert_statements:
         flat_stmt = stmt.strip().replace('\n', '')
         des_input += f"/tapi {flat_stmt}\n"
     des_input += f"/tapi /mparse\n{query}\n$eot\n"
-    des_input += "/exit\n"
+    #des_input += "/exit\n"
     return des_input
 
 
 def create_des_input_dml(create: str, insert: str, dml: str) -> str:
     """ Creates an str with the instructions that DES must execute for a DML problem """
-    des_input = '/type_casting on\n'
-    # input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
-    des_input += '/sql\n'
+    # This initial configuration has been moved to des.cfg
+    # des_input = '/type_casting on\n' # TODO
+    ##  input_stream.write('/date_format DD/MM/YYYY\n')  # Same format as Oracle
+    #des_input += '/sql\n'
+    des_input = ''
     create_statements = clean_sql(create)
     insert_statements = clean_sql(insert)
     for stmt in create_statements + insert_statements:
@@ -137,7 +142,7 @@ def create_des_input_dml(create: str, insert: str, dml: str) -> str:
     for stmt in dml_statements:
         flat_stmt = stmt.replace("\n", " ").strip()
         des_input += f"/tapi {flat_stmt}\n"  # This is the only difference with the case for SELECT
-    des_input += "/exit\n"
+    # des_input += "/exit\n"
     return des_input
 
 
@@ -152,7 +157,9 @@ def execute_des_script(path):
             output = subprocess.check_output(des_path, stdin=finput, timeout=des_timeout).decode('utf8')  # nosec B603
         end = time.time()
         logger.debug('DES execution time (seconds): %s', end-init)
-        return output[output.find('DES-SQL> ') + len('DES-SQL> '):]  # Removes banner from output
+        # return output[output.find('DES-SQL> ') + len('DES-SQL> '):]  # Removes banner from output
+        return output[output.find('DES-SQL> $') + len('DES-SQL> '):]  # Removes banner and initial configuration
+        # statements from output, i.e., those in des.cnf
     except subprocess.TimeoutExpired as error:
         end = time.time()
         raise DESException(f'Timeout when invoking DES. Timeout: {error.timeout}. '
@@ -215,6 +222,14 @@ class DesExecutor:
             cls.__DES = DesExecutor()
         return cls.__DES
 
+    @classmethod
+    def is_safe_for_des(cls, sql, dialect="oracle"):
+        try:
+            sqlglot.parse(sql, dialect=dialect)
+        except sqlglot.errors.ParseError:
+            return False
+        return True
+
     def get_des_messages_select(self, create, insert, query):
         """ Invokes DES to obtain all the messages related to the query (error, warning and info).
             Returns a list of tuples (msg_type, text, query_fragment), or throws a DESException
@@ -222,6 +237,12 @@ class DesExecutor:
         """
         try:
             _, path = tempfile.mkstemp(prefix=self.__FILE_PREFIX, text=True)
+            if not self.is_safe_for_des(create) or not self.is_safe_for_des(insert) or not self.is_safe_for_des(query):
+                UNABLE_OUTPUT_LOGGER.error(
+                    'Unsafe code in SQL for DES: \n------\n\n%s\n\n%s\n\n%s\n------',
+                    create, insert, query)
+                return []
+
             # logger.debug('Writing DES file to %s', path)
             with open(path, 'w', encoding='utf-8') as input_stream:
                 des_input = create_des_input_select(create, insert, query)
@@ -256,6 +277,12 @@ class DesExecutor:
         """
         try:
             _, path = tempfile.mkstemp(prefix=self.__FILE_PREFIX, text=True)
+            if not self.is_safe_for_des(create) or not self.is_safe_for_des(insert) or not self.is_safe_for_des(dml):
+                UNABLE_OUTPUT_LOGGER.error(
+                    'Unsafe code in SQL for DES: \n------\n\n%s\n\n%s\n\n%s\n------',
+                    create, insert, dml)
+                return []
+
             # logger.debug('Writing DES file to %s', path)
             with open(path, 'w', encoding='utf-8') as input_stream:
                 des_input = create_des_input_dml(create, insert, dml)
