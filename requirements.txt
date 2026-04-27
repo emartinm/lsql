@@ -1,7 +1,7 @@
 asgiref==3.11.1
 bandit==1.9.4
 beautifulsoup4==4.14.3
-certifi==2026.2.25
+certifi==2026.4.22
 cffi==2.0.0
 coverage==7.13.5
 cryptography==46.0.7
@@ -18,8 +18,8 @@ markdown-it-py==4.0.0
 mdurl==0.1.2
 multiset==3.2.0
 oracledb==3.4.2
-packaging==26.1
-psycopg2-binary==2.9.11
+packaging==26.2
+psycopg2-binary==2.9.12
 pycparser==3.0
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.7
@@ -28,10 +28,10 @@ Pygments==2.20.0
 pytz==2026.1.post1
 PyYAML==6.0.3
 rich==15.0.0
-ruff==0.15.11
+ruff==0.15.12
 sentry-sdk==2.58.0
 soupsieve==2.8.3
-sqlglot==30.4.3
+sqlglot==30.6.0
 sqlparse==0.5.5
 stevedore==5.7.0
 typing_extensions==4.15.0
