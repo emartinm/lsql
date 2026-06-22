@@ -1,9 +1,9 @@
 asgiref==3.11.1
 bandit==1.9.4
 beautifulsoup4==4.15.0
-certifi==2026.5.20
+certifi==2026.6.17
 cffi==2.0.0
-coverage==7.14.1
+coverage==7.14.2
 cryptography==49.0.0
 defusedxml==0.7.1
 Django==6.0.6
@@ -28,8 +28,8 @@ Pygments==2.20.0
 pytz==2026.2
 PyYAML==6.0.3
 rich==15.0.0
-ruff==0.15.17
-sentry-sdk==2.62.0
+ruff==0.15.18
+sentry-sdk==2.63.0
 soupsieve==2.8.4
 sqlglot==30.11.0
 sqlparse==0.5.5
