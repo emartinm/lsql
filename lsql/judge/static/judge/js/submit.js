@@ -15,12 +15,8 @@ function show_modal(title, message, achievements) {
     hljs.initHighlighting();
 }
 
-// Shows a modal window with a connection error message. If 'busy' is true, shows a message
-// explaining that a previous submission from the same user is still being judged (HTTP 429)
-// instead of the generic connection-error message
-function show_error_modal(busy) {
-     $('#error_message_busy').attr('hidden', !busy);
-     $('#error_message_generic').attr('hidden', !!busy);
+// Shows a modal windows with a connection error message
+function show_error_modal() {
      $('#error_window').modal("show");
 }
 
@@ -123,7 +119,7 @@ function send_solution() {
           update_page_submission_received();
       }).catch(function(e) {
           console.log(e);
-          show_error_modal(e && e.status === 429);
+          show_error_modal();
           update_page_submission_received();
       });
 }
