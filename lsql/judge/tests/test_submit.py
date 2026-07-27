@@ -4,6 +4,8 @@ Unit tests for the submits
 
 import os
 
+import psycopg2
+from django.conf import settings
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -306,3 +308,40 @@ class SubmitTest(TestCase):
         # The user submits a new solution and does not receive any achievement
         response = client.post(submit_select_url, {"code": "MAL"}, follow=True)  # Validation Error, too short
         self.assertNotIn("achievements", response.json())
+
+    def test_submit_rejects_concurrent_submission_with_429(self):
+        """A submission from a user that already has another one in flight must be rejected
+        with HTTP 429 instead of piling another sandboxed Oracle user onto the shared
+        admin-connection pool. 'In flight' is simulated by holding the same Postgres advisory
+        lock the view uses, from a genuinely separate DB session (Django's test Client reuses
+        the same connection/transaction as the test itself, so the lock must be taken from an
+        independent psycopg2 connection to actually behave like a concurrent request)"""
+        client = Client()
+        collection = create_collection("Colleccion de prueba concurrencia")
+        select_problem = create_select_problem(collection, "SelectProblem concurrencia")
+        user = create_user("5555", "concurrente")
+        client.login(username="concurrente", password="5555")  # nosec B106
+        submit_url = reverse("judge:submit", args=[select_problem.pk])
+
+        db_settings = settings.DATABASES["default"]
+        other_session = psycopg2.connect(
+            dbname=db_settings["NAME"],
+            user=db_settings["USER"],
+            password=db_settings["PASSWORD"],
+            host=db_settings["HOST"],
+            port=db_settings["PORT"],
+        )
+        try:
+            with other_session.cursor() as cursor:
+                cursor.execute("SELECT pg_try_advisory_lock(%s)", [user.pk])
+
+            response = client.post(submit_url, {"code": select_problem.solution})
+            self.assertEqual(response.status_code, 429)
+        finally:
+            with other_session.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_unlock(%s)", [user.pk])
+            other_session.close()
+
+        # Once the other session releases the lock, a normal submission succeeds again
+        response = client.post(submit_url, {"code": select_problem.solution}, follow=True)
+        self.assertEqual(response.json()["verdict"], VerdictCode.AC)

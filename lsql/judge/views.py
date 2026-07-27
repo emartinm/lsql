@@ -11,6 +11,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
+from django.db import connection
 from django.http import (
     FileResponse,
     HttpResponseForbidden,
@@ -443,45 +444,56 @@ def submit(request, problem_id):
     }
     code = ""
     if submit_form.is_valid():
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_try_advisory_lock(%s)", [request.user.pk])
+            (lock_acquired,) = cursor.fetchone()
+        if not lock_acquired:
+            # Another submission from this user is still being judged: reject instead of
+            # piling another sandboxed Oracle user onto the shared admin-connection pool
+            return HttpResponse(status=429)
         try:
-            # AC or WA
-            code = submit_form.cleaned_data["code"]
-            logger.debug("Checking submission to problem PK=%s. Code: %s", problem_id, code)
-            data["verdict"], data["feedback"] = problem.judge(code, OracleExecutor.get())
-            data["title"] = data["verdict"].label
-            data["message"] = data["verdict"].message()
-            extend_dictionary_with_des(data, problem, code)  # Check DES if needed
-        except ExecutorException as excp:
-            # Exceptions when judging: RE, TLE, VE or IE
-            if excp.error_code == OracleStatusCode.EXECUTE_USER_CODE:
-                data["verdict"] = VerdictCode.RE
-                data["title"] = VerdictCode.RE.label
-                data["message"] = VerdictCode.RE.message()
-                data["feedback"] = (
-                    f"{excp.statement} --> {excp.message}"
-                    if problem.problem_type() == ProblemType.FUNCTION
-                    else excp.message
-                )
-                data["position"] = excp.position
-                data["position_msg"] = _("Posición: línea {row}, columna {col}").format(
-                    row=excp.position[0] + 1, col=excp.position[1] + 1
-                )
+            try:
+                # AC or WA
+                code = submit_form.cleaned_data["code"]
+                logger.debug("Checking submission to problem PK=%s. Code: %s", problem_id, code)
+                data["verdict"], data["feedback"] = problem.judge(code, OracleExecutor.get())
+                data["title"] = data["verdict"].label
+                data["message"] = data["verdict"].message()
                 extend_dictionary_with_des(data, problem, code)  # Check DES if needed
-            elif excp.error_code == OracleStatusCode.TLE_USER_CODE:
-                data["verdict"] = VerdictCode.TLE
-                data["title"] = VerdictCode.TLE.label
-                data["message"] = VerdictCode.TLE.message()
-                extend_dictionary_with_des(data, problem, code)  # Check DES if needed
-            elif excp.error_code == OracleStatusCode.NUMBER_STATEMENTS:
-                data["verdict"] = VerdictCode.VE
-                data["title"] = VerdictCode.VE.label
-                data["message"] = VerdictCode.VE.message(problem)
-                data["feedback"] = ""  # Feedback not needed
-            elif excp.error_code == OracleStatusCode.COMPILATION_ERROR:
-                data["verdict"] = VerdictCode.WA
-                data["title"] = VerdictCode.WA.label
-                data["message"] = VerdictCode.WA.message()
-                data["feedback"] = compile_error_to_html_table(excp.message)
+            except ExecutorException as excp:
+                # Exceptions when judging: RE, TLE, VE or IE
+                if excp.error_code == OracleStatusCode.EXECUTE_USER_CODE:
+                    data["verdict"] = VerdictCode.RE
+                    data["title"] = VerdictCode.RE.label
+                    data["message"] = VerdictCode.RE.message()
+                    data["feedback"] = (
+                        f"{excp.statement} --> {excp.message}"
+                        if problem.problem_type() == ProblemType.FUNCTION
+                        else excp.message
+                    )
+                    data["position"] = excp.position
+                    data["position_msg"] = _("Posición: línea {row}, columna {col}").format(
+                        row=excp.position[0] + 1, col=excp.position[1] + 1
+                    )
+                    extend_dictionary_with_des(data, problem, code)  # Check DES if needed
+                elif excp.error_code == OracleStatusCode.TLE_USER_CODE:
+                    data["verdict"] = VerdictCode.TLE
+                    data["title"] = VerdictCode.TLE.label
+                    data["message"] = VerdictCode.TLE.message()
+                    extend_dictionary_with_des(data, problem, code)  # Check DES if needed
+                elif excp.error_code == OracleStatusCode.NUMBER_STATEMENTS:
+                    data["verdict"] = VerdictCode.VE
+                    data["title"] = VerdictCode.VE.label
+                    data["message"] = VerdictCode.VE.message(problem)
+                    data["feedback"] = ""  # Feedback not needed
+                elif excp.error_code == OracleStatusCode.COMPILATION_ERROR:
+                    data["verdict"] = VerdictCode.WA
+                    data["title"] = VerdictCode.WA.label
+                    data["message"] = VerdictCode.WA.message()
+                    data["feedback"] = compile_error_to_html_table(excp.message)
+        finally:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_unlock(%s)", [request.user.pk])
     else:
         data["verdict"] = VerdictCode.VE
         data["title"] = VerdictCode.VE.label

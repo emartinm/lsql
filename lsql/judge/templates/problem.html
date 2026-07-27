@@ -174,12 +174,20 @@ General template for a problem. Provides the following blocks:
         </h5>
       </div>
       <div class="modal-body">
-        {% blocktranslate %}
+        <div id="error_message_generic">
+          {% blocktranslate %}
           Ha sido imposible conectar con el corrector de ejercicios.
           Este problema puede ser debido a una saturación del servidor.
           Por favor, vuelve a cargar la página del problema e intenta enviarlo de nuevo dentro de unos instantes.
           Ponte en contacto con tu profesor si el problema persiste.
-        {% endblocktranslate %}
+          {% endblocktranslate %}
+        </div>
+        <div id="error_message_busy" hidden>
+          {% blocktranslate %}
+          Ya tienes un envío de este problema en proceso de corrección.
+          Espera a que termine antes de enviar uno nuevo.
+          {% endblocktranslate %}
+        </div>
       </div>
       <div class="modal-footer">
         <button id="close_error_window_button" type="button" class="btn btn-primary"
