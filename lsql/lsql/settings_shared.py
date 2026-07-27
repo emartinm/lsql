@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+from datetime import timedelta
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "axes",  # Locks out repeated failed login attempts, see AUTHENTICATION_BACKENDS below
     # 'dbbackup',  # django-dbbackup
 ]
 
@@ -54,7 +56,39 @@ MIDDLEWARE = [
     "judge.middleware.SentryUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # django-axes requires its middleware to be the LAST one in the list, since it turns
+    # a flagged request into the actual lockout HTTP response after every other
+    # middleware/view has already run
+    "axes.middleware.AxesMiddleware",
 ]
+
+# django-axes must come first so locked-out login attempts are rejected before
+# ModelBackend ever runs the (deliberately slow) password hash check. We use our own
+# RequestOptionalAxesBackend instead of axes.backends.AxesBackend directly because the
+# stock backend raises when authenticate() is called without a request - which is
+# exactly what Django's test Client.login() shortcut does everywhere in this test suite.
+# See judge/axes_backend.py for the full explanation.
+AUTHENTICATION_BACKENDS = [
+    "judge.axes_backend.RequestOptionalAxesBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# Number of failed login attempts allowed before lockout
+AXES_FAILURE_LIMIT = 5
+
+# How long an account/IP combination stays locked out after hitting the failure limit
+AXES_COOLOFF_TIME = timedelta(hours=1)
+
+# A successful login clears the failure counter, instead of letting past failed
+# attempts linger indefinitely toward a future lockout
+AXES_RESET_ON_SUCCESS = True
+
+# Lock out the specific (username, IP) combination rather than the IP alone (the
+# library default). Students often share IPs (university labs, NAT), so IP-only
+# lockout would let one person's failed attempts lock out every other student behind
+# the same address; keying on username as well avoids that collateral damage while
+# still stopping a targeted brute-force against one account
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 
 ROOT_URLCONF = "lsql.urls"
 

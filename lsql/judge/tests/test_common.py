@@ -20,7 +20,7 @@ from judge.models import (
 )
 
 
-class TestPaths:  # pylint: disable=too-few-public-methods
+class TestPaths:
     """Class only to store paths for testing files"""
 
     ZIP_FOLDER = "zip_files"

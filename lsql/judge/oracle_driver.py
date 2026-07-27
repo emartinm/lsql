@@ -327,8 +327,6 @@ def get_compilation_errors(conn):
 
 def offset_from_oracle_exception(excp: oracledb.DatabaseError) -> int:
     """Extracts the offset from a DataBaseError"""
-    # pylint: disable = no-member
-    # Locally disabled member checks because pylint thinks oracle_error is str
     (oracle_error,) = excp.args
     return oracle_error.offset
 

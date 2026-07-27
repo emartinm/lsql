@@ -249,8 +249,7 @@ class ShellTest(TestCase):
             self.assertIs(type(prob.expected_result), list)
             self.assertIs(type(prob.expected_result[0]), dict)
 
-        for prob in Problem.objects.all():  # pylint: disable=E1133
-            # pylint false positive E1133
+        for prob in Problem.objects.all():
             prob.delete()
 
         # Problems with wrong types in initial_db or expected_result

@@ -71,7 +71,7 @@ class OracleTest(TestCase):
             cursor.execute(f"DROP ROLE {self.ROLE_NAME}")
         oracle.connection_pool.release(gestor)
 
-        oracle._ensure_role_exists()  # pylint: disable=protected-access
+        oracle._ensure_role_exists()
 
         gestor = oracle.connection_pool.acquire()
         with gestor.cursor() as cursor:
@@ -89,7 +89,7 @@ class OracleTest(TestCase):
         (tolerating ORA-01921) and must re-apply the privileges GRANT"""
         oracle = OracleExecutor.get()  # Already created ROL_ESTUDIANTE_BD as part of __init__
 
-        oracle._ensure_role_exists()  # pylint: disable=protected-access
+        oracle._ensure_role_exists()
 
         gestor = oracle.connection_pool.acquire()
         with gestor.cursor() as cursor:
@@ -102,14 +102,14 @@ class OracleTest(TestCase):
         """_ensure_role_exists() must propagate any DatabaseError from CREATE ROLE that is not
         'role already exists' (ORA-01921), e.g. an invalid role name"""
         oracle = OracleExecutor.get()
-        original_script = oracle._OracleExecutor__CREATE_ROLE_SCRIPT  # pylint: disable=protected-access
+        original_script = oracle._OracleExecutor__CREATE_ROLE_SCRIPT
         # Unquoted identifiers cannot start with a digit, so this always fails with a code != 1921
-        oracle._OracleExecutor__CREATE_ROLE_SCRIPT = "CREATE ROLE 1_INVALID_ROLE_NAME"  # pylint: disable=protected-access
+        oracle._OracleExecutor__CREATE_ROLE_SCRIPT = "CREATE ROLE 1_INVALID_ROLE_NAME"
         try:
             with self.assertRaises(oracledb.DatabaseError):
-                oracle._ensure_role_exists()  # pylint: disable=protected-access
+                oracle._ensure_role_exists()
         finally:
-            oracle._OracleExecutor__CREATE_ROLE_SCRIPT = original_script  # pylint: disable=protected-access
+            oracle._OracleExecutor__CREATE_ROLE_SCRIPT = original_script
 
     def test_empty_clean_code(self):
         """Test for cleaning a null SQL code"""

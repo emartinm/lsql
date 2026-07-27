@@ -246,7 +246,7 @@ class RankingTest(TestCase):
         with self.assertRaises(NotImplementedError):
             achievement_definition.check_and_save(user)
 
-    def test_obtained_achievements_date(self):  # pylint: disable=too-many-statements
+    def test_obtained_achievements_date(self):
         """Test if the dates of the obtained achievements are correct"""
         user = create_user("passwordmichu", "michu")
         coll = create_collection("Coleccion de cartas")

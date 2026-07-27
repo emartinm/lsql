@@ -94,8 +94,7 @@ def check_if_get_achievement(user, verdict):
 
     # If the verdict != AC (correct) only can get a NumSubmissionsProblemsAchievementDefinition
     else:
-        # pylint false positive E1133
-        for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():  # pylint: disable=E1133
+        for ach in NumSubmissionsProblemsAchievementDefinition.objects.all():
             if ach.check_and_save(user):
                 obtained_achievements.append(ach)
 
@@ -424,9 +423,6 @@ def first_message_from_errordict(errordict):
 
 @login_required
 @require_POST
-# pylint does not understand the dynamic attributes in VerdictCode (TextChoices), so we need to disable
-# no-member warning in this specific function
-# pylint: disable=no-member
 def submit(request, problem_id):
     """Process a user submission. The POST request contains the following parameters:
     * code: (string, required): code to be assessed

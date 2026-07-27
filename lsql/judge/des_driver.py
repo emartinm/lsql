@@ -93,7 +93,7 @@ def parse_tapi_cmd(output: str, pos: int) -> tuple:
             end_eot = output.find("\n", end_output) + 1
             msgs = parse_tapi_error_messages(output, pos)
             return end_eot, msgs
-    except Exception as excp:  # pylint: disable=broad-except
+    except Exception as excp:
         # Any Exception will be translated into raise a DESException exception
         raise DESException(f"Unable to parse TAPI output <<{output[pos:]}>>") from excp
 
@@ -270,7 +270,7 @@ class DesExecutor:
             # Remove and log DES errors <Unrecognized start of input>
             msgs = filter_unrecognized_start_of_input(msgs, create, insert, query)
             return zip(create_statements + insert_statements + [query], msgs)
-        except (DESException, Exception) as excp:  # pylint: disable=broad-except
+        except (DESException, Exception) as excp:
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)
             excp_msg = str(excp)
             UNABLE_OUTPUT_LOGGER.error(
@@ -319,7 +319,7 @@ class DesExecutor:
             # Remove and log DES errors <Unrecognized start of input>
             msgs = filter_unrecognized_start_of_input(msgs, create, insert, dml)
             return zip(create_statements + insert_statements + dml_statements, msgs)
-        except (DESException, Exception) as excp:  # pylint: disable=broad-except
+        except (DESException, Exception) as excp:
             # If DES output cannot be obtained, log with detail (to avoid failing the submission, catches all)
             excp_msg = str(excp)
             UNABLE_OUTPUT_LOGGER.error(

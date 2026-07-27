@@ -10,7 +10,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-class VerdictCode(models.TextChoices):  # pylint: disable=too-many-ancestors
+class VerdictCode(models.TextChoices):
     """Codes representing different judge verdicts"""
 
     AC = "AC", _("Aceptado")

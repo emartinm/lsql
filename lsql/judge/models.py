@@ -955,7 +955,7 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
             )
 
             for sub in first_ac_submissions:
-                # TODO: improve N+1 queries because of the detection of the problem subclass  # pylint: disable=fixme
+                # TODO: improve N+1 queries because of the detection of the problem subclass
                 problem = Problem.objects.filter(pk=sub["problem"]).select_subclasses()
                 if problem[0].problem_type().name == self.problem_type:
                     count += 1
