@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
@@ -8,26 +7,54 @@ Customize how to show add/edit forms for objects in the Admin
 from django.contrib import admin
 
 from . import forms
-from .models import Collection, SelectProblem, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, \
-    Submission, NumSolvedCollectionAchievementDefinition, PodiumAchievementDefinition, \
-    NumSolvedAchievementDefinition, ObtainedAchievement, DiscriminantProblem, NumSolvedTypeAchievementDefinition, \
-    NumSubmissionsProblemsAchievementDefinition, Hint, UsedHint
+from .models import (
+    Collection,
+    DiscriminantProblem,
+    DMLProblem,
+    FunctionProblem,
+    Hint,
+    NumSolvedAchievementDefinition,
+    NumSolvedCollectionAchievementDefinition,
+    NumSolvedTypeAchievementDefinition,
+    NumSubmissionsProblemsAchievementDefinition,
+    ObtainedAchievement,
+    PodiumAchievementDefinition,
+    ProcProblem,
+    SelectProblem,
+    Submission,
+    TriggerProblem,
+    UsedHint,
+)
 
 
 class SelectProblemAdmin(admin.ModelAdmin):
-    """Model for SelectProblem, hides author when editing because the current user will be used """
+    """Model for SelectProblem, hides author when editing because the current user will be used"""
+
     fieldsets = [
-        ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
-                                          'position', 'check_order']}),
-        ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution']}),
+        ("ZIP file (if present, it will overwrite the rest of fields)", {"fields": ["zipfile"]}),
+        (
+            "Basic Information",
+            {
+                "fields": [
+                    "language",
+                    "title_md",
+                    "text_md",
+                    "min_stmt",
+                    "max_stmt",
+                    "collection",
+                    "position",
+                    "check_order",
+                ]
+            },
+        ),
+        ("SQL", {"fields": ["create_sql", "insert_sql", "solution"]}),
     ]
-    list_display = ('pk', 'title_md', 'creation_date', 'collection', 'author')
-    list_filter = ['collection', 'creation_date']
+    list_display = ("pk", "title_md", "creation_date", "collection", "author")
+    list_filter = ["collection", "creation_date"]
 
     def save_model(self, request, obj, form, change):
-        """ When saving the collection using the admin interface, set the author to the current user
-            if it is not already set
+        """When saving the collection using the admin interface, set the author to the current user
+        if it is not already set
         """
         if obj.author is None:
             obj.author = request.user
@@ -35,19 +62,33 @@ class SelectProblemAdmin(admin.ModelAdmin):
 
 
 class DMLProblemAdmin(admin.ModelAdmin):
-    """Model for DMLProblem, hides author when editing because the current user will be used """
+    """Model for DMLProblem, hides author when editing because the current user will be used"""
+
     fieldsets = [
-        ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
-                                          'position', 'check_order']}),
-        ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution']}),
+        ("ZIP file (if present, it will overwrite the rest of fields)", {"fields": ["zipfile"]}),
+        (
+            "Basic Information",
+            {
+                "fields": [
+                    "language",
+                    "title_md",
+                    "text_md",
+                    "min_stmt",
+                    "max_stmt",
+                    "collection",
+                    "position",
+                    "check_order",
+                ]
+            },
+        ),
+        ("SQL", {"fields": ["create_sql", "insert_sql", "solution"]}),
     ]
-    list_display = ('pk', 'title_md', 'creation_date', 'collection', 'author')
-    list_filter = ['collection', 'creation_date']
+    list_display = ("pk", "title_md", "creation_date", "collection", "author")
+    list_filter = ["collection", "creation_date"]
 
     def save_model(self, request, obj, form, change):
-        """ When saving the collection using the admin interface, set the author to the current user
-            if it is not already set
+        """When saving the collection using the admin interface, set the author to the current user
+        if it is not already set
         """
         if obj.author is None:
             obj.author = request.user
@@ -55,20 +96,34 @@ class DMLProblemAdmin(admin.ModelAdmin):
 
 
 class FunctionProblemAdmin(admin.ModelAdmin):
-    """Model for FunctionProblem, hides author when editing because the current user will be used """
+    """Model for FunctionProblem, hides author when editing because the current user will be used"""
+
     fieldsets = [
-        ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
-                                          'position', 'check_order']}),
-        ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'calls']}),
+        ("ZIP file (if present, it will overwrite the rest of fields)", {"fields": ["zipfile"]}),
+        (
+            "Basic Information",
+            {
+                "fields": [
+                    "language",
+                    "title_md",
+                    "text_md",
+                    "min_stmt",
+                    "max_stmt",
+                    "collection",
+                    "position",
+                    "check_order",
+                ]
+            },
+        ),
+        ("SQL", {"fields": ["create_sql", "insert_sql", "solution", "calls"]}),
     ]
-    list_display = ('pk', 'title_md', 'creation_date', 'collection', 'author')
-    list_filter = ['collection', 'creation_date']
+    list_display = ("pk", "title_md", "creation_date", "collection", "author")
+    list_filter = ["collection", "creation_date"]
     form = forms.FunctionProblemAdminForm
 
     def save_model(self, request, obj, form, change):
-        """ When saving the collection using the admin interface, set the author to the current user
-            if it is not already set
+        """When saving the collection using the admin interface, set the author to the current user
+        if it is not already set
         """
         if obj.author is None:
             obj.author = request.user
@@ -76,20 +131,34 @@ class FunctionProblemAdmin(admin.ModelAdmin):
 
 
 class ProcProblemAdmin(admin.ModelAdmin):
-    """Model for ProcProblem, hides author when editing because the current user will be used """
+    """Model for ProcProblem, hides author when editing because the current user will be used"""
+
     fieldsets = [
-        ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
-                                          'position', 'check_order']}),
-        ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'proc_call']}),
+        ("ZIP file (if present, it will overwrite the rest of fields)", {"fields": ["zipfile"]}),
+        (
+            "Basic Information",
+            {
+                "fields": [
+                    "language",
+                    "title_md",
+                    "text_md",
+                    "min_stmt",
+                    "max_stmt",
+                    "collection",
+                    "position",
+                    "check_order",
+                ]
+            },
+        ),
+        ("SQL", {"fields": ["create_sql", "insert_sql", "solution", "proc_call"]}),
     ]
-    list_display = ('pk', 'title_md', 'creation_date', 'collection', 'author')
-    list_filter = ['collection', 'creation_date']
+    list_display = ("pk", "title_md", "creation_date", "collection", "author")
+    list_filter = ["collection", "creation_date"]
     form = forms.ProcProblemAdminForm
 
     def save_model(self, request, obj, form, change):
-        """ When saving the collection using the admin interface, set the author to the current user
-            if it is not already set
+        """When saving the collection using the admin interface, set the author to the current user
+        if it is not already set
         """
         if obj.author is None:
             obj.author = request.user
@@ -97,20 +166,34 @@ class ProcProblemAdmin(admin.ModelAdmin):
 
 
 class TriggerProblemAdmin(admin.ModelAdmin):
-    """Model for TriggerProblem, hides author when editing because the current user will be used """
+    """Model for TriggerProblem, hides author when editing because the current user will be used"""
+
     fieldsets = [
-        ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
-                                          'position', 'check_order']}),
-        ('SQL', {'fields': ['create_sql', 'insert_sql', 'solution', 'tests']}),
+        ("ZIP file (if present, it will overwrite the rest of fields)", {"fields": ["zipfile"]}),
+        (
+            "Basic Information",
+            {
+                "fields": [
+                    "language",
+                    "title_md",
+                    "text_md",
+                    "min_stmt",
+                    "max_stmt",
+                    "collection",
+                    "position",
+                    "check_order",
+                ]
+            },
+        ),
+        ("SQL", {"fields": ["create_sql", "insert_sql", "solution", "tests"]}),
     ]
-    list_display = ('pk', 'title_md', 'creation_date', 'collection', 'author')
-    list_filter = ['collection', 'creation_date']
+    list_display = ("pk", "title_md", "creation_date", "collection", "author")
+    list_filter = ["collection", "creation_date"]
     form = forms.TriggerProblemAdminForm
 
     def save_model(self, request, obj, form, change):
-        """ When saving the collection using the admin interface, set the author to the current user
-            if it is not already set
+        """When saving the collection using the admin interface, set the author to the current user
+        if it is not already set
         """
         if obj.author is None:
             obj.author = request.user
@@ -118,19 +201,33 @@ class TriggerProblemAdmin(admin.ModelAdmin):
 
 
 class DiscriminantProblemAdmin(admin.ModelAdmin):
-    """Model for FunctionProblem, hides author when editing because the current user will be used """
+    """Model for FunctionProblem, hides author when editing because the current user will be used"""
+
     fieldsets = [
-        ('ZIP file (if present, it will overwrite the rest of fields)', {'fields': ['zipfile']}),
-        ('Basic Information', {'fields': ['language', 'title_md', 'text_md', 'min_stmt', 'max_stmt', 'collection',
-                                          'position', 'check_order']}),
-        ('SQL', {'fields': ['create_sql', 'insert_sql', 'correct_query', 'incorrect_query']}),
+        ("ZIP file (if present, it will overwrite the rest of fields)", {"fields": ["zipfile"]}),
+        (
+            "Basic Information",
+            {
+                "fields": [
+                    "language",
+                    "title_md",
+                    "text_md",
+                    "min_stmt",
+                    "max_stmt",
+                    "collection",
+                    "position",
+                    "check_order",
+                ]
+            },
+        ),
+        ("SQL", {"fields": ["create_sql", "insert_sql", "correct_query", "incorrect_query"]}),
     ]
-    list_display = ('pk', 'title_md', 'creation_date', 'collection', 'author')
-    list_filter = ['collection', 'creation_date']
+    list_display = ("pk", "title_md", "creation_date", "collection", "author")
+    list_filter = ["collection", "creation_date"]
 
     def save_model(self, request, obj, form, change):
-        """ When saving the collection using the admin interface, set the author to the current user
-            if it is not already set
+        """When saving the collection using the admin interface, set the author to the current user
+        if it is not already set
         """
         if obj.author is None:
             obj.author = request.user
@@ -138,28 +235,33 @@ class DiscriminantProblemAdmin(admin.ModelAdmin):
 
 
 class CollectionAdmin(admin.ModelAdmin):
-    """Model for Collection, hides author when editing because the current user will be used """
+    """Model for Collection, hides author when editing because the current user will be used"""
+
     # define get_fieldsets(self, request, obj=None) to have a dynamic behavior
     fieldsets = [
-        ('If provided, loads problems from ZIP file and add them to the collection',
-         {'fields': ('zipfile', )}),
-        ('Collection data', {'fields': ('name_md', 'position', 'description_md', 'visible')})
+        (
+            "If provided, loads problems from ZIP file and add them to the collection",
+            {"fields": ("zipfile",)},
+        ),
+        ("Collection data", {"fields": ("name_md", "position", "description_md", "visible")}),
     ]
-    list_display = ('pk', 'name_md', 'creation_date', 'author', 'visible')
-    list_filter = ['creation_date']
+    list_display = ("pk", "name_md", "creation_date", "author", "visible")
+    list_filter = ["creation_date"]
 
     def save_model(self, request, obj, form, change):
-        """ When saving the collection using the admin interface, set the author to the current user
-            if it is not already set
+        """When saving the collection using the admin interface, set the author to the current user
+        if it is not already set
         """
         if obj.author is None:
             obj.author = request.user
         super().save_model(request, obj, form, change)
 
+
 class SubmissionAdmin(admin.ModelAdmin):
     """Model for Submission"""
-    list_display = ('pk', 'user', 'problem', 'verdict_code', 'creation_date')
-    list_filter = ['creation_date', 'verdict_code', 'user']
+
+    list_display = ("pk", "user", "problem", "verdict_code", "creation_date")
+    list_filter = ["creation_date", "verdict_code", "user"]
 
 
 # class ProblemAdmin(admin.ModelAdmin):
@@ -175,47 +277,55 @@ class SubmissionAdmin(admin.ModelAdmin):
 
 class NumSolvedCollectionAchievementDefinitionAdmin(admin.ModelAdmin):
     """Model for Achievements"""
-    list_display = ('name', 'description', 'num_problems', 'collection')
+
+    list_display = ("name", "description", "num_problems", "collection")
 
 
 class PodiumAchievementDefinitionAdmin(admin.ModelAdmin):
     """Model for Achievements"""
-    list_display = ('name', 'description', 'num_problems', 'position')
+
+    list_display = ("name", "description", "num_problems", "position")
 
 
 class NumSolvedAchievementDefinitionAdmin(admin.ModelAdmin):
     """Model for Achievements"""
-    list_display = ('name', 'description', 'num_problems')
+
+    list_display = ("name", "description", "num_problems")
 
 
 class ObtainedAchievementAdmin(admin.ModelAdmin):
     """Model for Achievements"""
-    list_display = ('user', 'achievement_definition', 'obtained_date')
-    list_filter = ['achievement_definition', 'obtained_date', 'user']
+
+    list_display = ("user", "achievement_definition", "obtained_date")
+    list_filter = ["achievement_definition", "obtained_date", "user"]
 
 
 class NumSolvedTypeAchievementDefinitionAdmin(admin.ModelAdmin):
     """Model for Achievements"""
-    list_display = ('name', 'description', 'num_problems', 'problem_type')
+
+    list_display = ("name", "description", "num_problems", "problem_type")
 
 
 class NumSubmissionsProblemsAchievementDefinitionAdmin(admin.ModelAdmin):
     """Model for Achievements"""
-    list_display = ('name', 'description', 'num_problems', 'num_submissions')
-    list_filter = ['name']
+
+    list_display = ("name", "description", "num_problems", "num_submissions")
+    list_filter = ["name"]
 
 
 class HintAdmin(admin.ModelAdmin):
     """Model for Hints"""
-    list_display = ('text_md', 'problem', 'num_submit')
-    list_filter = ['problem']
+
+    list_display = ("text_md", "problem", "num_submit")
+    list_filter = ["problem"]
 
 
 class UsedHintAdmin(admin.ModelAdmin):
     """Model for Hints"""
-    list_display = ('user', 'hint_definition', 'request_date')
-    list_display_links = ('user', 'hint_definition')
-    list_filter = ['user']
+
+    list_display = ("user", "hint_definition", "request_date")
+    list_display_links = ("user", "hint_definition")
+    list_filter = ["user"]
 
 
 admin.site.register(Collection, CollectionAdmin)

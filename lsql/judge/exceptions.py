@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
@@ -16,7 +15,8 @@ class ZipFileParsingException(Exception):
 
 class ExecutorException(Exception):
     """Exception when calling the DB executor"""
-    def __init__(self, error_code, message='', statement='', position=(0, 0)):
+
+    def __init__(self, error_code, message="", statement="", position=(0, 0)):
         super().__init__(message)
         self.message = message
         # value from types.SelectStatusCode
@@ -26,4 +26,4 @@ class ExecutorException(Exception):
 
 
 class DESException(Exception):
-    """ Error while invoking or parsing DES output """
+    """Error while invoking or parsing DES output"""

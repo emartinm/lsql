@@ -12,15 +12,16 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+
 from logzero import logger
 
 # Load common settings
 from .settings_shared import *
 
 # Load development or deployment settings
-if os.environ.get('DJANGO_DEVELOPMENT'):
-    logger.debug('Loading DEVELOPMENT settings')
+if os.environ.get("DJANGO_DEVELOPMENT"):
+    logger.debug("Loading DEVELOPMENT settings")
     from .settings_dev import *
 else:
-    logger.debug('Loading DEPLOY settings')
+    logger.debug("Loading DEPLOY settings")
     from .settings_deploy import *

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2021
 
@@ -7,15 +6,15 @@ Unit tests to check custom tags for templates
 
 import re
 
-from django.test import TestCase
 from django.template import Context, Template
+from django.test import TestCase
 
 
 class TagsTest(TestCase):
     """Tests for the custom tags"""
 
     def test_ramdom_id(self):
-        """ Generates two random IDs and prints each one twice in the template"""
+        """Generates two random IDs and prints each one twice in the template"""
         template = Template("""
         {% load random_tags %}
               

@@ -1,26 +1,38 @@
-# -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Unit tests for the connection and execution of statements using the Oracle DB
 """
+
 import os
 import time
 
 from django.test import TestCase
 
-from judge.oracle_driver import OracleExecutor, clean_sql, line_col_from_offset, create_insert_all
-from judge.models import SelectProblem, Collection, DMLProblem, FunctionProblem, ProcProblem, TriggerProblem, \
-    DiscriminantProblem
-from judge.types import VerdictCode, OracleStatusCode
 from judge.exceptions import ExecutorException
+from judge.models import (
+    Collection,
+    DiscriminantProblem,
+    DMLProblem,
+    FunctionProblem,
+    ProcProblem,
+    SelectProblem,
+    TriggerProblem,
+)
+from judge.oracle_driver import (
+    OracleExecutor,
+    clean_sql,
+    create_insert_all,
+    line_col_from_offset,
+)
+from judge.types import OracleStatusCode, VerdictCode
 
-SELECT_TLE = '''
+SELECT_TLE = """
         SELECT a, AVG(b), MAX(b), AVG(c), AVG(d)
         FROM (select 8 AS a, sqrt(8) as b from dual connect by level <= 15000)
              CROSS JOIN
              (select 8 as c, sqrt(8) as d from dual connect by level <= 15000)
-        GROUP BY a;'''
+        GROUP BY a;"""
 
 
 class OracleTest(TestCase):
@@ -36,26 +48,34 @@ class OracleTest(TestCase):
         """Test for get_version()"""
         oracle = OracleExecutor.get()
         parts = oracle.get_version().split()
-        self.assertEqual(parts[0], 'Oracle')
-        self.assertTrue(int(parts[1].split('.')[0]) >= 11)
+        self.assertEqual(parts[0], "Oracle")
+        self.assertTrue(int(parts[1].split(".")[0]) >= 11)
 
     def test_empty_clean_code(self):
         """Test for cleaning a null SQL code"""
         self.assertEqual(clean_sql(None), [])
 
     def test_clean_sql(self):
-        """ Test for cleaning SQL code with several lines and interleaved comments """
+        """Test for cleaning SQL code with several lines and interleaved comments"""
         codes = [
-            ("\n   \n  --hello\n   SELECT *\n\n  \n \n FROM Club     ;",
-             ["\n   \n         \n   SELECT *\n\n  \n \n FROM Club      "]),
-            ("\n--comment   \n  --hola\n   SELECT *\n\n  \n \n FROM Club     ;--mas",
-             ["\n            \n        \n   SELECT *\n\n  \n \n FROM Club           "]),
-            ('\n  --hello\n  \n  ---hi hi \nUPDATE Club\nSET Atletas = 2000;  --something\n   \n \n --hola   '
-             '\nUPDATE Club\nSET Atletas = 107;',
-             ['\n         \n  \n           \nUPDATE Club\nSET Atletas = 2000              \n   \n \n          '
-              '\n           \n                  ',
-              '\n         \n  \n           \n           \n                                \n   \n \n          '
-              '\nUPDATE Club\nSET Atletas = 107 ']),
+            (
+                "\n   \n  --hello\n   SELECT *\n\n  \n \n FROM Club     ;",
+                ["\n   \n         \n   SELECT *\n\n  \n \n FROM Club      "],
+            ),
+            (
+                "\n--comment   \n  --hola\n   SELECT *\n\n  \n \n FROM Club     ;--mas",
+                ["\n            \n        \n   SELECT *\n\n  \n \n FROM Club           "],
+            ),
+            (
+                "\n  --hello\n  \n  ---hi hi \nUPDATE Club\nSET Atletas = 2000;  --something\n   \n \n --hola   "
+                "\nUPDATE Club\nSET Atletas = 107;",
+                [
+                    "\n         \n  \n           \nUPDATE Club\nSET Atletas = 2000              \n   \n \n          "
+                    "\n           \n                  ",
+                    "\n         \n  \n           \n           \n                                \n   \n \n          "
+                    "\nUPDATE Club\nSET Atletas = 107 ",
+                ],
+            ),
         ]
         for code, clean in codes:
             cleaned = clean_sql(code)
@@ -68,77 +88,93 @@ class OracleTest(TestCase):
         """Tests for SelectProblem.judge()"""
         collection = Collection()
         collection.save()
-        create = '''CREATE TABLE "Nombre Club" (
+        create = """CREATE TABLE "Nombre Club" (
                         CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
                         Nombre VARCHAR2(40) NOT NULL UNIQUE,
                         Sede VARCHAR2(30) NOT NULL,
                         Num_Socios NUMBER(10,0) NOT NULL,
                         CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
-                    );'''
-        insert = '''INSERT INTO "Nombre Club" VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
+                    );"""
+        insert = """INSERT INTO "Nombre Club" VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
                     INSERT INTO "Nombre Club" VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
-                    INSERT INTO "Nombre Club" VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);'''
+                    INSERT INTO "Nombre Club" VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);"""
         solution = 'SELECT * FROM "Nombre Club";'
         oracle = OracleExecutor.get()
-        problem = SelectProblem(title_md='Test Select', text_md='bla bla bla',
-                                create_sql=create, insert_sql=insert, collection=collection,
-                                author=None, check_order=False, solution=solution)
+        problem = SelectProblem(
+            title_md="Test Select",
+            text_md="bla bla bla",
+            create_sql=create,
+            insert_sql=insert,
+            collection=collection,
+            author=None,
+            check_order=False,
+            solution=solution,
+        )
         problem.clean()  # Needed to compute extra HTML fields and solutions
         problem.save()
 
         # Time-limit
         tle = SELECT_TLE
         # No SQL injection, the value inserted must be an integer
-        nrows = int(os.environ['ORACLE_MAX_ROWS']) + 1
-        ncols = int(os.environ['ORACLE_MAX_COLS']) + 1
+        nrows = int(os.environ["ORACLE_MAX_ROWS"]) + 1
+        ncols = int(os.environ["ORACLE_MAX_COLS"]) + 1
         too_many_rows = f"select * from dual connect by level <= {nrows};"  # nosec B608
         too_many_cols = f"select {','.join(['1'] * ncols)} from dual;"  # nosec B608
         self.assert_executor_exception(lambda: problem.judge(tle, oracle), OracleStatusCode.TLE_USER_CODE)
-        self.assert_executor_exception(lambda: problem.judge(too_many_rows, oracle),
-                                       OracleStatusCode.TLE_USER_CODE)
-        self.assert_executor_exception(lambda: problem.judge(too_many_cols, oracle),
-                                       OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(too_many_rows, oracle), OracleStatusCode.TLE_USER_CODE)
+        self.assert_executor_exception(lambda: problem.judge(too_many_cols, oracle), OracleStatusCode.TLE_USER_CODE)
 
         # Validation error (only one statement supported)
-        self.assert_executor_exception(lambda: problem.judge('', oracle), OracleStatusCode.NUMBER_STATEMENTS)
-        self.assert_executor_exception(lambda: problem.judge('SELECT * FROM "Nombre Club"; SELECT * '
-                                                             'FROM "Nombre Club"',
-                                                             oracle), OracleStatusCode.NUMBER_STATEMENTS)
+        self.assert_executor_exception(lambda: problem.judge("", oracle), OracleStatusCode.NUMBER_STATEMENTS)
+        self.assert_executor_exception(
+            lambda: problem.judge('SELECT * FROM "Nombre Club"; SELECT * FROM "Nombre Club"', oracle),
+            OracleStatusCode.NUMBER_STATEMENTS,
+        )
 
         # Runtime error
-        self.assert_executor_exception(lambda: problem.judge('SELECT * from "Nombre ClubE"', oracle),
-                                       OracleStatusCode.EXECUTE_USER_CODE)
-        self.assert_executor_exception(lambda: problem.judge('SELECT * from Club', oracle),
-                                       OracleStatusCode.EXECUTE_USER_CODE)
-        self.assert_executor_exception(lambda: problem.judge('SELECT * FROM', oracle),
-                                       OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(
+            lambda: problem.judge('SELECT * from "Nombre ClubE"', oracle),
+            OracleStatusCode.EXECUTE_USER_CODE,
+        )
+        self.assert_executor_exception(
+            lambda: problem.judge("SELECT * from Club", oracle), OracleStatusCode.EXECUTE_USER_CODE
+        )
+        self.assert_executor_exception(
+            lambda: problem.judge("SELECT * FROM", oracle), OracleStatusCode.EXECUTE_USER_CODE
+        )
 
         # Correct solution
         self.assertEqual(problem.judge(solution, oracle)[0], VerdictCode.AC)
-        self.assertEqual(problem.judge('SELECT CIF, NOmbre, Sede, Num_Socios FROM "Nombre Club"', oracle)[0],
-                         VerdictCode.AC)
-        self.assertEqual(problem.judge('SELECT * FROM "Nombre Club" ORDER BY Num_Socios ASC', oracle)[0],
-                         VerdictCode.AC)
+        self.assertEqual(
+            problem.judge('SELECT CIF, NOmbre, Sede, Num_Socios FROM "Nombre Club"', oracle)[0],
+            VerdictCode.AC,
+        )
+        self.assertEqual(
+            problem.judge('SELECT * FROM "Nombre Club" ORDER BY Num_Socios ASC', oracle)[0],
+            VerdictCode.AC,
+        )
 
         # Incorrect solution
         self.assertEqual(problem.judge('SELECT CIF FROM "Nombre Club"', oracle)[0], VerdictCode.WA)
-        self.assertEqual(problem.judge('SELECT * FROM "Nombre Club" WHERE Num_Socios < 50000', oracle)[0],
-                         VerdictCode.WA)
+        self.assertEqual(
+            problem.judge('SELECT * FROM "Nombre Club" WHERE Num_Socios < 50000', oracle)[0],
+            VerdictCode.WA,
+        )
 
     def test_dml(self):
         """Tests for DMLProblem.judge()"""
         collection = Collection()
         collection.save()
-        create = '''CREATE TABLE Club(
+        create = """CREATE TABLE Club(
                         CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
                         Nombre VARCHAR2(40) NOT NULL UNIQUE,
                         Sede VARCHAR2(30) NOT NULL,
                         Num_Socios NUMBER(10,0) NOT NULL,
                         CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
-                    );'''
-        insert = '''INSERT INTO Club VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
+                    );"""
+        insert = """INSERT INTO Club VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
                     INSERT INTO Club VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
-                    INSERT INTO Club VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);'''
+                    INSERT INTO Club VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);"""
         solution = """INSERT INTO Club VALUES ('11111114X', 'Real Betis Balompié', 'Av. de Heliópolis, s/n', 45000);
                       INSERT INTO Club VALUES ('11111115X', 'Un otro equipo', 'Calle falsa, 123', 25478);"""
         incorrect1 = """INSERT INTO Club VALUES ('11111114X', 'Real Betis Balompié', 'Av. de Heliópolis, s/n', 45001);
@@ -152,38 +188,55 @@ class OracleTest(TestCase):
           INSERT INTO Club VALUES ('11111114X', 'Real Betis Balompié', 'Av. de Heliópolis, s/n', 45000);
         """
         # Time-limit
-        tle = '''
+        tle = """
             INSERT INTO Club
                 SELECT CIF, MIN(Nombre) AS nombre, MAX(Sede) as sede, AVG(Num_socios) as Num_socios
                 FROM (select '00000000X' AS CIF, 'a' as Nombre from dual connect by level <= 15000)
                      CROSS JOIN
                      (select 'b' as Sede, 56789 AS Num_Socios from dual connect by level <= 15000)
-                GROUP BY CIF;'''
+                GROUP BY CIF;"""
         # Creates a table with ORACLE_MAX_ROWS + 1 rows
         # No SQL injection, the value inserted must be an integer
         too_many_rows = f"""
             INSERT INTO Club
             SELECT level || '3333X', level || 'a', 'b', 45 from dual 
-            connect by level <= {int(os.environ['ORACLE_MAX_ROWS']) + 1};
+            connect by level <= {int(os.environ["ORACLE_MAX_ROWS"]) + 1};
             """  # nosec B608
         # Create a table with ORACLE_MAX_COLS + 1 columns
-        cols = (f"col{i} NUMBER" for i in range(int(os.environ['ORACLE_MAX_COLS']) + 1))
+        cols = (f"col{i} NUMBER" for i in range(int(os.environ["ORACLE_MAX_COLS"]) + 1))
         too_many_cols = "CREATE TABLE Test( " + ", ".join(cols) + ");"
 
         # Creates ORACLE_MAX_TABLES + 1 tables
         too_many_tables = ""
-        too_many_tables = "; ".join(f"CREATE TABLE table{i}(n NUMBER)"
-                                    for i in range(int(os.environ['ORACLE_MAX_TABLES']) + 1))
+        too_many_tables = "; ".join(
+            f"CREATE TABLE table{i}(n NUMBER)" for i in range(int(os.environ["ORACLE_MAX_TABLES"]) + 1)
+        )
 
         oracle = OracleExecutor.get()
-        problem = DMLProblem(title_md='Test DML', text_md='bla bla bla',
-                             create_sql=create, insert_sql=insert, collection=collection,
-                             min_stmt=2, max_stmt=2,
-                             author=None, check_order=False, solution=solution)
-        problem2 = DMLProblem(title_md='DML problem', text_md='bla bla bla',
-                              create_sql=create, insert_sql=insert, collection=collection,
-                              min_stmt=0, max_stmt=100,
-                              author=None, check_order=False, solution=solution)
+        problem = DMLProblem(
+            title_md="Test DML",
+            text_md="bla bla bla",
+            create_sql=create,
+            insert_sql=insert,
+            collection=collection,
+            min_stmt=2,
+            max_stmt=2,
+            author=None,
+            check_order=False,
+            solution=solution,
+        )
+        problem2 = DMLProblem(
+            title_md="DML problem",
+            text_md="bla bla bla",
+            create_sql=create,
+            insert_sql=insert,
+            collection=collection,
+            min_stmt=0,
+            max_stmt=100,
+            author=None,
+            check_order=False,
+            solution=solution,
+        )
         problem.clean()  # Needed to compute extra fields and solutions
         problem.save()
         problem2.clean()
@@ -192,24 +245,36 @@ class OracleTest(TestCase):
         # Validation error (there should be exactly 2 statements)
         self.assert_executor_exception(
             lambda: problem.judge("INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000)", oracle),
-            OracleStatusCode.NUMBER_STATEMENTS)
+            OracleStatusCode.NUMBER_STATEMENTS,
+        )
         self.assert_executor_exception(
-            lambda: problem.judge("""INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
+            lambda: problem.judge(
+                """INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
                                      INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
-                                     INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000)""", oracle),
-            OracleStatusCode.NUMBER_STATEMENTS)
+                                     INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000)""",
+                oracle,
+            ),
+            OracleStatusCode.NUMBER_STATEMENTS,
+        )
 
         # Runtime error
         self.assert_executor_exception(
-            lambda: problem.judge("""INSERT Club VALUES ('11111114X', 'R', 'A', 45000);
-                                     INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);""", oracle),
-            OracleStatusCode.EXECUTE_USER_CODE)
+            lambda: problem.judge(
+                """INSERT Club VALUES ('11111114X', 'R', 'A', 45000);
+                                     INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);""",
+                oracle,
+            ),
+            OracleStatusCode.EXECUTE_USER_CODE,
+        )
         self.assert_executor_exception(
-            lambda: problem.judge("""INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
-                                     INSERT Club VALUES ('11111114X', 'R', 'A', 45000);""", oracle),
-            OracleStatusCode.EXECUTE_USER_CODE)
-        self.assert_executor_exception(
-            lambda: problem.judge(syntax_err, oracle), OracleStatusCode.EXECUTE_USER_CODE)
+            lambda: problem.judge(
+                """INSERT INTO Club VALUES ('11111114X', 'R', 'A', 45000);
+                                     INSERT Club VALUES ('11111114X', 'R', 'A', 45000);""",
+                oracle,
+            ),
+            OracleStatusCode.EXECUTE_USER_CODE,
+        )
+        self.assert_executor_exception(lambda: problem.judge(syntax_err, oracle), OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
         self.assertEqual(problem.judge(solution, oracle)[0], VerdictCode.AC)
@@ -231,8 +296,8 @@ class OracleTest(TestCase):
         """Tests for FunctionProblem.judge()"""
         collection = Collection()
         collection.save()
-        create = ''
-        insert = ''
+        create = ""
+        insert = ""
         solution = """
             CREATE OR REPLACE FUNCTION golesLocal(resultado VARCHAR2) RETURN NUMBER IS
                 posGuion NUMBER;
@@ -315,9 +380,16 @@ class OracleTest(TestCase):
                         RETURN TO_NUMBER(golesStr); 
                     END;"""
         oracle = OracleExecutor.get()
-        problem = FunctionProblem(title_md='Test Function', text_md='bla bla bla',
-                                  create_sql=create, insert_sql=insert, collection=collection,
-                                  author=None, solution=solution, calls=calls)
+        problem = FunctionProblem(
+            title_md="Test Function",
+            text_md="bla bla bla",
+            create_sql=create,
+            insert_sql=insert,
+            collection=collection,
+            author=None,
+            solution=solution,
+            calls=calls,
+        )
         problem.clean()  # Needed to compute extra HTML fields and solutions
         problem.save()
 
@@ -328,12 +400,13 @@ class OracleTest(TestCase):
         self.assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.COMPILATION_ERROR)
 
         # Error when invoking user function
-        self.assert_executor_exception(lambda: problem.judge(runtime_error1, oracle),
-                                       OracleStatusCode.EXECUTE_USER_CODE)
-        self.assert_executor_exception(lambda: problem.judge(runtime_error2, oracle),
-                                       OracleStatusCode.EXECUTE_USER_CODE)
-        self.assert_executor_exception(lambda: problem.judge(bad_name, oracle),
-                                       OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(
+            lambda: problem.judge(runtime_error1, oracle), OracleStatusCode.EXECUTE_USER_CODE
+        )
+        self.assert_executor_exception(
+            lambda: problem.judge(runtime_error2, oracle), OracleStatusCode.EXECUTE_USER_CODE
+        )
+        self.assert_executor_exception(lambda: problem.judge(bad_name, oracle), OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
         self.assertEqual(problem.judge(solution, oracle)[0], VerdictCode.AC)
@@ -346,13 +419,13 @@ class OracleTest(TestCase):
         """Tests for ProcProblem.judge()"""
         collection = Collection()
         collection.save()
-        create = '''CREATE TABLE Club(
+        create = """CREATE TABLE Club(
                         CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
                         Nombre VARCHAR2(40) NOT NULL UNIQUE,
                         Sede VARCHAR2(30) NOT NULL,
                         Num_Socios NUMBER(10,0) NOT NULL,
                         CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
-                    );'''
+                    );"""
         insert = """INSERT INTO Club VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
                     INSERT INTO Club VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
                     INSERT INTO Club VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);"""
@@ -421,9 +494,16 @@ END;"""
                     END;"""
 
         oracle = OracleExecutor.get()
-        problem = ProcProblem(title_md='Test Function', text_md='bla bla bla',
-                              create_sql=create, insert_sql=insert, collection=collection,
-                              author=None, solution=solution, proc_call=call)
+        problem = ProcProblem(
+            title_md="Test Function",
+            text_md="bla bla bla",
+            create_sql=create,
+            insert_sql=insert,
+            collection=collection,
+            author=None,
+            solution=solution,
+            proc_call=call,
+        )
         problem.clean()  # Needed to compute extra HTML fields and solutions
         problem.save()
 
@@ -434,12 +514,13 @@ END;"""
         self.assert_executor_exception(lambda: problem.judge(compile_error, oracle), OracleStatusCode.COMPILATION_ERROR)
 
         # Error when invoking user function
-        self.assert_executor_exception(lambda: problem.judge(runtime_error1, oracle),
-                                       OracleStatusCode.EXECUTE_USER_CODE)
-        self.assert_executor_exception(lambda: problem.judge(runtime_error2, oracle),
-                                       OracleStatusCode.EXECUTE_USER_CODE)
-        self.assert_executor_exception(lambda: problem.judge(bad_name, oracle),
-                                       OracleStatusCode.EXECUTE_USER_CODE)
+        self.assert_executor_exception(
+            lambda: problem.judge(runtime_error1, oracle), OracleStatusCode.EXECUTE_USER_CODE
+        )
+        self.assert_executor_exception(
+            lambda: problem.judge(runtime_error2, oracle), OracleStatusCode.EXECUTE_USER_CODE
+        )
+        self.assert_executor_exception(lambda: problem.judge(bad_name, oracle), OracleStatusCode.EXECUTE_USER_CODE)
 
         # Correct solution
         self.assertEqual(problem.judge(solution, oracle)[0], VerdictCode.AC)
@@ -451,13 +532,13 @@ END;"""
         """Tests for TriggerProblem.judge()"""
         collection = Collection()
         collection.save()
-        create = '''CREATE TABLE Club(
+        create = """CREATE TABLE Club(
                         CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
                         Nombre VARCHAR2(40) NOT NULL UNIQUE,
                         Sede VARCHAR2(30) NOT NULL,
                         Num_Socios NUMBER(10,0) NOT NULL,
                         CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
-                    );'''
+                    );"""
         insert = """INSERT INTO Club VALUES ('11111111X', 'Real Madrid CF', 'Concha Espina', 70000);
                     INSERT INTO Club VALUES ('11111112X', 'Futbol Club Barcelona', 'Aristides Maillol', 80000);
                     INSERT INTO Club VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);"""
@@ -525,9 +606,16 @@ END;"""
             END;"""
 
         oracle = OracleExecutor.get()
-        problem = TriggerProblem(title_md='Test Function', text_md='bla bla bla',
-                                 create_sql=create, insert_sql=insert, collection=collection,
-                                 author=None, solution=solution, tests=tests)
+        problem = TriggerProblem(
+            title_md="Test Function",
+            text_md="bla bla bla",
+            create_sql=create,
+            insert_sql=insert,
+            collection=collection,
+            author=None,
+            solution=solution,
+            tests=tests,
+        )
         problem.clean()  # Needed to compute extra HTML fields and solutions
         problem.save()
 
@@ -550,13 +638,13 @@ END;"""
         """Tests for DiscriminantProblem.judge(): clubs with more than 1000 followers"""
         collection = Collection()
         collection.save()
-        create = '''CREATE TABLE Club(
+        create = """CREATE TABLE Club(
                       CIF CHAR(9) PRIMARY KEY, -- No puede ser NULL
                       Nombre VARCHAR2(40) NOT NULL UNIQUE,
                       Sede VARCHAR2(30) NOT NULL,
                       Num_Socios NUMBER(10,0) NOT NULL,
                       CONSTRAINT NumSociosPositivos CHECK (Num_Socios >= 0)
-                    );'''
+                    );"""
         insert = """INSERT INTO Club VALUES ('11111111X', 'RMCF', 'Concha Espina', 70000);
                     INSERT INTO Club VALUES ('11111112X', 'FCB', 'Aristides Maillol', 80000);
                     INSERT INTO Club VALUES ('11111113X', 'PSG', 'Rue du Commandant Guilbaud', 1000);"""
@@ -566,25 +654,33 @@ END;"""
         # User solutions
         accepted = "INSERT INTO Club VALUES ('11111114X', 'XXX', 'YYY', 300)"
         wrong_answer = "INSERT INTO Club VALUES ('11111114X', 'XXX', 'YYY', 3000)"
-        runtime_error = ["INSERT INTO Club VALUES ('11111114X', 'XXX', 'YYY', 'AAA')",
-                         "INSERT INTO Club VALUES ('11111114X', 'XXX', 'YYY')",
-                         "INSERT INTO Club VALUES ()",
-                         "INSERT INT Club VALUES ('11111114X', 'XXX', 'YYY', 3000)",
-                         "INSER INTO Club VALUES ('11111114X', 'XXX', 'YYY', 3000)"
-                         ]
+        runtime_error = [
+            "INSERT INTO Club VALUES ('11111114X', 'XXX', 'YYY', 'AAA')",
+            "INSERT INTO Club VALUES ('11111114X', 'XXX', 'YYY')",
+            "INSERT INTO Club VALUES ()",
+            "INSERT INT Club VALUES ('11111114X', 'XXX', 'YYY', 3000)",
+            "INSER INTO Club VALUES ('11111114X', 'XXX', 'YYY', 3000)",
+        ]
 
-        tle = '''
+        tle = """
             INSERT INTO Club
                 SELECT CIF, MIN(Nombre) AS nombre, MAX(Sede) as sede, AVG(Num_socios) as Num_socios
                 FROM (select '00000000X' AS CIF, 'a' as Nombre from dual connect by level <= 15000)
                      CROSS JOIN
                      (select 'b' as Sede, 56789 AS Num_Socios from dual connect by level <= 15000)
-                GROUP BY CIF;'''
+                GROUP BY CIF;"""
 
         oracle = OracleExecutor.get()
-        problem = DiscriminantProblem(title_md='Test Discriminant', text_md='bla bla bla', create_sql=create,
-                                      insert_sql=insert, collection=collection, author=None,
-                                      incorrect_query=incorrect_query, correct_query=correct_query)
+        problem = DiscriminantProblem(
+            title_md="Test Discriminant",
+            text_md="bla bla bla",
+            create_sql=create,
+            insert_sql=insert,
+            collection=collection,
+            author=None,
+            incorrect_query=incorrect_query,
+            correct_query=correct_query,
+        )
         problem.clean()  # Needed to compute extra HTML fields and solutions
         problem.save()
 
@@ -608,12 +704,17 @@ END;"""
         value works as expected"""
         collection = Collection()
         collection.save()
-        create = 'CREATE TABLE test (day DATE);'
+        create = "CREATE TABLE test (day DATE);"
         insert = "INSERT INTO test VALUES (TO_DATE('2003/07/09', 'YYYY/MM/DD'))"
-        solution = 'SELECT * FROM test'
-        select_problem = SelectProblem(title_md='Dates', text_md='Example with dates',
-                                       create_sql=create, insert_sql=insert, collection=collection,
-                                       solution=solution)
+        solution = "SELECT * FROM test"
+        select_problem = SelectProblem(
+            title_md="Dates",
+            text_md="Example with dates",
+            create_sql=create,
+            insert_sql=insert,
+            collection=collection,
+            solution=solution,
+        )
         select_problem.clean()
         select_problem.save()
         oracle = OracleExecutor.get()
@@ -652,16 +753,16 @@ WHERE num_socios > 0
         self.assertEqual(line_col_from_offset(code, 71), (3, 23))
 
     def test_invalid_insert_all(self):
-        """ Throws ValueError when generating a SELECT ALL statement if the insert SQL
-            code contains something different from INSERT """
+        """Throws ValueError when generating a SELECT ALL statement if the insert SQL
+        code contains something different from INSERT"""
         inserts = [
-            'INSERT INTO tabla VALUES (1, 2, 3);\nCOMMIT;\nINSERT INTO tabla VALUES (1, 2, 3);',
-            'COMMIT;\nINSERT INTO tabla VALUES (1, 2, 3);\nINSERT INTO tabla VALUES (1, 2, 3);',
-            'INSERT INTO tabla VALUES (1, 2, 3);\nINSERT INTO tabla VALUES (1, 2, 3);\nCOMMIT;',
-            'INSERT INTO tabla VALUES (1, 2, 3);\nSELECT * FROM tabla;',
-            'INSERT INTO tabla VALUES (1, 2, 3);\nCREATE TABLE tabla(id INTEGER);',
-            'INSERT INTO tabla VALUES (1, 2, 3);\nsomething is very bad',
-            'something is very bad INSERT; INTO tabla VALUES (1,2);',
+            "INSERT INTO tabla VALUES (1, 2, 3);\nCOMMIT;\nINSERT INTO tabla VALUES (1, 2, 3);",
+            "COMMIT;\nINSERT INTO tabla VALUES (1, 2, 3);\nINSERT INTO tabla VALUES (1, 2, 3);",
+            "INSERT INTO tabla VALUES (1, 2, 3);\nINSERT INTO tabla VALUES (1, 2, 3);\nCOMMIT;",
+            "INSERT INTO tabla VALUES (1, 2, 3);\nSELECT * FROM tabla;",
+            "INSERT INTO tabla VALUES (1, 2, 3);\nCREATE TABLE tabla(id INTEGER);",
+            "INSERT INTO tabla VALUES (1, 2, 3);\nsomething is very bad",
+            "something is very bad INSERT; INTO tabla VALUES (1,2);",
         ]
         for insert in inserts:
             with self.assertRaises(ValueError):

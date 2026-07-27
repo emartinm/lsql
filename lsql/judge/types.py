@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
@@ -6,18 +5,20 @@ Types used in LearnSQL
 """
 
 from enum import IntEnum, unique
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
 class VerdictCode(models.TextChoices):  # pylint: disable=too-many-ancestors
     """Codes representing different judge verdicts"""
-    AC = 'AC', _('Aceptado')
-    TLE = 'TLE', _('Tiempo limite excedido')
-    RE = 'RE', _('Error en ejecución')
-    WA = 'WA', _('Resultados incorrectos')
-    IE = 'IE', _('Error interno')
-    VE = 'VE', _('Error de validación')
+
+    AC = "AC", _("Aceptado")
+    TLE = "TLE", _("Tiempo limite excedido")
+    RE = "RE", _("Error en ejecución")
+    WA = "WA", _("Resultados incorrectos")
+    IE = "IE", _("Error interno")
+    VE = "VE", _("Error de validación")
 
     def html_short_name(self):
         """Short name of the verdict code in HMTL with color"""
@@ -27,31 +28,40 @@ class VerdictCode(models.TextChoices):  # pylint: disable=too-many-ancestors
 
     def message(self, problem=None):
         """Message to show in the modal window in the webpage"""
-        msg = _('Error inesperado al ejecutar tu código. Por favor, inténtalo de nuevo.')
+        msg = _("Error inesperado al ejecutar tu código. Por favor, inténtalo de nuevo.")
         if self == self.AC:
-            msg = _('¡Enhorabuena! Tu código SQL ha generado los resultados esperados.')
+            msg = _("¡Enhorabuena! Tu código SQL ha generado los resultados esperados.")
         elif self == self.TLE:
-            msg = _('Puede deberse a una sobrecarga puntual del servidor, pero seguramente sea debido a que tu '
-                    'código SQL no es suficientemente eficiente. Vuelve a enviarlo en unos minutos y si sigues '
-                    'obteniendo el mismo verdicto trata de reescribir tu código para ser más eficiente.')
+            msg = _(
+                "Puede deberse a una sobrecarga puntual del servidor, pero seguramente sea debido a que tu "
+                "código SQL no es suficientemente eficiente. Vuelve a enviarlo en unos minutos y si sigues "
+                "obteniendo el mismo verdicto trata de reescribir tu código para ser más eficiente."
+            )
         elif self == self.RE:
-            msg = _('Tu código SQL ha producido un error durante la ejecución. Consulta el cuadro rojo '
-                    'de retroalimentación en la parte inferior de la página para ver los detalles e inspecciona '
-                    'el código resaltado en el editor.')
+            msg = _(
+                "Tu código SQL ha producido un error durante la ejecución. Consulta el cuadro rojo "
+                "de retroalimentación en la parte inferior de la página para ver los detalles e inspecciona "
+                "el código resaltado en el editor."
+            )
         elif self == self.WA:
-            msg = _('Tu código SQL ha generado resultados erróneos. Consulta el cuadro rojo en la parte inferior '
-                    'de la página para ver los detalles.')
+            msg = _(
+                "Tu código SQL ha generado resultados erróneos. Consulta el cuadro rojo en la parte inferior "
+                "de la página para ver los detalles."
+            )
         elif self == self.VE:
-            msg = _('Comprueba que tu solución no está vacía, que la cantidad de sentencias SQL enviadas '
-                    'es la adecuada y que estás enviando texto plano con letras del alfabeto inglés '
-                    '(sin tildes).')
+            msg = _(
+                "Comprueba que tu solución no está vacía, que la cantidad de sentencias SQL enviadas "
+                "es la adecuada y que estás enviando texto plano con letras del alfabeto inglés "
+                "(sin tildes)."
+            )
             if problem is not None and problem.min_stmt == problem.max_stmt:
                 ending = _("sentencias SQL") if problem.max_stmt > 1 else _("sentencia SQL")
-                msg = _('Se esperaba exactamente {min_stmt} {ending}.').format(min_stmt=problem.min_stmt, ending=ending)
+                msg = _("Se esperaba exactamente {min_stmt} {ending}.").format(min_stmt=problem.min_stmt, ending=ending)
             elif problem is not None:
                 ending = _("sentencias SQL") if problem.max_stmt > 1 else _("sentencia SQL")
-                msg = _('Tu envío debe estar formado por entre {min_stmt} y {max_stmt} '
-                        '{ending}.').format(min_stmt=problem.min_stmt, max_stmt=problem.max_stmt, ending=ending)
+                msg = _("Tu envío debe estar formado por entre {min_stmt} y {max_stmt} {ending}.").format(
+                    min_stmt=problem.min_stmt, max_stmt=problem.max_stmt, ending=ending
+                )
 
         return msg
 
@@ -59,6 +69,7 @@ class VerdictCode(models.TextChoices):  # pylint: disable=too-many-ancestors
 @unique
 class ProblemType(IntEnum):
     """Types of problems"""
+
     SELECT = 0
     DML = 1
     FUNCTION = 2
@@ -67,12 +78,13 @@ class ProblemType(IntEnum):
     DISC = 5
 
     def __str__(self):
-        return f'ProblemType.{self.name}'
+        return f"ProblemType.{self.name}"
 
 
 @unique
 class OracleStatusCode(IntEnum):
     """Status code returned by the DB executor"""
+
     OK = 0
     GET_ADMIN_CONNECTION = 1
     CREATE_USER = 2
@@ -92,7 +104,8 @@ class OracleStatusCode(IntEnum):
 
 
 class DesMessageType(IntEnum):
-    """ Types of DES message types """
+    """Types of DES message types"""
+
     ERROR = 0
     WARNING = 1
     INFO = 2

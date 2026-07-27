@@ -1,25 +1,21 @@
-# -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Class to connect to Oracle and execute the different types of problems
 """
 
-
 # Requires Oracle Client 19 (LTS) to connect to Oracle Database 11.2 or later in oracledb "thick mode"
 
-import string
+import json
 import os
 import re
-import json
-from typing import Optional
 import secrets
+import string
+
 import oracledb
-from logzero import logger
 import sqlparse
-
-
 from django.core.serializers.json import DjangoJSONEncoder
+from logzero import logger
 
 from .exceptions import ExecutorException
 from .types import OracleStatusCode
@@ -27,73 +23,73 @@ from .types import OracleStatusCode
 typenames_map = {
     # Based on https://python-oracledb.readthedocs.io/en/latest/user_guide/appendix_a.html
     #          https://python-oracledb.readthedocs.io/en/latest/api_manual/module.html#dbtypes
-    oracledb.DB_TYPE_BFILE: 'BFILE',
-    oracledb.DB_TYPE_BINARY_DOUBLE: 'DOUBLE',
-    oracledb.DB_TYPE_BINARY_FLOAT: 'FLOAT',
-    oracledb.DB_TYPE_BINARY_INTEGER: 'INTEGER',
-    oracledb.DB_TYPE_BLOB: 'BLOB',
-    oracledb.DB_TYPE_BOOLEAN: 'BOOLEAN',
-    oracledb.DB_TYPE_CHAR: 'CHAR',
-    oracledb.DB_TYPE_CLOB: 'CLOB',
-    oracledb.DB_TYPE_CURSOR: 'CURSOR',
-    oracledb.DB_TYPE_DATE: 'DATE',
-    oracledb.DB_TYPE_INTERVAL_DS: 'INTERVAL DAY TO SECOND',
-    oracledb.DB_TYPE_INTERVAL_YM: 'INTERVAL YEAR TO MONTH',
-    oracledb.DB_TYPE_JSON: 'JSON',
-    oracledb.DB_TYPE_LONG: 'LONG',
-    oracledb.DB_TYPE_LONG_RAW: 'LONG RAW',
-    oracledb.DB_TYPE_LONG_NVARCHAR: 'STRING',  # not a database type
-    oracledb.DB_TYPE_NCHAR: 'NCHAR',
-    oracledb.DB_TYPE_NCLOB: 'NCLOB',
-    oracledb.DB_TYPE_NUMBER: 'NUMBER',
-    oracledb.DB_TYPE_NVARCHAR: 'NVARCHAR',
-    oracledb.DB_TYPE_OBJECT: 'OBJECT',
-    oracledb.DB_TYPE_RAW: 'RAW',
-    oracledb.DB_TYPE_ROWID: 'ROWID',
-    oracledb.DB_TYPE_TIMESTAMP: 'TIMESTAMP',
-    oracledb.DB_TYPE_TIMESTAMP_LTZ: 'TIMESTAMP WITH LOCAL TIME ZONE',
-    oracledb.DB_TYPE_TIMESTAMP_TZ: 'TIMESTAMP WITH TIME ZONE',
-    oracledb.DB_TYPE_UNKNOWN: 'UNKNOWN',
-    oracledb.DB_TYPE_UROWID: 'UROWID',
-    oracledb.DB_TYPE_VARCHAR: 'VARCHAR',
-    oracledb.DB_TYPE_XMLTYPE: 'XMLTYPE',
+    oracledb.DB_TYPE_BFILE: "BFILE",
+    oracledb.DB_TYPE_BINARY_DOUBLE: "DOUBLE",
+    oracledb.DB_TYPE_BINARY_FLOAT: "FLOAT",
+    oracledb.DB_TYPE_BINARY_INTEGER: "INTEGER",
+    oracledb.DB_TYPE_BLOB: "BLOB",
+    oracledb.DB_TYPE_BOOLEAN: "BOOLEAN",
+    oracledb.DB_TYPE_CHAR: "CHAR",
+    oracledb.DB_TYPE_CLOB: "CLOB",
+    oracledb.DB_TYPE_CURSOR: "CURSOR",
+    oracledb.DB_TYPE_DATE: "DATE",
+    oracledb.DB_TYPE_INTERVAL_DS: "INTERVAL DAY TO SECOND",
+    oracledb.DB_TYPE_INTERVAL_YM: "INTERVAL YEAR TO MONTH",
+    oracledb.DB_TYPE_JSON: "JSON",
+    oracledb.DB_TYPE_LONG: "LONG",
+    oracledb.DB_TYPE_LONG_RAW: "LONG RAW",
+    oracledb.DB_TYPE_LONG_NVARCHAR: "STRING",  # not a database type
+    oracledb.DB_TYPE_NCHAR: "NCHAR",
+    oracledb.DB_TYPE_NCLOB: "NCLOB",
+    oracledb.DB_TYPE_NUMBER: "NUMBER",
+    oracledb.DB_TYPE_NVARCHAR: "NVARCHAR",
+    oracledb.DB_TYPE_OBJECT: "OBJECT",
+    oracledb.DB_TYPE_RAW: "RAW",
+    oracledb.DB_TYPE_ROWID: "ROWID",
+    oracledb.DB_TYPE_TIMESTAMP: "TIMESTAMP",
+    oracledb.DB_TYPE_TIMESTAMP_LTZ: "TIMESTAMP WITH LOCAL TIME ZONE",
+    oracledb.DB_TYPE_TIMESTAMP_TZ: "TIMESTAMP WITH TIME ZONE",
+    oracledb.DB_TYPE_UNKNOWN: "UNKNOWN",
+    oracledb.DB_TYPE_UROWID: "UROWID",
+    oracledb.DB_TYPE_VARCHAR: "VARCHAR",
+    oracledb.DB_TYPE_XMLTYPE: "XMLTYPE",
 }
 
 
-def create_insert_all(statements: str) -> Optional[str]:
-    """ Given 0 or more "INSERT INTO" statements, returns one "INSERT ALL" to insert all the
-        rows in a single statement. One "INSERT ALL" requires about 1/6 of the time of a sequence
-        of individual "INSERT INTO". *INSERT ALL statement is only valid in Oracle*
+def create_insert_all(statements: str) -> str | None:
+    """Given 0 or more "INSERT INTO" statements, returns one "INSERT ALL" to insert all the
+    rows in a single statement. One "INSERT ALL" requires about 1/6 of the time of a sequence
+    of individual "INSERT INTO". *INSERT ALL statement is only valid in Oracle*
 
-        If no INSERT appears in statements returns None
+    If no INSERT appears in statements returns None
 
-        Example:
+    Example:
 
-        INSERT INTO t VALUES (1,2);
-        INSERT INTO t2(id, age) VALUES (3,4);
-            ==>
-        INSERT ALL
-            INTO t VALUES(1, 2)
-            INTO t2(id, age) VALUES(3, 4)
-        SELECT 1 FROM DUAL;
+    INSERT INTO t VALUES (1,2);
+    INSERT INTO t2(id, age) VALUES (3,4);
+        ==>
+    INSERT ALL
+        INTO t VALUES(1, 2)
+        INTO t2(id, age) VALUES(3, 4)
+    SELECT 1 FROM DUAL;
     """
     stmts = sqlparse.parse(sqlparse.format(statements, strip_comments=True))  # Removes comments before parsing
     if not stmts:
         return None
     insert_all = "INSERT ALL\n"
     for stmt in stmts:
-        if stmt.get_type() != 'INSERT':
-            raise ValueError(f'Invalid INSERT statement: {stmt}')
-        parts = ['    INTO'] + [fragment.value for fragment in stmt.get_sublists()] + ['\n']
-        insert_code = ' '.join(parts)
+        if stmt.get_type() != "INSERT":
+            raise ValueError(f"Invalid INSERT statement: {stmt}")
+        parts = ["    INTO"] + [fragment.value for fragment in stmt.get_sublists()] + ["\n"]
+        insert_code = " ".join(parts)
         insert_all += insert_code
-    insert_all += 'SELECT 1 FROM DUAL\n'  # statements sent to cx_Oracle cannot have ending ';'
+    insert_all += "SELECT 1 FROM DUAL\n"  # statements sent to cx_Oracle cannot have ending ';'
     return insert_all
 
 
 def execute_insert_all(insert: str, conn):
-    """ From a sequence of 0 or more INSERT statements, translates them into INSERT ALL and
-        executes the generated statement"""
+    """From a sequence of 0 or more INSERT statements, translates them into INSERT ALL and
+    executes the generated statement"""
     insert_all = create_insert_all(insert)
     if insert_all is not None:
         with conn.cursor() as cursor:
@@ -101,20 +97,20 @@ def execute_insert_all(insert: str, conn):
 
 
 def replace_rest_stmt_blanks(statements):
-    """ Given a list[str] of SQL statements extends every statement with as many spaces and newlines as the previous
-        and next statements. This way, executing each statement separately will produce the error in the same offset
-        position as the complete SQL block, so they could be shown correctly in the editor. For example:
+    """Given a list[str] of SQL statements extends every statement with as many spaces and newlines as the previous
+    and next statements. This way, executing each statement separately will produce the error in the same offset
+    position as the complete SQL block, so they could be shown correctly in the editor. For example:
 
-            'SELECT *\nFROM CLUB;\nSELECT *\nFROM CLUB;'          --> (Origina block code)
-           ['SELECT *\nFROM CLUB;', '\nSELECT *\nFROM CLUB;']     --> (Split statements)
-           ['SELECT *\nFROM CLUB;\n        \n          ',         --> (Split statements with equal length and \n)
-            '        \n          \nSELECT *\nFROM CLUB;'
+        'SELECT *\nFROM CLUB;\nSELECT *\nFROM CLUB;'          --> (Origina block code)
+       ['SELECT *\nFROM CLUB;', '\nSELECT *\nFROM CLUB;']     --> (Split statements)
+       ['SELECT *\nFROM CLUB;\n        \n          ',         --> (Split statements with equal length and \n)
+        '        \n          \nSELECT *\nFROM CLUB;'
     """
     num_stmt = len(statements)
     result = []
     for i in range(num_stmt):
-        pre = re.sub(r'\S', ' ', "".join(statements[:i]))
-        post = re.sub(r'\S', ' ', "".join(statements[i+1:]))
+        pre = re.sub(r"\S", " ", "".join(statements[:i]))
+        post = re.sub(r"\S", " ", "".join(statements[i + 1 :]))
         result.append(pre + statements[i] + post)
     return result
 
@@ -130,12 +126,13 @@ def clean_sql(code: str, min_stmt: int = None, max_stmt: int = None):
     if code is None:
         code = ""
     # Replaces every line comment by a sequence of spaces of the same length
-    code_no_comments = re.sub(r'--.*$', lambda match_obj: ' '*len(match_obj.group(0)), code, flags=re.MULTILINE)
+    code_no_comments = re.sub(r"--.*$", lambda match_obj: " " * len(match_obj.group(0)), code, flags=re.MULTILINE)
     # Splits statements and replaces \r by spaces (only \n for newline)
-    statements = [str(s).replace('\r', ' ') for s in sqlparse.parse(code_no_comments)]  # Uses only \n for newline
+    statements = [str(s).replace("\r", " ") for s in sqlparse.parse(code_no_comments)]  # Uses only \n for newline
     # Replaces the last ';' of each statement with spaces
-    statements = [re.sub(r';\s*$', lambda match_obj: ' '*len(match_obj.group(0)), s, flags=re.MULTILINE)
-                  for s in statements]
+    statements = [
+        re.sub(r";\s*$", lambda match_obj: " " * len(match_obj.group(0)), s, flags=re.MULTILINE) for s in statements
+    ]
     statements = replace_rest_stmt_blanks(statements)
     num_sql = len(statements)
     if (min_stmt and num_sql < min_stmt) or (max_stmt and num_sql > max_stmt):
@@ -163,8 +160,8 @@ def line_col_from_offset(code: str, offset: int):
     last_line_init = 0
     for i in range(min(offset, len(code))):
         # If the syntax error is at the end, the offset from Oracle is > length of code
-        if code[i] == '\n':
-            last_line_init = i+1
+        if code[i] == "\n":
+            last_line_init = i + 1
             line += 1
     col = offset - last_line_init
     return line, col
@@ -189,7 +186,7 @@ def get_sql_type_name(typename) -> str:
     """
     regex = r"<DbType DB_TYPE_(\w*)>"
     m = re.search(regex, str(typename))
-    mini_name = 'ERROR_OBTAINING_TYPE'
+    mini_name = "ERROR_OBTAINING_TYPE"
     if len(m.groups()) >= 1:
         mini_name = m.groups()[0]
     return typenames_map.get(typename, mini_name)
@@ -204,26 +201,26 @@ def table_from_cursor(cursor):
     :param cursor: DB cursor
     :return: a dictionary {'header':[[NAME:str, TYPE:str]], 'rows': [list]}
     """
-    max_rows = int(os.environ['ORACLE_MAX_ROWS'])
-    max_cols = int(os.environ['ORACLE_MAX_COLS'])
+    max_rows = int(os.environ["ORACLE_MAX_ROWS"])
+    max_cols = int(os.environ["ORACLE_MAX_COLS"])
     table = {}
 
     if cursor.description is None:
         # It's the result of an SQL statement that do not return results (CREATE VIEW, for example)
-        table['header'] = []
-        table['rows'] = []
+        table["header"] = []
+        table["rows"] = []
         return table  # return empty table (no columns, no rows)
 
     if len(cursor.description) > max_cols:
-        logger.debug('TLE caused by too many columns in cursor')
+        logger.debug("TLE caused by too many columns in cursor")
         raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
-    table['header'] = [[e[0], get_sql_type_name(e[1])] for e in cursor.description]
+    table["header"] = [[e[0], get_sql_type_name(e[1])] for e in cursor.description]
 
     batch = cursor.fetchmany(numRows=max_rows)  # Takes MAX rows
     if cursor.fetchone():  # There are more rows
-        logger.debug('TLE caused by too many rows in cursor')
+        logger.debug("TLE caused by too many rows in cursor")
         raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
-    table['rows'] = [list(e) for e in batch]
+    table["rows"] = [list(e) for e in batch]
 
     return uniform_dict(table)  # Represents datetime as uniform strings
 
@@ -239,9 +236,9 @@ def get_all_tables(conn):
     """
     with conn.cursor() as cursor:
         cursor.execute("SELECT table_name FROM USER_TABLES")
-        tables = cursor.fetchmany(int(os.environ['ORACLE_MAX_TABLES']))
+        tables = cursor.fetchmany(int(os.environ["ORACLE_MAX_TABLES"]))
         if cursor.fetchone():
-            logger.debug('Too many tables in user DB')
+            logger.debug("Too many tables in user DB")
             raise ExecutorException(OracleStatusCode.TLE_USER_CODE)
         tb_names = [e[0] for e in tables]
         db_dict = {}
@@ -271,10 +268,11 @@ def execute_select_statement(conn, statement):
     """
     statements = clean_sql(statement)
     if len(statements) != 1:
-        logger.debug('User %s - <<%s>> contains more than one SQL statement',
-                     conn.username, statement)
-        raise ExecutorException(OracleStatusCode.NUMBER_STATEMENTS,
-                                f'The SQL query must have exactly one statement: <<{statement}>>')
+        logger.debug("User %s - <<%s>> contains more than one SQL statement", conn.username, statement)
+        raise ExecutorException(
+            OracleStatusCode.NUMBER_STATEMENTS,
+            f"The SQL query must have exactly one statement: <<{statement}>>",
+        )
 
     with conn.cursor() as cursor:
         cursor.execute(statements[0])
@@ -321,9 +319,9 @@ def get_compilation_errors(conn):
     :return: dict representing the table
     """
     with conn.cursor() as cursor:
-        cursor.execute('''SELECT NAME "Nombre de procedimiento", LINE "Línea", POSITION "Posición",
+        cursor.execute("""SELECT NAME "Nombre de procedimiento", LINE "Línea", POSITION "Posición",
                                  TEXT "Error detectado", ATTRIBUTE "Criticidad" 
-                          FROM SYS.USER_ERRORS''')
+                          FROM SYS.USER_ERRORS""")
         return table_from_cursor(cursor)
 
 
@@ -331,13 +329,13 @@ def offset_from_oracle_exception(excp: oracledb.DatabaseError) -> int:
     """Extracts the offset from a DataBaseError"""
     # pylint: disable = no-member
     # Locally disabled member checks because pylint thinks oracle_error is str
-    oracle_error, = excp.args
+    (oracle_error,) = excp.args
     return oracle_error.offset
 
 
 def is_tle_exception(error_msg):
-    """ Decides if the error_message from the Oracle exception can represent a timeout """
-    return 'DPI-1067' in error_msg or 'DPI-1080' in error_msg or 'DPI-1010' in error_msg
+    """Decides if the error_message from the Oracle exception can represent a timeout"""
+    return "DPI-1067" in error_msg or "DPI-1080" in error_msg or "DPI-1010" in error_msg
 
 
 # Dropping users will automatically remove all their objects
@@ -374,27 +372,27 @@ def is_tle_exception(error_msg):
 def build_dsn_tns():
     """Build a Data Source Name from values in the environment"""
     dsn_tns = oracledb.makedsn(
-        os.environ['ORACLE_SERVER'],
-        int(os.environ['ORACLE_PORT']),
-        os.environ['ORACLE_SID'])  # SID=free in oracle-free Docker images
+        os.environ["ORACLE_SERVER"], int(os.environ["ORACLE_PORT"]), os.environ["ORACLE_SID"]
+    )  # SID=free in oracle-free Docker images
     return dsn_tns
 
 
 class OracleExecutor:
     """Class to connect to Oracle DB and execute problems"""
 
-    __USER_PREFIX = 'lsql_'
+    __USER_PREFIX = "lsql_"
     __ALPHABET = string.ascii_lowercase + string.digits
-    __CREATE_USER_SCRIPT = ('CREATE USER {} '
-                            'IDENTIFIED BY "{}" '
-                            'DEFAULT TABLESPACE {} '
-                            'TEMPORARY TABLESPACE TEMP QUOTA UNLIMITED ON {}')
-    __GRANT_USER_SCRIPT = ('GRANT create table, delete any table, select any dictionary, connect, create session , '
-                           'create synonym , create public synonym, create sequence, create view , '
-                           'create trigger, alter any trigger, drop any trigger, '
-                           'create procedure, alter any procedure, drop any procedure, execute any procedure '
-                           'TO {}')
-    __DROP_USER_SCRIPT = 'DROP USER {} CASCADE'
+    __CREATE_USER_SCRIPT = (
+        'CREATE USER {} IDENTIFIED BY "{}" DEFAULT TABLESPACE {} TEMPORARY TABLESPACE TEMP QUOTA UNLIMITED ON {}'
+    )
+    __GRANT_USER_SCRIPT = (
+        "GRANT create table, delete any table, select any dictionary, connect, create session , "
+        "create synonym , create public synonym, create sequence, create view , "
+        "create trigger, alter any trigger, drop any trigger, "
+        "create procedure, alter any procedure, drop any procedure, execute any procedure "
+        "TO {}"
+    )
+    __DROP_USER_SCRIPT = "DROP USER {} CASCADE"
     __USER_CONNECTIONS = """SELECT s.sid, s.serial#, s.username
                                 FROM   gv$session s
                                        JOIN gv$process p ON p.addr = s.paddr AND p.inst_id = s.inst_id
@@ -425,28 +423,29 @@ class OracleExecutor:
         self.dsn_tns = build_dsn_tns()
         oracledb.init_oracle_client()  # To enable "thick mode"
         self.connection_pool = oracledb.create_pool(
-            user=os.environ['ORACLE_USER'],
-            password=os.environ['ORACLE_PASS'],
+            user=os.environ["ORACLE_USER"],
+            password=os.environ["ORACLE_PASS"],
             dsn=self.dsn_tns,
             # encoding='UTF-8', nencoding='UTF-8',
             # min=1,
-            min=int(os.environ['ORACLE_MAX_GESTOR_CONNECTIONS']),
-            max=int(os.environ['ORACLE_MAX_GESTOR_CONNECTIONS']),
+            min=int(os.environ["ORACLE_MAX_GESTOR_CONNECTIONS"]),
+            max=int(os.environ["ORACLE_MAX_GESTOR_CONNECTIONS"]),
             getmode=oracledb.POOL_GETMODE_TIMEDWAIT,
-            wait_timeout=int(os.environ['ORACLE_GESTOR_POOL_TIMEOUT_MS'])
+            wait_timeout=int(os.environ["ORACLE_GESTOR_POOL_TIMEOUT_MS"]),
         )
         self.version = None
-        logger.debug('Created an OracleExecutor to %s with a pool of %s connections with a timeout of %s ms',
-                     self.dsn_tns,
-                     int(os.environ['ORACLE_MAX_GESTOR_CONNECTIONS']),
-                     int(os.environ['ORACLE_GESTOR_POOL_TIMEOUT_MS'])
-                     )
+        logger.debug(
+            "Created an OracleExecutor to %s with a pool of %s connections with a timeout of %s ms",
+            self.dsn_tns,
+            int(os.environ["ORACLE_MAX_GESTOR_CONNECTIONS"]),
+            int(os.environ["ORACLE_GESTOR_POOL_TIMEOUT_MS"]),
+        )
 
     def get_version(self):
         """Returns the version of the Oracle server"""
         if not self.version:
             gestor = self.connection_pool.acquire()
-            self.version = f'Oracle {gestor.version}'
+            self.version = f"Oracle {gestor.version}"
             self.connection_pool.release(gestor)
         return self.version
 
@@ -458,13 +457,10 @@ class OracleExecutor:
         :param connection: Connection with privileges for creating users
         :return: A pair (username, password) of the created user
         """
-        user_name = f'{self.__USER_PREFIX}{random_str(8)}'
+        user_name = f"{self.__USER_PREFIX}{random_str(8)}"
         user_passwd = random_str(8)
         create_script = self.__CREATE_USER_SCRIPT.format(
-            user_name,
-            user_passwd,
-            os.environ['ORACLE_TABLESPACE'],
-            os.environ['ORACLE_TABLESPACE']
+            user_name, user_passwd, os.environ["ORACLE_TABLESPACE"], os.environ["ORACLE_TABLESPACE"]
         )
         grant_script = self.__GRANT_USER_SCRIPT.format(user_name)
 
@@ -486,7 +482,7 @@ class OracleExecutor:
                 cursor.execute(self.__DANGLING_USERS, age_seconds=age_seconds)
                 users = cursor.fetchall()
                 for user in users:
-                    logger.info('Removing dangling user %s created at %s', user[0], user[1])
+                    logger.info("Removing dangling user %s created at %s", user[0], user[1])
                     cursor.execute(self.__USER_CONNECTIONS, username=user[0])
                     connections = cursor.fetchall()
                     # Kills all the possible connections of username
@@ -494,7 +490,7 @@ class OracleExecutor:
                         cursor.execute(self.__KILL_SESSION.format(connection[0], connection[1]))
                     self.drop_user(user[0], gestor)
         except oracledb.DatabaseError as excp:  # pragma: no cover
-            logger.error('Unable to remove dangling users. Reason: %s', excp)
+            logger.error("Unable to remove dangling users. Reason: %s", excp)
         finally:
             if gestor is not None:
                 self.connection_pool.release(gestor)
@@ -514,7 +510,7 @@ class OracleExecutor:
                 row = cursor.fetchone()
                 num = row[0]
         except oracledb.DatabaseError as excp:  # pragma: no cover
-            logger.error('Unable to get number of dangling users. Reason: %s', excp)
+            logger.error("Unable to get number of dangling users. Reason: %s", excp)
         finally:
             if gestor is not None:
                 self.connection_pool.release(gestor)
@@ -564,7 +560,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ["ORACLE_STMT_TIMEOUT_MS"])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -592,7 +588,7 @@ class OracleExecutor:
             return {"result": result, "db": db}
         except oracledb.DatabaseError as excp:
             error_msg = str(excp)
-            logger.info('Error when testing SELECT statements: %s - %s - %s', state, excp, select)
+            logger.info("Error when testing SELECT statements: %s - %s - %s", state, excp, select)
             if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, select) from excp
@@ -610,7 +606,7 @@ class OracleExecutor:
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
                 except oracledb.DatabaseError as drop_except:  # pragma: no cover
-                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
+                    logger.error("Unable to drop user %s, REMOVE IT MANUALLY (%s)", user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -638,7 +634,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ["ORACLE_STMT_TIMEOUT_MS"])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -653,9 +649,10 @@ class OracleExecutor:
             state = OracleStatusCode.EXECUTE_USER_CODE
             statements = clean_sql(dml, min_stmt, max_stmt)
             if not statements:
-                raise ExecutorException(OracleStatusCode.NUMBER_STATEMENTS,
-                                        f'The SQL code must have between {min_stmt} and {max_stmt} statements:'
-                                        f'<<dml>>')
+                raise ExecutorException(
+                    OracleStatusCode.NUMBER_STATEMENTS,
+                    f"The SQL code must have between {min_stmt} and {max_stmt} statements:<<dml>>",
+                )
             with conn.cursor() as cursor:
                 for stmt in statements:
                     cursor.execute(stmt)
@@ -676,10 +673,10 @@ class OracleExecutor:
             self.connection_pool.release(gestor)
             gestor = None
 
-            return {'pre': pre, 'post': post}
+            return {"pre": pre, "post": post}
         except oracledb.DatabaseError as excp:
             error_msg = str(excp)
-            logger.info('Error when testing DML statements: %s - %s - %s', state, excp, stmt)
+            logger.info("Error when testing DML statements: %s - %s - %s", state, excp, stmt)
             if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
@@ -694,7 +691,7 @@ class OracleExecutor:
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
                 except oracledb.DatabaseError as drop_except:  # pragma: no cover
-                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
+                    logger.error("Unable to drop user %s, REMOVE IT MANUALLY (%s)", user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -722,7 +719,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ["ORACLE_STMT_TIMEOUT_MS"])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -745,14 +742,14 @@ class OracleExecutor:
                 # We must handle it manually because executing a FUNCTION creation with failures does not throw
                 # any Oracle exception
                 errors = get_compilation_errors(conn)
-                if len(errors['rows']) > 0:
+                if len(errors["rows"]) > 0:
                     raise ExecutorException(OracleStatusCode.COMPILATION_ERROR, message=errors, statement=stmt)
 
                 results = {}
-                tests = [s.strip() for s in tests.split('\n') if len(s.strip()) > 0]
+                tests = [s.strip() for s in tests.split("\n") if len(s.strip()) > 0]
                 for stmt in tests:
                     # NOTE:# Function calls cannot be bound by parameters, so we use f-strings and trust its content
-                    func_call = f'SELECT {stmt} FROM DUAL'  # nosec B608
+                    func_call = f"SELECT {stmt} FROM DUAL"  # nosec B608
                     cursor.execute(func_call)
                     res_type = str(cursor.description[0][1])
                     row = cursor.fetchone()
@@ -770,10 +767,10 @@ class OracleExecutor:
             self.connection_pool.release(gestor)
             gestor = None
 
-            return {'db': db, 'results': results}
+            return {"db": db, "results": results}
         except oracledb.DatabaseError as excp:
             error_msg = str(excp)
-            logger.info('Error when testing function statements: %s - %s - %s', state, excp, stmt)
+            logger.info("Error when testing function statements: %s - %s - %s", state, excp, stmt)
             if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, excp, stmt) from excp
@@ -788,7 +785,7 @@ class OracleExecutor:
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
                 except oracledb.DatabaseError as drop_except:  # pragma: no cover
-                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
+                    logger.error("Unable to drop user %s, REMOVE IT MANUALLY (%s)", user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -817,7 +814,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ["ORACLE_STMT_TIMEOUT_MS"])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -842,7 +839,7 @@ class OracleExecutor:
                 # We must handle it manually because executing a PROCEDURE creation with failures does not throw
                 # any Oracle exception
                 errors = get_compilation_errors(conn)
-                if len(errors['rows']) > 0:
+                if len(errors["rows"]) > 0:
                     raise ExecutorException(OracleStatusCode.COMPILATION_ERROR, message=errors, statement=stmt)
 
                 stmt = proc_call.strip()  # Must include "DECLARE ... BEGIN .. END;", can contain several calls
@@ -863,10 +860,10 @@ class OracleExecutor:
             self.connection_pool.release(gestor)
             gestor = None
 
-            return {'pre': db, 'post': post}
+            return {"pre": db, "post": post}
         except oracledb.DatabaseError as excp:
             error_msg = str(excp)
-            logger.info('Error when testing procedure creation and call: %s - %s - %s', state, excp, stmt)
+            logger.info("Error when testing procedure creation and call: %s - %s - %s", state, excp, stmt)
             if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
@@ -881,7 +878,7 @@ class OracleExecutor:
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
                 except oracledb.DatabaseError as drop_except:  # pragma: no cover
-                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
+                    logger.error("Unable to drop user %s, REMOVE IT MANUALLY (%s)", user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -910,7 +907,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ["ORACLE_STMT_TIMEOUT_MS"])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -950,14 +947,14 @@ class OracleExecutor:
             self.connection_pool.release(gestor)
             gestor = None
 
-            return {'pre': db, 'post': post}
+            return {"pre": db, "post": post}
         except oracledb.DatabaseError as excp:
             error_msg = str(excp)
-            logger.info('Error when testing trigger creation and call: %s - %s - %s', state, excp, stmt)
+            logger.info("Error when testing trigger creation and call: %s - %s - %s", state, excp, stmt)
             if is_tle_exception(error_msg) and state == OracleStatusCode.EXECUTE_USER_CODE:
                 # Time limit exceeded
                 raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg, stmt) from excp
-            if 'ORA-04098' in error_msg:
+            if "ORA-04098" in error_msg:
                 # trigger is invalid and failed re-validation => compilation error
                 errors = get_compilation_errors(conn)
                 raise ExecutorException(OracleStatusCode.COMPILATION_ERROR, message=errors, statement=stmt) from excp
@@ -972,7 +969,7 @@ class OracleExecutor:
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
                 except oracledb.DatabaseError as drop_except:  # pragma: no cover
-                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
+                    logger.error("Unable to drop user %s, REMOVE IT MANUALLY (%s)", user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)
 
@@ -1003,7 +1000,7 @@ class OracleExecutor:
             state = OracleStatusCode.GET_USER_CONNECTION
             conn = self.create_connection(user, passwd)
 
-            conn.call_timeout = int(os.environ['ORACLE_STMT_TIMEOUT_MS'])
+            conn.call_timeout = int(os.environ["ORACLE_STMT_TIMEOUT_MS"])
             state = OracleStatusCode.EXECUTE_CREATE
             execute_sql_script(conn, creation)
 
@@ -1033,12 +1030,21 @@ class OracleExecutor:
             return {"result_correct": result_correct, "result_incorrect": result_incorrect}
         except oracledb.DatabaseError as excp:
             error_msg = str(excp)
-            logger.info('Error when testing DISCRIMINANT problem: %s - %s - %s - %s - %s', state, excp, insertion_user,
-                        select_correct, select_incorrect)
+            logger.info(
+                "Error when testing DISCRIMINANT problem: %s - %s - %s - %s - %s",
+                state,
+                excp,
+                insertion_user,
+                select_correct,
+                select_incorrect,
+            )
             if is_tle_exception(error_msg):
                 # Time limit exceeded
-                raise ExecutorException(OracleStatusCode.TLE_USER_CODE, error_msg,
-                                        (insertion_user, select_correct, select_incorrect)) from excp
+                raise ExecutorException(
+                    OracleStatusCode.TLE_USER_CODE,
+                    error_msg,
+                    (insertion_user, select_correct, select_incorrect),
+                ) from excp
             # Only extracts the position in the error is found in the user code
             pos = None
             if state == OracleStatusCode.EXECUTE_USER_CODE:
@@ -1054,6 +1060,6 @@ class OracleExecutor:
                     # These users must be removed manually later
                     self.drop_user(user, gestor)
                 except oracledb.DatabaseError as drop_except:  # pragma: no cover
-                    logger.error('Unable to drop user %s, REMOVE IT MANUALLY (%s)', user, drop_except)
+                    logger.error("Unable to drop user %s, REMOVE IT MANUALLY (%s)", user, drop_except)
             if gestor:
                 self.connection_pool.release(gestor)

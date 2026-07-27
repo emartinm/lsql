@@ -1,10 +1,17 @@
-exclude=['lsql/judge/migrations']
-
 # Assume Python 3.13
 target-version = "py313"
+exclude = ["lsql/judge/migrations"]
+line-length = 120
+
+[format]
+# optional: keep formatter and linter in sync (this is actually the default)
+
+[lint]
+# Enable default rules (E, F) plus Django rules (DJ)
+select = ["E", "F", "DJ"]
 
 [lint.per-file-ignores]
 # Ignore `F403` (unable to detect undefined names) in settings.py
 "lsql/lsql/settings.py" = ["F403"]
-# Ignore `F401` (importe by unused) in apps.py for signals
-"lsql/judge/apps.py"    = ["F401"]
+# Ignore `F401` (imported but unused) in apps.py for signals
+"lsql/judge/apps.py" = ["F401"]

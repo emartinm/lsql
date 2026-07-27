@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Models to store objects in the DB
 """
+
 from zipfile import ZipFile
 
 import markdown
@@ -16,24 +16,35 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import JSONField, Min
-from django.utils import timezone
-from django.utils import translation
+from django.utils import timezone, translation
 from model_utils.managers import InheritanceManager
 
 from .des_driver import DesExecutor
-from .exceptions import ZipFileParsingException, DESException
-from .feedback import compare_select_results, compare_db_results, compare_function_results, compare_discriminant_db
+from .exceptions import DESException, ZipFileParsingException
+from .feedback import (
+    compare_db_results,
+    compare_discriminant_db,
+    compare_function_results,
+    compare_select_results,
+)
 from .oracle_driver import OracleExecutor
-from .parse import load_select_problem, load_dml_problem, load_function_problem, load_proc_problem, \
-    load_trigger_problem, load_discriminant_problem, get_problem_type_from_zip
-from .types import VerdictCode, ProblemType, DesMessageType
+from .parse import (
+    get_problem_type_from_zip,
+    load_discriminant_problem,
+    load_dml_problem,
+    load_function_problem,
+    load_proc_problem,
+    load_select_problem,
+    load_trigger_problem,
+)
+from .types import DesMessageType, ProblemType, VerdictCode
 
 
 def markdown_to_html(markdown_text, remove_initial_p=False):
-    """Converts a markdown string into HTML (possibly removing initial paragraph <p>....</p>) """
-    html_code = markdown.markdown(markdown_text, output_format='html').strip()
-    tree = DET.fromstring(f'<span>{html_code}</span>')
-    if remove_initial_p and tree[0].tag == 'p':
+    """Converts a markdown string into HTML (possibly removing initial paragraph <p>....</p>)"""
+    html_code = markdown.markdown(markdown_text, output_format="html").strip()
+    tree = DET.fromstring(f"<span>{html_code}</span>")
+    if remove_initial_p and tree[0].tag == "p":
         # Removes the surrounding <p></p> in one html paragraph
         html_code = html_code[3:-4]
     return html_code
@@ -41,7 +52,7 @@ def markdown_to_html(markdown_text, remove_initial_p=False):
 
 def load_many_problems(file, collection):
     """Given a ZIP file containing several ZIP files (each one a problem),
-       insert the problems into collection"""
+    insert the problems into collection"""
     problems = []
     inner_zipfile = None
     try:
@@ -54,21 +65,24 @@ def load_many_problems(file, collection):
                     problems.append(problem)
                     inner_zipfile = None
     except ZipFileParsingException as excp:
-        raise ZipFileParsingException(f'{filename.filename}: {excp}') from excp
+        raise ZipFileParsingException(f"{filename.filename}: {excp}") from excp
     except Exception as excp:
-        raise ZipFileParsingException(f'{"" if inner_zipfile is None else inner_zipfile} -> '
-                                      f'{type(excp)}: {excp}') from excp
+        raise ZipFileParsingException(
+            f"{'' if inner_zipfile is None else inner_zipfile} -> {type(excp)}: {excp}"
+        ) from excp
     collection.problems_from_zip = problems
 
 
 def load_problem_from_file(file):
-    """ Load the problem from file using the type in the JSON file """
-    problem_types = {ProblemType.SELECT: (SelectProblem, load_select_problem),
-                     ProblemType.DML: (DMLProblem, load_dml_problem),
-                     ProblemType.FUNCTION: (FunctionProblem, load_function_problem),
-                     ProblemType.PROC: (ProcProblem, load_proc_problem),
-                     ProblemType.TRIGGER: (TriggerProblem, load_trigger_problem),
-                     ProblemType.DISC: (DiscriminantProblem, load_discriminant_problem)}
+    """Load the problem from file using the type in the JSON file"""
+    problem_types = {
+        ProblemType.SELECT: (SelectProblem, load_select_problem),
+        ProblemType.DML: (DMLProblem, load_dml_problem),
+        ProblemType.FUNCTION: (FunctionProblem, load_function_problem),
+        ProblemType.PROC: (ProcProblem, load_proc_problem),
+        ProblemType.TRIGGER: (TriggerProblem, load_trigger_problem),
+        ProblemType.DISC: (DiscriminantProblem, load_discriminant_problem),
+    }
     problem_type = get_problem_type_from_zip(file)
     prob_class, load_fun = problem_types[problem_type]
 
@@ -78,11 +92,10 @@ def load_problem_from_file(file):
 
 
 def send_des_error_email(excp: Exception, problem_id: int, problem_type: str, create: str, code: str) -> None:
-    """ Sends an e-mail to admins with the information of the detected DES error """
-    methods = {'SELECT': 'get_des_messages_select',
-               'DML': 'get_des_messages_dml'}
+    """Sends an e-mail to admins with the information of the detected DES error"""
+    methods = {"SELECT": "get_des_messages_select", "DML": "get_des_messages_dml"}
     method = methods[problem_type]
-    subject = f'Unable to obtain DES output of SELECT problem PK {problem_id}: {excp}'
+    subject = f"Unable to obtain DES output of SELECT problem PK {problem_id}: {excp}"
     msg = f"""Exception {excp}
     
 {create}
@@ -104,22 +117,30 @@ des.{method}('''{create}''', '', '''{code}''')
 
 class Collection(models.Model):
     """Collection of problems"""
+
     name_md = models.CharField(max_length=100, validators=[MinLengthValidator(1)])
-    name_html = models.CharField(max_length=200, default='', blank=True)
+    name_html = models.CharField(max_length=200, default="", blank=True)
     position = models.PositiveIntegerField(default=1, null=False)
     description_md = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
-    description_html = models.CharField(max_length=10000, default='', blank=True)
+    description_html = models.CharField(max_length=10000, default="", blank=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     creation_date = models.DateTimeField(auto_now_add=True)
     visible = models.BooleanField(default=True)
     # (Dirty) trick to load problems from a ZIP fil by editing a collection using the standard admin interface of Django
-    zipfile = models.FileField(upload_to='problem_zips/', default=None, blank=True, null=True)
+    zipfile = models.FileField(upload_to="problem_zips/", default=None, blank=True, null=True)
 
     class Meta:
         ordering = ["name_html", "-creation_date"]
 
+    def __str__(self):
+        """String to show in the Admin"""
+        name_str = self.name_md
+        if self.name_html:
+            name_str = DET.fromstring(f"<p>{self.name_html}</p>").text
+        return name_str
+
     def clean(self):
-        """ Loads and overwrite data from the ZIP file (if it is set) and creates HTML from markdown """
+        """Loads and overwrite data from the ZIP file (if it is set) and creates HTML from markdown"""
         try:
             if self.zipfile:
                 load_many_problems(self.zipfile, self)
@@ -132,16 +153,9 @@ class Collection(models.Model):
         except Exception as excp:
             raise ValidationError(excp) from excp
 
-    def __str__(self):
-        """String to show in the Admin"""
-        name_str = self.name_md
-        if self.name_html:
-            name_str = DET.fromstring(f'<p>{self.name_html}</p>').text
-        return name_str
-
     def problems(self):
         """Returns a list of Problem objects in the collection using the inverse FK from Problem to Collection"""
-        return self.problem_set.all().order_by('position', 'creation_date')
+        return self.problem_set.all().order_by("position", "creation_date")
 
     def num_problems(self):
         """Number of problems in the collection"""
@@ -149,51 +163,65 @@ class Collection(models.Model):
 
     def num_solved_by_user(self, user):
         """Number of problems solved by user in this collection"""
-        return Submission.objects.filter(verdict_code='AC', problem__collection=self, user=user) \
-            .distinct('problem').count()
+        return (
+            Submission.objects.filter(verdict_code="AC", problem__collection=self, user=user)
+            .distinct("problem")
+            .count()
+        )
 
     def languages(self):
         """Set with all the languages of the collection"""
-        return list(self.problems().order_by('language').distinct('language').values_list('language', flat=True))
+        return list(self.problems().order_by("language").distinct("language").values_list("language", flat=True))
 
     def ranking(self, from_date, to_date, group):
-        """ Returns a list of the non-staff users in the group in the order they are in the ranking.
-            Each user is extended with the following attributes:
-              - n_achievements: number of achievements
-              - score: sum of the submissions needed to solve the problems in the collection
-              - num_solved: number of problems solved in the collection
-              - results: dictionary pk->info of dictionaries with the information for each problem.
-                         These inner dictionaries contain:
-                    'total_submissions': number of submissions
-                    'correct_submissions': number of correct submissions
-                    'first_correct_submission': position of the first correct submission (-1 if none)
+        """Returns a list of the non-staff users in the group in the order they are in the ranking.
+        Each user is extended with the following attributes:
+          - n_achievements: number of achievements
+          - score: sum of the submissions needed to solve the problems in the collection
+          - num_solved: number of problems solved in the collection
+          - results: dictionary pk->info of dictionaries with the information for each problem.
+                     These inner dictionaries contain:
+                'total_submissions': number of submissions
+                'correct_submissions': number of correct submissions
+                'first_correct_submission': position of the first correct submission (-1 if none)
         """
         users = get_user_model().objects.filter(groups__id=group.id, is_staff=False)
         users_dict = {user.pk: user for user in users}
         for _, user in users_dict.items():
-            user.results = {problem.pk: {'total_submissions': 0,
-                                         'correct_submissions': 0,
-                                         'first_correct_submission': 0}
-                            for problem in self.problems()}
+            user.results = {
+                problem.pk: {
+                    "total_submissions": 0,
+                    "correct_submissions": 0,
+                    "first_correct_submission": 0,
+                }
+                for problem in self.problems()
+            }
             user.n_achievements = len(ObtainedAchievement.objects.filter(user__pk=user.pk))
-        submissions = Submission.objects.filter(user__in=users, creation_date__gte=from_date,
-                                                creation_date__lte=to_date, problem__collection=self).order_by('pk')
+        submissions = Submission.objects.filter(
+            user__in=users,
+            creation_date__gte=from_date,
+            creation_date__lte=to_date,
+            problem__collection=self,
+        ).order_by("pk")
         for submission in submissions:
             # Updates the information of the problem within each submission
             user_pk = submission.user.pk
             problem_pk = submission.problem.pk
-            users_dict[user_pk].results[problem_pk]['total_submissions'] += 1
-            if (submission.verdict_code == VerdictCode.AC and
-                    users_dict[user_pk].results[problem_pk]['correct_submissions'] == 0):
-                users_dict[user_pk].results[problem_pk]['first_correct_submission'] = \
-                    users_dict[user_pk].results[problem_pk]['total_submissions']
+            users_dict[user_pk].results[problem_pk]["total_submissions"] += 1
+            if (
+                submission.verdict_code == VerdictCode.AC
+                and users_dict[user_pk].results[problem_pk]["correct_submissions"] == 0
+            ):
+                users_dict[user_pk].results[problem_pk]["first_correct_submission"] = users_dict[user_pk].results[
+                    problem_pk
+                ]["total_submissions"]
             if submission.verdict_code == VerdictCode.AC:
-                users_dict[user_pk].results[problem_pk]['correct_submissions'] += 1
+                users_dict[user_pk].results[problem_pk]["correct_submissions"] += 1
 
         # Computes num. solved and score from problem statistics
         for _, user in users_dict.items():
-            user.num_solved = len([True for info in user.results.values() if info['first_correct_submission'] > 0])
-            user.score = sum(info['first_correct_submission'] for info in user.results.values())
+            user.num_solved = len([True for info in user.results.values() if info["first_correct_submission"] > 0])
+            user.score = sum(info["first_correct_submission"] for info in user.results.values())
 
         # Sorts users by descending number of solved problems and then ascending by score.
         ranking = sorted(users_dict.values(), key=lambda user: (-1 * user.num_solved, user.score))
@@ -211,6 +239,7 @@ class Collection(models.Model):
 
 class Problem(models.Model):
     """Base class for problems, with common attributes and methods"""
+
     __INSERT_SEPARATION = "-- @new data base@"
     title_md = models.CharField(max_length=100, blank=True)
     title_html = models.CharField(max_length=200)
@@ -227,24 +256,24 @@ class Problem(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
     position = models.PositiveIntegerField(default=1, null=False)
     # (Dirty) trick to upload ZIP files using the standard admin interface of Django
-    zipfile = models.FileField(upload_to='problem_zips/', default=None, blank=True, null=True)
+    zipfile = models.FileField(upload_to="problem_zips/", default=None, blank=True, null=True)
 
     # To query Problem and obtain subclass objects with '.select_subclasses()'
     objects = InheritanceManager()
+
+    def __str__(self):
+        """String to show in the Admin interface"""
+        return f"(PK {self.pk}) {self.title_md}"
 
     def clean(self):
         """Check the number of statements and creates HTML versions from MarkDown"""
         super().clean()
 
         if self.min_stmt > self.max_stmt:
-            raise ValidationError('Invalid statement range', code='invalid_stmt_range')
+            raise ValidationError("Invalid statement range", code="invalid_stmt_range")
 
         self.title_html = markdown_to_html(self.title_md, remove_initial_p=True)
         self.text_html = markdown_to_html(self.text_md, remove_initial_p=False)
-
-    def __str__(self):
-        """String to show in the Admin interface"""
-        return f'(PK {self.pk}) {self.title_md}'
 
     def template(self):
         """Name of the HTML template used to show the problem"""
@@ -269,9 +298,13 @@ class Problem(models.Model):
     def solved_n_position(self, position):
         """User (non-staff and active) who solved the problem in 'position' position"""
         active_students = get_user_model().objects.filter(is_staff=False, is_active=True)
-        pks = Submission.objects.filter(problem=self, verdict_code=VerdictCode.AC, user__in=active_students) \
-            .order_by('user', 'pk').distinct('user').values_list('pk', flat=True)
-        subs = Submission.objects.filter(pk__in=pks).order_by('pk')[position - 1:position]
+        pks = (
+            Submission.objects.filter(problem=self, verdict_code=VerdictCode.AC, user__in=active_students)
+            .order_by("user", "pk")
+            .distinct("user")
+            .values_list("pk", flat=True)
+        )
+        subs = Submission.objects.filter(pk__in=pks).order_by("pk")[position - 1 : position]
         if len(subs) > 0 and subs[0] is not None:
             return subs[0].user
         return None
@@ -291,14 +324,15 @@ class Problem(models.Model):
     @staticmethod
     def solved_position_problem_user(problem, user):
         """Position that user solved the problem (ignoring staff and inactive users). If not solved return None
-           static method that does not require to generate or lookup for a Problem
+        static method that does not require to generate or lookup for a Problem
         """
         active_students = get_user_model().objects.filter(is_staff=False, is_active=True)
-        pk_users_ac = (Submission.objects.
-                        filter(problem=problem, user__in=active_students, verdict_code=VerdictCode.AC).
-                        order_by('pk', 'user').
-                        distinct('pk', 'user').
-                        values_list('user', flat=True))
+        pk_users_ac = (
+            Submission.objects.filter(problem=problem, user__in=active_students, verdict_code=VerdictCode.AC)
+            .order_by("pk", "user")
+            .distinct("pk", "user")
+            .values_list("user", flat=True)
+        )
         for i, user_pk in enumerate(pk_users_ac, 1):
             if user_pk == user.pk:
                 return i
@@ -312,22 +346,24 @@ class Problem(models.Model):
         return None
 
     def insert_sql_list(self):
-        """ List containing all sql inserts """
+        """List containing all sql inserts"""
         return self.insert_sql.split(self.__INSERT_SEPARATION)
 
 
 class SelectProblem(Problem):
     """Problem that requires a SELECT statement as solution"""
+
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, default=None, blank=True, null=True)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'Problem_Select'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "Problem_Select"
 
     def clean(self):
-        """ Executes the problem and stores the expected result """
+        """Executes the problem and stores the expected result"""
         try:
             if self.zipfile:
                 # Replaces the fields with the information from the file
@@ -339,35 +375,37 @@ class SelectProblem(Problem):
             self.initial_db = []
             executor = OracleExecutor.get()
             for insert_sql in self.insert_sql_list():
-                res = executor.execute_select_test((self.create_sql, insert_sql),
-                                                   self.solution, output_db=True)
-                self.expected_result.append(res['result'])
-                self.initial_db.append(res['db'])
+                res = executor.execute_select_test((self.create_sql, insert_sql), self.solution, output_db=True)
+                self.expected_result.append(res["result"])
+                self.initial_db.append(res["db"])
             # self.validate_des(DesMessageType.ERROR)  # DES validation of new problems is disabled
         except Exception as excp:
             raise ValidationError(excp) from excp
 
     def template(self):
-        return 'problem_select.html'
+        return "problem_select.html"
 
     def judge(self, code, executor):
         first_insert_sql = self.insert_sql_list()[0]
         oracle_result = executor.execute_select_test((self.create_sql, first_insert_sql), code, output_db=False)
         # Check first code with first db
-        verdict, feedback = compare_select_results(self.expected_result[0], oracle_result['result'], self.check_order)
+        verdict, feedback = compare_select_results(self.expected_result[0], oracle_result["result"], self.check_order)
         if verdict != VerdictCode.AC:
             return verdict, feedback
         # Get results using secondary dbs
         insert_sql_extra_list = self.insert_sql_list()[1:]
         initial_db_count = 1
         for insert_sql_extra in insert_sql_extra_list:
-            oracle_result_extra = executor.execute_select_test((self.create_sql, insert_sql_extra), code,
-                                                               output_db=False)
+            oracle_result_extra = executor.execute_select_test(
+                (self.create_sql, insert_sql_extra), code, output_db=False
+            )
             # Check secondary results
-            verdict_extra, feedback_extra = compare_select_results(self.expected_result[initial_db_count],
-                                                                   oracle_result_extra['result'],
-                                                                   self.check_order,
-                                                                   self.initial_db[initial_db_count])
+            verdict_extra, feedback_extra = compare_select_results(
+                self.expected_result[initial_db_count],
+                oracle_result_extra["result"],
+                self.check_order,
+                self.initial_db[initial_db_count],
+            )
             if verdict_extra != VerdictCode.AC:
                 return verdict_extra, feedback_extra
             initial_db_count += 1
@@ -378,8 +416,8 @@ class SelectProblem(Problem):
         return ProblemType.SELECT
 
     def get_des_messages(self):
-        """ Return a list [DES_messages] **for every test data base**. A DES_messages object is a
-            list of pairs (statement, [DES message]) or None"""
+        """Return a list [DES_messages] **for every test data base**. A DES_messages object is a
+        list of pairs (statement, [DES message]) or None"""
         des = DesExecutor.get()
         des_messages = []
         for insert in self.insert_sql_list():
@@ -387,41 +425,44 @@ class SelectProblem(Problem):
         return des_messages
 
     def get_des_messages_solution(self, code):
-        """ Return a flat list of DES messages obtained for the user code """
+        """Return a flat list of DES messages obtained for the user code"""
         des = DesExecutor.get()
         # Checks DES only with the first DB
         try:
-            des_messages = des.get_des_messages_select(self.create_sql, '', code)  # INSERT are not needed
+            des_messages = des.get_des_messages_select(self.create_sql, "", code)  # INSERT are not needed
         except DESException as excp:
-            send_des_error_email(excp, self.pk, 'SELECT', str(self.create_sql), code)
+            send_des_error_email(excp, self.pk, "SELECT", str(self.create_sql), code)
             return []
-        messages = [(msg_type, msg, snippet) for _, msgs in des_messages
-                    for msg_type, msg, snippet in msgs if msgs]
+        messages = [(msg_type, msg, snippet) for _, msgs in des_messages for msg_type, msg, snippet in msgs if msgs]
         return messages
 
     def validate_des(self, min_level=DesMessageType.ERROR):
-        """ Validates that the current problem does not generate any error message with
-            level smaller than 'level' (by default ERROR) """
+        """Validates that the current problem does not generate any error message with
+        level smaller than 'level' (by default ERROR)"""
         des_messages = self.get_des_messages()
         for bd_msgs in des_messages:
             for stmt, msg_list in bd_msgs:
                 for des_level, text, stmt_snippet in msg_list:
                     if des_level <= min_level:
-                        error_msg = f'DES Validation error in <{stmt}>. Error code: {des_level}. ' \
-                                    f'Error message: {text}. Snippet: {stmt_snippet}'
+                        error_msg = (
+                            f"DES Validation error in <{stmt}>. Error code: {des_level}. "
+                            f"Error message: {text}. Snippet: {stmt_snippet}"
+                        )
                         raise ValidationError(error_msg)
 
 
 class DMLProblem(Problem):
     """Problem that requires one or more DML statements (INSERT, UPDATE, CREATE...) as solution"""
+
     # IMPORTANT: This problem does not support multiple initial db. It only uses the first db
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, blank=True)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'Problem_DML'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "Problem_DML"
 
     def clean(self):
         """Executes the problem and stores the expected result"""
@@ -435,25 +476,30 @@ class DMLProblem(Problem):
             super().clean()
             executor = OracleExecutor.get()
             res = executor.execute_dml_test((self.create_sql, self.insert_sql), self.solution, pre_db=True)
-            self.expected_result = [res['post']]
-            self.initial_db = [res['pre']]
+            self.expected_result = [res["post"]]
+            self.initial_db = [res["pre"]]
         except Exception as excp:
             raise ValidationError(excp) from excp
 
     def template(self):
-        return 'problem_dml.html'
+        return "problem_dml.html"
 
     def judge(self, code, executor):
-        oracle_result = executor.execute_dml_test((self.create_sql, self.insert_sql), code, pre_db=False,
-                                                  min_stmt=self.min_stmt, max_stmt=self.max_stmt)
-        return compare_db_results(self.expected_result[0], oracle_result['post'])
+        oracle_result = executor.execute_dml_test(
+            (self.create_sql, self.insert_sql),
+            code,
+            pre_db=False,
+            min_stmt=self.min_stmt,
+            max_stmt=self.max_stmt,
+        )
+        return compare_db_results(self.expected_result[0], oracle_result["post"])
 
     def problem_type(self):
         return ProblemType.DML
 
     def get_des_messages(self):
-        """ Return a list [DES_messages] **for every test data base**. A DES_messages object is a
-            list of pairs (statement, [DES message]) or None"""
+        """Return a list [DES_messages] **for every test data base**. A DES_messages object is a
+        list of pairs (statement, [DES message]) or None"""
         des = DesExecutor.get()
         des_messages = []
         for insert in self.insert_sql_list():
@@ -461,48 +507,53 @@ class DMLProblem(Problem):
         return des_messages
 
     def get_des_messages_solution(self, code):
-        """ Return a flat list of DES messages obtained for the user code """
+        """Return a flat list of DES messages obtained for the user code"""
         des = DesExecutor.get()
         # Checks DES only with the first DB
         try:
             des_messages = des.get_des_messages_dml(self.create_sql, self.insert_sql_list()[0], code)
             # Needed because DES generate "No tuple met the 'where' condition for updating" if omitted
         except DESException as excp:
-            send_des_error_email(excp, self.pk, 'DML', str(self.create_sql), code)
+            send_des_error_email(excp, self.pk, "DML", str(self.create_sql), code)
             return []
         # Uses the whole statement as snippet because:
         # A) DES doesn't seem to provide detailed snippets for DML errors
         # B) DML problems can have several statements, so messages without context are difficult to understand
-        messages = [(msg_type, msg, stmt.strip()) for stmt, msgs in des_messages
-                    for msg_type, msg, snippet in msgs if msgs]
+        messages = [
+            (msg_type, msg, stmt.strip()) for stmt, msgs in des_messages for msg_type, msg, snippet in msgs if msgs
+        ]
         return messages
 
     def validate_des(self, min_level=DesMessageType.ERROR):
-        """ Validates that the current problem does not generate any error message with
-            level smaller than 'level' (by default ERROR). If some message is found,
-            raises a ValidationError with that first message
+        """Validates that the current problem does not generate any error message with
+        level smaller than 'level' (by default ERROR). If some message is found,
+        raises a ValidationError with that first message
         """
         des_messages = self.get_des_messages()
         for bd_msgs in des_messages:
             for stmt, msg_list in bd_msgs:
                 for des_level, text, stmt_snippet in msg_list:
                     if des_level <= min_level:
-                        error_msg = f'DES Validation error in <{stmt.strip()}>. Error code: {des_level}. ' \
-                                    f'Error message: {text}. Snippet: {stmt_snippet}'
+                        error_msg = (
+                            f"DES Validation error in <{stmt.strip()}>. Error code: {des_level}. "
+                            f"Error message: {text}. Snippet: {stmt_snippet}"
+                        )
                         raise ValidationError(error_msg)
 
 
 class FunctionProblem(Problem):
     """Problem that requires a function definition as solution"""
+
     # IMPORTANT: This problem does not support multiple initial db. It only uses the first db
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
-    calls = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], default='', blank=True)
+    calls = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], default="", blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, blank=True)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'Problem_Function'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "Problem_Function"
 
     def clean(self):
         """Executes the problem and stores the expected result"""
@@ -516,23 +567,23 @@ class FunctionProblem(Problem):
             super().clean()
             executor = OracleExecutor.get()
             res = executor.execute_function_test((self.create_sql, self.insert_sql), self.solution, self.calls)
-            self.expected_result = [res['results']]
-            self.initial_db = [res['db']]
+            self.expected_result = [res["results"]]
+            self.initial_db = [res["db"]]
         except Exception as excp:
             raise ValidationError(excp) from excp
 
     def template(self):
-        return 'problem_function.html'
+        return "problem_function.html"
 
     def result_as_table(self):
         """Transforms the dict with the expected result in a dict representing a table that can be shown
         in the templates (i.e., we add a suitable header and create rows)"""
         rows = [[call, result[0]] for call, result in self.expected_result[0].items()]
-        return {'rows': rows, 'header': [('Llamada', None), ('Resultado', None)]}
+        return {"rows": rows, "header": [("Llamada", None), ("Resultado", None)]}
 
     def judge(self, code, executor):
         oracle_result = executor.execute_function_test((self.create_sql, self.insert_sql), code, self.calls)
-        return compare_function_results(self.expected_result[0], oracle_result['results'])
+        return compare_function_results(self.expected_result[0], oracle_result["results"])
 
     def problem_type(self):
         return ProblemType.FUNCTION
@@ -540,6 +591,7 @@ class FunctionProblem(Problem):
 
 class ProcProblem(Problem):
     """Problem that requires a procedure definition as solution"""
+
     # IMPORTANT: This problem does not support multiple initial db. It only uses the first db
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
@@ -547,11 +599,12 @@ class ProcProblem(Problem):
     expected_result = JSONField(encoder=DjangoJSONEncoder, blank=True)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'Problem_Procedure'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "Problem_Procedure"
 
     def template(self):
-        return 'problem_proc.html'
+        return "problem_proc.html"
 
     def clean(self):
         """Executes the problem and stores the expected result"""
@@ -564,17 +617,19 @@ class ProcProblem(Problem):
 
             super().clean()
             executor = OracleExecutor.get()
-            res = executor.execute_proc_test((self.create_sql, self.insert_sql), self.solution, self.proc_call,
-                                             pre_db=True)
-            self.expected_result = [res['post']]
-            self.initial_db = [res['pre']]
+            res = executor.execute_proc_test(
+                (self.create_sql, self.insert_sql), self.solution, self.proc_call, pre_db=True
+            )
+            self.expected_result = [res["post"]]
+            self.initial_db = [res["pre"]]
         except Exception as excp:
             raise ValidationError(excp) from excp
 
     def judge(self, code, executor):
-        oracle_result = executor.execute_proc_test((self.create_sql, self.insert_sql), code, self.proc_call,
-                                                   pre_db=False)
-        return compare_db_results(self.expected_result[0], oracle_result['post'])
+        oracle_result = executor.execute_proc_test(
+            (self.create_sql, self.insert_sql), code, self.proc_call, pre_db=False
+        )
+        return compare_db_results(self.expected_result[0], oracle_result["post"])
 
     def problem_type(self):
         return ProblemType.PROC
@@ -582,6 +637,7 @@ class ProcProblem(Problem):
 
 class TriggerProblem(Problem):
     """Problem that requires a trigger definition as solution"""
+
     # IMPORTANT: This problem does not support multiple initial db. It only uses the first db
     check_order = models.BooleanField(default=False)
     solution = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
@@ -589,11 +645,12 @@ class TriggerProblem(Problem):
     expected_result = JSONField(encoder=DjangoJSONEncoder, blank=True)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'Problem_Trigger'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "Problem_Trigger"
 
     def template(self):
-        return 'problem_trigger.html'  # The same template works
+        return "problem_trigger.html"  # The same template works
 
     def clean(self):
         """Executes the problem and stores the expected result"""
@@ -606,17 +663,19 @@ class TriggerProblem(Problem):
 
             super().clean()
             executor = OracleExecutor.get()
-            res = executor.execute_trigger_test((self.create_sql, self.insert_sql),
-                                                self.solution, self.tests, pre_db=True)
-            self.expected_result = [res['post']]
-            self.initial_db = [res['pre']]
+            res = executor.execute_trigger_test(
+                (self.create_sql, self.insert_sql), self.solution, self.tests, pre_db=True
+            )
+            self.expected_result = [res["post"]]
+            self.initial_db = [res["pre"]]
         except Exception as excp:
             raise ValidationError(excp) from excp
 
     def judge(self, code, executor):
-        oracle_result = executor.execute_trigger_test((self.create_sql, self.insert_sql), code, self.tests,
-                                                      pre_db=False)
-        return compare_db_results(self.expected_result[0], oracle_result['post'])
+        oracle_result = executor.execute_trigger_test(
+            (self.create_sql, self.insert_sql), code, self.tests, pre_db=False
+        )
+        return compare_db_results(self.expected_result[0], oracle_result["post"])
 
     def problem_type(self):
         return ProblemType.TRIGGER
@@ -624,17 +683,19 @@ class TriggerProblem(Problem):
 
 class DiscriminantProblem(Problem):
     """Problem that requires an INSERT as solution for debug an incorrect query"""
+
     check_order = models.BooleanField(default=False)
     correct_query = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     incorrect_query = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     expected_result = JSONField(encoder=DjangoJSONEncoder, default=None, blank=True, null=True)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'Problem_Discriminant'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "Problem_Discriminant"
 
     def template(self):
-        return 'problem_disc.html'
+        return "problem_disc.html"
 
     def clean(self):
         """Executes the problem and stores the expected result"""
@@ -651,17 +712,17 @@ class DiscriminantProblem(Problem):
             self.initial_db = []
             # In this case (this type of problem) there are only one database
             for insert_sql in self.insert_sql_list():
-                res = executor.execute_select_test((self.create_sql, insert_sql),
-                                                   self.incorrect_query, output_db=True)
-                self.expected_result.append(res['result'])
-                self.initial_db.append(res['db'])
+                res = executor.execute_select_test((self.create_sql, insert_sql), self.incorrect_query, output_db=True)
+                self.expected_result.append(res["result"])
+                self.initial_db.append(res["db"])
         except Exception as excp:
             raise ValidationError(excp) from excp
 
     def judge(self, code, executor):
         insert_sql = self.insert_sql_list()[0]  # In this type of problem there is only one database
-        result = executor.execute_discriminant_test((self.create_sql, insert_sql), code,
-                                                    (self.correct_query, self.incorrect_query))
+        result = executor.execute_discriminant_test(
+            (self.create_sql, insert_sql), code, (self.correct_query, self.incorrect_query)
+        )
         incorrect_result = result["result_incorrect"]
         correct_result = result["result_correct"]
         return compare_discriminant_db(incorrect_result, correct_result, self.check_order)
@@ -671,15 +732,12 @@ class DiscriminantProblem(Problem):
 
 
 class Submission(models.Model):
-    """ A user submission """
+    """A user submission"""
+
     creation_date = models.DateTimeField(auto_now_add=True)
     code = models.CharField(max_length=5000, validators=[MinLengthValidator(1)])
-    verdict_code = models.CharField(
-        max_length=3,
-        choices=VerdictCode.choices,
-        default=VerdictCode.AC
-    )
-    verdict_message = models.CharField(max_length=5000, null=True)
+    verdict_code = models.CharField(max_length=3, choices=VerdictCode.choices, default=VerdictCode.AC)
+    verdict_message = models.CharField(max_length=5000, default="")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_index=True)
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
 
@@ -687,26 +745,27 @@ class Submission(models.Model):
         return f"{self.pk} - {self.user.email} - {self.verdict_code}"
 
     def verdict_html_name(self):
-        """ Returns the HTML code with the verdict name in colors """
+        """Returns the HTML code with the verdict name in colors"""
         return VerdictCode(self.verdict_code).html_short_name()
 
 
 def default_json_lang():
-    """ Default values for name and description attributes in AchievementDefinition """
+    """Default values for name and description attributes in AchievementDefinition"""
     return {settings.LANGUAGE_CODE: ""}
 
 
 class AchievementDefinition(models.Model):
     """Abstract class for Achievements"""
-    name = JSONField(encoder=DjangoJSONEncoder,
-                     default=default_json_lang,
-                     blank=True, null=True)
-    description = JSONField(encoder=DjangoJSONEncoder,
-                            default=default_json_lang,
-                            blank=True, null=True)
+
+    name = JSONField(encoder=DjangoJSONEncoder, default=default_json_lang, blank=True, null=True)
+    description = JSONField(encoder=DjangoJSONEncoder, default=default_json_lang, blank=True, null=True)
 
     # To query Problem to obtain subclass objects with '.select_subclasses()'
     objects = InheritanceManager()
+
+    def __str__(self):
+        """String for show the achievement name"""
+        return self.get_name()
 
     def check_and_save(self, user):
         """Raise a NotImplementedError, declared function for its children"""
@@ -724,10 +783,6 @@ class AchievementDefinition(models.Model):
         for usr in all_users:
             self.check_and_save(usr)
 
-    def __str__(self):
-        """String for show the achievement name"""
-        return self.get_name()
-
     def get_name(self):
         """Returns the name in the current language"""
         if translation.get_language() in self.name:
@@ -743,22 +798,29 @@ class AchievementDefinition(models.Model):
 
 class ObtainedAchievement(models.Model):
     """Store info about an obtained achievement"""
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     obtained_date = models.DateTimeField(default=timezone.now)
     achievement_definition = models.ForeignKey(AchievementDefinition, on_delete=models.CASCADE)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'Achievement_Obtained'
+        """Changes the name displayed in the admin interface"""
+        verbose_name_plural = "Achievement_Obtained"
+
+    def __str__(self) -> str:
+        """String for show the achievement name"""
+        return f"ObtainedAchievement {self.achievement_definition} ({self.obtained_date}) user={self.user}"
 
 
 class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
     """Achievement by solving a number of problems"""
+
     num_problems = models.PositiveIntegerField(default=1, null=False)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'AchievementDef_NumSolved'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "AchievementDef_NumSolved"
 
     def check_and_save(self, user):
         """Determine if a user qualifies for an achievement; if they do, save it."""
@@ -767,14 +829,17 @@ class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
             if corrects >= self.num_problems:
                 # First submission of each solved Problem that user have VerdictCode.AC. Ordered by 'creation_date'
                 # List of dictionaries {'problem': problem pk, 'first_ac_submission': date first AC)
-                first_ac_submissions = (Submission.objects.filter(verdict_code=VerdictCode.AC, user=user)
-                                        .values('problem')
-                                        .annotate(first_ac_submission=Min('creation_date'))
-                                        .order_by('first_ac_submission'))
-                new_achievement = ObtainedAchievement(user=user,
-                                                      obtained_date=first_ac_submissions[self.num_problems - 1][
-                                                          'first_ac_submission'],
-                                                      achievement_definition=self)
+                first_ac_submissions = (
+                    Submission.objects.filter(verdict_code=VerdictCode.AC, user=user)
+                    .values("problem")
+                    .annotate(first_ac_submission=Min("creation_date"))
+                    .order_by("first_ac_submission")
+                )
+                new_achievement = ObtainedAchievement(
+                    user=user,
+                    obtained_date=first_ac_submissions[self.num_problems - 1]["first_ac_submission"],
+                    achievement_definition=self,
+                )
                 new_achievement.save()
                 return True
         return False
@@ -782,31 +847,38 @@ class NumSolvedAchievementDefinition(AchievementDefinition, models.Model):
 
 class PodiumAchievementDefinition(AchievementDefinition, models.Model):
     """Achievement by solving X problems among the first N"""
+
     num_problems = models.PositiveIntegerField(default=1, null=False)
     position = models.PositiveIntegerField(default=3, null=False)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'AchievementDef_Podium'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "AchievementDef_Podium"
 
     def check_and_save(self, user):
         """Return if a user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
             # First submission of each solved Problem that user have VerdictCode.AC. Ordered by 'creation_date'
             # List of dictionaries {'problem': problem pk, 'first_ac_submission': date first AC)
-            first_ac_submissions = (Submission.objects.filter(verdict_code=VerdictCode.AC, user=user)
-                                    .values('problem')
-                                    .annotate(first_ac_submission=Min('creation_date'))
-                                    .order_by('first_ac_submission'))
+            first_ac_submissions = (
+                Submission.objects.filter(verdict_code=VerdictCode.AC, user=user)
+                .values("problem")
+                .annotate(first_ac_submission=Min("creation_date"))
+                .order_by("first_ac_submission")
+            )
             total = 0
             if len(first_ac_submissions) >= self.num_problems:
                 for sub in first_ac_submissions:
-                    user_pos = Problem.solved_position_problem_user(sub['problem'], user)
+                    user_pos = Problem.solved_position_problem_user(sub["problem"], user)
                     if user_pos is not None and user_pos <= self.position:
                         total = total + 1
                         if total >= self.num_problems:
-                            new_achievement = ObtainedAchievement(user=user, obtained_date=sub['first_ac_submission'],
-                                                                  achievement_definition=self)
+                            new_achievement = ObtainedAchievement(
+                                user=user,
+                                obtained_date=sub["first_ac_submission"],
+                                achievement_definition=self,
+                            )
                             new_achievement.save()
                             return True
         return False
@@ -814,31 +886,40 @@ class PodiumAchievementDefinition(AchievementDefinition, models.Model):
 
 class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Model):
     """Achievement by solving X problems of a Collection"""
+
     num_problems = models.PositiveIntegerField(default=1, null=False)
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'AchievementDef_NumSolvedCollection'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "AchievementDef_NumSolvedCollection"
 
     def check_and_save(self, user):
         """Return if a user is deserving for get an achievement, if it is, save that"""
         if not self.check_user(user):
-            corrects = Submission.objects.filter(verdict_code=VerdictCode.AC, user=user,
-                                                 problem__collection=self.collection).distinct("problem").count()
+            corrects = (
+                Submission.objects.filter(verdict_code=VerdictCode.AC, user=user, problem__collection=self.collection)
+                .distinct("problem")
+                .count()
+            )
             if corrects >= self.num_problems:
                 # First submission of each solved Problem in the collection that user have VerdictCode.AC, ordered
                 # by 'creation_date'
                 # List of dictionaries {'problem': problem pk, 'first_ac_submission': date first AC)
-                first_ac_submissions = (Submission.objects.filter(verdict_code=VerdictCode.AC, user=user,
-                                                                  problem__collection=self.collection)
-                                        .values('problem')
-                                        .annotate(first_ac_submission=Min('creation_date'))
-                                        .order_by('first_ac_submission'))
-                new_achievement = ObtainedAchievement(user=user,
-                                                      obtained_date=first_ac_submissions[self.num_problems - 1][
-                                                          'first_ac_submission'],
-                                                      achievement_definition=self)
+                first_ac_submissions = (
+                    Submission.objects.filter(
+                        verdict_code=VerdictCode.AC, user=user, problem__collection=self.collection
+                    )
+                    .values("problem")
+                    .annotate(first_ac_submission=Min("creation_date"))
+                    .order_by("first_ac_submission")
+                )
+                new_achievement = ObtainedAchievement(
+                    user=user,
+                    obtained_date=first_ac_submissions[self.num_problems - 1]["first_ac_submission"],
+                    achievement_definition=self,
+                )
                 new_achievement.save()
                 return True
         return False
@@ -846,17 +927,19 @@ class NumSolvedCollectionAchievementDefinition(AchievementDefinition, models.Mod
 
 class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
     """Achievement by solving X problems of a Type"""
+
     num_problems = models.PositiveIntegerField(default=1, null=False)
     problem_type = models.CharField(
         max_length=5000,
         choices=list(ProblemType.__members__.items()),
         validators=[MinLengthValidator(1)],
-        blank=True
+        blank=True,
     )
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'AchievementDef_NumSolvedType'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "AchievementDef_NumSolvedType"
 
     def check_and_save(self, user):
         """Return if a user is deserving for get an achievement, if it is, save that"""
@@ -864,20 +947,24 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
             count = 0
             # First submission of each solved Problem that user have VerdictCode.AC, ordered by 'creation_date'
             # List of dictionaries {'problem': problem pk, 'first_ac_submission': date first AC)
-            first_ac_submissions = (Submission.objects.filter(verdict_code=VerdictCode.AC, user=user)
-                                    .values('problem')
-                                    .annotate(first_ac_submission=Min('creation_date'))
-                                    .order_by('first_ac_submission'))
+            first_ac_submissions = (
+                Submission.objects.filter(verdict_code=VerdictCode.AC, user=user)
+                .values("problem")
+                .annotate(first_ac_submission=Min("creation_date"))
+                .order_by("first_ac_submission")
+            )
 
             for sub in first_ac_submissions:
                 # TODO: improve N+1 queries because of the detection of the problem subclass  # pylint: disable=fixme
-                problem = Problem.objects.filter(pk=sub['problem']).select_subclasses()
+                problem = Problem.objects.filter(pk=sub["problem"]).select_subclasses()
                 if problem[0].problem_type().name == self.problem_type:
                     count += 1
                     if count >= self.num_problems:
-                        new_achievement = ObtainedAchievement(user=user,
-                                                              obtained_date=sub['first_ac_submission'],
-                                                              achievement_definition=self)
+                        new_achievement = ObtainedAchievement(
+                            user=user,
+                            obtained_date=sub["first_ac_submission"],
+                            achievement_definition=self,
+                        )
                         new_achievement.save()
                         return True
         return False
@@ -885,12 +972,14 @@ class NumSolvedTypeAchievementDefinition(AchievementDefinition, models.Model):
 
 class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.Model):
     """Achievement by submitting X submissions of Y problems"""
+
     num_submissions = models.PositiveIntegerField(default=1, null=False)
     num_problems = models.PositiveIntegerField(default=1, null=False)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'AchievementDef_NumSubmissions'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "AchievementDef_NumSubmissions"
 
     def check_and_save(self, user):
         """Return if a user is deserving for get an achievement, if it is, save that"""
@@ -901,17 +990,22 @@ class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.
                 if total_prob >= self.num_problems:
                     # First submission (any) of each Problem that user have VerdictCode.AC, ordered by 'creation_date'
                     # List of dictionaries {'problem': problem pk, 'first_ac_submission': date first AC)
-                    date_xth_submission = Submission.objects.filter(user=user).order_by('creation_date')[
-                        self.num_submissions-1].creation_date
-                    date_yth_problem = (Submission.objects.filter(user=user)
-                                            .values('problem')
-                                            .annotate(first_submission=Min('creation_date'))
-                                            .order_by('first_submission'))[self.num_problems-1]['first_submission']
+                    date_xth_submission = (
+                        Submission.objects.filter(user=user)
+                        .order_by("creation_date")[self.num_submissions - 1]
+                        .creation_date
+                    )
+                    date_yth_problem = (
+                        Submission.objects.filter(user=user)
+                        .values("problem")
+                        .annotate(first_submission=Min("creation_date"))
+                        .order_by("first_submission")
+                    )[self.num_problems - 1]["first_submission"]
                     achievement_date = max(date_xth_submission, date_yth_problem)
                     # The most recent date of xth submission and yht problem
-                    new_achievement = ObtainedAchievement(user=user,
-                                                   obtained_date=achievement_date,
-                                                   achievement_definition=self)
+                    new_achievement = ObtainedAchievement(
+                        user=user, obtained_date=achievement_date, achievement_definition=self
+                    )
                     new_achievement.save()
                     return True
         return False
@@ -919,34 +1013,37 @@ class NumSubmissionsProblemsAchievementDefinition(AchievementDefinition, models.
 
 class Hint(models.Model):
     """Hints of a problem"""
+
     text_md = models.TextField(max_length=5000, validators=[MinLengthValidator(1)], blank=True)
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
     num_submit = models.PositiveIntegerField(default=0, null=False)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'Hint_definition'
+        """Changes the name displayed in the admin interface"""
+        verbose_name_plural = "Hint_definition"
+
+    def __str__(self):  # pragma: no cover
+        """String representation of Hint object"""
+        return f"Hint #{self.pk} - problem {self.problem}"
 
     def get_text_html(self):
         """Converts a markdown string into HTML"""
         text_html = markdown_to_html(self.text_md, remove_initial_p=True)
         return text_html
 
-    def __str__(self):  # pragma: no cover
-        """ String representation of Hint object """
-        return f'Hint #{self.pk} - problem {self.problem}'
-
 
 class UsedHint(models.Model):
     """Hints used by user"""
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     request_date = models.DateTimeField(auto_now_add=True)
     hint_definition = models.ForeignKey(Hint, on_delete=models.CASCADE)
 
     class Meta:
-        """ Changes the name displayed in the admin interface"""
-        verbose_name_plural = 'Hint_Used'
+        """Changes the name displayed in the admin interface"""
+
+        verbose_name_plural = "Hint_Used"
 
     def __str__(self):  # pragma: no cover
-        """ String representation of used Hint object """
-        return f'UsedHint (PK {self.pk})'
+        """String representation of used Hint object"""
+        return f"UsedHint (PK {self.pk})"

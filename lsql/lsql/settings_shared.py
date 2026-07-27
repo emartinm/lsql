@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+
 from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -23,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Takes the key from the environment or creates a new one
-SECRET_KEY = os.environ.get('SECRET_KEY', get_random_secret_key())
+SECRET_KEY = os.environ.get("SECRET_KEY", get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -34,46 +35,46 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'judge.apps.JudgeConfig',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "judge.apps.JudgeConfig",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     # 'dbbackup',  # django-dbbackup
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'lsql.urls'
+ROOT_URLCONF = "lsql.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'lsql.wsgi.application'
+WSGI_APPLICATION = "lsql.wsgi.application"
 
 
 # Database
@@ -84,13 +85,13 @@ DATABASES = {
     #     'ENGINE': 'django.db.backends.sqlite3',
     #     'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     # }
-    'default': {  # Takes default values if there are no environment variables
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('PG_DB', 'postgres'),
-        'USER': os.environ.get('PG_USER', 'postgres'),
-        'PASSWORD': os.environ.get('PG_PASS', ''),
-        'HOST': os.environ.get('PG_SERVER', 'localhost'),
-        'PORT': os.environ.get('PG_PORT', 9000),
+    "default": {  # Takes default values if there are no environment variables
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("PG_DB", "postgres"),
+        "USER": os.environ.get("PG_USER", "postgres"),
+        "PASSWORD": os.environ.get("PG_PASS", ""),
+        "HOST": os.environ.get("PG_SERVER", "localhost"),
+        "PORT": os.environ.get("PG_PORT", 9000),
     }
 }
 
@@ -100,16 +101,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -117,9 +118,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
-LANGUAGE_CODE = 'es'
+LANGUAGE_CODE = "es"
 
-TIME_ZONE = 'Europe/Madrid'
+TIME_ZONE = "Europe/Madrid"
 
 USE_I18N = True
 
@@ -127,18 +128,16 @@ USE_I18N = True
 
 USE_TZ = True
 
-LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale')
-]
+LOCALE_PATHS = [os.path.join(BASE_DIR, "locale")]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "allstaticfiles")
 
 # Paths for the default authentication system
-LOGIN_URL = '/sql/login/'
-LOGIN_REDIRECT_URL = '/sql/'
+LOGIN_URL = "/sql/login/"
+LOGIN_REDIRECT_URL = "/sql/"
 
 # Configuration of django-dbbackup
 # DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
@@ -148,6 +147,6 @@ LOGIN_REDIRECT_URL = '/sql/'
 
 
 LANGUAGES = (
-    ('en', 'English'),
-    ('es', 'Español'),
+    ("en", "English"),
+    ("es", "Español"),
 )

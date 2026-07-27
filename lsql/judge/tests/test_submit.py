@@ -1,17 +1,30 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for the submits
 """
+
 import os
 
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.urls import reverse
-from judge.models import FunctionProblem, ProcProblem, TriggerProblem, \
-    NumSubmissionsProblemsAchievementDefinition, ObtainedAchievement, NumSolvedTypeAchievementDefinition, \
-    SelectProblem
-from judge.tests.test_common import create_collection, create_user, create_select_problem, create_dml_problem, \
-    create_discriminant_problem, TestPaths
-from judge.types import VerdictCode, ProblemType
+
+from judge.models import (
+    FunctionProblem,
+    NumSolvedTypeAchievementDefinition,
+    NumSubmissionsProblemsAchievementDefinition,
+    ObtainedAchievement,
+    ProcProblem,
+    SelectProblem,
+    TriggerProblem,
+)
+from judge.tests.test_common import (
+    TestPaths,
+    create_collection,
+    create_discriminant_problem,
+    create_dml_problem,
+    create_select_problem,
+    create_user,
+)
+from judge.types import ProblemType, VerdictCode
 
 
 class SubmitTest(TestCase):
@@ -26,9 +39,9 @@ class SubmitTest(TestCase):
         zip_trigger_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.TRIGGER_OK)
 
         client = Client()
-        collection = create_collection('Colleccion de prueba AAA')
-        user = create_user('54522', 'antonio')
-        client.login(username='antonio', password='54522')  # nosec B106
+        collection = create_collection("Colleccion de prueba AAA")
+        user = create_user("54522", "antonio")
+        client.login(username="antonio", password="54522")  # nosec B106
 
         function_problem = FunctionProblem(zipfile=zip_function_path, collection=collection, author=user)
         proc_problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
@@ -94,16 +107,18 @@ class SubmitTest(TestCase):
                                   END IF;
                                 END;"""
 
-        for (problem, code) in [(function_problem, funct_compile_error),
-                                (proc_problem, proc_compile_error),
-                                (trigger_problem, trigger_compile_error)]:
+        for problem, code in [
+            (function_problem, funct_compile_error),
+            (proc_problem, proc_compile_error),
+            (trigger_problem, trigger_compile_error),
+        ]:
             problem.clean()
             problem.save()
-            submit_url = reverse('judge:submit', args=[problem.pk])
-            response = client.post(submit_url, {'code': code}, follow=True)
-            self.assertEqual(response.json()['verdict'], VerdictCode.WA)
-            self.assertIn('error', response.json()['feedback'])
-            self.assertIn('compil', response.json()['feedback'])
+            submit_url = reverse("judge:submit", args=[problem.pk])
+            response = client.post(submit_url, {"code": code}, follow=True)
+            self.assertEqual(response.json()["verdict"], VerdictCode.WA)
+            self.assertIn("error", response.json()["feedback"])
+            self.assertIn("compil", response.json()["feedback"])
 
     def test_plsql_correct(self):
         """Accepted submissions to function/procedure/trigger problem"""
@@ -114,9 +129,9 @@ class SubmitTest(TestCase):
         zip_trigger_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.TRIGGER_OK)
 
         client = Client()
-        collection = create_collection('Colleccion de prueba AAA')
-        user = create_user('54522', 'antonio')
-        client.login(username='antonio', password='54522')  # nosec B106
+        collection = create_collection("Colleccion de prueba AAA")
+        user = create_user("54522", "antonio")
+        client.login(username="antonio", password="54522")  # nosec B106
 
         function_problem = FunctionProblem(zipfile=zip_function_path, collection=collection, author=user)
         proc_problem = ProcProblem(zipfile=zip_proc_path, collection=collection, author=user)
@@ -125,147 +140,169 @@ class SubmitTest(TestCase):
         for problem in [function_problem, proc_problem, trigger_problem]:
             problem.clean()
             problem.save()
-            submit_url = reverse('judge:submit', args=[problem.pk])
-            response = client.post(submit_url, {'code': problem.solution}, follow=True)
-            self.assertEqual(response.json()['verdict'], VerdictCode.AC)
+            submit_url = reverse("judge:submit", args=[problem.pk])
+            response = client.post(submit_url, {"code": problem.solution}, follow=True)
+            self.assertEqual(response.json()["verdict"], VerdictCode.AC)
 
     def test_validation_error(self):
         """Test messages obtained in submission that do not contain the correct number of statements"""
         client = Client()
-        collection = create_collection('Colleccion de prueba XYZ')
-        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        dml_problem = create_dml_problem(collection, 'DML Problem')
-        create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')  # nosec B106
+        collection = create_collection("Colleccion de prueba XYZ")
+        select_problem = create_select_problem(collection, "SelectProblem ABC DEF")
+        dml_problem = create_dml_problem(collection, "DML Problem")
+        create_user("5555", "pepe")
+        client.login(username="pepe", password="5555")  # nosec B106
 
-        submit_url_select = reverse('judge:submit', args=[select_problem.pk])
-        submit_url_dml = reverse('judge:submit', args=[dml_problem.pk])
+        submit_url_select = reverse("judge:submit", args=[select_problem.pk])
+        submit_url_dml = reverse("judge:submit", args=[dml_problem.pk])
 
         # JSON with VE and correct message for one SQL
-        response = client.post(submit_url_select, {'code': f'{select_problem.solution}; {select_problem.solution}'},
-                               follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.VE)
-        self.assertIn('exactamente 1 sentencia SQL', response.json()['message'])
+        response = client.post(
+            submit_url_select,
+            {"code": f"{select_problem.solution}; {select_problem.solution}"},
+            follow=True,
+        )
+        self.assertEqual(response.json()["verdict"], VerdictCode.VE)
+        self.assertIn("exactamente 1 sentencia SQL", response.json()["message"])
 
         # JSON with VE and correct message for 1--3 SQL
-        stmt = 'INSERT INTO test VALUES (25);'
-        response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.VE)
-        self.assertIn('entre 2 y 3 sentencias SQL', response.json()['message'])
+        stmt = "INSERT INTO test VALUES (25);"
+        response = client.post(submit_url_dml, {"code": stmt}, follow=True)
+        self.assertEqual(response.json()["verdict"], VerdictCode.VE)
+        self.assertIn("entre 2 y 3 sentencias SQL", response.json()["message"])
 
-        stmt = 'INSERT INTO test VALUES (25); INSERT INTO test VALUES (50); INSERT INTO test VALUES (75);' \
-               'INSERT INTO test VALUES (100);'
-        response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.VE)
-        self.assertIn('entre 2 y 3 sentencias SQL', response.json()['message'])
+        stmt = (
+            "INSERT INTO test VALUES (25); INSERT INTO test VALUES (50); INSERT INTO test VALUES (75);"
+            "INSERT INTO test VALUES (100);"
+        )
+        response = client.post(submit_url_dml, {"code": stmt}, follow=True)
+        self.assertEqual(response.json()["verdict"], VerdictCode.VE)
+        self.assertIn("entre 2 y 3 sentencias SQL", response.json()["message"])
 
         # JSON with VE and correct message for less than 10 characters
-        stmt = 'holis'
-        response = client.post(submit_url_dml, {'code': stmt}, follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.VE)
+        stmt = "holis"
+        response = client.post(submit_url_dml, {"code": stmt}, follow=True)
+        self.assertEqual(response.json()["verdict"], VerdictCode.VE)
 
     def test_select_no_output(self):
         """Test that SQL statements that produce no results generate WA in a SELECT problem because
         the schema is different"""
         client = Client()
-        collection = create_collection('Colleccion de prueba XYZ')
-        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        create_user('5555', 'pepe')
-        client.login(username='pepe', password='5555')  # nosec B106
-        stmts = ["CREATE VIEW my_test(n) AS SELECT n FROM test;",
-                 "INSERT INTO test VALUES (89547);",
-                 ]
-        submit_url_select = reverse('judge:submit', args=[select_problem.pk])
+        collection = create_collection("Colleccion de prueba XYZ")
+        select_problem = create_select_problem(collection, "SelectProblem ABC DEF")
+        create_user("5555", "pepe")
+        client.login(username="pepe", password="5555")  # nosec B106
+        stmts = [
+            "CREATE VIEW my_test(n) AS SELECT n FROM test;",
+            "INSERT INTO test VALUES (89547);",
+        ]
+        submit_url_select = reverse("judge:submit", args=[select_problem.pk])
 
         for stmt in stmts:
-            response = client.post(submit_url_select, {'code': stmt}, follow=True)
-            self.assertEqual(response.json()['verdict'], VerdictCode.WA)
-            self.assertIn('Generado por tu código SQL: 0 columnas', response.json()['feedback'])
+            response = client.post(submit_url_select, {"code": stmt}, follow=True)
+            self.assertEqual(response.json()["verdict"], VerdictCode.WA)
+            self.assertIn("Generado por tu código SQL: 0 columnas", response.json()["feedback"])
 
     def test_discriminant_problem(self):
         """Test for the view of a discriminant problem"""
         client = Client()
-        collection = create_collection('Colleccion de prueba XYZ')
-        create_user('contra', 'moragues')
-        client.login(username='moragues', password='contra')  # nosec B106
+        collection = create_collection("Colleccion de prueba XYZ")
+        create_user("contra", "moragues")
+        client.login(username="moragues", password="contra")  # nosec B106
         disc_problem = create_discriminant_problem(False, collection)
-        submit_discriminant_url = reverse('judge:submit', args=[disc_problem.pk])
+        submit_discriminant_url = reverse("judge:submit", args=[disc_problem.pk])
 
         # Checks that invalid INSERTs are mappet to RE
-        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (a);'}, follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.RE)
-        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES ()'}, follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.RE)
-        response = client.post(submit_discriminant_url, {'code': 'INSERT merienda;'}, follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.RE)
+        response = client.post(submit_discriminant_url, {"code": "INSERT INTO test_table_1 VALUES (a);"}, follow=True)
+        self.assertEqual(response.json()["verdict"], VerdictCode.RE)
+        response = client.post(submit_discriminant_url, {"code": "INSERT INTO test_table_1 VALUES ()"}, follow=True)
+        self.assertEqual(response.json()["verdict"], VerdictCode.RE)
+        response = client.post(submit_discriminant_url, {"code": "INSERT merienda;"}, follow=True)
+        self.assertEqual(response.json()["verdict"], VerdictCode.RE)
 
         # Check a correct answer and an incorrect
-        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (500)'}, follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.AC)
-        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (2021)'}, follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.WA)
+        response = client.post(submit_discriminant_url, {"code": "INSERT INTO test_table_1 VALUES (500)"}, follow=True)
+        self.assertEqual(response.json()["verdict"], VerdictCode.AC)
+        response = client.post(submit_discriminant_url, {"code": "INSERT INTO test_table_1 VALUES (2021)"}, follow=True)
+        self.assertEqual(response.json()["verdict"], VerdictCode.WA)
 
-        problem_url = reverse('judge:problem', args=[disc_problem.pk])
+        problem_url = reverse("judge:problem", args=[disc_problem.pk])
         response = client.get(problem_url, follow=True)
-        self.assertIn('Consulta SQL errónea a depurar', response.content.decode('utf-8'))
+        self.assertIn("Consulta SQL errónea a depurar", response.content.decode("utf-8"))
         disc_problem = create_discriminant_problem(True, collection)
-        submit_discriminant_url = reverse('judge:submit', args=[disc_problem.pk])
-        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (2000, 1990)'},
-                               follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.AC)
-        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table_1 VALUES (2000, 2000)'},
-                               follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.WA)
-        response = client.post(submit_discriminant_url, {'code': 'INSERT INTO test_table VALUES (2000, 2000)'},
-                               follow=True)
-        self.assertEqual(response.json()['verdict'], VerdictCode.RE)
+        submit_discriminant_url = reverse("judge:submit", args=[disc_problem.pk])
+        response = client.post(
+            submit_discriminant_url,
+            {"code": "INSERT INTO test_table_1 VALUES (2000, 1990)"},
+            follow=True,
+        )
+        self.assertEqual(response.json()["verdict"], VerdictCode.AC)
+        response = client.post(
+            submit_discriminant_url,
+            {"code": "INSERT INTO test_table_1 VALUES (2000, 2000)"},
+            follow=True,
+        )
+        self.assertEqual(response.json()["verdict"], VerdictCode.WA)
+        response = client.post(
+            submit_discriminant_url,
+            {"code": "INSERT INTO test_table VALUES (2000, 2000)"},
+            follow=True,
+        )
+        self.assertEqual(response.json()["verdict"], VerdictCode.RE)
         self.assertEqual(disc_problem.problem_type(), ProblemType.DISC)
 
     def test_achievements_submit(self):
         """Test to show correct message when obtain an achievement"""
         client = Client()
-        collection = create_collection('Colleccion de prueba XYZ')
-        select_problem = create_select_problem(collection, 'SelectProblem ABC DEF')
-        user = create_user('5555', 'tamara')
-        ach_submission = NumSubmissionsProblemsAchievementDefinition(name={"es": 'Un envio'},
-                                                                     description={
-                                                                         "es": 'Envia una solucion para un problema'},
-                                                                     num_problems=1, num_submissions=1)
+        collection = create_collection("Colleccion de prueba XYZ")
+        select_problem = create_select_problem(collection, "SelectProblem ABC DEF")
+        user = create_user("5555", "tamara")
+        ach_submission = NumSubmissionsProblemsAchievementDefinition(
+            name={"es": "Un envio"},
+            description={"es": "Envia una solucion para un problema"},
+            num_problems=1,
+            num_submissions=1,
+        )
         ach_submission.save()
-        ach_submissions = NumSubmissionsProblemsAchievementDefinition(name={"es": 'Tres envios'},
-                                                                      description={
-                                                                          "es": 'Envia tres soluciones de un problema'},
-                                                                      num_problems=1, num_submissions=3)
+        ach_submissions = NumSubmissionsProblemsAchievementDefinition(
+            name={"es": "Tres envios"},
+            description={"es": "Envia tres soluciones de un problema"},
+            num_problems=1,
+            num_submissions=3,
+        )
         ach_submissions.save()
-        ach_type = NumSolvedTypeAchievementDefinition(name={"es": 'Es select'},
-                                                      description={"es": 'Resuelve un problema SELECT'},
-                                                      num_problems=1, problem_type=ProblemType.SELECT.name)
-        client.login(username='tamara', password='5555')  # nosec B106
-        submit_select_url = reverse('judge:submit', args=[select_problem.pk])
+        ach_type = NumSolvedTypeAchievementDefinition(
+            name={"es": "Es select"},
+            description={"es": "Resuelve un problema SELECT"},
+            num_problems=1,
+            problem_type=ProblemType.SELECT.name,
+        )
+        client.login(username="tamara", password="5555")  # nosec B106
+        submit_select_url = reverse("judge:submit", args=[select_problem.pk])
 
         # The user submits one solution and obtains the first achievement
-        response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
+        response = client.post(submit_select_url, {"code": "MAL"}, follow=True)  # Validation Error, too short
         obtained_achieve = ObtainedAchievement.objects.filter(user=user)
-        self.assertIn(obtained_achieve[0].achievement_definition.name['es'], response.json()['achievements'])
+        self.assertIn(obtained_achieve[0].achievement_definition.name["es"], response.json()["achievements"])
 
         # The user submits a new solution and does not receive any achievement
-        response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
-        self.assertNotIn('achievements', response.json())
+        response = client.post(submit_select_url, {"code": "MAL"}, follow=True)  # Validation Error, too short
+        self.assertNotIn("achievements", response.json())
 
         # The user makes another submission and obtain two achievements
         ach_type.save()
         curr_path = os.path.dirname(__file__)
         zip_select_path = os.path.join(curr_path, TestPaths.ZIP_FOLDER, TestPaths.SELECT_OK)
-        collection = create_collection('Coleccion 1')
+        collection = create_collection("Coleccion 1")
         select = SelectProblem(zipfile=zip_select_path, collection=collection)
         select.clean()
         select.save()
-        submit_url = reverse('judge:submit', args=[select.pk])
-        response = client.post(submit_url, {'code': select.solution}, follow=True)
+        submit_url = reverse("judge:submit", args=[select.pk])
+        response = client.post(submit_url, {"code": select.solution}, follow=True)
         obtained_achieve = ObtainedAchievement.objects.filter(user=user)
-        self.assertIn(obtained_achieve[1].achievement_definition.name['es'], response.json()['achievements'])
-        self.assertIn(obtained_achieve[2].achievement_definition.name['es'], response.json()['achievements'])
+        self.assertIn(obtained_achieve[1].achievement_definition.name["es"], response.json()["achievements"])
+        self.assertIn(obtained_achieve[2].achievement_definition.name["es"], response.json()["achievements"])
 
         # The user submits a new solution and does not receive any achievement
-        response = client.post(submit_select_url, {'code': 'MAL'}, follow=True)  # Validation Error, too short
-        self.assertNotIn('achievements', response.json())
+        response = client.post(submit_select_url, {"code": "MAL"}, follow=True)  # Validation Error, too short
+        self.assertNotIn("achievements", response.json())

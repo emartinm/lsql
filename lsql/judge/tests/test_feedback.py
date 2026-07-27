@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
@@ -7,8 +6,14 @@ Unit tests for the feedback module
 
 from django.test import TestCase
 
-from judge.feedback import pretty_type, header_to_str, compare_select_results, compare_db_results, \
-    compare_function_results, compare_discriminant_db
+from judge.feedback import (
+    compare_db_results,
+    compare_discriminant_db,
+    compare_function_results,
+    compare_select_results,
+    header_to_str,
+    pretty_type,
+)
 from judge.types import VerdictCode
 
 
@@ -17,36 +22,75 @@ class FeedbackTest(TestCase):
 
     def test_class_names(self):
         """Test for function pretty_type"""
-        self.assertEqual(pretty_type("<class 'cx_Oracle.INTEGER'>"), 'INTEGER')
-        self.assertEqual(pretty_type("otro tipo"), 'otro tipo')
+        self.assertEqual(pretty_type("<class 'cx_Oracle.INTEGER'>"), "INTEGER")
+        self.assertEqual(pretty_type("otro tipo"), "otro tipo")
 
     def test_header_to_str(self):
         """Test for header_to_str"""
-        header = [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]]
+        header = [["ID", "<class 'cx_Oracle.NUMBER'>"], ["NOMBRE", "<class 'cx_Oracle.STRING'>"]]
         expected = "(ID: NUMBER, NOMBRE: STRING)"
         self.assertEqual(header_to_str(header), expected)
 
     def test_compare_select(self):
         """Test for compare_select_results"""
-        expected = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                    'rows': [[1, 'a'], [2, 'b']]}
-        obtained1 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                     'rows': [[2, 'b'], [1, 'a']]}
-        obtained2 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                     'rows': [[1, 'a']]}
-        obtained3 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                     'rows': [[1, 'a'], [2, 'b'], [3, 'a']]}
-        obtained4 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                     'rows': [[1, 'a'], [2, 'b'], [1, 'a']]}
-        obtained5 = {'header': [['IDi', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                     'rows': [[1, 'a'], [2, 'b']]}
-        obtained6 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.NUMBER'>"]],
-                     'rows': [[1, 'a'], [2, 'b']]}
-        obtained7 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"]],
-                     'rows': [[1], [2]]}
-        obtained8 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"],
-                                ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                     'rows': [[1, 'a', 'a'], [2, 'b', 'b']]}
+        expected = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"]],
+        }
+        obtained1 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[2, "b"], [1, "a"]],
+        }
+        obtained2 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"]],
+        }
+        obtained3 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"], [3, "a"]],
+        }
+        obtained4 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"], [1, "a"]],
+        }
+        obtained5 = {
+            "header": [
+                ["IDi", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"]],
+        }
+        obtained6 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.NUMBER'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"]],
+        }
+        obtained7 = {"header": [["ID", "<class 'cx_Oracle.NUMBER'>"]], "rows": [[1], [2]]}
+        obtained8 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a", "a"], [2, "b", "b"]],
+        }
 
         # Expected equal to obtained
         self.assertEqual(compare_select_results(expected, expected, True)[0], VerdictCode.AC)
@@ -78,25 +122,59 @@ class FeedbackTest(TestCase):
 
     def test_feedback_headers(self):
         """Test for feedback_headers"""
-        expected = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                    'rows': [[1, 'a'], [2, 'b']]}
-        obtained1 = {'header': [['NOMBRE', "<class 'cx_Oracle.STRING'>"], ['ID', "<class 'cx_Oracle.NUMBER'>"]],
-                     'rows': [['b', 2], ['a', 1]]}
-        obtained2 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"],
-                                ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                     'rows': [[1, 'a', 'a'], [2, 'b', 'b']]}
+        expected = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"]],
+        }
+        obtained1 = {
+            "header": [
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+            ],
+            "rows": [["b", 2], ["a", 1]],
+        }
+        obtained2 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a", "a"], [2, "b", "b"]],
+        }
 
-        obtained3 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"]],
-                     'rows': [[1], [2]]}
+        obtained3 = {"header": [["ID", "<class 'cx_Oracle.NUMBER'>"]], "rows": [[1], [2]]}
 
-        obtained4 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.NUMBER'>"]],
-                     'rows': [[1, 'a'], [2, 'b']]}
-        obtained5 = {'header': [['id', "<class 'cx_Oracle.NUMBER'>"], ['nombre', "<class 'cx_Oracle.STRING'>"]],
-                     'rows': [[1, 'a'], [2, 'b']]}
-        obtained6 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['nombre', "<class 'cx_Oracle.STRING'>"]],
-                     'rows': [[1, 'a'], [2, 'b']]}
-        obtained7 = {'header': [['Id', "<class 'cx_Oracle.NUMBER'>"], ['NoMbre', "<class 'cx_Oracle.STRING'>"]],
-                     'rows': [[1, 'a'], [2, 'b']]}
+        obtained4 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.NUMBER'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"]],
+        }
+        obtained5 = {
+            "header": [
+                ["id", "<class 'cx_Oracle.NUMBER'>"],
+                ["nombre", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"]],
+        }
+        obtained6 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["nombre", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"]],
+        }
+        obtained7 = {
+            "header": [
+                ["Id", "<class 'cx_Oracle.NUMBER'>"],
+                ["NoMbre", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"]],
+        }
         # Comprobacion correcta
         self.assertEqual(compare_select_results(expected, expected, True)[0], VerdictCode.AC)
         self.assertEqual(compare_select_results(expected, expected, False)[0], VerdictCode.AC)
@@ -112,11 +190,17 @@ class FeedbackTest(TestCase):
 
         # Obtenido con mas filas que el esperado, compruebo sus mensajes
         self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained2, True)[1])
-        self.assertIn("Generado por tu código SQL: 3 columnas", compare_select_results(expected, obtained2, True)[1])
+        self.assertIn(
+            "Generado por tu código SQL: 3 columnas",
+            compare_select_results(expected, obtained2, True)[1],
+        )
         self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained2, True)[1])
 
         self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained2, False)[1])
-        self.assertIn("Generado por tu código SQL: 3 columnas", compare_select_results(expected, obtained2, False)[1])
+        self.assertIn(
+            "Generado por tu código SQL: 3 columnas",
+            compare_select_results(expected, obtained2, False)[1],
+        )
         self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained2, False)[1])
 
         # Comprobacion de que salen WA
@@ -125,11 +209,17 @@ class FeedbackTest(TestCase):
 
         # Obtenido con menos filas que el esperado, compruebo sus mensajes
         self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained3, True)[1])
-        self.assertIn("Generado por tu código SQL: 1 columnas", compare_select_results(expected, obtained3, True)[1])
+        self.assertIn(
+            "Generado por tu código SQL: 1 columnas",
+            compare_select_results(expected, obtained3, True)[1],
+        )
         self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained3, True)[1])
 
         self.assertIn("Esperado: 2 columnas", compare_select_results(expected, obtained3, False)[1])
-        self.assertIn("Generado por tu código SQL: 1 columnas", compare_select_results(expected, obtained3, False)[1])
+        self.assertIn(
+            "Generado por tu código SQL: 1 columnas",
+            compare_select_results(expected, obtained3, False)[1],
+        )
         self.assertIn("Número de columnas obtenidas:", compare_select_results(expected, obtained3, False)[1])
 
         # Comprobacion de que salen WA
@@ -139,30 +229,50 @@ class FeedbackTest(TestCase):
         # Comprobacion de que las columnas estan cambiadas Esperado: ID NOMBRE y obtengo NOMBRE ID
         self.assertIn("nombre de la 1ª columna", compare_select_results(expected, obtained1, False)[1])
         self.assertIn("Nombre esperado: ID", compare_select_results(expected, obtained1, False)[1])
-        self.assertIn("Nombre generado por tu código SQL: NOMBRE",
-                      compare_select_results(expected, obtained1, False)[1])
+        self.assertIn(
+            "Nombre generado por tu código SQL: NOMBRE",
+            compare_select_results(expected, obtained1, False)[1],
+        )
 
         # Comprobacion de que salen WA
         self.assertEqual(compare_select_results(expected, obtained4, False)[0], VerdictCode.WA)
         self.assertEqual(compare_select_results(expected, obtained4, True)[0], VerdictCode.WA)
 
         # Comprobacion de que los tipos no son los adecuados
-        self.assertIn("Tipo generado por tu código SQL: ", compare_select_results(expected, obtained4, True)[1])
+        self.assertIn(
+            "Tipo generado por tu código SQL: ",
+            compare_select_results(expected, obtained4, True)[1],
+        )
         self.assertIn("tipo de la columna NOMBRE", compare_select_results(expected, obtained4, False)[1])
 
     def test_compare_db(self):
         """Tests for compare_db_results"""
-        table1 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                  'rows': [[1, 'a'], [2, 'b']]}
-        table2 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                  'rows': [[1, 'zzzz'], [2, 'b']]}
-        table3 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                  'rows': [[2, 'b'], [1, 'a']]}
-        expected = {'table1': table1, 'table2': table1}
-        obtained1 = {'table1': table1}
-        obtained2 = {'table1': table1, 'table2': table1, 'table3': table1}
-        obtained3 = {'table1': table1, 'table2': table2}
-        obtained4 = {'table1': table1, 'table2': table3}
+        table1 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"]],
+        }
+        table2 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "zzzz"], [2, "b"]],
+        }
+        table3 = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[2, "b"], [1, "a"]],
+        }
+        expected = {"table1": table1, "table2": table1}
+        obtained1 = {"table1": table1}
+        obtained2 = {"table1": table1, "table2": table1, "table3": table1}
+        obtained3 = {"table1": table1, "table2": table2}
+        obtained4 = {"table1": table1, "table2": table3}
 
         # Identical DB
         self.assertEqual(compare_db_results(expected, expected)[0], VerdictCode.AC)
@@ -177,16 +287,26 @@ class FeedbackTest(TestCase):
 
     def test_compare_function(self):
         """Tests for compare_function_results"""
-        expected = {'fun(1)': (3, '<cx_Oracle.DbType DB_TYPE_NUMBER>'),
-                    'fun(2)': (56, '<cx_Oracle.DbType DB_TYPE_NUMBER>')}
-        obtained1 = {'fun(1)': (3, '<cx_Oracle.DbType DB_TYPE_NUMBER>'),
-                     'fun(2)': (5, '<cx_Oracle.DbType DB_TYPE_NUMBER>')}
-        obtained2 = {'fun(1)': (33, '<cx_Oracle.DbType DB_TYPE_NUMBER>'),
-                     'fun(2)': (56, '<cx_Oracle.DbType DB_TYPE_NUMBER>')}
-        obtained3 = {'fun(1)': (3, '<cx_Oracle.DbType DB_TYPE_NUMBER>'),
-                     'fun(2)': (56, '<cx_Oracle.DbType DB_TYPE_VARCHAR>')}
-        obtained4 = {'fun(1)': (3, '<cx_Oracle.DbType DB_TYPE_VARCHAR>'),
-                     'fun(2)': (56, '<cx_Oracle.DbType DB_TYPE_NUMBER>')}
+        expected = {
+            "fun(1)": (3, "<cx_Oracle.DbType DB_TYPE_NUMBER>"),
+            "fun(2)": (56, "<cx_Oracle.DbType DB_TYPE_NUMBER>"),
+        }
+        obtained1 = {
+            "fun(1)": (3, "<cx_Oracle.DbType DB_TYPE_NUMBER>"),
+            "fun(2)": (5, "<cx_Oracle.DbType DB_TYPE_NUMBER>"),
+        }
+        obtained2 = {
+            "fun(1)": (33, "<cx_Oracle.DbType DB_TYPE_NUMBER>"),
+            "fun(2)": (56, "<cx_Oracle.DbType DB_TYPE_NUMBER>"),
+        }
+        obtained3 = {
+            "fun(1)": (3, "<cx_Oracle.DbType DB_TYPE_NUMBER>"),
+            "fun(2)": (56, "<cx_Oracle.DbType DB_TYPE_VARCHAR>"),
+        }
+        obtained4 = {
+            "fun(1)": (3, "<cx_Oracle.DbType DB_TYPE_VARCHAR>"),
+            "fun(2)": (56, "<cx_Oracle.DbType DB_TYPE_NUMBER>"),
+        }
 
         # Identical
         self.assertEqual(compare_function_results(expected, expected)[0], VerdictCode.AC)
@@ -201,19 +321,40 @@ class FeedbackTest(TestCase):
 
     def test_discriminant_feedback(self):
         """Test for compare discriminant type problems feedback"""
-        header_e = {'header': [['id', "<class 'cx_Oracle.NUMBER'>"], ['nombre', "<class 'cx_Oracle.STRING'>"]],
-                    'rows': [[1, 'a'], [2, 'b']]}
-        header_o = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"]], 'rows': [[1], [2]]}
-        ac_e = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                  'rows': [[1, 'a'], [2, 'b']]}
-        ac_o = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['NOMBRE', "<class 'cx_Oracle.STRING'>"]],
-                  'rows': [[1, 'a']]}
-        order_1 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['PK', "<class 'cx_Oracle.NUMBER'>"]],
-                  'rows': [[1, 1], [2, 2]]}
-        order_2 = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['PK', "<class 'cx_Oracle.NUMBER'>"]],
-                  'rows': [[2, 2], [1, 1]]}
-        order_2_bis = {'header': [['ID', "<class 'cx_Oracle.NUMBER'>"], ['PK', "<class 'cx_Oracle.NUMBER'>"]],
-                   'rows': [[2, 2], [1, 1]]}
+        header_e = {
+            "header": [
+                ["id", "<class 'cx_Oracle.NUMBER'>"],
+                ["nombre", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"]],
+        }
+        header_o = {"header": [["ID", "<class 'cx_Oracle.NUMBER'>"]], "rows": [[1], [2]]}
+        ac_e = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"], [2, "b"]],
+        }
+        ac_o = {
+            "header": [
+                ["ID", "<class 'cx_Oracle.NUMBER'>"],
+                ["NOMBRE", "<class 'cx_Oracle.STRING'>"],
+            ],
+            "rows": [[1, "a"]],
+        }
+        order_1 = {
+            "header": [["ID", "<class 'cx_Oracle.NUMBER'>"], ["PK", "<class 'cx_Oracle.NUMBER'>"]],
+            "rows": [[1, 1], [2, 2]],
+        }
+        order_2 = {
+            "header": [["ID", "<class 'cx_Oracle.NUMBER'>"], ["PK", "<class 'cx_Oracle.NUMBER'>"]],
+            "rows": [[2, 2], [1, 1]],
+        }
+        order_2_bis = {
+            "header": [["ID", "<class 'cx_Oracle.NUMBER'>"], ["PK", "<class 'cx_Oracle.NUMBER'>"]],
+            "rows": [[2, 2], [1, 1]],
+        }
         # Incorrect headers
         self.assertEqual(compare_discriminant_db(header_e, header_o, False)[0], VerdictCode.WA)
         # Correct answer
@@ -221,8 +362,12 @@ class FeedbackTest(TestCase):
         # Correct answer with order
         self.assertEqual(compare_discriminant_db(order_1, order_2, True)[0], VerdictCode.AC)
         # Incorrect answer with order
-        self.assertIn('La inserción que has propuesto no permite detectar el comportamiento erróneo de la sentencia.',
-                      compare_discriminant_db(order_2, order_2_bis, True)[1])
+        self.assertIn(
+            "La inserción que has propuesto no permite detectar el comportamiento erróneo de la sentencia.",
+            compare_discriminant_db(order_2, order_2_bis, True)[1],
+        )
         # Incorrect answer without order
-        self.assertIn('La inserción que has propuesto no permite detectar el comportamiento erróneo de la sentencia.',
-                      compare_discriminant_db(ac_o, ac_e, False)[1])
+        self.assertIn(
+            "La inserción que has propuesto no permite detectar el comportamiento erróneo de la sentencia.",
+            compare_discriminant_db(ac_o, ac_e, False)[1],
+        )

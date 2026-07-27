@@ -1,4 +1,3 @@
- # -*- coding: utf-8 -*-
 """
 Copyright Iván Ruiz <ivarui01@ucm.es> 2021
 
@@ -13,15 +12,16 @@ register = template.Library()
 @register.simple_tag
 def language_to_flag(code):
     """Generates css flag class for the language code"""
-    if code.lower() == 'en':
-        return 'fi fi-us'
-    return 'fi fi-' + code.lower()
+    if code.lower() == "en":
+        return "fi fi-us"
+    return "fi fi-" + code.lower()
+
 
 @register.simple_tag
 def collection_flags(languages):
     """Generates the necessary css flag classes for the language codes in a list"""
     flags = []
-    if languages != ['es']:
+    if languages != ["es"]:
         for lang in languages:
             flags.append(language_to_flag(lang))
     return flags
