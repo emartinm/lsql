@@ -1,7 +1,7 @@
 asgiref==3.12.1
 bandit==1.9.4
 beautifulsoup4==4.15.0
-certifi==2026.6.17
+certifi==2026.7.22
 cffi==2.1.0
 coverage==7.15.2
 cryptography==49.0.0
