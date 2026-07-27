@@ -95,6 +95,7 @@ jobs:
       run: |
         ./tests_ci.sh
       env:
+        SECRET_KEY: dummy_pass
         ORACLE_SID: XE
         ORACLE_MAX_GESTOR_CONNECTIONS: 20
         ORACLE_GESTOR_POOL_TIMEOUT_MS: 20000

@@ -13,8 +13,6 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 
-from django.core.management.utils import get_random_secret_key
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -23,8 +21,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# Takes the key from the environment or creates a new one
-SECRET_KEY = os.environ.get("SECRET_KEY", get_random_secret_key())
+# Fails immediately at startup (in both DEVELOPMENT and DEPLOYMENT) if not defined, instead of
+# silently falling back to a fresh random key on every process/worker restart
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

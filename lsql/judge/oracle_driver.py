@@ -385,13 +385,13 @@ class OracleExecutor:
     __CREATE_USER_SCRIPT = (
         'CREATE USER {} IDENTIFIED BY "{}" DEFAULT TABLESPACE {} TEMPORARY TABLESPACE TEMP QUOTA UNLIMITED ON {}'
     )
-    __GRANT_USER_SCRIPT = (
-        "GRANT create table, delete any table, select any dictionary, connect, create session , "
-        "create synonym , create public synonym, create sequence, create view , "
-        "create trigger, alter any trigger, drop any trigger, "
-        "create procedure, alter any procedure, drop any procedure, execute any procedure "
-        "TO {}"
+    __ROLE_NAME = "ROL_ESTUDIANTE_BD"
+    __CREATE_ROLE_SCRIPT = f"CREATE ROLE {__ROLE_NAME}"
+    __GRANT_PRIVILEGES_TO_ROLE_SCRIPT = (
+        f"GRANT CREATE SESSION, CREATE TABLE, CREATE VIEW, CREATE SEQUENCE, "
+        f"CREATE PROCEDURE, CREATE TRIGGER TO {__ROLE_NAME}"
     )
+    __GRANT_ROLE_SCRIPT = f"GRANT {__ROLE_NAME} TO {{}}"
     __DROP_USER_SCRIPT = "DROP USER {} CASCADE"
     __USER_CONNECTIONS = """SELECT s.sid, s.serial#, s.username
                                 FROM   gv$session s
@@ -434,12 +434,32 @@ class OracleExecutor:
             wait_timeout=int(os.environ["ORACLE_GESTOR_POOL_TIMEOUT_MS"]),
         )
         self.version = None
+        self._ensure_role_exists()
         logger.debug(
             "Created an OracleExecutor to %s with a pool of %s connections with a timeout of %s ms",
             self.dsn_tns,
             int(os.environ["ORACLE_MAX_GESTOR_CONNECTIONS"]),
             int(os.environ["ORACLE_GESTOR_POOL_TIMEOUT_MS"]),
         )
+
+    def _ensure_role_exists(self):
+        """
+        Creates the role granted to every sandboxed student user, if it does not already exist.
+        Re-applies the GRANT on every startup so the role's privileges always match this code,
+        and tolerates a concurrent creation by another worker process (ORA-01921)
+        """
+        gestor = self.connection_pool.acquire()
+        try:
+            with gestor.cursor() as cursor:
+                try:
+                    cursor.execute(self.__CREATE_ROLE_SCRIPT)
+                except oracledb.DatabaseError as excp:
+                    (oracle_error,) = excp.args
+                    if oracle_error.code != 1921:  # ORA-01921: role already exists
+                        raise
+                cursor.execute(self.__GRANT_PRIVILEGES_TO_ROLE_SCRIPT)
+        finally:
+            self.connection_pool.release(gestor)
 
     def get_version(self):
         """Returns the version of the Oracle server"""
@@ -462,7 +482,7 @@ class OracleExecutor:
         create_script = self.__CREATE_USER_SCRIPT.format(
             user_name, user_passwd, os.environ["ORACLE_TABLESPACE"], os.environ["ORACLE_TABLESPACE"]
         )
-        grant_script = self.__GRANT_USER_SCRIPT.format(user_name)
+        grant_script = self.__GRANT_ROLE_SCRIPT.format(user_name)
 
         with connection.cursor() as cursor:
             cursor.execute(create_script)
