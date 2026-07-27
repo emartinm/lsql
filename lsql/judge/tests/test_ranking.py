@@ -27,7 +27,7 @@ from judge.tests.test_common import (
     create_user,
 )
 from judge.types import ProblemType, VerdictCode
-from judge.views import first_day_of_course
+from judge.views import first_day_of_course, sanitize_spreadsheet_cell
 
 
 def create_an_achievement_of_each(coll):
@@ -497,3 +497,14 @@ class RankingTest(TestCase):
         client.login(username=user.username, password="2222")  # nosec B106
         response = client.get(url, {"group": group_a.id, "start": start, "end": end}, follow=True)
         self.assertIn("pero no está autorizado a acceder a esta página", response.content.decode("utf-8"))
+
+    def test_sanitize_spreadsheet_cell(self):
+        """sanitize_spreadsheet_cell prefixes formula-trigger characters and leaves everything
+        else untouched"""
+        for prefix in ("=", "+", "-", "@", "\t", "\r"):
+            value = f"{prefix}cmd|'/C calc'!A0"
+            self.assertEqual(sanitize_spreadsheet_cell(value), f"'{value}")
+
+        self.assertEqual(sanitize_spreadsheet_cell("tamara"), "tamara")
+        self.assertEqual(sanitize_spreadsheet_cell(""), "")
+        self.assertEqual(sanitize_spreadsheet_cell(42), 42)

@@ -537,6 +537,17 @@ def cell_ranking(problem):
     return cell_str
 
 
+_FORMULA_INJECTION_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def sanitize_spreadsheet_cell(value):
+    """Neutralizes CSV/formula injection by prefixing values that a spreadsheet
+    application could interpret as a formula with a leading apostrophe"""
+    if isinstance(value, str) and value.startswith(_FORMULA_INJECTION_PREFIXES):
+        return "'" + value
+    return value
+
+
 @staff_member_required
 def download_ranking(request, collection_id):
     """Download ODS file with the ranking. Receives the following GET parameters:
@@ -559,21 +570,21 @@ def download_ranking(request, collection_id):
 
     sheet_rows = [
         # Sheet header: collection name, dates and group in first 4 rows
-        [gettext("Colección"), collection.name_md],
-        [gettext("Grupo"), str(group)],
+        [gettext("Colección"), sanitize_spreadsheet_cell(collection.name_md)],
+        [gettext("Grupo"), sanitize_spreadsheet_cell(str(group))],
         [gettext("Desde"), str(start)],
         [gettext("Hasta"), str(end)],
         [],
         # Table header [Pos., User, Exercises..., Score, Solved] in row 6
         [gettext("Pos."), gettext("Usuario")]
-        + [problem.title_md for problem in collection.problems()]
+        + [sanitize_spreadsheet_cell(problem.title_md) for problem in collection.problems()]
         + [gettext("Puntuación."), gettext("Resueltos")],
     ]
 
     # Ranking row by row
     for user in collection.ranking(start, end, group):
         sheet_rows.append(
-            [user.pos, user.username]
+            [user.pos, sanitize_spreadsheet_cell(user.username)]
             + [cell_ranking(problem) for _, problem in user.results.items()]
             + [user.score, user.num_solved]
         )
