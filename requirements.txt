@@ -1,7 +1,7 @@
 asgiref==3.12.1
 bandit==1.9.4
 beautifulsoup4==4.15.0
-certifi==2026.6.17
+certifi==2026.7.22
 cffi==2.1.0
 coverage==7.15.2
 cryptography==49.0.0
@@ -14,7 +14,7 @@ lazy-object-proxy==1.12.0
 lml==0.2.0
 logzero==1.7.0
 lxml==6.1.1
-Markdown==3.10.2
+Markdown==3.10.3
 markdown-it-py==4.2.0
 mdurl==0.1.2
 multiset==3.2.0
@@ -29,7 +29,7 @@ Pygments==2.20.0
 pytz==2026.3.post1
 PyYAML==6.0.3
 rich==15.0.0
-ruff==0.16.0
+ruff==0.16.1
 sentry-sdk==2.66.1
 soupsieve==2.9.1
 sqlglot==30.14.0
