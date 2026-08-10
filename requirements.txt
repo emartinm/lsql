@@ -2,11 +2,11 @@ asgiref==3.12.1
 bandit==1.9.4
 beautifulsoup4==4.15.0
 certifi==2026.7.22
-cffi==2.1.0
-coverage==7.15.2
+cffi==2.1.1
+coverage==7.15.4
 cryptography==49.0.0
 defusedxml==0.7.1
-Django==6.0.7
+Django==6.1
 django-axes==8.3.1
 django-model-utils==5.0.0
 gunicorn==26.0.0
@@ -19,7 +19,7 @@ markdown-it-py==4.2.0
 mdurl==0.1.2
 multiset==3.2.0
 oracledb==4.0.2
-packaging==26.2
+packaging==26.3
 psycopg2-binary==2.9.12
 pycparser==3.0
 pyexcel-ezodf==0.3.4
@@ -32,7 +32,7 @@ rich==15.0.0
 ruff==0.16.1
 sentry-sdk==2.66.1
 soupsieve==2.9.1
-sqlglot==30.14.0
+sqlglot==30.15.0
 sqlparse==0.5.5
 stevedore==5.9.0
 typing_extensions==4.16.0
