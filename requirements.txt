@@ -20,7 +20,7 @@ mdurl==0.1.2
 multiset==3.2.0
 oracledb==26.0.0
 packaging==26.3
-psycopg2-binary==2.9.12
+psycopg2-binary==2.9.13
 pycparser==3.0
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.8
@@ -29,8 +29,8 @@ Pygments==2.21.0
 pytz==2026.3.post1
 PyYAML==6.0.3
 rich==15.0.0
-ruff==0.16.6
-sentry-sdk==2.68.1
+ruff==0.16.7
+sentry-sdk==2.69.1
 soupsieve==2.9.2
 sqlglot==30.18.0
 sqlparse==0.6.0
