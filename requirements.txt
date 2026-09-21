@@ -3,7 +3,7 @@ bandit==1.9.4
 beautifulsoup4==4.15.0
 certifi==2026.7.22
 cffi==2.1.1
-coverage==7.16.0
+coverage==7.16.1
 cryptography==50.0.1
 defusedxml==0.7.1
 Django==6.1.1
@@ -29,11 +29,11 @@ Pygments==2.21.0
 pytz==2026.3.post1
 PyYAML==6.0.3
 rich==15.0.0
-ruff==0.16.7
-sentry-sdk==2.69.1
+ruff==0.16.8
+sentry-sdk==2.69.2
 soupsieve==2.9.2
 sqlglot==30.18.0
 sqlparse==0.6.0
 stevedore==5.9.1
 typing_extensions==4.16.0
-urllib3==2.7.0
+urllib3==2.8.0
