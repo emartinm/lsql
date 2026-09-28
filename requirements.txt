@@ -18,7 +18,7 @@ Markdown==3.10.3
 markdown-it-py==4.2.0
 mdurl==0.1.2
 multiset==3.2.0
-oracledb==26.0.0
+oracledb==26.0.1
 packaging==26.3
 psycopg2-binary==2.9.13
 pycparser==3.0
@@ -26,13 +26,13 @@ pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.8
 pyexcel-ods3==0.6.1
 Pygments==2.21.0
-pytz==2026.3.post1
+pytz==2026.4
 PyYAML==6.0.3
 rich==15.0.0
-ruff==0.16.8
-sentry-sdk==2.69.2
-soupsieve==2.9.2
-sqlglot==30.18.0
+ruff==0.16.9
+sentry-sdk==2.70.0
+soupsieve==2.10
+sqlglot==30.19.0
 sqlparse==0.6.0
 stevedore==5.9.1
 typing_extensions==4.16.0
