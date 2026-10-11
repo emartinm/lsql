@@ -126,6 +126,10 @@ DATABASES = {
         "PASSWORD": os.environ.get("PG_PASS", ""),
         "HOST": os.environ.get("PG_SERVER", "localhost"),
         "PORT": os.environ.get("PG_PORT", 9000),
+        "OPTIONS": {
+            "server_side_binding": True,  # opt in; Django defaults to client-side binding for compatibility
+            "pool": True,                 # Django 5.1+, needs psycopg[pool]
+        },
     }
 }
 

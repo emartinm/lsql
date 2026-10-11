@@ -4,7 +4,7 @@ Unit tests for the submits
 
 import os
 
-import psycopg2
+import psycopg
 from django.conf import settings
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -315,7 +315,7 @@ class SubmitTest(TestCase):
         admin-connection pool. 'In flight' is simulated by holding the same Postgres advisory
         lock the view uses, from a genuinely separate DB session (Django's test Client reuses
         the same connection/transaction as the test itself, so the lock must be taken from an
-        independent psycopg2 connection to actually behave like a concurrent request)"""
+        independent psycopg connection to actually behave like a concurrent request)"""
         client = Client()
         collection = create_collection("Colleccion de prueba concurrencia")
         select_problem = create_select_problem(collection, "SelectProblem concurrencia")
@@ -324,7 +324,7 @@ class SubmitTest(TestCase):
         submit_url = reverse("judge:submit", args=[select_problem.pk])
 
         db_settings = settings.DATABASES["default"]
-        other_session = psycopg2.connect(
+        other_session = psycopg.connect(
             dbname=db_settings["NAME"],
             user=db_settings["USER"],
             password=db_settings["PASSWORD"],
