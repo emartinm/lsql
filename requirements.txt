@@ -6,7 +6,7 @@ cffi==2.1.1
 coverage==7.16.2
 cryptography==50.0.2
 defusedxml==0.7.1
-Django==6.1.1
+Django==6.1.2
 django-axes==8.3.1
 django-model-utils==5.0.0
 gunicorn==26.2.0
@@ -23,12 +23,12 @@ packaging==26.3
 psycopg==3.3.6
 psycopg-binary==3.3.6
 psycopg-pool==3.3.3
-pycparser==3.0
+pycparser==3.1
 pyexcel-ezodf==0.3.4
 pyexcel-io==0.6.8
 pyexcel-ods3==0.6.1
 Pygments==2.21.0
-pytz==2026.4
+pytz==2026.5
 PyYAML==6.0.3
 rich==15.0.0
 ruff==0.16.10
