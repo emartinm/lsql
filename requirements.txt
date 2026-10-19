@@ -33,7 +33,7 @@ PyYAML==6.0.3
 rich==15.0.0
 ruff==0.16.10
 sentry-sdk==2.71.0
-soupsieve==2.10
+soupsieve==3.0.3
 sqlglot==30.21.0
 sqlparse==0.6.0
 stevedore==5.9.1
