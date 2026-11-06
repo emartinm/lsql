@@ -1,0 +1,22 @@
+# systemd unit of the SQL judge (Django + gunicorn). Replace <user> and <base>
+# (see deploy/manage.sh for the layout) and copy it to /etc/systemd/system/lsql.service.
+#
+#   sudo systemctl daemon-reload && sudo systemctl enable --now lsql
+
+[Unit]
+Description=Learn SQL (Django + gunicorn)
+# If PostgreSQL or Oracle run on this machine as systemd services, add them here
+# (Requires= for PostgreSQL, Wants= for Oracle, and both in After=).
+After=network.target
+
+[Service]
+User=<user>
+Group=<user>
+EnvironmentFile=<base>/env
+WorkingDirectory=<base>/app/lsql
+ExecStart=<base>/venv/bin/gunicorn -c <base>/app/deploy/gunicorn.conf.py lsql.wsgi
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

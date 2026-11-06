@@ -1,5 +1,5 @@
 """
-Django setting that will be loaded only in DEPLOYMENT: DJANGO_DEVELOPMENT is NOT defined in the environment
+Django settings loaded only in DEVELOPMENT (when DJANGO_DEVELOPMENT is defined in the environment)
 
-Can define new setting or override previous settings in settings_shared
+Can define new settings or override previous settings in settings_shared
 """

@@ -6,6 +6,8 @@
 
 **Automatic judge for database learning**
 
+Development guide: [DEVELOPMENT.md](DEVELOPMENT.md). Deployment and updates: [DEPLOYMENT.md](DEPLOYMENT.md).
+
 LearnSQL has been developed as an open source project under MIT license. 
 Its development and evaluation has been supported by the teaching innovation 
 projects of the Complutense University of Madrid INNOVA-Docencia 2020-21/18 
