@@ -11,6 +11,7 @@ import os
 import re
 import secrets
 import string
+import threading
 
 import oracledb
 import sqlparse
@@ -404,12 +405,16 @@ class OracleExecutor:
                               WHERE USERNAME LIKE 'LSQ_%' AND (SYSDATE-CREATED)*24*60*60 > :age_seconds"""
     __KILL_SESSION = """ALTER SYSTEM KILL SESSION '{},{}'"""
     __DB = None
+    # gunicorn runs several threads per process: only one of them may create the pool
+    __DB_LOCK = threading.Lock()
 
     @classmethod
     def get(cls):
         """Singleton DB"""
         if cls.__DB is None:
-            cls.__DB = OracleExecutor()
+            with cls.__DB_LOCK:
+                if cls.__DB is None:
+                    cls.__DB = OracleExecutor()
         return cls.__DB
 
     def __init__(self):
