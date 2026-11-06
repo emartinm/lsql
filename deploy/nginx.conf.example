@@ -5,8 +5,9 @@
 
 location = /sql { return 301 /sql/; }
 
-# STATIC_URL of the judge (settings_shared.py)
-location /static/ {
+# STATIC_URL of the judge (settings_shared.py). More specific than /sql/, so nginx serves
+# these files itself instead of passing them to gunicorn
+location /sql/static/ {
     alias <base>/app/lsql/allstaticfiles/;
 }
 

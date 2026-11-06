@@ -5,9 +5,11 @@
 
 [Unit]
 Description=Learn SQL (Django + gunicorn)
-# If PostgreSQL or Oracle run on this machine as systemd services, add them here
-# (Requires= for PostgreSQL, Wants= for Oracle, and both in After=).
-After=network.target
+# If PostgreSQL runs on this machine as a systemd service, add it with Requires= and After=.
+# Oracle goes with Wants= and not Requires=: if it stops, the web keeps working and only the
+# submissions fail (with Requires= the whole judge would stop with it and not come back).
+Wants=lsql-oracle.service
+After=network.target lsql-oracle.service
 
 [Service]
 User=<user>

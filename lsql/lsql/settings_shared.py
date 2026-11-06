@@ -170,7 +170,8 @@ LOCALE_PATHS = [os.path.join(BASE_DIR, "locale")]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
-STATIC_URL = "/static/"
+# Under /sql/ like the rest of the judge, so that other applications of the same domain can have their own
+STATIC_URL = "/sql/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "allstaticfiles")
 
 # Paths for the default authentication system

@@ -1,0 +1,27 @@
+# systemd unit of the Oracle XE container of the SQL judge (deploy/oracle-xe.sh). Replace <base>
+# and copy it to /etc/systemd/system/lsql-oracle.service. If you change the container name with
+# ORACLE_CONTAINER in <base>/env, use it also in ExecStartPre and ExecStop.
+#
+#   sudo systemctl daemon-reload && sudo systemctl enable --now lsql-oracle
+#
+# Requires=docker.service stops Oracle when Docker stops or restarts (e.g. an apt upgrade of
+# Docker); WantedBy=docker.service starts it again when Docker starts. Restart=always alone does
+# not cover that case, because systemd itself stopped the unit.
+
+[Unit]
+Description=Oracle XE of the SQL judge (Docker)
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+EnvironmentFile=<base>/env
+# A leftover container with the same name would make every "docker run" fail
+ExecStartPre=-/usr/bin/docker rm -f lsql-oracle
+ExecStart=<base>/app/deploy/oracle-xe.sh
+ExecStop=/usr/bin/docker stop lsql-oracle
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target docker.service

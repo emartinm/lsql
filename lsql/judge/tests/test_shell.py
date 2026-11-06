@@ -9,8 +9,6 @@ import datetime
 import os
 from tempfile import mkstemp
 
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.test import TestCase
 
 from judge.models import (
@@ -26,8 +24,6 @@ from judge.models import (
 from judge.shell import (
     adapt_db_result_to_list,
     apply_sql_checker,
-    create_users_from_csv,
-    create_users_from_list,
     extended_submissions,
     is_aggregation,
     is_exists,
@@ -57,130 +53,6 @@ from judge.types import VerdictCode
 
 class ShellTest(TestCase):
     """Tests for module parse"""
-
-    FILE_FOLDER = "csv_files"
-    CSV_OK_TEST = "test_ok.csv"
-    CSV_BAD_FORMAT = [
-        "csv_empty_document.csv",
-        "csv_empty_first.csv",
-        "csv_empty_name.csv",
-        "csv_empty_email.csv",
-        "csv_empty_last.csv",
-        "csv_non_ucm_email.csv",
-    ]
-
-    def test_create_users_from_list_bad(self):
-        """Invocations that must raise AssertionErrors"""
-        with self.assertRaises(AssertionError):
-            create_users_from_list(dict_list=[], group=None, dry=True)
-
-        with self.assertRaises(AssertionError):
-            create_users_from_list(
-                dict_list=[{"CORREO": "", "DOCUMENTO": "58962147S", "NOMBRE COMPLETO": "Calabaza, Manuel"}],
-                group="test",
-                dry=True,
-            )
-
-        with self.assertRaises(AssertionError):
-            create_users_from_list(
-                dict_list=[
-                    {
-                        "CORREO": "@ucm.es",
-                        "DOCUMENTO": "58962147S",
-                        "NOMBRE COMPLETO": "Calabaza, Manuel",
-                    }
-                ],
-                group="test",
-                dry=True,
-            )
-
-        with self.assertRaises(AssertionError):
-            create_users_from_list(
-                dict_list=[{"CORREO": "pep@ucm.es", "DOCUMENTO": "", "NOMBRE COMPLETO": "Calabaza, Manuel"}],
-                group="test",
-                dry=True,
-            )
-
-        with self.assertRaises(AssertionError):
-            create_users_from_list(
-                dict_list=[
-                    {
-                        "CORREO": "pep@ucm.es",
-                        "DOCUMENTO": "58962147S",
-                        "NOMBRE COMPLETO": "Calabaza,",
-                    }
-                ],
-                group="test",
-                dry=True,
-            )
-
-        with self.assertRaises(AssertionError):
-            create_users_from_list(
-                dict_list=[{"CORREO": "pep@ucm.es", "DOCUMENTO": "58962147S", "NOMBRE COMPLETO": ",Manuel"}],
-                group="test",
-                dry=True,
-            )
-
-    def test_valid_csv(self):
-        """Valid CSV file with 3 users"""
-        # Delete existing users and groups
-        Group.objects.all().delete()
-        get_user_model().objects.all().delete()
-
-        group_name = "Clase ABC curso X/Y"
-        curr_path = os.path.dirname(__file__)
-        path = os.path.join(curr_path, self.FILE_FOLDER, self.CSV_OK_TEST)
-
-        # Invoking with dry=True does not create users or groups
-        old_groups = list(Group.objects.all())
-        old_users = list(get_user_model().objects.all())
-        create_users_from_csv(path, group_name, dry=True)
-        new_groups = list(Group.objects.all())
-        new_users = list(get_user_model().objects.all())
-        self.assertEqual(old_groups, new_groups)
-        self.assertEqual(old_users, new_users)
-
-        # Invoking with dry=False does create a group with the expected users
-        create_users_from_csv(path, group_name, dry=False)
-
-        # The new group has 3 members
-        new_group = Group.objects.filter(name=group_name)[0]
-        self.assertEqual(len(new_group.user_set.all()), 3)
-
-        juan = get_user_model().objects.get(username="juan")
-        self.assertTrue(juan.check_password("11111111X"))
-        self.assertFalse(juan.check_password("11113111X"))
-        self.assertEqual(juan.first_name, "Juan")
-        self.assertEqual(juan.last_name, "_")
-        self.assertEqual(len(juan.groups.all()), 1)
-        self.assertEqual(juan.groups.all()[0], new_group)
-
-        eva = get_user_model().objects.get(username="eva")
-        self.assertTrue(eva.check_password("22222222X"))
-        self.assertFalse(eva.check_password("11113111X"))
-        self.assertEqual(eva.first_name, "EVA MARIA")
-        self.assertEqual(eva.last_name, "MARTIN KEPLER")
-        self.assertEqual(len(eva.groups.all()), 1)
-        self.assertEqual(eva.groups.all()[0], new_group)
-
-        froilan = get_user_model().objects.get(username="froilan")
-        self.assertTrue(froilan.check_password("33333333X"))
-        self.assertFalse(froilan.check_password("11113111X"))
-        self.assertEqual(froilan.first_name, "JUAN FROILAN DE TODOS LOS SANTOS DE JESÚS")
-        self.assertEqual(froilan.last_name, "KUPU KUPI")
-        self.assertEqual(len(froilan.groups.all()), 1)
-        self.assertEqual(froilan.groups.all()[0], new_group)
-
-    def test_bad_csv_format(self):
-        """CSV files where some fields are empty"""
-        curr_path = os.path.dirname(__file__)
-        for filename in self.CSV_BAD_FORMAT:
-            # Delete existing users and groups
-            get_user_model().objects.all().delete()
-            Group.objects.all().delete()
-            path = os.path.join(curr_path, self.FILE_FOLDER, filename)
-            with self.assertRaises(AssertionError):
-                create_users_from_csv(path, f"Test-{filename}", dry=True)
 
     def test_adapt_db_expected_list(self):
         """Test for adapting dictionaries in initial_db and expected_result to unitary lists"""

@@ -3,7 +3,7 @@ Django settings loaded only in DEPLOYMENT (when DJANGO_DEVELOPMENT is NOT define
 on top of settings_shared. See deploy/env.example.
 
 Additional environment variables:
-  ALLOWED_HOSTS     public host names of the judge, comma separated
+  ALLOWED_HOSTS     public host names of the judge, comma separated (required)
   SENTRY_DSN        (optional)
   SENTRY_TRACES_SAMPLE_RATE  (optional, 0.1 by default)
 """
@@ -16,9 +16,7 @@ import sentry_sdk
 DEBUG = False  # Redefined
 
 # Accept only requests directed to the public host names of the judge
-ALLOWED_HOSTS = [  # Redefined
-    host.strip() for host in os.environ.get("ALLOWED_HOSTS", "learn.fdi.ucm.es").split(",") if host.strip()
-]
+ALLOWED_HOSTS = [host.strip() for host in os.environ["ALLOWED_HOSTS"].split(",") if host.strip()]  # Redefined
 CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS]
 
 # Browsers are forced to connect using only HTTPS for 1 year

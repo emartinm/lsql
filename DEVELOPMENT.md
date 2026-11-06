@@ -1,93 +1,127 @@
 # Guía de desarrollo
 
-## Pasos previos
+## Requisitos
 
-* Se recomienda usar del editor de Python **PyCharm** (https://www.jetbrains.com/pycharm/) 
-en su versión *Community* (gratuita).
-* Es necesario disponer de un servidor de PostgreSQL 12 y otro de Oracle 11g XE, no importa si es en local o en remoto.
-* Las versiones de Python consideradas para el sistema son la 3.7 y la 3.8, pero **mejor 3.8**.
-* Para conectar con Oracle, además del paquete Python `cx_Oracle`, es necesario instalar Oracle Instant Client
-  tal y como se explica en https://cx-oracle.readthedocs.io/en/latest/user_guide/installation.html#quick-start-cx-oracle-installation.
-* Crear en la carpeta **venv** un *virtual environment* e instalar todas las dependencias:
-    ````
-    $ virtualenv venv
-    $ source venv/bin/activate
-    $ pip install -r requirements.txt
-    ````
-* Definir las siguientes variables de entorno. Lo más cómodo es crear un script **env.sh** que exporte todo de golpe. 
-  Se pueden ver valores de ejemplo de estas variables de entorno en el fichero `.travis.yml`.
-  * ORACLE_MAX_GESTOR_CONNECTIONS *(conexiones simultáneas que soportará Oracle)*
-  * ORACLE_GESTOR_POOL_TIMEOUT_MS *(tiempo en ms que esperará una conexión a Oracle, para cuando la cola esté llena)*
-  * ORACLE_STMT_TIMEOUT_MS *(tiempo en ms que esperará un comando SQL en Oracle a su resultado)*
-  * ORACLE_SERVER *(URL del servidor Oracle, usualmente `localhost`)*
-  * ORACLE_PORT= *(puerto del servidor Oracle, usualmente `1521`)*
-  * ORACLE_SID *(nombre de la base de datos Oracle, normalmente `xe`)*
-  * ORACLE_TABLESPACE *(nombre del tablespace que has creado en Oracle, que puede ser `USERS` si no has creado ningún
-  tablespace expresamente para esto)*
-  * ORACLE_USER *(usuario Oracle con permisos para crear otros usuarios, puede ser `SYSTEM` si no has creado un usuario
-    expresamente para esto)*
-  * ORACLE_PASS *(contraseña del usuario Oracle anterior)*
-  * ORACLE_MAX_COLS *(máximo número de columnas que puede tener el resultado de un ejercicio)*
-  * ORACLE_MAX_ROWS *(máximo número filas que puede tener el resultado de un ejercicio)*
-  * ORACLE_MAX_TABLES *(máximo número de tablas que puede tener el resultado de un ejercicio)*
-  * PG_USER *(usuario PostgreSQL, usualmente `postgres`)*
-  * PG_PASS *(la contraseña del usuario PostgreSQL)*
-  * PG_SERVER *(URL del servidor PostgreSQL, usualmente `localhost`)*
-  * PG_PORT *(puerto del servidor PostgreSQL, usualmente `5432`)*
-  * PG_DB *(nombre de la base de datos PostgreSQL a usar, usualmente `postgres`)*
-  
+- **Python 3.13** o posterior (es la versión de la integración continua y del despliegue).
+- **Docker**, para ejecutar PostgreSQL y Oracle en contenedores desechables.
+- **Oracle Instant Client** (19 o posterior): el juez usa `oracledb` en modo *thick*
+  (`oracledb.init_oracle_client()`), que necesita sus bibliotecas. Descarga el paquete *Basic* de
+  https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html,
+  descomprímelo (por ejemplo en `~/lib/instantclient_23_x`) y añade su directorio a
+  `LD_LIBRARY_PATH`. `install_oracle_instant_client.sh` hace lo mismo en `/tmp` (lo usa la
+  integración continua).
+- **libaio**, que necesita Instant Client:
+  - Ubuntu 22.04 o anterior: `sudo apt install libaio1`.
+  - Ubuntu 24.04 o posterior: el paquete se llama `libaio1t64` e instala `libaio.so.1t64`, pero
+    Instant Client busca `libaio.so.1`, así que hace falta un enlace en un directorio de
+    `LD_LIBRARY_PATH` (o en el del sistema):
+    ```sh
+    sudo apt install libaio1t64
+    ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 ~/lib/libaio.so.1
+    ```
+  Si falta, al conectar con Oracle aparece `DPI-1047: Cannot locate a 64-bit Oracle Client
+  library: "libaio.so.1: cannot open shared object file"`.
+- **DES** (Datalog Educational System), para la retroalimentación adicional de las consultas:
+  descarga la versión para Linux de https://des.sourceforge.io/ (la misma que
+  `install_des.sh`) y descomprímela en `des/` dentro del repositorio (está en `.gitignore`).
+  `DES_BIN` debe apuntar a `des/des_start`.
+
+## Entorno
+
+```sh
+python3 -m venv venv
+venv/bin/pip install -r requirements.txt
+```
+
+Toda la configuración se lee de variables de entorno (`lsql/lsql/settings_shared.py`,
+`settings_dev.py` y `settings_deploy.py`). Con `DJANGO_DEVELOPMENT` definida se usa la
+configuración de desarrollo; sin ella, la de despliegue (que además exige `ALLOWED_HOSTS`).
+
+| Variable | Significado |
+|---|---|
+| `SECRET_KEY` | Clave de Django (obligatoria) |
+| `DJANGO_DEVELOPMENT` | Cualquier valor: configuración de desarrollo (`DEBUG`) |
+| `PG_SERVER`, `PG_PORT`, `PG_DB`, `PG_USER`, `PG_PASS` | Conexión a PostgreSQL (datos del juez) |
+| `ORACLE_SERVER`, `ORACLE_PORT`, `ORACLE_SID` | Conexión a Oracle (`xe` en Oracle XE, `free` en Oracle Free) |
+| `ORACLE_USER`, `ORACLE_PASS` | Usuario de Oracle que crea los usuarios temporales de cada envío (p. ej. `SYSTEM`) |
+| `ORACLE_TABLESPACE` | *Tablespace* de esos usuarios (`USERS`) |
+| `ORACLE_MAX_GESTOR_CONNECTIONS` | Conexiones del pool de Oracle (por proceso) |
+| `ORACLE_GESTOR_POOL_TIMEOUT_MS` | Espera máxima por una conexión libre del pool |
+| `ORACLE_STMT_TIMEOUT_MS` | Tiempo máximo de cada sentencia de un envío |
+| `ORACLE_MAX_ROWS`, `ORACLE_MAX_COLS`, `ORACLE_MAX_TABLES` | Límites del resultado de un envío |
+| `DES_BIN`, `DES_TIMEOUT` | Ejecutable de DES y su tiempo máximo en segundos |
+| `LD_LIBRARY_PATH` | Debe incluir Instant Client (y el enlace a `libaio.so.1` si hace falta) |
+
+Lo más cómodo es un script `config.sh` (no se sube al repositorio: está en `.gitignore`) que
+exporte las variables, arranque las bases de datos en Docker y active el entorno virtual. Por
+ejemplo:
+
+```sh
+export SECRET_KEY=clave-de-desarrollo
+export DJANGO_DEVELOPMENT=true
+
+export PG_SERVER=localhost PG_PORT=5432 PG_DB=postgres PG_USER=postgres PG_PASS=postgres
+export ORACLE_SERVER=localhost ORACLE_PORT=1521 ORACLE_SID=xe ORACLE_TABLESPACE=USERS
+export ORACLE_USER=SYSTEM ORACLE_PASS=oracle
+export ORACLE_MAX_GESTOR_CONNECTIONS=20 ORACLE_GESTOR_POOL_TIMEOUT_MS=20000 ORACLE_STMT_TIMEOUT_MS=1500
+export ORACLE_MAX_COLS=30 ORACLE_MAX_ROWS=1000 ORACLE_MAX_TABLES=30
+export DES_BIN=$PWD/des/des_start DES_TIMEOUT=5
+
+docker run --rm -d --name lsql-pg -p 127.0.0.1:${PG_PORT}:5432 -e POSTGRES_PASSWORD=${PG_PASS} postgres:16
+docker run --rm -d --name lsql-oracle --shm-size=2g -p 127.0.0.1:${ORACLE_PORT}:1521 \
+    -e ORACLE_PASSWORD=${ORACLE_PASS} gvenzl/oracle-xe:21-slim-faststart
+
+source venv/bin/activate
+```
+
+Oracle tarda uno o dos minutos en arrancar: espera a que `docker logs lsql-oracle` muestre
+`DATABASE IS READY TO USE!`. También sirve la imagen `gvenzl/oracle-free:slim-faststart`, con
+`ORACLE_SID=free`. Los contenedores no guardan datos (`--rm` sin volúmenes): para conservar la
+base de datos de PostgreSQL entre sesiones, añade un volumen
+(`-v $PWD/postgres:/var/lib/postgresql`; `postgres/` está en `.gitignore`).
+
 ## Lanzar el servidor en local
-Asegurarse de que están aplicadas todas las migraciones de la BD:
-````
-$ python manage.py makemigrations
-$ python manage.py migrate
-````
-Colocar los ficheros estáticos en su lugar:
-````
-$ python manage.py collectstatic
-````
-Lanzar el servidor en local:
-````
-$ python manage.py runserver
-````
 
-# Incorporar cambios al proyecto
-* **[LEER PRIMERO]** Hay un tutorial bastante fácil de seguir sobre como realizar *pull requests*
-en proyectos GitHub en https://www.freecodecamp.org/news/how-to-make-your-first-pull-request-on-github-3/
+```sh
+source config.sh
+cd lsql
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver        # http://localhost:8000/sql/ (administración en /sql/admin/)
+```
 
-Antes de integrar cualquier cambio en la rama principal o de hacer ningún *pull request* es necesario que:
- 1. El código obtengan un 10.0 en pylint:
-````
-$ ./pylint.sh
-------------------------------------
+`launch.sh` hace lo mismo leyendo las variables de un fichero `.env` (formato `CLAVE=valor`,
+también en `.gitignore`).
 
-Your code has been rated at 10.00/10
-````
- 2. Los tests tengan una cobertura de código del 100%:
-````
-$ ./tests.sh
-----------------------------------------------------------------------
-(...)
-Ran 26 tests in 139.763s
+Otros comandos útiles (desde `lsql/`):
 
-OK
-Destroying test database for alias 'default'...
-Name                     Stmts   Miss  Cover   Missing
-------------------------------------------------------
-judge/admin.py              45      0   100%
-judge/apps.py                3      0   100%
-judge/exceptions.py          9      0   100%
-judge/feedback.py           78      0   100%
-judge/forms.py              13      0   100%
-judge/models.py            237      0   100%
-judge/oracle_driver.py     385      0   100%
-judge/parse.py             188      0   100%
-judge/types.py              52      0   100%
-judge/urls.py                6      0   100%
-judge/views.py              84      0   100%
-------------------------------------------------------
-TOTAL                     1100      0   100%
-````
+```sh
+python manage.py makemigrations    # generar migraciones tras cambiar models.py
+python manage.py dbshell           # consola SQL de PostgreSQL
+python manage.py shell             # consola de Python con Django (utilidades en judge/shell.py)
+python manage.py collectstatic     # copiar los estáticos a allstaticfiles/
+python manage.py check --deploy    # revisar la configuración de despliegue (sin DJANGO_DEVELOPMENT)
+python manage.py makemessages -l en && python manage.py compilemessages   # traducciones (locale/)
+```
+
+## Calidad
+
+Antes de integrar cualquier cambio en la rama principal o de hacer un *pull request*:
+
+1. Las pruebas pasan con un **100 % de cobertura**. Se ejecutan contra PostgreSQL, Oracle y DES
+   reales (no hay simulaciones), así que necesitan el entorno anterior:
+   ```sh
+   ./tests.sh          # coverage run manage.py test + informe con las líneas sin cubrir
+   ```
+   Para una parte: `cd lsql && python manage.py test judge.tests.test_models` (o
+   `judge.tests.test_models.SelectProblemTestCase.test_judge_ac`).
+2. `./ruff.sh` sin avisos (configuración en `ruff.toml`).
+3. `./bandit.sh` sin avisos.
+
+La integración continua (`.github/workflows/`) ejecuta lo mismo en cada *push* y *pull request* a
+`master`: ruff, las pruebas con PostgreSQL y Oracle XE 21 como servicios (con subida de la
+cobertura a Codecov, `tests_ci.sh`), bandit y CodeQL. Dependabot propone cada semana las
+actualizaciones de `requirements.txt` y de las acciones.
 
 # Trabajar con *forks* y ramas
 Para evitar que los *pull request* acaben con muchos *commits* según avanza el tiempo
@@ -169,7 +203,7 @@ Si aparecen conflictos en algún fichero durante el último comando debéis
 editar ese fichero a mano para resolverlos **a mano** y hacer *commit*.
     
 ## Paso 7: Crear *pull request*
-Después de haber hecho varios *commit*, haber pasado **pylint** y el 100% en los tests y haber
+Después de haber hecho varios *commit*, haber pasado **ruff** y **bandit** sin avisos y el 100 % de cobertura en los tests y haber
 subido los cambios al *fork* (*origin*) dentro de una rama, hay que hacer un **PR de esa rama**. 
 Para ello vais a la web de vuestro *fork* en GitHub, seleccionáis la rama concreta y pulsáis el botón 
 para crear el *pull request*

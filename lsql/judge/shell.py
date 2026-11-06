@@ -2,7 +2,7 @@
 Copyright Enrique Martín <emartinm@ucm.es> 2020
 
 Methods for batch processing that can be invoked from the shell (python manage.py shell).
-For example: create a group of users from a CSV list of students
+For example: judge again some submissions or generate CSV reports of the submissions
 """
 
 import csv
@@ -13,7 +13,6 @@ from collections.abc import Callable
 import sqlglot
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.db.models import Count, Max, Min, Q
 from django.test import Client
 from django.urls import reverse
@@ -21,79 +20,6 @@ from django.utils import timezone
 
 from .models import Problem, Submission
 from .types import ProblemType
-
-
-def create_users_from_csv(csv_filename: str, group_name: str, dry: bool = True):
-    """
-    Batch creation of users from a CSV file, each line representing a new user. The username is the
-    first part of the email (before @) and the password is the document number. Assigns every new
-    user to a new created group with name 'group_name'
-
-    If dry = True then it does not modifies the DB but only shows messages of the actions
-
-    Each line has the following fields:
-      FOTOGRAFÍA,NOMBRE COMPLETO,DOCUMENTO,ASIGNATURA,MAT.,CONV.,OBSERVACIÓN,CORREO,TELÉFONO
-    """
-    if dry:
-        print("Creating users from CSV (DRY RUN): NO USERS OR GROUPS WILL BE SAVED!")
-        group = Group(name=group_name)  # Dummy group not saved for dry run
-    else:
-        print("Creating users from CSV")
-        group = Group.objects.create(name=group_name)
-    print(f"* Created group {group_name}")
-    with open(csv_filename, encoding="utf_8") as csvfile:
-        reader = csv.DictReader(csvfile)
-        create_users_from_list(reader, group, dry)
-    print()
-
-
-def create_users_from_list(dict_list, group: Group, dry: bool = True):
-    """
-    Batch creation of users from a list of dictionaries, each dictionary representing a new user. The username is the
-    first part of the email (before @) and the password is the document number.
-
-    If dry = True does not modify the DB but only show messages of the actions
-
-    Dictionaries have the following keys:
-      FOTOGRAFÍA,NOMBRE COMPLETO,DOCUMENTO,ASIGNATURA,MAT.,CONV.,OBSERVACIÓN,CORREO,TELÉFONO
-    """
-    if not group:
-        raise AssertionError  # Group is set
-    for user_dict in dict_list:
-        email = user_dict["CORREO"]
-        if not email:
-            raise AssertionError
-        if not email.split("@")[1] == "ucm.es":
-            raise AssertionError  # We want official UCM emails
-        username = email.split("@")[0]
-        password = user_dict["DOCUMENTO"]
-        if "," in user_dict["NOMBRE COMPLETO"]:
-            first_name = user_dict["NOMBRE COMPLETO"].split(",")[1].strip()
-            last_name = user_dict["NOMBRE COMPLETO"].split(",")[0].strip()
-        else:
-            first_name = user_dict["NOMBRE COMPLETO"]
-            last_name = "_"
-
-        # Safety checks
-        if not username:
-            raise AssertionError
-        if not password:
-            raise AssertionError
-        if not first_name:
-            raise AssertionError
-        if not last_name:
-            raise AssertionError
-
-        if not dry:
-            user = get_user_model().objects.create_user(username, email, password)
-            user.first_name = first_name
-            user.last_name = last_name
-            user.save()
-            group.user_set.add(user)
-        print(
-            f'* Saved User("username:{username}", email:"{email}", passwd:"{password}", '
-            f'first_name:"{first_name}", last_name:"{last_name}") in group "{group}"'
-        )
 
 
 def is_list_of_dict(value):
@@ -151,7 +77,7 @@ def rejudge(
             for sub in subs:
                 submit_url = reverse("judge:submit", args=[sub.problem.pk])
                 # Using Client outside the Django testing command requires adjustment in the HTTP Host header
-                http_host = "127.0.0.1" if settings.DEBUG else "learn.fdi.ucm.es"
+                http_host = "127.0.0.1" if settings.DEBUG else settings.ALLOWED_HOSTS[0]
                 response = (
                     client.post(submit_url, {"code": sub.code}, HTTP_HOST=http_host, follow=True)
                     if not tests
