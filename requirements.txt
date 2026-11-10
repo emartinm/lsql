@@ -7,7 +7,7 @@ coverage==7.17.0
 cryptography==50.0.2
 defusedxml==0.7.1
 Django==6.1.2
-django-axes==8.3.1
+django-axes==9.0.0
 django-model-utils==5.0.0
 gunicorn==26.2.0
 lazy-object-proxy==1.13.0
