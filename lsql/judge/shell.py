@@ -107,7 +107,7 @@ def rejudge(
 def extended_submissions(filename: str) -> None:
     """Generates a CSV file with all students' submissions extended with some information about
     the user, the problem and the collection"""
-    subs = Submission.objects.filter(user__is_staff=False, user__is_active=True).order_by("creation_date")
+    subs = Submission.objects.filter(user__is_staff=False, user__is_active=True).order_by("creation_date", "pk")
     with open(filename, "w", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(
             csvfile,
@@ -158,7 +158,7 @@ def user_submissions_per_type(user) -> dict:
 
 def submissions_per_user(filename: str) -> None:
     """Generates a CSV file with a summary of all students' submissions"""
-    users = get_user_model().objects.filter(is_staff=False, is_active=True)
+    users = get_user_model().objects.filter(is_staff=False, is_active=True).order_by("pk")
     dict_list = []
     for user in users:
         user_info = Submission.objects.filter(user=user).aggregate(

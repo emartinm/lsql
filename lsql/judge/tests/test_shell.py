@@ -233,12 +233,6 @@ class ShellTest(TestCase):
             reader = csv.DictReader(csvfile)
             rows = list(reader)
             self.assertEqual(len(rows), 3)
-            #####
-            # Sometimes this test fails (nondeterministically) in GitHub Actions,
-            # never locally. Temporary printing the rows from the CSV file to
-            # help finding the bug
-            print(rows)
-            #####
             # Check submission information in the CSV
             for i, row in enumerate(rows):
                 self.assertEqual(row["verdict"], subs[i].verdict_code)

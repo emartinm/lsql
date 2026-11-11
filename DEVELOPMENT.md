@@ -42,7 +42,7 @@ configuración de desarrollo; sin ella, la de despliegue (que además exige `ALL
 | `SECRET_KEY` | Clave de Django (obligatoria) |
 | `DJANGO_DEVELOPMENT` | Cualquier valor: configuración de desarrollo (`DEBUG`) |
 | `PG_SERVER`, `PG_PORT`, `PG_DB`, `PG_USER`, `PG_PASS` | Conexión a PostgreSQL (datos del juez) |
-| `ORACLE_SERVER`, `ORACLE_PORT`, `ORACLE_SID` | Conexión a Oracle (`xe` en Oracle XE, `free` en Oracle Free) |
+| `ORACLE_SERVER`, `ORACLE_PORT`, `ORACLE_SERVICE_NAME` | Conexión a Oracle. El nombre de servicio es `XE` en Oracle XE y `FREEPDB1` en Oracle Free |
 | `ORACLE_USER`, `ORACLE_PASS` | Usuario de Oracle que crea los usuarios temporales de cada envío (p. ej. `SYSTEM`) |
 | `ORACLE_TABLESPACE` | *Tablespace* de esos usuarios (`USERS`) |
 | `ORACLE_MAX_GESTOR_CONNECTIONS` | Conexiones del pool de Oracle (por proceso) |
@@ -61,7 +61,7 @@ export SECRET_KEY=clave-de-desarrollo
 export DJANGO_DEVELOPMENT=true
 
 export PG_SERVER=localhost PG_PORT=5432 PG_DB=postgres PG_USER=postgres PG_PASS=postgres
-export ORACLE_SERVER=localhost ORACLE_PORT=1521 ORACLE_SID=xe ORACLE_TABLESPACE=USERS
+export ORACLE_SERVER=localhost ORACLE_PORT=1521 ORACLE_SERVICE_NAME=XE ORACLE_TABLESPACE=USERS
 export ORACLE_USER=SYSTEM ORACLE_PASS=oracle
 export ORACLE_MAX_GESTOR_CONNECTIONS=20 ORACLE_GESTOR_POOL_TIMEOUT_MS=20000 ORACLE_STMT_TIMEOUT_MS=1500
 export ORACLE_MAX_COLS=30 ORACLE_MAX_ROWS=1000 ORACLE_MAX_TABLES=30
@@ -76,7 +76,8 @@ source venv/bin/activate
 
 Oracle tarda uno o dos minutos en arrancar: espera a que `docker logs lsql-oracle` muestre
 `DATABASE IS READY TO USE!`. También sirve la imagen `gvenzl/oracle-free:slim-faststart`, con
-`ORACLE_SID=free`. Los contenedores no guardan datos (`--rm` sin volúmenes): para conservar la
+`ORACLE_SERVICE_NAME=FREEPDB1` (su base de datos *pluggable*: en la raíz de Oracle Free no se pueden
+crear los usuarios de los envíos). Los contenedores no guardan datos (`--rm` sin volúmenes): para conservar la
 base de datos de PostgreSQL entre sesiones, añade un volumen
 (`-v $PWD/postgres:/var/lib/postgresql`; `postgres/` está en `.gitignore`).
 

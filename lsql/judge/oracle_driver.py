@@ -369,11 +369,14 @@ def is_tle_exception(error_msg):
 
 
 def build_dsn_tns():
-    """Build a Data Source Name from values in the environment"""
-    dsn_tns = oracledb.makedsn(
-        os.environ["ORACLE_SERVER"], int(os.environ["ORACLE_PORT"]), os.environ["ORACLE_SID"]
-    )  # SID=free in oracle-free Docker images
-    return dsn_tns
+    """Build a Data Source Name from values in the environment, using a service name: XE in Oracle XE,
+    FREEPDB1 in Oracle Free (users cannot be created in the CDB root of Oracle Free, so the connection
+    must go to its pluggable database)"""
+    return oracledb.makedsn(
+        os.environ["ORACLE_SERVER"],
+        int(os.environ["ORACLE_PORT"]),
+        service_name=os.environ["ORACLE_SERVICE_NAME"],
+    )
 
 
 class OracleExecutor:
