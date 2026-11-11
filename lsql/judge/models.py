@@ -185,7 +185,7 @@ class Collection(models.Model):
                 'correct_submissions': number of correct submissions
                 'first_correct_submission': position of the first correct submission (-1 if none)
         """
-        users = get_user_model().objects.filter(groups__id=group.id, is_staff=False)
+        users = get_user_model().objects.filter(groups__id=group.id, is_staff=False).order_by("username")
         users_dict = {user.pk: user for user in users}
         for _, user in users_dict.items():
             user.results = {

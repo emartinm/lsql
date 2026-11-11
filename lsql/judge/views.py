@@ -277,7 +277,11 @@ def show_problem(request, problem_id):
     )
     # Extends problem with hint information
     problem.available_hints = Hint.objects.filter(problem=problem).order_by("num_submit").count()
-    problem.used_hints = UsedHint.objects.filter(user=request.user).filter(hint_definition__problem=problem)
+    problem.used_hints = (
+        UsedHint.objects.filter(user=request.user)
+        .filter(hint_definition__problem=problem)
+        .order_by("request_date")
+    )
     problem.used = len(problem.used_hints)
     return render(request, problem.template(), {"problem": problem})
 

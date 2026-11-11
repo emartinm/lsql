@@ -207,13 +207,15 @@ class ViewsTest(TestCase):
         # create a teacher and show submission to user pepe
         teacher = create_superuser("1111", "teacher")
         client.login(username=teacher.username, password="1111")  # nosec B106
+        # Fixed dates far from today, so the result does not depend on when the test runs
+        Submission.objects.filter(problem=problem_dml).update(creation_date=datetime(2021, 3, 3, 12).astimezone())
         response = client.get(
             submissions_url,
             {
                 "problem_id": problem_dml.pk,
                 "user_id": user.id,
                 "start": first_day_of_course(datetime(2020, 9, 1)).strftime("%Y-%m-%d"),
-                "end": datetime.today().strftime("%Y-%m-%d"),
+                "end": datetime(2021, 3, 7).strftime("%Y-%m-%d"),
             },
             follow=True,
         )
@@ -597,7 +599,7 @@ class ViewsTest(TestCase):
 
         group_b.user_set.add(teacher)
         start = first_day_of_course(datetime(2020, 9, 1)).strftime("%Y-%m-%d")
-        end = datetime.today().strftime("%Y-%m-%d")
+        end = datetime(2021, 3, 7).strftime("%Y-%m-%d")
         # use the teacher to view the two groups
         client.login(username=teacher.username, password="12345")  # nosec B106
         classification_url = reverse("judge:result", args=[collection.pk])
