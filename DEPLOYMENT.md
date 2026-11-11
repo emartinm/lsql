@@ -75,7 +75,7 @@ ejecuta el juez y `<base>` su directorio, con esta estructura:
    `DES_BIN=<base>/des/des_start`.
 6. **Oracle** (si no tienes ya un servidor de Oracle): adapta `deploy/oracle-xe.service.example`,
    cópialo a `/etc/systemd/system/lsql-oracle.service` y arráncalo. Usa `ORACLE_PASS` y
-   `ORACLE_PORT` de `<base>/env` (con `ORACLE_SERVER=localhost`, `ORACLE_SID=xe` y
+   `ORACLE_PORT` de `<base>/env` (con `ORACLE_SERVER=localhost`, `ORACLE_SERVICE_NAME=XE` y
    `ORACLE_USER=SYSTEM`). La imagen solo admite en `ORACLE_PASS` letras, números, `_` y `-`
    (con `&`, por ejemplo, falla al arrancar con `ORA-00922`); `openssl rand -hex 24` sirve:
    ```sh
